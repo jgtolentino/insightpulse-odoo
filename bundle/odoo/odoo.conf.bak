@@ -1,0 +1,11 @@
+[options]
+db_host = postgres
+db_port = 5432
+db_user = ${POSTGRES_USER}
+db_password = ${POSTGRES_PASSWORD}
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+proxy_mode = True
+limit_request = 8192
+workers = 4
+longpolling_port = 8072
+admin_passwd = change_me_master_password

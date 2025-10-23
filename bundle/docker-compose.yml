@@ -1,0 +1,70 @@
+# version: "3.8"  # Obsolete, removed per Docker Compose v2
+services:
+  postgres:
+    image: postgres:14
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis:
+    image: redis:6
+
+  odoo:
+    image: odoo:19
+    depends_on: [postgres, redis]
+    environment:
+      HOST: postgres
+      USER: ${POSTGRES_USER}
+      PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - ./odoo/odoo.conf:/etc/odoo/odoo.conf
+      - odoo_data:/var/lib/odoo
+    command: ["odoo","-c","/etc/odoo/odoo.conf"]
+
+  odoo-longpoll:
+    image: odoo:19
+    depends_on: [postgres, redis]
+    environment:
+      HOST: postgres
+      USER: ${POSTGRES_USER}
+      PASSWORD: ${POSTGRES_PASSWORD}
+    command: ["odoo","-c","/etc/odoo/odoo.conf","--longpolling-port=8072","--proxy-mode"]
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - ./odoo/odoo.conf:/etc/odoo/odoo.conf
+
+  onlyoffice:
+    image: onlyoffice/documentserver
+    environment:
+      JWT_ENABLED: "false"
+
+  ocr-service:
+    build: ./services/ocr-service
+    environment:
+      OCR_PROVIDER: ${OCR_PROVIDER:-paddleocr-vl}
+      USE_GPU: ${USE_GPU:-false}
+      OCR_CONFIDENCE_THRESHOLD: ${OCR_CONFIDENCE_THRESHOLD:-0.60}
+
+  caddy:
+    image: caddy:2.8
+    depends_on: [odoo, odoo-longpoll, onlyoffice, ocr-service]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      EMAIL: ${EMAIL}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata: {}
+  odoo_data: {}
+  caddy_data: {}
+  caddy_config: {}

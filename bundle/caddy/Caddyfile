@@ -1,0 +1,23 @@
+{
+  email {$EMAIL}
+}
+{$DOMAIN} {
+  encode gzip zstd
+
+  @longpoll path /longpolling/*
+  handle @longpoll {
+    reverse_proxy odoo-longpoll:8072
+  }
+
+  handle_path /onlyoffice/* {
+    reverse_proxy onlyoffice:80
+  }
+
+  handle_path /ocr/* {
+    reverse_proxy ocr-service:8000
+  }
+
+  handle {
+    reverse_proxy odoo:8069
+  }
+}

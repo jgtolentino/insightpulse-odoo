@@ -1,0 +1,8 @@
+<odoo>
+  <record id="rule_kn_page_own_company" model="ir.rule">
+    <field name="name">Knowledge Pages: multi-company safe</field>
+    <field name="model_id" ref="model_knowledge_page"/>
+    <field name="global" eval="True"/>
+    <field name="domain_force">[('company_id','in',[user.company_id.id, False])]</field>
+  </record>
+</odoo>
