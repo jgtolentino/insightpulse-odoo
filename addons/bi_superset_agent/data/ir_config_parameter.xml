@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="param_bi_api_base" model="ir.config_parameter">
+            <field name="key">bi_agent.api_base</field>
+            <field name="value">http://localhost:8001</field>
+        </record>
+
+        <record id="param_bi_superset_url" model="ir.config_parameter">
+            <field name="key">bi_agent.superset_url</field>
+            <field name="value">http://localhost:8088</field>
+        </record>
+
+        <record id="param_bi_dataset_id" model="ir.config_parameter">
+            <field name="key">bi_agent.dataset_id</field>
+            <field name="value">1</field>
+        </record>
+    </data>
+</odoo>

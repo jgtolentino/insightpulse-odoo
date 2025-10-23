@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_bi_dashboard_form" model="ir.ui.view">
+        <field name="name">bi.superset.dashboard.form</field>
+        <field name="model">bi.superset.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="BI Dashboard">
+                <header>
+                    <button name="action_create_dashboard" type="object" string="Create Dashboard" class="oe_highlight"
+                            invisible="state not in ('draft', 'error')"/>
+                    <button name="action_view_dashboard" type="object" string="View Dashboard"
+                            invisible="not dashboard_url" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g., Expense Analytics Dashboard"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Charts">
+                            <field name="analytics_ids" widget="many2many_tags">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="query"/>
+                                    <field name="chart_id"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Styling">
+                            <group>
+                                <field name="custom_css" widget="text" placeholder="/* Optional custom CSS for dashboard */"/>
+                            </group>
+                        </page>
+                        <page string="Results" invisible="state == 'draft'">
+                            <group>
+                                <field name="dashboard_id" readonly="1"/>
+                                <field name="dashboard_url" widget="url" readonly="1"/>
+                            </group>
+                            <separator string="Dashboard Preview" invisible="not dashboard_url"/>
+                            <div class="o_bi_chart_container" invisible="not dashboard_url">
+                                <iframe t-att-src="dashboard_url" class="o_bi_dashboard_frame"/>
+                            </div>
+                        </page>
+                        <page string="Error" invisible="state != 'error'">
+                            <group>
+                                <field name="error_message" widget="text" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_bi_dashboard_tree" model="ir.ui.view">
+        <field name="name">bi.superset.dashboard.tree</field>
+        <field name="model">bi.superset.dashboard</field>
+        <field name="arch" type="xml">
+            <tree string="Dashboards">
+                <field name="name"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-warning="state == 'running'" decoration-danger="state == 'error'"/>
+                <field name="dashboard_id"/>
+                <field name="create_date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_bi_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboards</field>
+        <field name="res_model">bi.superset.dashboard</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first dashboard!
+            </p>
+            <p>
+                Combine multiple analytics charts into a comprehensive dashboard.
+            </p>
+        </field>
+    </record>
+
+</odoo>

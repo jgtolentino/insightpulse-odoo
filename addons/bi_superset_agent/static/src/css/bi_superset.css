@@ -1,0 +1,138 @@
+/* BI Superset Agent Styles - Odoo 19 Design System Integration */
+
+/* Superset-like color palette for consistency */
+:root {
+    --bi-primary: #714B67;       /* Odoo 19 primary purple */
+    --bi-secondary: #00A09D;     /* Odoo 19 teal accent */
+    --bi-indigo: #4f46e5;        /* Superset indigo */
+    --bi-bg: #ffffff;
+    --bi-surface: #f8f9fa;
+    --bi-border: #dee2e6;
+    --bi-text: #212529;
+    --bi-muted: #6c757d;
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bi-bg: #1c1c1e;
+        --bi-surface: #2c2c2e;
+        --bi-border: #3a3a3c;
+        --bi-text: #f5f5f7;
+        --bi-muted: #aeaeb2;
+    }
+}
+
+/* Chart container styling */
+.o_bi_chart_container {
+    background: var(--bi-bg);
+    border: 1px solid var(--bi-border);
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    min-height: 500px;
+    overflow: hidden;
+}
+
+/* Chart iframe */
+.o_bi_chart_frame {
+    border: none;
+    width: 100%;
+    height: 640px;
+    display: block;
+}
+
+/* Dashboard iframe */
+.o_bi_dashboard_frame {
+    border: none;
+    width: 100%;
+    min-height: 800px;
+    display: block;
+}
+
+/* Form styling for BI analytics */
+.o_form_view .o_bi_chart_container {
+    margin-top: 16px;
+}
+
+/* Button styling */
+.o_control_panel .btn-primary {
+    background-color: var(--bi-primary);
+    border-color: var(--bi-primary);
+}
+
+.o_control_panel .btn-primary:hover {
+    background-color: #5c3b54;
+    border-color: #5c3b54;
+}
+
+/* Status badges */
+.badge-success {
+    background-color: #28a745;
+}
+
+.badge-warning {
+    background-color: #ffc107;
+}
+
+.badge-danger {
+    background-color: #dc3545;
+}
+
+/* Text area for queries */
+textarea[name="query"] {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 14px;
+    min-height: 120px;
+    line-height: 1.6;
+}
+
+/* SQL result display */
+textarea[name="result_sql"] {
+    font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+    font-size: 12px;
+    background-color: var(--bi-surface);
+    border: 1px solid var(--bi-border);
+    min-height: 200px;
+}
+
+/* Loading state */
+.o_bi_loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--bi-muted);
+}
+
+.o_bi_loading:after {
+    content: " ";
+    display: block;
+    width: 40px;
+    height: 40px;
+    margin: 8px;
+    border-radius: 50%;
+    border: 4px solid var(--bi-primary);
+    border-color: var(--bi-primary) transparent var(--bi-primary) transparent;
+    animation: o_bi_loading 1.2s linear infinite;
+}
+
+@keyframes o_bi_loading {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .o_bi_chart_frame {
+        height: 480px;
+    }
+
+    .o_bi_dashboard_frame {
+        min-height: 600px;
+    }
+}

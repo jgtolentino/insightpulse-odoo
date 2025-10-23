@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bi_analytics_user,access_bi_analytics_user,model_bi_superset_analytics,group_bi_user,1,1,1,0
+access_bi_analytics_manager,access_bi_analytics_manager,model_bi_superset_analytics,group_bi_manager,1,1,1,1
+access_bi_dashboard_user,access_bi_dashboard_user,model_bi_superset_dashboard,group_bi_user,1,1,1,0
+access_bi_dashboard_manager,access_bi_dashboard_manager,model_bi_superset_dashboard,group_bi_manager,1,1,1,1

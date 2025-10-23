@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_bi_analytics_form" model="ir.ui.view">
+        <field name="name">bi.superset.analytics.form</field>
+        <field name="model">bi.superset.analytics</field>
+        <field name="arch" type="xml">
+            <form string="BI Analytics">
+                <header>
+                    <button name="action_run_agent" type="object" string="Run Query" class="oe_highlight"
+                            invisible="state not in ('draft', 'error')"/>
+                    <button name="action_view_chart" type="object" string="View Chart"
+                            invisible="not chart_url" class="btn-primary"/>
+                    <button name="action_view_dashboard" type="object" string="View Dashboard"
+                            invisible="not dashboard_url" class="btn-primary"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,running,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g., Monthly Expense Analysis"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="query" widget="text" placeholder="Ask a question in natural language...
+Example: 'Show top 10 expense categories by total amount'"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="dataset_id"/>
+                            <field name="create_dashboard"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Results" invisible="state == 'draft'">
+                            <group>
+                                <group string="Generated SQL">
+                                    <field name="result_sql" widget="text" nolabel="1"/>
+                                </group>
+                                <group string="Superset Links">
+                                    <field name="chart_id" readonly="1"/>
+                                    <field name="chart_url" widget="url" readonly="1"/>
+                                    <field name="dashboard_id" readonly="1" invisible="not dashboard_id"/>
+                                    <field name="dashboard_url" widget="url" readonly="1" invisible="not dashboard_url"/>
+                                </group>
+                            </group>
+                            <separator string="Chart Preview" invisible="not chart_url"/>
+                            <div class="o_bi_chart_container" invisible="not chart_url">
+                                <iframe t-att-src="chart_url" class="o_bi_chart_frame"/>
+                            </div>
+                        </page>
+                        <page string="Error" invisible="state != 'error'">
+                            <group>
+                                <field name="error_message" widget="text" nolabel="1"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_bi_analytics_tree" model="ir.ui.view">
+        <field name="name">bi.superset.analytics.tree</field>
+        <field name="model">bi.superset.analytics</field>
+        <field name="arch" type="xml">
+            <tree string="Analytics">
+                <field name="name"/>
+                <field name="query"/>
+                <field name="state" widget="badge" decoration-success="state == 'done'"
+                       decoration-warning="state == 'running'" decoration-danger="state == 'error'"/>
+                <field name="chart_id"/>
+                <field name="create_date"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_bi_analytics_search" model="ir.ui.view">
+        <field name="name">bi.superset.analytics.search</field>
+        <field name="model">bi.superset.analytics</field>
+        <field name="arch" type="xml">
+            <search string="Search Analytics">
+                <field name="name"/>
+                <field name="query"/>
+                <filter string="My Analytics" name="my_analytics"
+                        domain="[('create_uid', '=', uid)]"/>
+                <filter string="Done" name="done" domain="[('state', '=', 'done')]"/>
+                <filter string="Error" name="error" domain="[('state', '=', 'error')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_bi_analytics" model="ir.actions.act_window">
+        <field name="name">Analytics</field>
+        <field name="res_model">bi.superset.analytics</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_my_analytics': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first analytics query!
+            </p>
+            <p>
+                Ask questions in natural language and get automatic charts and dashboards.
+                <br/>
+                Example: "Show monthly expense trends for the last year"
+            </p>
+        </field>
+    </record>
+
+</odoo>
