@@ -1,0 +1,26 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: odoo
+    volumes: [pgdata:/var/lib/postgresql/data]
+  odoo:
+    image: ghcr.io/jgtolentino/insightpulse-odoo:${TAG:-main}
+    depends_on: [db]
+    environment:
+      HOST: db
+      PORT: 5432
+      USER: odoo
+      PASSWORD: odoo
+      POSTGRES_DB: odoo
+      ADDONS_PATH: ${ADDONS_PATH}
+      SUPERSET_URL: ${SUPERSET_URL:-https://superset.example.com}
+      SS_USER: ${SS_USER:-service_user}
+      SS_PASS: ${SS_PASS:-service_pass}
+      RAG_API_URL: ${RAG_API_URL:-http://rag_api:8085}
+    ports: ["8069:8069"]
+    volumes: [filestore:/var/lib/odoo]
+volumes: { pgdata: {}, filestore: {} }

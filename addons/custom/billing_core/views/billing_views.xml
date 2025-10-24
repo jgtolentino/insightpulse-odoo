@@ -1,0 +1,39 @@
+<odoo>
+  <record id="view_billing_profile_tree" model="ir.ui.view">
+    <field name="name">billing.profile.tree</field>
+    <field name="model">billing.profile</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/><field name="partner_id"/><field name="journal_id"/>
+        <field name="payment_term_id"/><field name="auto_post"/><field name="active"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_billing_profile_form" model="ir.ui.view">
+    <field name="name">billing.profile.form</field>
+    <field name="model">billing.profile</field>
+    <field name="arch" type="xml">
+      <form><sheet><group>
+        <field name="name"/><field name="partner_id"/><field name="journal_id"/>
+        <field name="payment_term_id"/><field name="auto_post"/><field name="active"/>
+      </group></sheet></form>
+    </field>
+  </record>
+  <record id="action_billing_profile" model="ir.actions.act_window">
+    <field name="name">Billing Profiles</field>
+    <field name="res_model">billing.profile</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_billing_root" name="Billing" parent="account.menu_finance" sequence="90"/>
+  <menuitem id="menu_billing_profiles" name="Billing Profiles" parent="menu_billing_root" action="action_billing_profile" sequence="10"/>
+  <record id="view_move_form_billing_kind" model="ir.ui.view">
+    <field name="name">account.move.form.billing.kind</field>
+    <field name="model">account.move</field>
+    <field name="inherit_id" ref="account.view_move_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group[@name='invoice_note']" position="before">
+        <group string="Billing"><field name="billing_kind"/></group>
+      </xpath>
+    </field>
+  </record>
+</odoo>

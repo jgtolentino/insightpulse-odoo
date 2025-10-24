@@ -1,0 +1,27 @@
+<odoo>
+  <record id="view_contract_form_inherit_subscr" model="ir.ui.view">
+    <field name="name">contract.form.subscription.proration</field>
+    <field name="model">contract.contract</field>
+    <field name="inherit_id" ref="contract.contract_contract_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet/notebook/page[@name='recurring']" position="inside">
+        <group string="Subscription"><field name="proration_mode"/></group>
+      </xpath>
+    </field>
+  </record>
+  <record id="product_template_form_view_subscription_flag" model="ir.ui.view">
+    <field name="name">product.template.subscription.flag</field>
+    <field name="model">product.template</field>
+    <field name="inherit_id" ref="product.product_template_only_form_view"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet//group[@name='sales']" position="inside">
+        <field name="is_subscription"/>
+      </xpath>
+    </field>
+  </record>
+  <record id="menu_subscription_root" model="ir.ui.menu">
+    <field name="name">Subscriptions</field>
+    <field name="parent_id" ref="contract.menu_contract_root"/>
+    <field name="action" ref="contract.action_contract"/>
+  </record>
+</odoo>

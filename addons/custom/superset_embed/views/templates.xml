@@ -1,0 +1,20 @@
+<odoo>
+  <template id="page" name="Superset Embed">
+    <t t-call="website.layout">
+      <div id="superset-mount" style="height:92vh"></div>
+      <script src="https://unpkg.com/@superset-ui/embedded-sdk"></script>
+      <script>
+        (function(){
+          var m = document.getElementById("superset-mount");
+          if (!window.embedDashboard) { m.textContent="Embed SDK failed to load."; return; }
+          window.embedDashboard({
+            id: "<t t-esc='dash_uuid'/>",
+            supersetDomain: "<t t-esc='superset_url'/>",
+            mountPoint: m,
+            fetchGuestToken: () => "<t t-esc='guest_token'/>",
+          });
+        })();
+      </script>
+    </t>
+  </template>
+</odoo>

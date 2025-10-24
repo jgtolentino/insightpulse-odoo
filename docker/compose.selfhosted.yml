@@ -1,0 +1,64 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: outline
+      POSTGRES_PASSWORD: outline
+      POSTGRES_DB: outline
+    volumes: [pgdata:/var/lib/postgresql/data]
+  redis:
+    image: redis:7
+  minio:
+    image: minio/minio
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: adminpass123
+    ports: ["9000:9000"]
+    volumes: [minio:/data]
+  keycloak:
+    image: quay.io/keycloak/keycloak:25.0
+    command: start-dev
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports: ["8081:8080"]
+  outline:
+    image: outlinewiki/outline:latest
+    depends_on: [postgres, redis, minio, keycloak]
+    environment:
+      DATABASE_URL: postgres://outline:outline@postgres:5432/outline
+      REDIS_URL: redis://redis:6379
+      URL: http://localhost:3000
+      SECRET_KEY: change_me
+      FILE_STORAGE: s3
+      AWS_S3_UPLOAD_BUCKET_URL: http://minio:9000/outline
+      AWS_S3_UPLOAD_BUCKET_NAME: outline
+      AWS_S3_UPLOAD_MAX_SIZE: "26214400"
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: adminpass123
+      AWS_S3_FORCE_PATH_STYLE: "true"
+      OIDC_CLIENT_ID: outline
+      OIDC_CLIENT_SECRET: change_me
+      OIDC_AUTH_URI: http://keycloak:8080/realms/main/protocol/openid-connect/auth
+      OIDC_TOKEN_URI: http://keycloak:8080/realms/main/protocol/openid-connect/token
+      OIDC_USERINFO_URI: http://keycloak:8080/realms/main/protocol/openid-connect/userinfo
+      OIDC_LOGOUT_URI: http://keycloak:8080/realms/main/protocol/openid-connect/logout
+    ports: ["3000:3000"]
+  ollama:
+    image: ollama/ollama:latest
+    ports: ["11434:11434"]
+    volumes: [ollama:/root/.ollama]
+  rag_api:
+    build: ./services/rag-api
+    environment:
+      DATABASE_URL: postgresql+psycopg://outline:outline@postgres:5432/outline
+      EMBEDDINGS_PROVIDER: local
+      EMBEDDINGS_MODEL: bge-base-en-v1.5
+      LLM_PROVIDER: ollama
+      OLLAMA_MODEL: llama3.1:8b-instruct-q4_K_M
+      MAX_CTX_DOCS: "6"
+    depends_on: [postgres, ollama]
+    ports: ["8085:8085"]
+volumes: { pgdata: {}, minio: {}, ollama: {} }
