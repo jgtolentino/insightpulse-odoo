@@ -17,6 +17,11 @@
     reverse_proxy ocr-service:8000
   }
 
+  handle_path /wren/* {
+    uri strip_prefix /wren
+    reverse_proxy wren:8080
+  }
+
   handle {
     reverse_proxy odoo:8069
   }

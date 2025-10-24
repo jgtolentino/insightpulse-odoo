@@ -49,9 +49,17 @@ services:
       USE_GPU: ${USE_GPU:-false}
       OCR_CONFIDENCE_THRESHOLD: ${OCR_CONFIDENCE_THRESHOLD:-0.60}
 
+  wren:
+    image: ghcr.io/canner/wren-ai-service:latest
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      LLM_PROVIDER_KEY: ${WREN_LLM_KEY:-sk-your-key-here}
+    depends_on:
+      - postgres
+
   caddy:
     image: caddy:2.8
-    depends_on: [odoo, odoo-longpoll, onlyoffice, ocr-service]
+    depends_on: [odoo, odoo-longpoll, onlyoffice, ocr-service, wren]
     ports:
       - "80:80"
       - "443:443"

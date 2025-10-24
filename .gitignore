@@ -1,21 +1,11 @@
-# Environment files with secrets
 .env
-bundle/.env
-
-# Large binary files
-*.tar.gz
-*.zip
-
-# Docker volumes
-bundle/postgres_data/
-bundle/odoo_data/
-bundle/caddy_data/
-
-# Temporary files
+env/.env
 *.pyc
 __pycache__/
-.DS_Store
-
-# Logs
-*.log
-bundle/addons/oca/
+addons/oca/*/.git/
+pgdata/
+odoo_data/
+caddy_data/
+caddy_config/
+*.zip
+*.tar.gz

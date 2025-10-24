@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:14
+    container_name: insightpulse-odoo-postgres
+    env_file: env/.env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:6
+    container_name: insightpulse-odoo-redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo:
+    image: odoo:19
+    container_name: insightpulse-odoo-odoo
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - ./odoo/odoo.conf:/etc/odoo/odoo.conf
+      - odoo_data:/var/lib/odoo
+    environment:
+      HOST: postgres
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo_password_change_me}
+
+  odoo-longpoll:
+    image: odoo:19
+    container_name: insightpulse-odoo-odoo-longpoll
+    restart: unless-stopped
+    depends_on:
+      odoo:
+        condition: service_started
+    command: ["odoo","-c","/etc/odoo/odoo.conf","--longpolling-port=8072","--proxy-mode"]
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - ./odoo/odoo.conf:/etc/odoo/odoo.conf
+
+  onlyoffice:
+    image: onlyoffice/documentserver
+    container_name: insightpulse-odoo-onlyoffice
+    environment:
+      JWT_ENABLED: "false"
+
+  ocr-service:
+    build: ./services/ocr-service
+    container_name: insightpulse-odoo-ocr-service
+    env_file: env/.env
+
+  caddy:
+    image: caddy:2.8
+    container_name: insightpulse-odoo-caddy
+    env_file: env/.env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+  odoo-langchain:
+    build: ./services/odoo-langchain-service
+    container_name: insightpulse-odoo-odoo-langchain
+    restart: unless-stopped
+    environment:
+      PORT: 8081
+      ODOO_BASE_URL: ${ODOO_BASE_URL:-https://insightpulseai.net/odoo}
+      ODOO_DB: ${POSTGRES_DB:-odoo}
+      PG_DSN: postgresql://${POSTGRES_USER:-odoo}:${POSTGRES_PASSWORD:-odoo_password_change_me}@postgres:5432/${POSTGRES_DB:-odoo}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      odoo:
+        condition: service_started
+
+volumes:
+  pgdata: {}
+  odoo_data: {}
+  caddy_data: {}
+  caddy_config: {}
