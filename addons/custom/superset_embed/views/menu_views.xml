@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Integrate with existing BI Analytics menu -->
+    <menuitem id="menu_superset_dashboards"
+              name="Superset Dashboards"
+              parent="bi_superset_agent.menu_bi_dashboards"
+              action="action_superset_dashboard"
+              sequence="10"/>
+</odoo>

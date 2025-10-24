@@ -56,3 +56,26 @@ class SupersetEmbed(http.Controller):
             return http.Response(f"Embed error: {str(e)}", status=502)
         return request.render('superset_embed.page',
                               {"guest_token": guest, "superset_url": SUPERSET, "dash_uuid": uuid})
+
+    @http.route('/odoo/insights', type='http', auth='user', website=True)
+    def insights(self, dashboard_id=None):
+        return request.render('superset_embed.page',
+                              {"guest_token": "", "superset_url": SUPERSET, "dash_uuid": dashboard_id})
+
+    @http.route('/odoo/superset/dashboards', type='json', auth='user')
+    def list_dashboards(self):
+        """Return list of available Superset dashboards"""
+        try:
+            tok = _access_token()
+            r = requests.get(f"{API_DASH}/?q=(page:0,page_size:50)",
+                            headers={"Authorization":f"Bearer {tok}"}, timeout=10)
+            r.raise_for_status()
+            dashboards = r.json().get("result", [])
+            return [{
+                "id": dash.get("id"),
+                "uuid": dash.get("uuid"),
+                "title": dash.get("dashboard_title"),
+                "description": dash.get("description", "")
+            } for dash in dashboards]
+        except Exception as e:
+            return {"error": str(e)}
