@@ -1,0 +1,17 @@
+[project]
+name = "odoo-addons-oca-hr-expense"
+version = "18.0.20250904.0"
+dependencies = [
+    "odoo-addon-hr_expense_advance_clearing==18.0.*",
+    "odoo-addon-hr_expense_advance_clearing_sequence==18.0.*",
+    "odoo-addon-hr_expense_cancel==18.0.*",
+    "odoo-addon-hr_expense_invoice==18.0.*",
+    "odoo-addon-hr_expense_payment==18.0.*",
+    "odoo-addon-hr_expense_sequence==18.0.*",
+    "odoo-addon-hr_expense_tier_validation==18.0.*",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 18.0",
+]

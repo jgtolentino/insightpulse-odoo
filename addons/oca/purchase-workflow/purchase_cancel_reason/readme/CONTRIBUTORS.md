@@ -1,0 +1,6 @@
+- Guewen Baconnier, Camptocamp SA
+- Sylvain Van Hoof \<<sylvain@okia.be>\>
+- [Ecosoft](http://ecosoft.co.th):
+  - Kitti U. \<<kittiu@ecosoft.co.th>\>
+  - Tharathip C. \<<tharathipc@ecosoft.co.th>\>
+- `Heliconia Solutions Pvt. Ltd. <https://www.heliconia.io>`_

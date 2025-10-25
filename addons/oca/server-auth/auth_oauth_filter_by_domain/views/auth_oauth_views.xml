@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <record id="view_oauth_provider_form_inherit" model="ir.ui.view">
+        <field name="model">auth.oauth.provider</field>
+        <field name="inherit_id" ref="auth_oauth.view_oauth_provider_form" />
+        <field name="arch" type="xml">
+            <field name="data_endpoint" position="after">
+                <field name="allowed_domains" />
+            </field>
+        </field>
+    </record>
+</odoo>

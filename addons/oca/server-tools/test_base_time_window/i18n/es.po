@@ -1,0 +1,110 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* test_base_time_window
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 13.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2021-03-19 17:46+0000\n"
+"Last-Translator: Ana Suárez <ana.suarez@qubiq.es>\n"
+"Language-Team: none\n"
+"Language: es\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.3.2\n"
+
+#. module: test_base_time_window
+#: model:ir.model,name:test_base_time_window.model_res_partner
+msgid "Contact"
+msgstr "Contacto"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__create_uid
+msgid "Created by"
+msgstr "Creado por"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__create_date
+msgid "Created on"
+msgstr "Creado el"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__display_name
+msgid "Display Name"
+msgstr "Nombre mostrado"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_start
+msgid "From"
+msgstr "De"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__id
+msgid "ID"
+msgstr "ID"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__write_uid
+msgid "Last Updated by"
+msgstr "Última actualización por"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__write_date
+msgid "Last Updated on"
+msgstr "Última actualización el"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__partner_id
+msgid "Partner"
+msgstr "Empresa"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_partner__smart_search
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__smart_search
+msgid "Smart Search"
+msgstr ""
+
+#. module: test_base_time_window
+#: model:ir.model,name:test_base_time_window.model_test_partner_time_window
+#, fuzzy
+msgid "Test partner time Window"
+msgstr "Test Ventana Tiempo Empresa"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_weekday_ids
+msgid "Time Window Weekday"
+msgstr ""
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_partner__time_window_ids
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_users__time_window_ids
+msgid "Time windows"
+msgstr ""
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_end
+msgid "To"
+msgstr "A"
+
+#~ msgid "Changeset Changes"
+#~ msgstr "Cambios en el conjunto de cambios"
+
+#~ msgid "Changesets"
+#~ msgstr "Conjunto de cambios"
+
+#, fuzzy
+#~ msgid "Count Pending Changeset Changes"
+#~ msgstr "Contar los cambios pendientes del conjunto de cambios"
+
+#, fuzzy
+#~ msgid "Count Pending Changesets"
+#~ msgstr "Contar los conjunto de cambios pendientes"
+
+#~ msgid "Last Modified on"
+#~ msgstr "Última modificación el"
+
+#~ msgid "User Can See Changeset"
+#~ msgstr "Usuario puede ver conjunto de cambios"

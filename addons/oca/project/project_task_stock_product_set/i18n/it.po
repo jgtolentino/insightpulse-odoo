@@ -1,0 +1,103 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* project_task_stock_product_set
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 14.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2024-03-18 09:35+0000\n"
+"Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
+"Language-Team: none\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 4.17\n"
+
+#. module: project_task_stock_product_set
+#: model:ir.actions.act_window,name:project_task_stock_product_set.act_open_wizard_product_set_add_from_task
+msgid "Add a set in a project task"
+msgstr "Aggiungere un set in un lavoro del progetto"
+
+#. module: project_task_stock_product_set
+#: model_terms:ir.ui.view,arch_db:project_task_stock_product_set.product_set_add_from_task_form_view
+#: model_terms:ir.ui.view,arch_db:project_task_stock_product_set.view_task_form2
+msgid "Add set"
+msgstr "Aggiungi set"
+
+#. module: project_task_stock_product_set
+#: model_terms:ir.ui.view,arch_db:project_task_stock_product_set.product_set_add_from_task_form_view
+msgid "Cancel"
+msgstr "Annulla"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__create_uid
+msgid "Created by"
+msgstr "Creato da"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__create_date
+msgid "Created on"
+msgstr "Creato il"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__display_name
+msgid "Display Name"
+msgstr "Nome visualizzato"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__id
+msgid "ID"
+msgstr "ID"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard____last_update
+msgid "Last Modified on"
+msgstr "Ultima modifica il"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__write_uid
+msgid "Last Updated by"
+msgstr "Ultimo aggiornamento di"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__write_date
+msgid "Last Updated on"
+msgstr "Ultimo aggiornamento il"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__partner_id
+msgid "Partner"
+msgstr "Partner"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__product_set_id
+msgid "Product set"
+msgstr "Set prodotto"
+
+#. module: project_task_stock_product_set
+#: model:ir.model,name:project_task_stock_product_set.model_product_set_line
+msgid "Product set line"
+msgstr "Riga set prodotto"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__product_set_line_ids
+msgid "Product set lines"
+msgstr "Righe set prodotto"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__quantity
+msgid "Quantity"
+msgstr "Quantità"
+
+#. module: project_task_stock_product_set
+#: model:ir.model.fields,field_description:project_task_stock_product_set.field_project_task_stock_product_set_wizard__task_id
+msgid "Task"
+msgstr "Lavoro"
+
+#. module: project_task_stock_product_set
+#: model:ir.model,name:project_task_stock_product_set.model_project_task_stock_product_set_wizard
+msgid "Wizard model to add product set into a task"
+msgstr "Modello procedura guidata per aggiugere un set prodotto in un lavoro"

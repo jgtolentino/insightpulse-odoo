@@ -1,0 +1,13 @@
+<form string="Test">
+    <header>
+        <button string="Reset Confirmation" type="object" name="set_draft" />
+    </header>
+    <sheet>
+        <group col="4">
+            <field name="test" required="True" />
+            <field name="type_env_is_editable" invisible="True" />
+            <field name="test2" readonly="not type_env_is_editable" />
+            <field name="date" />
+        </group>
+    </sheet>
+</form>

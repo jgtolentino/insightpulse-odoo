@@ -1,0 +1,118 @@
+[MAIN]
+ignore=CVS,.git,scenarios,.bzr
+persistent=yes
+load-plugins=pylint.extensions.docstyle, pylint.extensions.mccabe, pylint_odoo
+# External scripts main replace
+py-version=3.12
+
+[ODOOLINT]
+readme-template-url="https://github.com/OCA/maintainer-tools/blob/master/template/module/README.rst"
+license-allowed=AGPL-3,GPL-2,GPL-2 or any later version,
+    GPL-3,GPL-3 or any later version,LGPL-3,
+    Other OSI approved licence,Other proprietary,
+    OEEL-1, OPL-1,
+manifest-required-authors=Vauxoo,
+  Odoo Community Association (OCA),
+  Jarsa,
+manifest-required-keys=license
+manifest-deprecated-keys=description,active
+# External scripts odoo_lint replace
+valid-odoo-version=18.0
+
+[MESSAGES CONTROL]
+disable=all,unknown-option-value
+enable=attribute-deprecated,
+  attribute-string-redundant,
+  bad-builtin-groupby,
+  bad-docstring-quotes,
+  consider-merging-classes-inherited,
+  consider-using-generator,
+  context-overridden,
+  deprecated-method,
+  deprecated-odoo-model-method,
+  deprecated-pragma,
+  docstring-first-line-empty,
+  eval-used,
+  except-pass,
+  external-request-timeout,
+  implicit-str-concat,
+  invalid-commit,
+  license-allowed,
+  manifest-author-string,
+  manifest-data-duplicated,
+  manifest-deprecated-key,
+  manifest-maintainers-list,
+  manifest-required-author,
+  manifest-required-key,
+  manifest-version-format,
+  method-compute,
+  method-inverse,
+  method-required-super,
+  method-search,
+  missing-readme,
+  missing-return,
+  odoo-addons-relative-import,
+  odoo-exception-warning,
+  print-used,
+  redundant-u-string-prefix,
+  renamed-field-parameter,
+  resource-not-exist,
+  sql-injection,
+  too-complex,
+  translation-contains-variable,
+  translation-field,
+  translation-required,
+  translation-not-lazy,
+  translation-format-interpolation,
+  translation-format-truncated,
+  translation-fstring-interpolation,
+  translation-too-few-args,
+  translation-too-many-args,
+  translation-unsupported-format,
+  use-dict-literal,
+  use-implicit-booleaness-not-comparison-to-string,
+  use-implicit-booleaness-not-comparison-to-zero,
+  use-symbolic-message-instead,
+  use-vim-comment,
+  useless-parent-delegation,
+  website-manifest-key-not-valid-uri
+
+[REPORTS]
+msg-template={path}:{line}:{column}: ({symbol}) {msg}
+output-format=colorized
+reports=no
+evaluation=10.0 - ((float(5 * error + warning + refactor + convention) / statement) * 10)
+score=no
+
+[FORMAT]
+indent-string='    '
+expected-line-ending-format=LF
+
+[BASIC]
+class-rgx=[A-Z_][a-zA-Z0-9]{2,59}
+module-rgx=.*
+const-rgx=.*
+function-rgx=.*
+method-rgx=.*
+attr-rgx=.*
+argument-rgx=.*
+variable-rgx=.*
+inlinevar-rgx=.*
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+
+[MISCELLANEOUS]
+notes=FIXME,TODO
+
+[IMPORTS]
+deprecated-modules=openerp.osv
+
+[DESIGN]
+# McCabe complexity cyclomatic threshold for too-complex check
+#  Value definied from https://en.wikipedia.org/wiki/Cyclomatic_complexity
+#   - The figure of 10 had received substantial corroborating evidence,
+#     but that in some circumstances it may be appropriate to relax the restriction
+#     and permit modules with a complexity as high as 15
+max-complexity=15

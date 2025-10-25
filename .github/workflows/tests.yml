@@ -1,0 +1,8 @@
+name: tests
+on: [push, pull_request]
+jobs:
+  smoke:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "lint/pytest hooks can be added here" && exit 0

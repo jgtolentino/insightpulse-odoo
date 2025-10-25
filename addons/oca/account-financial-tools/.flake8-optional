@@ -1,0 +1,23 @@
+[flake8]
+max-line-length = 119
+jobs = 0
+# B = bugbear
+# B9 = bugbear opinionated (incl line length +10% tolerance)
+select = C,E,F,W,B,B9
+# E203 whitespace before ':' (black behaviour)
+# E501: flake8 line length (covered by bugbear B950)
+# W503: line break before binary operator (black behaviour)
+# W504: line break after binary operator (black behaviour?)
+# E241: E241 multiple spaces after ',' (Better autofixing)
+# B023: Function definition does not bind loop variable 'item'. (Odoo needs it [self.filtered(lambda l: l.item_id == item) for item in items])
+# E226: missing whitespace around arithmetic operator (Better autofixing)
+# B904: Within an `except` clause, raise exceptions with `raise (It is valid for us)
+# E123: closing bracket does not match indentation of opening bracket's line (Better autofixing)
+# E275: missing whitespace after keyword (Better autofixing)
+# B905: zip(strict=True) only works in python >= 3.10
+# B907: We sometimes quote for stylistic purposes
+# F401: imported but unused (like __init__ already works)
+ignore = E203,E501,W503,W504,E241,B023,E226,B904,B905,B907,E123,E275
+per-file-ignores =
+    __init__.py:F401
+    __manifest__.py:B018

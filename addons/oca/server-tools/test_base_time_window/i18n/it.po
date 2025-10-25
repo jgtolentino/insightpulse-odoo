@@ -1,0 +1,89 @@
+# Translation of Odoo Server.
+# This file contains the translation of the following modules:
+# 	* test_base_time_window
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Odoo Server 18.0\n"
+"Report-Msgid-Bugs-To: \n"
+"PO-Revision-Date: 2025-03-18 10:38+0000\n"
+"Last-Translator: mymage <stefano.consolaro@mymage.it>\n"
+"Language-Team: none\n"
+"Language: it\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: \n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 5.10.2\n"
+
+#. module: test_base_time_window
+#: model:ir.model,name:test_base_time_window.model_res_partner
+msgid "Contact"
+msgstr "Contatto"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__create_uid
+msgid "Created by"
+msgstr "Creato da"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__create_date
+msgid "Created on"
+msgstr "Creato il"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__display_name
+msgid "Display Name"
+msgstr "Nome visualizzato"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_start
+msgid "From"
+msgstr "Dal"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__id
+msgid "ID"
+msgstr "ID"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__write_uid
+msgid "Last Updated by"
+msgstr "Ultimo aggiornamento di"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__write_date
+msgid "Last Updated on"
+msgstr "Ultimo aggiornamento il"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__partner_id
+msgid "Partner"
+msgstr "Partner"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_partner__smart_search
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__smart_search
+msgid "Smart Search"
+msgstr "Ricerca intelligente"
+
+#. module: test_base_time_window
+#: model:ir.model,name:test_base_time_window.model_test_partner_time_window
+msgid "Test partner time Window"
+msgstr "Intervallo orario test partner"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_weekday_ids
+msgid "Time Window Weekday"
+msgstr "Intervallo orario giorno della settimana"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_partner__time_window_ids
+#: model:ir.model.fields,field_description:test_base_time_window.field_res_users__time_window_ids
+msgid "Time windows"
+msgstr "Intervalli orario"
+
+#. module: test_base_time_window
+#: model:ir.model.fields,field_description:test_base_time_window.field_test_partner_time_window__time_window_end
+msgid "To"
+msgstr "A"
