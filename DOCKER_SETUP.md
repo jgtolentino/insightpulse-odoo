@@ -61,7 +61,7 @@ The repository includes GitHub Actions for automated Docker builds:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DOCKER_USER` | jgtolentino | Docker Hub username |
+| `REGISTRY_USER` | jgtolentino | Docker Hub username |
 | `ODOO_REF` | 19.0 | Odoo version to build |
 | `POSTGRES_DB` | odoo | Database name |
 | `POSTGRES_USER` | odoo | Database user |
@@ -73,8 +73,8 @@ The repository includes GitHub Actions for automated Docker builds:
 
 Set these in your repository settings:
 
-- `DOCKER_PAT`: Docker Hub personal access token
-- `DOCKER_USER`: Docker Hub username (set as variable)
+- `REGISTRY_TOKEN`: Docker Hub personal access token
+- `REGISTRY_USER`: Docker Hub username (set as variable)
 
 ## 🏗️ Build Process
 
