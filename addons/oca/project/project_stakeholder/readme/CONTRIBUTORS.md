@@ -1,3 +1,0 @@
-- Camptocamp (<https://www.camptocamp.com>):
-  - Vincent Van Rossem \<<vincent.vanrossem@camptocamp.com>\>
-  - Iván Todorovich \<<ivan.todorovich@camptocamp.com>\>

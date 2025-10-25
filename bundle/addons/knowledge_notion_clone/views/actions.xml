@@ -1,7 +1,0 @@
-<odoo>
-  <record id="action_kn_app" model="ir.actions.client">
-    <field name="name">Knowledge</field>
-    <field name="tag">knowledge_notion_clone.app</field>
-    <field name="target">current</field>
-  </record>
-</odoo>

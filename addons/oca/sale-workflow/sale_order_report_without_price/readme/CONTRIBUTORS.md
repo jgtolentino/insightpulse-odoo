@@ -1,4 +1,0 @@
-- [Akretion](https://www.akretion.com):
-  - Florian Mounier
-- [Open Source Integrators](https://www.opensourceintegrators.com):
-  - Chandresh Thakkar

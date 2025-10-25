@@ -1,3 +1,0 @@
-- David Jimenez \<<david.jimenez@forgeflow.com>\>
-- Nils Coenen \<<nils.coenen@nico-solutions.de>\>
-- `Heliconia Solutions Pvt. Ltd. <https://www.heliconia.io>`_

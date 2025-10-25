@@ -1,1 +1,0 @@
-- Christopher Rogos \<<crogos@gmail.com>\>

@@ -1,2 +1,0 @@
-- Akim Juillerat <akim.juilllerat@camptocamp.com>
-- Chau Le <chaulb@trobz.com>

@@ -1,3 +1,0 @@
-- [Tecnativa](https://tecnativa.com)
-    - Pedro M. Baeza
-    - David Vidal

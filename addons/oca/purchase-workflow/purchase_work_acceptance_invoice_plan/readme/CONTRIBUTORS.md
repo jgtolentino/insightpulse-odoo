@@ -1,2 +1,0 @@
-- [Ecosoft](http://ecosoft.co.th):
-  - Niaisoh Nikaji \<<niaisohn@ecosoft.co.th>\>

@@ -1,2 +1,0 @@
-- Anna Janiszewska \<<anna.janiszewska@camptocamp.com>\>
-- `Heliconia Solutions Pvt. Ltd. <https://www.heliconia.io>`_

@@ -1,2 +1,0 @@
-* Akretion
-  * Olivier Nibart

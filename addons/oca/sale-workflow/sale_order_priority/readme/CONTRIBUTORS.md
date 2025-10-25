@@ -1,5 +1,0 @@
-- Simone Rubino \<<simone.rubino@agilebg.com>\>
-- George Daramouskas \<<gdaramouskas@therp.nl>\>
--  `360ERP <https://www.360erp.com>`:
-   -  Andrea Stirpe
-- Alejandro Parrales \<<alejandro17parrales@gmail.com>\>

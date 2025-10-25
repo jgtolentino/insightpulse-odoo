@@ -1,4 +1,0 @@
-- Italo Lopes \<<italo.lopes@camptocamp.com>\>
-- Silvio Gregorini \<<silvio.gregorini@camptocamp.com>\>
-- [Heliconia Solutions Pvt. Ltd.](https://www.heliconia.io)
-  - Bhavesh Heliconia

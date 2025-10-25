@@ -1,2 +1,0 @@
-- Cédric Pigeon \<<cedric.pigeon@acsone.eu>\>
-- Khoi (Kien Kim) \<<khoikk@trobz.com>\>
