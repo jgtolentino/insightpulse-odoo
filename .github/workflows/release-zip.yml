@@ -1,0 +1,13 @@
+name: release-zip
+on:
+  push:
+    tags: ["v*"]
+jobs:
+  zip:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make release && make sha
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
