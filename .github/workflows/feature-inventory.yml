@@ -1,0 +1,24 @@
+name: feature-inventory
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build-list:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install optional deps
+        run: pip install --quiet psycopg2-binary || true
+      - name: Generate inventory
+        run: python scripts/feature_inventory.py
+      - name: Commit inventory
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: update feature inventory'
+          branch: main
