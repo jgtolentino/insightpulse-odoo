@@ -1,9 +1,0 @@
-- Samuel Fringeli
-- [Tecnativa](https://www.tecnativa.com):
-  - João Marques
-  - Alexandre D. Díaz
-  - Carlos Roca
-- Thanakrit Pintana
-- [Factorlibre](https://www.factorlibre.com):
-  - Hugo Santos
-- Taras Shabaranskyi

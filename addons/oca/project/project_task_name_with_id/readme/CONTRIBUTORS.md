@@ -1,1 +1,0 @@
-- Miquel Pascual \<<mpascual@apsl.net>\>

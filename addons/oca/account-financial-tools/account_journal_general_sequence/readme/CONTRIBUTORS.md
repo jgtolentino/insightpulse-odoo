@@ -1,2 +1,0 @@
-- Jairo Llopis ([Moduon](https://www.moduon.team/))
-- Rafael Blasco ([Moduon](https://www.moduon.team/))

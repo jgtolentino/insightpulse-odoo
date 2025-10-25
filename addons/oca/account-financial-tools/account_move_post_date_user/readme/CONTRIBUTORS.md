@@ -1,2 +1,0 @@
-- [ForgeFlow S.L.](https://www.forgeflow.com):
-  - Jordi Masvidal \<<jordi.masvidal@forgeflow.com>\>

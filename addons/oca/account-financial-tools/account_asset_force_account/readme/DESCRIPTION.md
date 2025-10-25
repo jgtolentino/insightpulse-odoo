@@ -1,1 +1,0 @@
-This module enables the ability to override default accounts directly from the asset form.

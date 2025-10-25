@@ -1,4 +1,0 @@
-- [Tecnativa](https://www.tecnativa.com):
-  - Víctor Martínez
-  - Pedro M. Baeza
-  - Pilar Vargas

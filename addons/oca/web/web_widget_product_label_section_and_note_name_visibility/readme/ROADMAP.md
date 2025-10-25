@@ -1,1 +1,0 @@
-- Add compatibility with purchase_product_matrix module

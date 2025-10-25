@@ -1,5 +1,0 @@
-- Patrick Wilson \<<patrickraymondwilson@gmail.com>\>
-- Alfadil Mustafa \<<alfadil.tabar@gmail.com>\>
-- Mantas Šniukas \<<mantas@vialaurea.lt>\>
-- Atte Isopuro \<<atte.isopuro@avoin.systems>\>
-- Stefan Rijnhart \<<stefan@opener.amsterdam>\>

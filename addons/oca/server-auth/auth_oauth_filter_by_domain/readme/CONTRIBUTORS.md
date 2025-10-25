@@ -1,2 +1,0 @@
-- [Trobz](https://trobz.com):
-  - Tuan Nguyen \<<tuanna@trobz.com>\>

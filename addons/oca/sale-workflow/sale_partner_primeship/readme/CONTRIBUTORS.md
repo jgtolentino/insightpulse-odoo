@@ -1,4 +1,0 @@
-- [Akretion](https://www.akretion.com):
-  - Florian Mounier
-  - Kevin Roche
-  - Olivier Nibart

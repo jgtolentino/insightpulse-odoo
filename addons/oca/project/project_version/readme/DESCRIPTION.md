@@ -1,1 +1,0 @@
-This module allows you to have versions for your project and task management so you can then generate reports.

@@ -1,2 +1,0 @@
-- Adria Gil Sorribes \<<adria.gil@forgeflow.com>\>
-- Stefan Rijnhart \<<stefan@opener.amsterdam>\>

@@ -1,3 +1,0 @@
-- Enric Tobella \<<etobella@creublanca.es>\>
-- [Tecnativa](https://www.tecnativa.com):
-  - David Vidal
