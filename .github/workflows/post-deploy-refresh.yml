@@ -1,0 +1,30 @@
+name: post-deploy-refresh
+on:
+  workflow_dispatch: {}
+  workflow_run:
+    workflows: ["dockerhub-publish", "docker-build"]
+    types: [completed]
+permissions: { contents: read }
+jobs:
+  deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy and refresh on droplet
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/insightpulse-odoo
+            git pull
+            docker compose pull
+            docker compose up -d
+            DB="${{ secrets.ODOO_DB }}"
+            docker compose exec -T odoo odoo shell -d "$DB" <<'PY'
+env['ir.module.module'].update_list()
+PY
+            docker compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d "$DB" -u all --stop-after-init
+            docker compose restart odoo

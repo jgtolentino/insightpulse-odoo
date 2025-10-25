@@ -1,9 +1,0 @@
-[submodule "vendor/oca-web"]
-	path = vendor/oca-web
-	url = https://github.com/OCA/web
-[submodule "vendor/oca-template"]
-	path = vendor/oca-template
-	url = https://github.com/OCA/oca-addons-repo-template
-[submodule "vendor/oca-apps-store"]
-	path = vendor/oca-apps-store
-	url = https://github.com/OCA/apps-store

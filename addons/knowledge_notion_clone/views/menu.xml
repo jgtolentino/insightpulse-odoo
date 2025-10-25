@@ -1,4 +1,0 @@
-<odoo>
-  <menuitem id="menu_kn_root" name="Knowledge" sequence="10"/>
-  <menuitem id="menu_kn_app" name="Workspace" parent="menu_kn_root" action="action_kn_app"/>
-</odoo>
