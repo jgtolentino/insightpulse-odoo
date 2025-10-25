@@ -3,12 +3,41 @@
 }
 {$DOMAIN} {
   encode gzip zstd
-  handle_path /odoo/* { uri strip_prefix /odoo; reverse_proxy odoo:8069 }
-  @exempt path /onlyoffice/* /ocr/* /.well-known/* /health
-  @redir not path /odoo/* /onlyoffice/* /ocr/* /.well-known/* /health
-  handle @redir { redir /odoo{uri} 301 }
-  handle_path /odoo/longpolling/* { uri strip_prefix /odoo; reverse_proxy odoo-longpoll:8072 }
-  handle_path /longpolling/* { reverse_proxy odoo-longpoll:8072 }
-  handle_path /onlyoffice/* { uri strip_prefix /onlyoffice; reverse_proxy onlyoffice:80 }
-  handle_path /ocr/* { uri strip_prefix /ocr; reverse_proxy ocr-api:8000 }
+  
+  # Force all root routes to /odoo
+  handle_path / {
+    redir https://insightpulseai.net/odoo permanent
+  }
+  
+  # Odoo routes
+  handle_path /odoo/* { 
+    uri strip_prefix /odoo
+    reverse_proxy odoo:8069 
+  }
+  
+  # Other services
+  handle_path /odoo/longpolling/* { 
+    uri strip_prefix /odoo
+    reverse_proxy odoo-longpoll:8072 
+  }
+  handle_path /longpolling/* { 
+    reverse_proxy odoo-longpoll:8072 
+  }
+  handle_path /onlyoffice/* { 
+    uri strip_prefix /onlyoffice
+    reverse_proxy onlyoffice:80 
+  }
+  handle_path /ocr/* { 
+    uri strip_prefix /ocr
+    reverse_proxy ocr-api:8000 
+  }
+  handle_path /agent/* {
+    uri strip_prefix /agent
+    reverse_proxy odoo-langchain:8081
+  }
+  
+  # Security: Block database manager
+  handle_path /web/database/* {
+    respond "Access Denied" 403
+  }
 }

@@ -3,7 +3,7 @@ import asyncio
 import psycopg2
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
+from langchain_core.prompts import ChatPromptTemplate
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 import uvicorn
@@ -236,5 +236,5 @@ async def health_check():
 
 
 if __name__ == "__main__":
-    port = int(os.getenv('SERVICE_PORT', 8080))
+    port = int(os.getenv('PORT', 8080))
     uvicorn.run(app, host="0.0.0.0", port=port)
