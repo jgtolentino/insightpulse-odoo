@@ -4,10 +4,10 @@ FROM odoo:19.0
 WORKDIR /var/lib/odoo
 
 # Copy custom addons
-COPY addons /mnt/addons
+COPY insightpulse_odoo/addons /mnt/addons
 
 # Copy Odoo configuration
-COPY config/odoo.conf /etc/odoo/odoo.conf
+COPY insightpulse_odoo/config/odoo.conf /etc/odoo/odoo.conf
 
 # Install additional dependencies if needed
 USER root
