@@ -1,0 +1,18 @@
+enhancement:
+  - '**/*superset*'
+  - 'addons/**/superset_*'
+documentation:
+  - 'docs/**'
+  - '**/*.md'
+bug:
+  - '**/*.py'
+  - '**/*.xml'
+ci:
+  - '.github/workflows/**'
+docker:
+  - 'Dockerfile'
+  - 'docker/**'
+mindsdb:
+  - 'docker/mindsdb.compose.yml'
+odoo:
+  - 'addons/**'
