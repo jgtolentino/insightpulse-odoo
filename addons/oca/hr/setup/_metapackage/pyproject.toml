@@ -1,0 +1,27 @@
+[project]
+name = "odoo-addons-oca-hr"
+version = "18.0.20250903.0"
+dependencies = [
+    "odoo-addon-hr_contract_reference==18.0.*",
+    "odoo-addon-hr_contract_renew==18.0.*",
+    "odoo-addon-hr_department_code==18.0.*",
+    "odoo-addon-hr_employee_age==18.0.*",
+    "odoo-addon-hr_employee_birthday_mail==18.0.*",
+    "odoo-addon-hr_employee_calendar_planning==18.0.*",
+    "odoo-addon-hr_employee_firstname==18.0.*",
+    "odoo-addon-hr_employee_id==18.0.*",
+    "odoo-addon-hr_employee_language==18.0.*",
+    "odoo-addon-hr_employee_medical_examination==18.0.*",
+    "odoo-addon-hr_employee_phone_extension==18.0.*",
+    "odoo-addon-hr_employee_relative==18.0.*",
+    "odoo-addon-hr_employee_second_lastname==18.0.*",
+    "odoo-addon-hr_employee_service==18.0.*",
+    "odoo-addon-hr_employee_service_contract==18.0.*",
+    "odoo-addon-hr_employee_ssn==18.0.*",
+    "odoo-addon-hr_professional_category==18.0.*",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 18.0",
+]

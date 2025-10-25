@@ -1,0 +1,10 @@
+[bandit]
+exclude = tests
+
+# B608: hardcoded_sql_expressions they are considered from pylint-odoo
+# B313,B314,B315,B316,B317,B318,B319,B320,B405,B406,B407,B408,B409,B410: defusedxml checks
+#   Odoo's team via inbox twitter is not convinced to repair them and the entire Odoo is raising these checks
+skips = B608,B313,B314,B315,B316,B317,B318,B319,B320,B405,B406,B407,B408,B409,B410
+format = custom
+msg-template={relpath}:{line}:{col} {msg} - [{test_id}] - ({severity})
+quiet=True

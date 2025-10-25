@@ -1,0 +1,3 @@
+- Patrick Wilson \<<patrickraymondwilson@gmail.com>\>
+- Trobz (<https://www.trobz.com>)
+  - Tuan Nguyen \<<tuanna@trobz.com>\>

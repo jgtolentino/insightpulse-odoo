@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+project_task_stock_product_set.access_project_task_stock_product_set_wizard,access_project_task_stock_product_set_wizard,project_task_stock_product_set.model_project_task_stock_product_set_wizard,project.group_project_user,1,1,1,1

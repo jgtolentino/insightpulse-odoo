@@ -1,0 +1,32 @@
+[project]
+name = "odoo-addons-oca-reporting-engine"
+version = "18.0.20251022.0"
+dependencies = [
+    "odoo-addon-base_comment_template==18.0.*",
+    "odoo-addon-bi_sql_editor==18.0.*",
+    "odoo-addon-pdf_xml_attachment==18.0.*",
+    "odoo-addon-report_csv==18.0.*",
+    "odoo-addon-report_py3o==18.0.*",
+    "odoo-addon-report_py3o_fusion_server==18.0.*",
+    "odoo-addon-report_qr==18.0.*",
+    "odoo-addon-report_qweb_element_page_visibility==18.0.*",
+    "odoo-addon-report_qweb_encrypt==18.0.*",
+    "odoo-addon-report_qweb_field_option==18.0.*",
+    "odoo-addon-report_qweb_parameter==18.0.*",
+    "odoo-addon-report_qweb_pdf_cover==18.0.*",
+    "odoo-addon-report_qweb_pdf_watermark==18.0.*",
+    "odoo-addon-report_substitute==18.0.*",
+    "odoo-addon-report_wkhtmltopdf_param==18.0.*",
+    "odoo-addon-report_xlsx==18.0.*",
+    "odoo-addon-report_xlsx_helper==18.0.*",
+    "odoo-addon-report_xml==18.0.*",
+    "odoo-addon-sql_export==18.0.*",
+    "odoo-addon-sql_export_excel==18.0.*",
+    "odoo-addon-sql_export_mail==18.0.*",
+    "odoo-addon-sql_request_abstract==18.0.*",
+]
+classifiers=[
+    "Programming Language :: Python",
+    "Framework :: Odoo",
+    "Framework :: Odoo :: 18.0",
+]

@@ -1,0 +1,6 @@
+- Jordi Ballester Alomar \<<jordi.ballester@forgeflow.com>\>
+- Jonathan Nemry \<<jonathan.nemry@acsone.eu>\>
+- Aarón Henríquez \<<ahenriquez@forgeflow.com>\>
+- Adrien Peiffer \<<adrien.peiffer@acsone.eu>\>
+- Kitti U. \<<kittiu@ecosoft.co.th>\>
+- Saran Lim. \<<saranl@ecosoft.co.th>\>
