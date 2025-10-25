@@ -17,15 +17,20 @@ services:
     platform: ${PLATFORM_DB:-}
 
   odoo:
-    image: odoo:19
+    build:
+      context: .
+      args:
+        ODOO_REF: ${ODOO_REF:-19.0}
+    image: ${DOCKER_USER:-jgtolentino}/insightpulse-odoo:${ODOO_REF:-19.0}
     environment:
-      HOST: db
-      USER: ${POSTGRES_USER:-odoo}
-      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      DB_HOST: db
+      DB_USER: ${POSTGRES_USER:-odoo}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      DB_PORT: 5432
     ports: ["8069:8069"]
-    depends_on: [db]
     volumes:
-      - ./addons:/mnt/extra-addons
+      - ./addons:/mnt/addons
+    depends_on: [db]
     platform: ${PLATFORM_ODOO:-}
 
 volumes:

@@ -1,10 +1,10 @@
 # Docker Setup for InsightPulse Odoo
 
-This repository includes a complete Docker setup for building and deploying Odoo 19.0 with custom addons.
+This repository includes a complete Docker setup for building and deploying Odoo 19.0 with custom addons, following DigitalOcean best practices.
 
 ## 🚀 Quick Start
 
-### Local Development
+### Option 1: Simple Setup (Official Image)
 
 1. **Clone and setup:**
    ```bash
@@ -18,9 +18,22 @@ This repository includes a complete Docker setup for building and deploying Odoo
    docker compose up -d
    ```
 
-3. **Access Odoo:**
-   - URL: http://localhost:8069
-   - Database: odoo (default)
+3. **Initialize Odoo database:**
+   - Visit: http://localhost:8069
+   - Create a new database
+   - Master password: `admin` (or set your own)
+
+### Option 2: Custom Build (Full Control)
+
+1. **Build custom image:**
+   ```bash
+   docker compose -f docker-compose.custom.yml up -d --build
+   ```
+
+2. **Multi-architecture build:**
+   ```bash
+   ./build-multiarch.sh
+   ```
 
 ### CI/CD Pipeline
 
@@ -34,8 +47,10 @@ The repository includes GitHub Actions for automated Docker builds:
 
 | File | Purpose |
 |------|---------|
-| `Dockerfile` | Multi-stage build for Odoo + addons |
-| `docker-compose.yml` | Local development stack |
+| `docker-compose.yml` | **Simple setup** - Official Odoo image |
+| `docker-compose.custom.yml` | **Custom build** - Build from source with addons |
+| `Dockerfile` | Custom Odoo build (follows DO best practices) |
+| `build-multiarch.sh` | Multi-architecture build script |
 | `.github/workflows/docker-build.yml` | CI/CD pipeline |
 | `.env.example` | Configuration template |
 | `test-docker-setup.sh` | Setup validation script |
