@@ -1,0 +1,38 @@
+name: release-tag
+on:
+  workflow_run: {workflows: ["docker-build"], types: [completed]}
+  workflow_dispatch:
+jobs:
+  tag-and-retag:
+    if: ${{ github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') }}
+    runs-on: ubuntu-latest
+    permissions: { contents: write, packages: write }
+    env:
+      GHCR_IMAGE: ${{ vars.GHCR_IMAGE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute tag
+        id: t
+        run: echo "tag=v$(date +%Y.%m.%d)-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
+      - name: Login GHCR
+        uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: ${{ github.actor }}, password: ${{ secrets.GITHUB_TOKEN }} }
+      - name: Install skopeo
+        run: sudo apt-get update && sudo apt-get install -y skopeo jq
+      - name: Resolve digest of :main
+        id: d
+        run: |
+          DIGEST=$(skopeo inspect --raw docker://${GHCR_IMAGE} | jq -r '.manifests? // empty | .[] | select(.platform.architecture=="amd64") | .digest' | head -n1)
+          if [ -z "$DIGEST" ]; then DIGEST=$(skopeo inspect docker://${GHCR_IMAGE} | jq -r '.Digest'); fi
+          echo "digest=$DIGEST" >> $GITHUB_OUTPUT
+      - name: Retag manifest -> release tag
+        run: |
+          IMG_NOPFX=${GHCR_IMAGE%:*}
+          skopeo copy docker://$IMG_NOPFX@${{ steps.d.outputs.digest }} docker://$IMG_NOPFX:${{ steps.t.outputs.tag }}
+      - name: Create git tag + release
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const tag = "${{ steps.t.outputs.tag }}";
+            try { await github.git.createRef({owner: context.repo.owner, repo: context.repo.repo, ref: `refs/tags/${tag}`, sha: context.sha}); } catch(e) {}
+            await github.repos.createRelease({owner: context.repo.owner, repo: context.repo.repo, tag_name: tag, name: tag, generate_release_notes: true});
