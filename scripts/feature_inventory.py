@@ -3,7 +3,7 @@ import os, ast, json, pathlib, re
 from datetime import datetime
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
-ADDONS = ROOT / 'addons'
+ADDONS = ROOT / 'insightpulse_odoo' / 'addons'
 OUT = ROOT / 'docs' / 'feature-inventory.md'
 
 # optional DB status via PG_DSN env var (e.g. postgresql://user:pass@host:5432/odoo)
