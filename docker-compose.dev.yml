@@ -1,0 +1,66 @@
+version: "3.8"
+
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odoo}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+    volumes:
+      - db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    platform: ${PLATFORM_DB:-}
+
+  odoo:
+    image: odoo:19
+    environment:
+      HOST: db
+      USER: ${POSTGRES_USER:-odoo}
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      # Development settings
+      ODOO_RC: /etc/odoo/odoo.conf
+      # Enable development mode
+      DEV_MODE: 1
+      # Auto-reload on file changes
+      WATCHDOG: 1
+    ports: 
+      - "8069:8069"    # Main Odoo interface
+      - "8072:8072"    # Long polling port
+      - "8080:8080"    # Development server port
+    depends_on: [db]
+    volumes:
+      - ./addons:/mnt/extra-addons:rw
+      - ./config:/etc/odoo:ro
+      - odoo_data:/var/lib/odoo
+    platform: ${PLATFORM_ODOO:-}
+    # Enable live reload for development
+    command: >
+      odoo
+      --dev=all
+      --log-level=debug
+      --logfile=/var/log/odoo/odoo.log
+      --workers=0
+      --max-cron-threads=0
+      --proxy-mode
+      --http-port=8069
+      --http-interface=0.0.0.0
+
+  # Live reload server for static files
+  live-server:
+    image: nginx:alpine
+    ports:
+      - "3000:80"      # Live reload server
+      - "3001:81"      # File watcher status
+    volumes:
+      - ./addons:/usr/share/nginx/html/addons:ro
+      - ./live-server.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [odoo]
+
+volumes:
+  db: {}
+  odoo_data: {}
