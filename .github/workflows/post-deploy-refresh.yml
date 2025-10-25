@@ -19,12 +19,20 @@ jobs:
           script: |
             set -e
             cd ~/insightpulse-odoo
-            git pull
-            docker compose pull
-            docker compose up -d
+            
+            echo "🐳 Pulling latest Docker images from registry..."
+            docker compose pull odoo
+            
+            echo "🚀 Restarting services with new images..."
+            docker compose up -d --force-recreate odoo
+            
             DB="${{ secrets.ODOO_DB }}"
+            echo "🔄 Updating Odoo modules..."
             docker compose exec -T odoo odoo shell -d "$DB" <<'PY'
 env['ir.module.module'].update_list()
 PY
+            
+            echo "🔄 Upgrading all modules..."
             docker compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d "$DB" -u all --stop-after-init
-            docker compose restart odoo
+            
+            echo "✅ Docker registry deployment completed successfully!"
