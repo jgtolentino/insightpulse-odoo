@@ -1,4 +1,0 @@
-- Daniel Reis (<https://launchpad.com/~dreis-pt>),
-- [Tecnativa](https://www.tecnativa.com):
-  - Alexandre Díaz
-  - João Marques

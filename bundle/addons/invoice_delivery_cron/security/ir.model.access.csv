@@ -1,2 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_invoice_delivery_cron_invoice_delivery_cron,invoice_delivery_cron.invoice_delivery_cron,model_invoice_delivery_cron_invoice_delivery_cron,base.group_user,1,1,1,1

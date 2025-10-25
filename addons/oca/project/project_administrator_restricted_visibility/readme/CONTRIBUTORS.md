@@ -1,7 +1,0 @@
-- [Tecnativa](https://www.tecnativa.com):
-  - Ernesto Tejeda
-  - Pilar Vargas
-- [Moduon](https://www.moduon.team):
-  - Eduardo López
-- [Heliconia Solutions Pvt. Ltd.](https://www.heliconia.io)
-  - Bhavesh Heliconia

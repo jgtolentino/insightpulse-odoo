@@ -1,2 +1,0 @@
-odoo_test_helper
-httpx

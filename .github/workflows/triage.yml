@@ -1,0 +1,39 @@
+name: triage
+on:
+  issues: { types: [opened, edited, reopened] }
+  pull_request: { types: [opened, synchronize, reopened] }
+permissions: { contents: read, issues: write, pull-requests: write }
+jobs:
+  label-assign:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          sync-labels: true
+      - name: Auto-assign
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const login = 'jgtolentino';
+            if (context.eventName === 'issues') {
+              await github.issues.addAssignees({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: context.issue.number, assignees: [login]
+              });
+            } else {
+              await github.pulls.requestReviewers({
+                owner: context.repo.owner, repo: context.repo.repo,
+                pull_number: context.payload.pull_request.number, reviewers: [login]
+              });
+            }
+      - name: Comment checklist
+        if: ${{ github.event_name == 'issues' && github.event.action == 'opened' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `**Triage checklist**\n- [ ] Reproduce / attach logs\n- [ ] Label: bug | enhancement | documentation\n- [ ] Scope & owner assigned\n- [ ] Link PR when ready`;
+            await github.issues.createComment({
+              owner: context.repo.owner, repo: context.repo.repo,
+              issue_number: context.issue.number, body
+            });

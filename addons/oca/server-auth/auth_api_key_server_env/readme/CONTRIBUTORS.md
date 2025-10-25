@@ -1,3 +1,0 @@
-- Simone Orsi \<<simone.orsi@camptocamp.com>\>
-- Florian da Costa \<<florian.dacosta@akretion.com>\>
-- Thien Vo Hong \<<thienvh@trobzh.com>\>

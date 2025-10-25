@@ -1,3 +1,0 @@
-- Adria Gil \<<adria.gil@forgeflow.com>\>
-- [Komit](https://komit-consulting.com):
-  - Quan.nhm \<<quan.nhm@komit-consulting.com>\>
