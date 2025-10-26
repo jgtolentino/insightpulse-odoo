@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Add Superset settings to General Settings -->
+        <record id="view_general_configuration_superset" model="ir.ui.view">
+            <field name="name">res.config.settings.form.inherit.superset</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[hasclass('settings')]" position="inside">
+                    <div class="app_settings_block" data-string="Superset Integration" string="Superset Integration" data-key="superset_connector">
+                        <h2>Apache Superset Integration</h2>
+                        <div class="row mt16 o_settings_container">
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_url"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_url"/>
+                                    <div class="text-muted">
+                                        Base URL of your Apache Superset instance
+                                    </div>
+                                    <field name="superset_url" placeholder="https://superset.example.com"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_username"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_username"/>
+                                    <div class="text-muted">
+                                        Username for Superset API authentication
+                                    </div>
+                                    <field name="superset_username" placeholder="admin"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_password"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_password"/>
+                                    <div class="text-muted">
+                                        Password for Superset API authentication
+                                    </div>
+                                    <field name="superset_password" password="True"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_database_id"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_database_id"/>
+                                    <div class="text-muted">
+                                        Superset database ID for Odoo data source
+                                    </div>
+                                    <field name="superset_database_id"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_enable_rls"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_enable_rls"/>
+                                    <div class="text-muted">
+                                        Enable row-level security filtering based on user permissions
+                                    </div>
+                                    <field name="superset_enable_rls"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_token_expiry"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_token_expiry"/>
+                                    <div class="text-muted">
+                                        Guest token expiry time in seconds (default: 3600 = 1 hour)
+                                    </div>
+                                    <field name="superset_token_expiry"/>
+                                </div>
+                            </div>
+                            <div class="col-12 col-lg-6 o_setting_box">
+                                <div class="o_setting_left_pane">
+                                    <field name="superset_csp_enabled"/>
+                                </div>
+                                <div class="o_setting_right_pane">
+                                    <label for="superset_csp_enabled"/>
+                                    <div class="text-muted">
+                                        Add Content Security Policy headers for embedded dashboards
+                                    </div>
+                                    <field name="superset_csp_enabled"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Superset Token Form View -->
+        <record id="view_superset_token_form" model="ir.ui.view">
+            <field name="name">superset.token.form</field>
+            <field name="model">superset.token</field>
+            <field name="arch" type="xml">
+                <form string="Superset Token">
+                    <header>
+                        <button name="generate_token" string="Generate Token" type="object" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="dashboard_id"/>
+                                <field name="user_id"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group>
+                                <field name="expiry_date"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group string="Row-Level Security">
+                            <field name="rls_filter" placeholder="e.g., department_id = 5"/>
+                        </group>
+                        <group string="Token">
+                            <field name="token" readonly="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Superset Token Tree View -->
+        <record id="view_superset_token_tree" model="ir.ui.view">
+            <field name="name">superset.token.tree</field>
+            <field name="model">superset.token</field>
+            <field name="arch" type="xml">
+                <tree string="Superset Tokens">
+                    <field name="name"/>
+                    <field name="dashboard_id"/>
+                    <field name="user_id"/>
+                    <field name="company_id"/>
+                    <field name="expiry_date"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Superset Token Action -->
+        <record id="action_superset_token" model="ir.actions.act_window">
+            <field name="name">Superset Tokens</field>
+            <field name="res_model">superset.token</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Embedded Dashboard Template -->
+        <template id="embedded_dashboard" name="Embedded Superset Dashboard">
+            <t t-call="web.layout">
+                <div class="container-fluid mt-3">
+                    <div class="row">
+                        <div class="col-12">
+                            <h2>Superset Dashboard</h2>
+                            <div class="card">
+                                <div class="card-body p-0">
+                                    <iframe 
+                                        t-att-src="dashboard_url"
+                                        width="100%"
+                                        t-att-height="height + 'px'"
+                                        frameborder="0"
+                                        style="border: none;">
+                                    </iframe>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- Dashboard List Template -->
+        <template id="dashboard_list" name="Superset Dashboard List">
+            <t t-call="web.layout">
+                <div class="container mt-3">
+                    <h2>My Superset Dashboards</h2>
+                    <div class="row">
+                        <t t-foreach="tokens" t-as="token">
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h5 class="card-title"><t t-esc="token.name"/></h5>
+                                        <p class="card-text">
+                                            <small class="text-muted">
+                                                Expires: <t t-esc="token.expiry_date"/>
+                                            </small>
+                                        </p>
+                                        <a t-attf-href="/superset/dashboard/#{token.dashboard_id}" class="btn btn-primary">
+                                            View Dashboard
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- Error Templates -->
+        <template id="error_not_configured" name="Superset Not Configured">
+            <t t-call="web.layout">
+                <div class="container mt-5">
+                    <div class="alert alert-warning" role="alert">
+                        <h4 class="alert-heading">Superset Not Configured</h4>
+                        <p>Please configure the Superset connection in Settings > General Settings > Superset Integration.</p>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <template id="error_token_generation" name="Token Generation Error">
+            <t t-call="web.layout">
+                <div class="container mt-5">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">Failed to Generate Token</h4>
+                        <p><t t-esc="error"/></p>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+    </data>
+</odoo>

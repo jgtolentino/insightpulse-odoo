@@ -1,0 +1,12 @@
+<!-- Placeholder SVG icon for Superset Connector module -->
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect width="128" height="128" fill="#20A7C9"/>
+  <g transform="translate(24, 24)">
+    <!-- Dashboard icon -->
+    <rect x="0" y="0" width="30" height="30" fill="white" opacity="0.9"/>
+    <rect x="35" y="0" width="45" height="30" fill="white" opacity="0.9"/>
+    <rect x="0" y="35" width="45" height="45" fill="white" opacity="0.9"/>
+    <rect x="50" y="35" width="30" height="45" fill="white" opacity="0.9"/>
+  </g>
+  <text x="64" y="115" font-family="Arial, sans-serif" font-size="14" fill="white" text-anchor="middle" font-weight="bold">SUPERSET</text>
+</svg>

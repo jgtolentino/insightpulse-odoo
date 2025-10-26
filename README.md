@@ -23,6 +23,10 @@ open http://localhost:8069
 - **[SKILLS.md](docs/SKILLS.md)** - Comprehensive skill listing (Odoo, Python, SQL, BI, Superset, security, deployment)
 - **[DEPLOYMENT.md](docs/DEPLOYMENT.md)** - Production deployment guide with security, scaling, monitoring, and backup
 - **[AGENT.md](docs/AGENT.md)** - Agent setup, usage patterns, and function reference
+
+### BI & Analytics Documentation
+- **[SUPERSET_INTEGRATION.md](docs/SUPERSET_INTEGRATION.md)** - Complete Superset integration guide with setup, configuration, and troubleshooting
+- **[BI_ARCHITECTURE.md](docs/BI_ARCHITECTURE.md)** - BI architecture, data flow, security layers, and performance optimization
 - **[SUPERSET_DASHBOARDS.md](docs/SUPERSET_DASHBOARDS.md)** - Superset dashboard design, RLS, multi-company analytics
 
 ### Deployment Guides
@@ -136,6 +140,33 @@ dashboards = superset_api(
 - **BI**: Apache Superset 3.0+
 - **Cache**: Redis 7+
 - **AI**: MindsDB (optional)
+
+### BI Integration Architecture
+
+```
+┌─────────────────┐     Guest Token      ┌─────────────────┐
+│   Odoo Users    │ ◄──────────────────► │ Apache Superset │
+└────────┬────────┘    Authentication     └────────┬────────┘
+         │                                          │
+         │ Embedded                        SQL Queries (RLS)
+         │ Dashboards                               │
+         │                                          │
+         ▼                                          ▼
+┌─────────────────────────────────────────────────────────┐
+│              PostgreSQL (Odoo Database)                 │
+│  - Analytics Views (vw_sales_kpi_day, etc.)            │
+│  - Row-Level Security                                   │
+│  - Read-only user (superset_readonly)                  │
+└─────────────────────────────────────────────────────────┘
+```
+
+**Key Features:**
+- **Secure Embedding**: Guest token authentication for dashboard iframes
+- **Row-Level Security (RLS)**: Multi-company data isolation
+- **Pre-built Analytics**: SQL views for Sales, Inventory, Accounting, HR
+- **SSO Integration**: Seamless authentication between Odoo and Superset
+
+See [BI_ARCHITECTURE.md](docs/BI_ARCHITECTURE.md) for detailed architecture documentation.
 
 ### Deployment Options
 1. **Development**: `docker compose up`

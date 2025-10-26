@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Superset Menu -->
+        <menuitem 
+            id="menu_superset_root"
+            name="Superset"
+            sequence="100"
+            web_icon="superset_connector,static/description/icon.png"/>
+
+        <menuitem 
+            id="menu_superset_dashboards"
+            name="Dashboards"
+            parent="menu_superset_root"
+            sequence="10"
+            action=""/>
+
+        <menuitem 
+            id="menu_superset_tokens"
+            name="Tokens"
+            parent="menu_superset_root"
+            sequence="20"
+            action="action_superset_token"/>
+
+        <menuitem 
+            id="menu_superset_config"
+            name="Configuration"
+            parent="menu_superset_root"
+            sequence="100"
+            action="base.action_res_config_settings"/>
+
+    </data>
+</odoo>
