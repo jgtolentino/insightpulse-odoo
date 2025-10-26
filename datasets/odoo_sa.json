@@ -1,0 +1,479 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "odoo_version": "19.0",
+    "created": "2025-10-26",
+    "description": "Odoo Solution Architecture reference data including module dependencies, common patterns, and standard configurations"
+  },
+  
+  "core_modules": {
+    "base": {
+      "description": "Core framework module",
+      "key_models": [
+        "res.partner",
+        "res.company",
+        "res.users",
+        "res.groups",
+        "res.country",
+        "res.currency",
+        "ir.model",
+        "ir.model.fields"
+      ],
+      "provides": [
+        "authentication",
+        "authorization",
+        "multi_company",
+        "multi_currency",
+        "localization_framework"
+      ]
+    },
+    
+    "sale": {
+      "description": "Sales management",
+      "depends": ["base", "product", "account"],
+      "key_models": [
+        "sale.order",
+        "sale.order.line",
+        "sale.order.template"
+      ],
+      "common_fields": {
+        "sale.order": {
+          "partner_id": "res.partner",
+          "date_order": "datetime",
+          "amount_total": "monetary",
+          "amount_untaxed": "monetary",
+          "amount_tax": "monetary",
+          "state": "selection",
+          "company_id": "res.company",
+          "currency_id": "res.currency",
+          "user_id": "res.users",
+          "team_id": "crm.team"
+        }
+      },
+      "states": ["draft", "sent", "sale", "done", "cancel"],
+      "typical_extensions": [
+        "Add custom fields to sale.order",
+        "Create sale.order.line computed fields",
+        "Implement custom pricing rules",
+        "Add approval workflows"
+      ]
+    },
+    
+    "purchase": {
+      "description": "Purchase management",
+      "depends": ["base", "product", "account"],
+      "key_models": [
+        "purchase.order",
+        "purchase.order.line"
+      ],
+      "common_fields": {
+        "purchase.order": {
+          "partner_id": "res.partner",
+          "date_order": "datetime",
+          "amount_total": "monetary",
+          "state": "selection",
+          "company_id": "res.company"
+        }
+      },
+      "states": ["draft", "sent", "to approve", "purchase", "done", "cancel"]
+    },
+    
+    "stock": {
+      "description": "Inventory and warehouse management",
+      "depends": ["base", "product"],
+      "key_models": [
+        "stock.picking",
+        "stock.move",
+        "stock.move.line",
+        "stock.warehouse",
+        "stock.location",
+        "stock.quant"
+      ],
+      "common_operations": [
+        "incoming shipments",
+        "delivery orders",
+        "internal transfers",
+        "manufacturing orders"
+      ]
+    },
+    
+    "account": {
+      "description": "Accounting and financial management",
+      "depends": ["base", "product"],
+      "key_models": [
+        "account.move",
+        "account.move.line",
+        "account.account",
+        "account.journal",
+        "account.payment",
+        "account.tax"
+      ],
+      "critical_features": [
+        "multi_currency",
+        "multi_company",
+        "chart_of_accounts",
+        "tax_management",
+        "fiscal_positions"
+      ]
+    },
+    
+    "product": {
+      "description": "Product management",
+      "depends": ["base"],
+      "key_models": [
+        "product.product",
+        "product.template",
+        "product.category",
+        "product.attribute",
+        "product.pricelist"
+      ],
+      "product_types": ["product", "consu", "service"]
+    },
+    
+    "hr": {
+      "description": "Human resources",
+      "depends": ["base", "resource"],
+      "key_models": [
+        "hr.employee",
+        "hr.department",
+        "hr.job",
+        "hr.contract"
+      ]
+    },
+    
+    "project": {
+      "description": "Project management",
+      "depends": ["base", "analytic", "web_tour"],
+      "key_models": [
+        "project.project",
+        "project.task",
+        "project.milestone"
+      ]
+    }
+  },
+  
+  "common_patterns": {
+    "state_machine": {
+      "description": "Workflow with states and transitions",
+      "implementation": {
+        "field": "state = fields.Selection([...], default='draft')",
+        "methods": [
+          "action_confirm()",
+          "action_cancel()",
+          "action_done()"
+        ],
+        "states_button": "states=\"{'invisible': [('state', '!=', 'draft')]}\""
+      },
+      "typical_states": {
+        "draft": "Initial state, editable",
+        "confirmed": "Confirmed, limited editing",
+        "done": "Completed, read-only",
+        "cancel": "Cancelled, read-only"
+      }
+    },
+    
+    "approval_workflow": {
+      "description": "Multi-level approval process",
+      "implementation": {
+        "fields": [
+          "state = fields.Selection([('draft','Draft'), ('submitted','Submitted'), ('approved','Approved')])",
+          "approver_id = fields.Many2one('res.users')",
+          "approval_date = fields.Datetime()"
+        ],
+        "methods": [
+          "action_submit()",
+          "action_approve()",
+          "action_reject()"
+        ]
+      }
+    },
+    
+    "multi_company": {
+      "description": "Support for multiple companies",
+      "implementation": {
+        "field": "company_id = fields.Many2one('res.company', default=lambda self: self.env.company)",
+        "record_rule": "['|', ('company_id', '=', False), ('company_id', '=', company_id)]",
+        "context": "self.env['model'].with_company(company_id)"
+      }
+    },
+    
+    "sequence_numbering": {
+      "description": "Auto-generated sequential numbers",
+      "implementation": {
+        "field": "name = fields.Char(default='/', required=True)",
+        "method": "name = self.env['ir.sequence'].next_by_code('model.code') or '/'",
+        "data": "<record id='seq_model' model='ir.sequence'><field name='code'>model.code</field></record>"
+      }
+    },
+    
+    "computed_field": {
+      "description": "Field calculated from other fields",
+      "implementation": {
+        "field": "total = fields.Float(compute='_compute_total', store=True)",
+        "method": "@api.depends('line_ids.amount')\\ndef _compute_total(self):\\n    for rec in self:\\n        rec.total = sum(rec.line_ids.mapped('amount'))"
+      }
+    },
+    
+    "one2many_lines": {
+      "description": "Header-lines relationship",
+      "implementation": {
+        "header": "line_ids = fields.One2many('model.line', 'header_id')",
+        "line": "header_id = fields.Many2one('model.header', required=True, ondelete='cascade')"
+      }
+    }
+  },
+  
+  "security_groups": {
+    "base_groups": [
+      {
+        "xml_id": "base.group_user",
+        "name": "Internal User",
+        "description": "Basic employee access"
+      },
+      {
+        "xml_id": "base.group_system",
+        "name": "Settings",
+        "description": "Access to technical settings"
+      },
+      {
+        "xml_id": "base.group_portal",
+        "name": "Portal",
+        "description": "External portal users"
+      },
+      {
+        "xml_id": "base.group_public",
+        "name": "Public",
+        "description": "Anonymous website visitors"
+      }
+    ],
+    
+    "module_groups_pattern": {
+      "user": "Basic user access (read/create)",
+      "manager": "Manager access (full CRUD + settings)"
+    }
+  },
+  
+  "field_types": {
+    "char": {
+      "usage": "Short text (names, codes)",
+      "common_attributes": ["size", "required", "default", "index"]
+    },
+    "text": {
+      "usage": "Long text (descriptions, notes)",
+      "common_attributes": ["required", "default"]
+    },
+    "integer": {
+      "usage": "Whole numbers",
+      "common_attributes": ["required", "default", "index"]
+    },
+    "float": {
+      "usage": "Decimal numbers",
+      "common_attributes": ["digits", "required", "default"]
+    },
+    "monetary": {
+      "usage": "Currency amounts",
+      "required_fields": ["currency_id"],
+      "common_attributes": ["currency_field", "required"]
+    },
+    "boolean": {
+      "usage": "True/False flags",
+      "common_attributes": ["default"]
+    },
+    "date": {
+      "usage": "Date without time",
+      "common_attributes": ["required", "default", "index"]
+    },
+    "datetime": {
+      "usage": "Date with time",
+      "common_attributes": ["required", "default", "index"]
+    },
+    "selection": {
+      "usage": "Fixed list of options",
+      "common_attributes": ["selection", "required", "default"]
+    },
+    "many2one": {
+      "usage": "Foreign key relationship",
+      "common_attributes": ["comodel_name", "required", "ondelete", "index"]
+    },
+    "one2many": {
+      "usage": "Reverse foreign key",
+      "common_attributes": ["comodel_name", "inverse_name"]
+    },
+    "many2many": {
+      "usage": "Many-to-many relationship",
+      "common_attributes": ["comodel_name", "relation", "column1", "column2"]
+    },
+    "binary": {
+      "usage": "File uploads",
+      "common_attributes": ["attachment"]
+    },
+    "html": {
+      "usage": "Rich text content",
+      "common_attributes": ["sanitize"]
+    }
+  },
+  
+  "view_types": {
+    "form": {
+      "purpose": "Detail view for single record",
+      "key_elements": ["sheet", "header", "group", "notebook", "page"]
+    },
+    "tree": {
+      "purpose": "List view for multiple records",
+      "key_attributes": ["editable", "decoration-*", "create", "delete"]
+    },
+    "kanban": {
+      "purpose": "Card/board view",
+      "key_elements": ["kanban_state", "progressbar", "kanban_box"]
+    },
+    "pivot": {
+      "purpose": "Pivot table for analytics",
+      "key_attributes": ["row_fields", "col_fields", "measures"]
+    },
+    "graph": {
+      "purpose": "Charts and graphs",
+      "types": ["bar", "line", "pie"],
+      "key_attributes": ["type", "stacked"]
+    },
+    "calendar": {
+      "purpose": "Calendar view",
+      "required_fields": ["date_start", "date_stop"],
+      "key_attributes": ["mode", "color"]
+    }
+  },
+  
+  "database_indexes": {
+    "automatic": [
+      "primary_key (id)",
+      "many2one fields",
+      "fields with index=True"
+    ],
+    "recommended": [
+      {
+        "field": "state",
+        "reason": "Frequently used in filters"
+      },
+      {
+        "field": "date_order",
+        "reason": "Sorting and date range filters"
+      },
+      {
+        "field": "company_id",
+        "reason": "Multi-company record rules"
+      },
+      {
+        "field": "partner_id",
+        "reason": "Frequent joins and filters"
+      }
+    ],
+    "composite_indexes": [
+      {
+        "fields": ["company_id", "state"],
+        "reason": "Common filter combination"
+      },
+      {
+        "fields": ["date_order", "state"],
+        "reason": "Date range with status filter"
+      }
+    ]
+  },
+  
+  "performance_best_practices": {
+    "orm": [
+      "Use search() with proper domains instead of browsing all records",
+      "Use mapped() instead of loops for simple field access",
+      "Use read() instead of browse() when you don't need recordset operations",
+      "Batch operations instead of one-by-one in loops",
+      "Use search_count() before search() for large datasets"
+    ],
+    "sql": [
+      "Use database views for complex analytics",
+      "Add indexes on frequently filtered fields",
+      "Use EXPLAIN ANALYZE to optimize queries",
+      "Avoid SELECT * - specify needed fields",
+      "Use materialized views for heavy aggregations"
+    ],
+    "caching": [
+      "Use @ormcache decorator for expensive computations",
+      "Clear cache after data modifications",
+      "Consider Redis for application-level caching"
+    ]
+  },
+  
+  "api_decorators": {
+    "@api.model": "Method doesn't need 'self' recordset",
+    "@api.depends('field')": "Computed field dependency",
+    "@api.onchange('field')": "Client-side field change handler",
+    "@api.constrains('field')": "Python constraint validation",
+    "@api.autovacuum": "Auto-cleanup method",
+    "@api.returns('model')": "Specify return model for API methods"
+  },
+  
+  "scheduled_actions": {
+    "configuration": {
+      "model": "ir.cron",
+      "fields": [
+        "name",
+        "model_id",
+        "state",
+        "code",
+        "interval_number",
+        "interval_type",
+        "numbercall",
+        "active"
+      ]
+    },
+    "interval_types": ["minutes", "hours", "days", "weeks", "months"],
+    "best_practices": [
+      "Use @api.model methods for cron jobs",
+      "Add error handling and logging",
+      "Set reasonable intervals to avoid overload",
+      "Use numbercall=-1 for recurring jobs",
+      "Test with shorter intervals in development"
+    ]
+  },
+  
+  "data_migration": {
+    "pre_migration": {
+      "purpose": "Prepare data before module update",
+      "example": "def migrate(cr, version):\\n    if not version: return\\n    # Migration logic"
+    },
+    "post_migration": {
+      "purpose": "Clean up after module update",
+      "location": "migrations/{version}/post-migrate.py"
+    }
+  },
+  
+  "testing_patterns": {
+    "transactional_case": {
+      "class": "TransactionCase",
+      "usage": "Standard unit tests",
+      "rollback": "Yes - after each test"
+    },
+    "single_transaction_case": {
+      "class": "SingleTransactionCase",
+      "usage": "Tests that should share transaction",
+      "rollback": "After all tests"
+    },
+    "http_case": {
+      "class": "HttpCase",
+      "usage": "Tests requiring HTTP requests",
+      "browser": "Included"
+    }
+  },
+  
+  "common_utilities": {
+    "date_handling": {
+      "today": "fields.Date.today()",
+      "now": "fields.Datetime.now()",
+      "add_days": "date + relativedelta(days=7)"
+    },
+    "recordset_operations": {
+      "ensure_one": "self.ensure_one() - Verify single record",
+      "exists": "records.exists() - Filter out deleted",
+      "filtered": "records.filtered(lambda r: r.active)",
+      "mapped": "records.mapped('partner_id.name')",
+      "sorted": "records.sorted(key=lambda r: r.date_order)"
+    }
+  }
+}

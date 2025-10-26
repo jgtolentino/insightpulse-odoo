@@ -1,0 +1,314 @@
+name: Agent Evaluation
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-structure:
+    name: Validate Repository Structure
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check required files
+        run: |
+          echo "Checking required files..."
+          required_files=(
+            "docs/KNOWLEDGE.md"
+            "docs/SKILLS.md"
+            "docs/DEPLOYMENT.md"
+            "docs/AGENT.md"
+            "rules/selection.yaml"
+            "schemas/feature_request.yaml"
+            "datasets/odoo_sa.json"
+            "datasets/oca_index.json"
+            "datasets/market_caps.yaml"
+            "scripts/appsrc.py"
+            "scripts/vendor_oca.py"
+            "scripts/connectors.py"
+          )
+          
+          missing=0
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing: $file"
+              missing=$((missing + 1))
+            else
+              echo "✅ Found: $file"
+            fi
+          done
+          
+          if [ $missing -gt 0 ]; then
+            echo "Error: $missing required files missing"
+            exit 1
+          fi
+          
+          echo "All required files present"
+  
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check documentation completeness
+        run: |
+          echo "Validating documentation files..."
+          
+          # Check KNOWLEDGE.md has key sections
+          echo "Checking KNOWLEDGE.md..."
+          grep -q "## Core Competencies" docs/KNOWLEDGE.md || exit 1
+          grep -q "### 1. Odoo Architecture" docs/KNOWLEDGE.md || exit 1
+          grep -q "### 2. Data Connector Design" docs/KNOWLEDGE.md || exit 1
+          grep -q "### 3. Apache Superset Integration" docs/KNOWLEDGE.md || exit 1
+          
+          # Check SKILLS.md has skill categories
+          echo "Checking SKILLS.md..."
+          grep -q "## 🐍 Python Development" docs/SKILLS.md || exit 1
+          grep -q "## 🗄️ Database & SQL" docs/SKILLS.md || exit 1
+          grep -q "## 🔧 Odoo Framework" docs/SKILLS.md || exit 1
+          grep -q "## 📊 Business Intelligence" docs/SKILLS.md || exit 1
+          
+          # Check DEPLOYMENT.md has deployment sections
+          echo "Checking DEPLOYMENT.md..."
+          grep -q "## Prerequisites" docs/DEPLOYMENT.md || exit 1
+          grep -q "## Odoo Deployment" docs/DEPLOYMENT.md || exit 1
+          grep -q "## Superset Deployment" docs/DEPLOYMENT.md || exit 1
+          grep -q "## Security Hardening" docs/DEPLOYMENT.md || exit 1
+          
+          # Check AGENT.md has usage patterns
+          echo "Checking AGENT.md..."
+          grep -q "## Agent Capabilities" docs/AGENT.md || exit 1
+          grep -q "## Usage Patterns" docs/AGENT.md || exit 1
+          grep -q "## Function Reference" docs/AGENT.md || exit 1
+          
+          echo "✅ All documentation files validated"
+  
+  validate-configs:
+    name: Validate Configuration Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyyaml jsonschema
+      
+      - name: Validate YAML files
+        run: |
+          python3 << 'EOF'
+          import yaml
+          import sys
+          
+          yaml_files = [
+              'rules/selection.yaml',
+              'datasets/market_caps.yaml'
+          ]
+          
+          errors = 0
+          for file in yaml_files:
+              try:
+                  with open(file, 'r') as f:
+                      data = yaml.safe_load(f)
+                  print(f"✅ Valid YAML: {file}")
+              except Exception as e:
+                  print(f"❌ Invalid YAML: {file} - {e}")
+                  errors += 1
+          
+          if errors > 0:
+              sys.exit(1)
+          EOF
+      
+      - name: Validate JSON files
+        run: |
+          python3 << 'EOF'
+          import json
+          import sys
+          
+          json_files = [
+              'datasets/odoo_sa.json',
+              'datasets/oca_index.json'
+          ]
+          
+          errors = 0
+          for file in json_files:
+              try:
+                  with open(file, 'r') as f:
+                      data = json.load(f)
+                  print(f"✅ Valid JSON: {file}")
+              except Exception as e:
+                  print(f"❌ Invalid JSON: {file} - {e}")
+                  errors += 1
+          
+          if errors > 0:
+              sys.exit(1)
+          EOF
+      
+      - name: Validate feature request schema
+        run: |
+          python3 << 'EOF'
+          import yaml
+          
+          with open('schemas/feature_request.yaml', 'r') as f:
+              schema = yaml.safe_load(f)
+          
+          # Basic validation
+          assert 'feature_request' in schema, "Schema must have 'feature_request' root"
+          assert 'type' in schema['feature_request'], "Schema must define type"
+          assert 'properties' in schema['feature_request'], "Schema must have properties"
+          
+          print("✅ Feature request schema is valid")
+          EOF
+  
+  test-scripts:
+    name: Test Python Scripts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+      
+      - name: Test script syntax
+        run: |
+          python3 -m py_compile scripts/appsrc.py
+          python3 -m py_compile scripts/vendor_oca.py
+          python3 -m py_compile scripts/connectors.py
+          echo "✅ All scripts compile successfully"
+      
+      - name: Test appsrc.py help
+        run: |
+          python3 scripts/appsrc.py --help
+      
+      - name: Test vendor_oca.py help
+        run: |
+          python3 scripts/vendor_oca.py --help
+      
+      - name: Test connectors.py imports
+        run: |
+          python3 -c "from scripts.connectors import odoo_rpc_call, supabase_sql, superset_api"
+          echo "✅ Connector functions import successfully"
+  
+  golden-prompts:
+    name: Golden Prompts Evaluation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Evaluate golden prompts
+        run: |
+          echo "Golden Prompts Evaluation"
+          echo "=========================="
+          echo ""
+          echo "Testing agent capabilities with standard prompts:"
+          echo ""
+          
+          # Prompt 1: Module scaffolding
+          echo "1. Module Scaffolding"
+          echo "   Prompt: Create a sales commission module"
+          echo "   Expected: Module structure with models, views, security"
+          echo ""
+          
+          # Prompt 2: Data connector
+          echo "2. Data Connector Implementation"
+          echo "   Prompt: Implement Odoo to Superset connector"
+          echo "   Expected: SQL views, read-only user, security config"
+          echo ""
+          
+          # Prompt 3: Dashboard design
+          echo "3. Dashboard Design"
+          echo "   Prompt: Create sales executive dashboard"
+          echo "   Expected: Chart configs, filters, RLS setup"
+          echo ""
+          
+          # Prompt 4: Security setup
+          echo "4. Security Configuration"
+          echo "   Prompt: Setup multi-company isolation"
+          echo "   Expected: Record rules, field security"
+          echo ""
+          
+          # Prompt 5: Performance optimization
+          echo "5. Performance Optimization"
+          echo "   Prompt: Optimize slow sales reports"
+          echo "   Expected: Indexes, materialized views, caching"
+          echo ""
+          
+          echo "✅ Golden prompts documented"
+          echo ""
+          echo "Note: Full evaluation requires AI agent integration"
+          echo "These prompts should be tested manually or with agent SDK"
+
+  report:
+    name: Generate Report
+    runs-on: ubuntu-latest
+    needs: [validate-structure, validate-docs, validate-configs, test-scripts]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Generate evaluation report
+        run: |
+          cat > evaluation-report.md << 'EOF'
+          # Agent Evaluation Report
+          
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Branch:** ${{ github.ref }}
+          **Commit:** ${{ github.sha }}
+          
+          ## Test Results
+          
+          | Test Suite | Status |
+          |------------|--------|
+          | Structure Validation | ${{ needs.validate-structure.result }} |
+          | Documentation Validation | ${{ needs.validate-docs.result }} |
+          | Configuration Validation | ${{ needs.validate-configs.result }} |
+          | Script Testing | ${{ needs.test-scripts.result }} |
+          
+          ## Coverage
+          
+          - [x] Core documentation (KNOWLEDGE, SKILLS, DEPLOYMENT, AGENT)
+          - [x] Configuration files (rules, schemas, datasets)
+          - [x] Utility scripts (appsrc, vendor_oca, connectors)
+          - [x] CI/CD workflows
+          - [ ] Golden prompts integration (requires agent SDK)
+          
+          ## Recommendations
+          
+          1. Complete golden prompts evaluation with agent SDK
+          2. Add unit tests for connector functions
+          3. Create sample Superset dashboard exports
+          4. Document troubleshooting procedures
+          
+          EOF
+          
+          cat evaluation-report.md
+      
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: evaluation-report
+          path: evaluation-report.md

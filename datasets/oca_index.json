@@ -1,0 +1,447 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "updated": "2025-10-26",
+    "description": "Index of Odoo Community Association (OCA) modules for reuse and reference",
+    "oca_website": "https://github.com/OCA",
+    "odoo_version": "19.0"
+  },
+  
+  "repositories": [
+    {
+      "name": "server-tools",
+      "url": "https://github.com/OCA/server-tools",
+      "description": "Server environment and tools",
+      "modules": [
+        {
+          "name": "base_jsonify",
+          "summary": "JSON serialization for Odoo models",
+          "use_cases": ["API development", "data export", "JSON responses"],
+          "complexity": "low"
+        },
+        {
+          "name": "base_rest",
+          "summary": "REST framework for Odoo",
+          "use_cases": ["REST API", "external integrations", "web services"],
+          "complexity": "medium"
+        },
+        {
+          "name": "base_technical_user",
+          "summary": "Technical users for automated processes",
+          "use_cases": ["automation", "API access", "system integration"],
+          "complexity": "low"
+        },
+        {
+          "name": "auto_backup",
+          "summary": "Automated database backups",
+          "use_cases": ["backup", "disaster recovery", "data protection"],
+          "complexity": "low"
+        }
+      ]
+    },
+    
+    {
+      "name": "reporting-engine",
+      "url": "https://github.com/OCA/reporting-engine",
+      "description": "Advanced reporting capabilities",
+      "modules": [
+        {
+          "name": "report_xlsx",
+          "summary": "Excel report generation",
+          "use_cases": ["Excel exports", "financial reports", "data analysis"],
+          "complexity": "low"
+        },
+        {
+          "name": "report_qweb_pdf_watermark",
+          "summary": "Add watermarks to PDF reports",
+          "use_cases": ["draft watermarks", "confidential marking", "branding"],
+          "complexity": "low"
+        },
+        {
+          "name": "base_report_to_printer",
+          "summary": "Direct printing to network printers",
+          "use_cases": ["automated printing", "warehouse operations", "POS"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "sale-workflow",
+      "url": "https://github.com/OCA/sale-workflow",
+      "description": "Sales process enhancements",
+      "modules": [
+        {
+          "name": "sale_quotation_builder",
+          "summary": "Advanced quotation templates",
+          "use_cases": ["complex quotes", "product bundles", "quote templates"],
+          "complexity": "medium"
+        },
+        {
+          "name": "sale_order_line_date",
+          "summary": "Delivery dates on order lines",
+          "use_cases": ["line-level scheduling", "partial deliveries", "logistics"],
+          "complexity": "low"
+        },
+        {
+          "name": "sale_advance_payment",
+          "summary": "Advanced payment handling",
+          "use_cases": ["deposits", "down payments", "payment plans"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "commission",
+      "url": "https://github.com/OCA/commission",
+      "description": "Sales commission management",
+      "modules": [
+        {
+          "name": "sale_commission",
+          "summary": "Calculate sales commissions",
+          "use_cases": ["commission tracking", "sales incentives", "performance metrics"],
+          "complexity": "high"
+        },
+        {
+          "name": "hr_commission",
+          "summary": "HR integration for commissions",
+          "use_cases": ["payroll integration", "HR records", "employee compensation"],
+          "complexity": "high"
+        }
+      ]
+    },
+    
+    {
+      "name": "stock-logistics-warehouse",
+      "url": "https://github.com/OCA/stock-logistics-warehouse",
+      "description": "Warehouse and inventory enhancements",
+      "modules": [
+        {
+          "name": "stock_available_unreserved",
+          "summary": "Calculate unreserved product quantities",
+          "use_cases": ["available to promise", "inventory planning", "sales forecasting"],
+          "complexity": "medium"
+        },
+        {
+          "name": "stock_request",
+          "summary": "Stock request workflow",
+          "use_cases": ["procurement requests", "internal orders", "MRP integration"],
+          "complexity": "high"
+        },
+        {
+          "name": "stock_warehouse_calendar",
+          "summary": "Warehouse working calendars",
+          "use_cases": ["delivery scheduling", "warehouse hours", "logistics planning"],
+          "complexity": "low"
+        }
+      ]
+    },
+    
+    {
+      "name": "account-financial-reporting",
+      "url": "https://github.com/OCA/account-financial-reporting",
+      "description": "Financial reports and statements",
+      "modules": [
+        {
+          "name": "account_financial_report",
+          "summary": "Advanced financial reporting",
+          "use_cases": ["P&L", "balance sheet", "financial analysis"],
+          "complexity": "high"
+        },
+        {
+          "name": "mis_builder",
+          "summary": "Management Information System builder",
+          "use_cases": ["KPI dashboards", "budget vs actual", "forecasting"],
+          "complexity": "high"
+        }
+      ]
+    },
+    
+    {
+      "name": "account-payment",
+      "url": "https://github.com/OCA/account-payment",
+      "description": "Payment processing enhancements",
+      "modules": [
+        {
+          "name": "account_payment_partner",
+          "summary": "Partner-specific payment methods",
+          "use_cases": ["customer payment methods", "vendor payments", "banking"],
+          "complexity": "medium"
+        },
+        {
+          "name": "account_payment_mode",
+          "summary": "Payment modes and terms",
+          "use_cases": ["payment terms", "banking setup", "cash flow"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "web",
+      "url": "https://github.com/OCA/web",
+      "description": "Web interface enhancements",
+      "modules": [
+        {
+          "name": "web_responsive",
+          "summary": "Responsive web interface",
+          "use_cases": ["mobile access", "tablet support", "responsive design"],
+          "complexity": "low"
+        },
+        {
+          "name": "web_widget_x2many_2d_matrix",
+          "summary": "Matrix widget for one2many/many2many",
+          "use_cases": ["planning grids", "skill matrices", "resource allocation"],
+          "complexity": "medium"
+        },
+        {
+          "name": "web_dashboard_tile",
+          "summary": "Dashboard tiles/widgets",
+          "use_cases": ["KPI displays", "custom dashboards", "executive views"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "connector",
+      "url": "https://github.com/OCA/connector",
+      "description": "Connector framework for integrations",
+      "modules": [
+        {
+          "name": "connector",
+          "summary": "Generic connector framework",
+          "use_cases": ["ecommerce integration", "data synchronization", "external systems"],
+          "complexity": "high"
+        },
+        {
+          "name": "connector_base_product",
+          "summary": "Product connector base",
+          "use_cases": ["product sync", "catalog management", "multi-channel"],
+          "complexity": "high"
+        }
+      ]
+    },
+    
+    {
+      "name": "rest-framework",
+      "url": "https://github.com/OCA/rest-framework",
+      "description": "REST API framework and tools",
+      "modules": [
+        {
+          "name": "base_rest",
+          "summary": "REST framework for Odoo",
+          "use_cases": ["REST APIs", "web services", "integrations"],
+          "complexity": "medium"
+        },
+        {
+          "name": "base_rest_auth_api_key",
+          "summary": "API key authentication",
+          "use_cases": ["API security", "external access", "authentication"],
+          "complexity": "low"
+        }
+      ]
+    },
+    
+    {
+      "name": "data-protection",
+      "url": "https://github.com/OCA/data-protection",
+      "description": "GDPR and data privacy compliance",
+      "modules": [
+        {
+          "name": "privacy",
+          "summary": "GDPR compliance framework",
+          "use_cases": ["GDPR", "data privacy", "consent management"],
+          "complexity": "high"
+        },
+        {
+          "name": "privacy_partner_report",
+          "summary": "Partner data reports for GDPR",
+          "use_cases": ["data export", "right to access", "compliance"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "queue",
+      "url": "https://github.com/OCA/queue",
+      "description": "Job queue and background processing",
+      "modules": [
+        {
+          "name": "queue_job",
+          "summary": "Asynchronous job queue",
+          "use_cases": ["background jobs", "async processing", "job scheduling"],
+          "complexity": "high"
+        }
+      ]
+    },
+    
+    {
+      "name": "project",
+      "url": "https://github.com/OCA/project",
+      "description": "Project management enhancements",
+      "modules": [
+        {
+          "name": "project_task_default_stage",
+          "summary": "Default task stages per project",
+          "use_cases": ["project templates", "workflow customization", "stage management"],
+          "complexity": "low"
+        },
+        {
+          "name": "project_timeline",
+          "summary": "Gantt chart for projects",
+          "use_cases": ["project planning", "timeline view", "task scheduling"],
+          "complexity": "medium"
+        }
+      ]
+    },
+    
+    {
+      "name": "crm",
+      "url": "https://github.com/OCA/crm",
+      "description": "CRM enhancements",
+      "modules": [
+        {
+          "name": "crm_phonecall",
+          "summary": "Phone call logging",
+          "use_cases": ["call tracking", "sales calls", "customer communication"],
+          "complexity": "low"
+        },
+        {
+          "name": "crm_claim",
+          "summary": "Customer claims/complaints",
+          "use_cases": ["complaint tracking", "customer service", "quality management"],
+          "complexity": "medium"
+        }
+      ]
+    }
+  ],
+  
+  "selection_guide": {
+    "by_use_case": {
+      "api_development": [
+        "base_rest",
+        "base_jsonify",
+        "base_rest_auth_api_key"
+      ],
+      "reporting": [
+        "report_xlsx",
+        "account_financial_report",
+        "mis_builder"
+      ],
+      "sales_enhancement": [
+        "sale_commission",
+        "sale_quotation_builder",
+        "sale_advance_payment"
+      ],
+      "inventory_management": [
+        "stock_available_unreserved",
+        "stock_request",
+        "stock_warehouse_calendar"
+      ],
+      "web_improvements": [
+        "web_responsive",
+        "web_dashboard_tile",
+        "web_widget_x2many_2d_matrix"
+      ],
+      "integrations": [
+        "connector",
+        "queue_job",
+        "base_rest"
+      ],
+      "compliance": [
+        "privacy",
+        "privacy_partner_report"
+      ]
+    },
+    
+    "by_complexity": {
+      "low": [
+        "base_jsonify",
+        "report_xlsx",
+        "web_responsive",
+        "auto_backup"
+      ],
+      "medium": [
+        "base_rest",
+        "sale_quotation_builder",
+        "stock_available_unreserved"
+      ],
+      "high": [
+        "sale_commission",
+        "mis_builder",
+        "connector",
+        "queue_job"
+      ]
+    }
+  },
+  
+  "integration_patterns": {
+    "rest_api": {
+      "recommended_modules": ["base_rest", "base_rest_auth_api_key"],
+      "implementation_steps": [
+        "Install base_rest module",
+        "Create service class inheriting from 'base.rest.service'",
+        "Define HTTP routes with decorators",
+        "Implement authentication (API key or OAuth)",
+        "Document API endpoints"
+      ]
+    },
+    
+    "async_processing": {
+      "recommended_modules": ["queue_job"],
+      "implementation_steps": [
+        "Install queue_job module",
+        "Decorate methods with @job",
+        "Configure job channels",
+        "Set up job monitoring",
+        "Handle failures and retries"
+      ]
+    },
+    
+    "excel_reporting": {
+      "recommended_modules": ["report_xlsx"],
+      "implementation_steps": [
+        "Install report_xlsx module",
+        "Create report class inheriting from ReportXlsx",
+        "Implement generate_xlsx_report method",
+        "Add report action",
+        "Define report template"
+      ]
+    }
+  },
+  
+  "version_compatibility": {
+    "note": "Check module README for specific Odoo version compatibility",
+    "19.0": {
+      "status": "Some modules being migrated",
+      "recommendation": "Check branch availability before use"
+    },
+    "18.0": {
+      "status": "Good coverage",
+      "recommendation": "Most popular modules available"
+    },
+    "17.0": {
+      "status": "Mature and stable",
+      "recommendation": "Comprehensive module coverage"
+    }
+  },
+  
+  "contribution_guidelines": {
+    "code_quality": [
+      "Follow OCA guidelines",
+      "Pass all CI checks (pylint, tests)",
+      "Include tests with >80% coverage",
+      "Document in README.rst"
+    ],
+    "pull_request_process": [
+      "Fork repository",
+      "Create feature branch",
+      "Implement changes with tests",
+      "Submit PR with clear description",
+      "Address review comments"
+    ]
+  }
+}
