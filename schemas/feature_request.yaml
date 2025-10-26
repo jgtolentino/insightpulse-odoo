@@ -1,0 +1,516 @@
+# Feature Request Schema
+# This schema validates and structures feature requests for the Odoo development agent
+
+version: "1.0"
+schema_type: "feature_request"
+
+# Main feature request schema
+feature_request:
+  type: object
+  required:
+    - title
+    - description
+    - functional_area
+    - priority
+  
+  properties:
+    # Basic Information
+    title:
+      type: string
+      minLength: 10
+      maxLength: 200
+      description: "Clear, concise feature title"
+      example: "Add Sales Commission Calculation to Sale Orders"
+    
+    description:
+      type: string
+      minLength: 50
+      maxLength: 5000
+      description: "Detailed description of the feature"
+      example: "Implement automatic calculation of sales commissions based on salesperson performance and configurable commission rules"
+    
+    functional_area:
+      type: string
+      enum:
+        - sales
+        - purchasing
+        - inventory
+        - manufacturing
+        - accounting
+        - finance
+        - hr
+        - project
+        - crm
+        - helpdesk
+        - website
+        - ecommerce
+        - marketing
+        - custom
+      description: "Primary Odoo functional area affected"
+    
+    # Priority and Effort
+    priority:
+      type: string
+      enum:
+        - critical    # System down, blocking business
+        - high        # Important feature, significant business impact
+        - medium      # Useful feature, moderate impact
+        - low         # Nice to have, minimal impact
+      description: "Business priority level"
+    
+    estimated_effort:
+      type: string
+      enum:
+        - xs   # 1-4 hours (simple field additions, minor changes)
+        - s    # 1-3 days (simple module, basic features)
+        - m    # 1-2 weeks (moderate complexity, multiple models)
+        - l    # 2-4 weeks (complex module, integrations)
+        - xl   # 1-3 months (major feature, extensive work)
+      description: "Estimated development effort"
+    
+    # Technical Details
+    implementation_approach:
+      type: string
+      enum:
+        - odoo_studio      # No-code/low-code via Studio
+        - oca_module       # Use existing OCA module
+        - custom_module    # Develop custom module
+        - core_extension   # Extend core Odoo functionality
+        - api_integration  # External API integration
+      description: "Preferred implementation approach"
+    
+    affected_models:
+      type: array
+      items:
+        type: string
+      description: "Odoo models that will be modified or created"
+      example:
+        - "sale.order"
+        - "sale.order.line"
+        - "sale.commission"
+    
+    # Dependencies
+    dependencies:
+      type: array
+      items:
+        type: string
+      description: "Required Odoo modules or external systems"
+      example:
+        - "sale"
+        - "account"
+    
+    oca_modules_considered:
+      type: array
+      items:
+        type: object
+        properties:
+          name:
+            type: string
+          repository:
+            type: string
+          reason_not_suitable:
+            type: string
+      description: "OCA modules reviewed but not suitable"
+    
+    # Business Requirements
+    business_requirements:
+      type: object
+      properties:
+        user_stories:
+          type: array
+          items:
+            type: string
+          description: "User stories in 'As a [role], I want [goal], so that [benefit]' format"
+          example:
+            - "As a sales manager, I want to see commission calculations on orders, so that I can verify salesperson earnings"
+        
+        acceptance_criteria:
+          type: array
+          items:
+            type: string
+          description: "Specific criteria for feature acceptance"
+          example:
+            - "Commission is calculated as percentage of order total"
+            - "Commission rules can be configured per product category"
+            - "Historical commission data is preserved"
+        
+        business_rules:
+          type: array
+          items:
+            type: string
+          description: "Business logic and constraints"
+          example:
+            - "Commission only applies to confirmed orders"
+            - "Returned products reduce commission"
+    
+    # Security and Compliance
+    security_requirements:
+      type: object
+      properties:
+        access_control:
+          type: array
+          items:
+            type: string
+          description: "Required security groups and permissions"
+          example:
+            - "Only Sales Managers can modify commission rules"
+            - "Salespeople can view their own commissions only"
+        
+        data_privacy:
+          type: boolean
+          description: "Does this feature handle personal/sensitive data?"
+        
+        audit_trail:
+          type: boolean
+          description: "Is audit trail required for this feature?"
+        
+        multi_company:
+          type: boolean
+          description: "Must support multi-company scenarios?"
+    
+    # Performance Requirements
+    performance_requirements:
+      type: object
+      properties:
+        expected_data_volume:
+          type: string
+          enum:
+            - small      # < 1,000 records
+            - medium     # 1,000 - 100,000 records
+            - large      # 100,000 - 1M records
+            - very_large # > 1M records
+        
+        response_time:
+          type: string
+          description: "Expected response time for operations"
+          example: "< 2 seconds for calculations"
+        
+        concurrent_users:
+          type: integer
+          description: "Expected number of concurrent users"
+    
+    # Integration Requirements
+    integration_requirements:
+      type: object
+      properties:
+        external_systems:
+          type: array
+          items:
+            type: object
+            properties:
+              system_name:
+                type: string
+              integration_type:
+                type: string
+                enum:
+                  - rest_api
+                  - soap
+                  - database
+                  - file_export
+                  - webhook
+              direction:
+                type: string
+                enum:
+                  - inbound
+                  - outbound
+                  - bidirectional
+        
+        bi_tools:
+          type: array
+          items:
+            type: string
+            enum:
+              - superset
+              - metabase
+              - grafana
+              - powerbi
+              - tableau
+          description: "BI tools that need access to this data"
+    
+    # UI/UX Requirements
+    ui_requirements:
+      type: object
+      properties:
+        views_needed:
+          type: array
+          items:
+            type: string
+            enum:
+              - form
+              - tree
+              - kanban
+              - calendar
+              - pivot
+              - graph
+              - cohort
+              - gantt
+              - dashboard
+        
+        menu_location:
+          type: string
+          description: "Where in the menu structure this feature appears"
+          example: "Sales > Reporting > Commissions"
+        
+        reports_needed:
+          type: array
+          items:
+            type: string
+          description: "Required reports (PDF, Excel, etc.)"
+    
+    # Testing Requirements
+    testing_requirements:
+      type: object
+      properties:
+        unit_tests:
+          type: boolean
+          default: true
+          description: "Are unit tests required?"
+        
+        integration_tests:
+          type: boolean
+          description: "Are integration tests required?"
+        
+        test_scenarios:
+          type: array
+          items:
+            type: string
+          description: "Specific test scenarios to cover"
+        
+        performance_tests:
+          type: boolean
+          description: "Are performance tests required?"
+    
+    # Documentation Requirements
+    documentation_requirements:
+      type: object
+      properties:
+        user_documentation:
+          type: boolean
+          default: true
+        
+        technical_documentation:
+          type: boolean
+          default: true
+        
+        api_documentation:
+          type: boolean
+        
+        training_materials:
+          type: boolean
+    
+    # Deployment
+    deployment_requirements:
+      type: object
+      properties:
+        deployment_type:
+          type: string
+          enum:
+            - standard      # Normal module installation
+            - migration     # Requires data migration
+            - staged        # Phased rollout
+        
+        rollback_plan:
+          type: boolean
+          description: "Is rollback plan needed?"
+        
+        downtime_acceptable:
+          type: boolean
+          description: "Can deployment cause downtime?"
+        
+        data_migration:
+          type: object
+          properties:
+            required:
+              type: boolean
+            affected_records:
+              type: integer
+            migration_script:
+              type: string
+    
+    # Additional Context
+    context:
+      type: object
+      properties:
+        current_workaround:
+          type: string
+          description: "How is this currently handled?"
+        
+        similar_features:
+          type: array
+          items:
+            type: string
+          description: "Similar features in Odoo or other systems"
+        
+        stakeholders:
+          type: array
+          items:
+            type: string
+          description: "Key stakeholders for this feature"
+        
+        deadline:
+          type: string
+          format: date
+          description: "Target delivery date"
+        
+        budget:
+          type: string
+          description: "Budget constraints or considerations"
+    
+    # Metadata
+    metadata:
+      type: object
+      properties:
+        created_by:
+          type: string
+        
+        created_at:
+          type: string
+          format: date-time
+        
+        updated_at:
+          type: string
+          format: date-time
+        
+        odoo_version:
+          type: string
+          default: "19.0"
+        
+        environment:
+          type: string
+          enum:
+            - development
+            - staging
+            - production
+        
+        tags:
+          type: array
+          items:
+            type: string
+          description: "Tags for categorization"
+
+# Validation Rules
+validation_rules:
+  - rule: "critical_priority_must_have_effort"
+    condition: "priority == 'critical'"
+    requirement: "estimated_effort is required"
+    message: "Critical features must have effort estimation"
+  
+  - rule: "external_integration_requires_details"
+    condition: "implementation_approach == 'api_integration'"
+    requirement: "integration_requirements.external_systems is required and not empty"
+    message: "API integrations must specify external systems"
+  
+  - rule: "sensitive_data_requires_security"
+    condition: "security_requirements.data_privacy == true"
+    requirement: "security_requirements.access_control is required"
+    message: "Features handling sensitive data must define access control"
+  
+  - rule: "large_data_volume_requires_performance_plan"
+    condition: "performance_requirements.expected_data_volume in ['large', 'very_large']"
+    requirement: "performance_requirements.response_time is required"
+    message: "Large datasets require performance requirements"
+  
+  - rule: "multi_company_requires_isolation"
+    condition: "security_requirements.multi_company == true"
+    requirement: "affected_models includes company_id field"
+    message: "Multi-company features must include company_id in models"
+
+# Example Feature Request
+example:
+  title: "Sales Commission Management Module"
+  description: |
+    Implement a comprehensive sales commission module that automatically calculates
+    commissions for salespeople based on configurable rules. The module should support
+    percentage-based commissions, tiered rates, and product category-specific rules.
+    Commission calculations should update automatically when orders are confirmed.
+  
+  functional_area: "sales"
+  priority: "high"
+  estimated_effort: "m"
+  implementation_approach: "custom_module"
+  
+  affected_models:
+    - "sale.order"
+    - "sale.order.line"
+    - "sale.commission"
+    - "sale.commission.rule"
+  
+  dependencies:
+    - "sale"
+    - "account"
+  
+  oca_modules_considered:
+    - name: "sale_commission"
+      repository: "commission"
+      reason_not_suitable: "Doesn't support our specific tiered rate requirements"
+  
+  business_requirements:
+    user_stories:
+      - "As a sales manager, I want to configure commission rules, so that I can motivate salespeople"
+      - "As a salesperson, I want to see my commission on each order, so that I know my earnings"
+    
+    acceptance_criteria:
+      - "Commission rules can be set by product category"
+      - "Commission calculations appear on sale order form"
+      - "Monthly commission reports are available"
+      - "Commission data is included in salesperson performance reports"
+    
+    business_rules:
+      - "Commission is only earned on confirmed orders"
+      - "Canceled orders reduce commission"
+      - "Returns reduce commission by the returned amount"
+      - "Commission rates can vary by product category"
+  
+  security_requirements:
+    access_control:
+      - "Sales / Manager can create and modify commission rules"
+      - "Sales / User can view their own commissions only"
+      - "Finance / Manager can view all commissions"
+    data_privacy: false
+    audit_trail: true
+    multi_company: true
+  
+  performance_requirements:
+    expected_data_volume: "medium"
+    response_time: "< 2 seconds for commission calculation"
+    concurrent_users: 50
+  
+  ui_requirements:
+    views_needed:
+      - "form"
+      - "tree"
+      - "pivot"
+    menu_location: "Sales > Configuration > Commissions"
+    reports_needed:
+      - "Monthly Commission Report (PDF)"
+      - "Commission Detail Export (Excel)"
+  
+  testing_requirements:
+    unit_tests: true
+    integration_tests: true
+    test_scenarios:
+      - "Calculate commission on confirmed order"
+      - "Verify commission reduction on order cancellation"
+      - "Test tiered commission rates"
+      - "Validate multi-company commission isolation"
+  
+  documentation_requirements:
+    user_documentation: true
+    technical_documentation: true
+    api_documentation: false
+    training_materials: true
+  
+  deployment_requirements:
+    deployment_type: "standard"
+    rollback_plan: true
+    downtime_acceptable: false
+    data_migration:
+      required: false
+  
+  metadata:
+    odoo_version: "19.0"
+    environment: "production"
+    tags:
+      - "sales"
+      - "commission"
+      - "reporting"

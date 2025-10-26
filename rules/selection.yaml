@@ -1,0 +1,450 @@
+# Module and Pattern Selection Rules
+# This file defines decision rules for choosing implementation patterns,
+# suggesting OCA modules, and routing development approaches.
+
+version: "1.0"
+metadata:
+  created: "2025-10-26"
+  purpose: "Agent decision-making for Odoo development"
+  odoo_version: "19.0"
+
+# Pattern Selection Rules for Data Connectors
+connector_patterns:
+  - name: "direct_database_view"
+    condition:
+      any:
+        - keyword: "real-time reporting"
+        - keyword: "live dashboard"
+        - keyword: "minimal latency"
+    requirements:
+      - read_only_access: true
+      - same_network: true
+    recommendation:
+      pattern: "PostgreSQL views with read-only user"
+      advantages:
+        - "Fastest performance"
+        - "Simple setup"
+        - "No API overhead"
+      disadvantages:
+        - "Requires database credentials"
+        - "Limited to SQL queries"
+        - "No Odoo security layer"
+      implementation_steps:
+        - "Create read-only PostgreSQL user"
+        - "Design star schema views"
+        - "Add appropriate indexes"
+        - "Configure network security"
+    
+  - name: "json_rpc_api"
+    condition:
+      any:
+        - keyword: "external system"
+        - keyword: "remote access"
+        - keyword: "API integration"
+        - keyword: "secure connection"
+    requirements:
+      - authentication: true
+      - respects_security: true
+    recommendation:
+      pattern: "Odoo JSON-RPC External API"
+      advantages:
+        - "Respects Odoo security"
+        - "Works remotely"
+        - "Standard authentication"
+      disadvantages:
+        - "Slower than direct DB"
+        - "Limited by API design"
+        - "Requires network access"
+      implementation_steps:
+        - "Generate API keys for users"
+        - "Implement RPC calls in connector"
+        - "Handle authentication and sessions"
+        - "Implement error handling and retries"
+  
+  - name: "custom_rest_endpoint"
+    condition:
+      any:
+        - keyword: "complex transformation"
+        - keyword: "custom logic"
+        - keyword: "aggregation"
+        - keyword: "business rules"
+    requirements:
+      - custom_module: true
+      - business_logic: true
+    recommendation:
+      pattern: "Custom REST API Controller"
+      advantages:
+        - "Full control over logic"
+        - "Can aggregate and transform"
+        - "Optimized queries"
+      disadvantages:
+        - "Requires Odoo module"
+        - "More code to maintain"
+        - "Version-specific"
+      implementation_steps:
+        - "Create Odoo module with controller"
+        - "Implement HTTP routes"
+        - "Add authentication (API key)"
+        - "Write unit tests"
+        - "Document API endpoints"
+  
+  - name: "etl_scheduled_export"
+    condition:
+      any:
+        - keyword: "batch processing"
+        - keyword: "scheduled export"
+        - keyword: "data warehouse"
+        - keyword: "nightly sync"
+    requirements:
+      - scheduled_action: true
+      - file_export: true
+    recommendation:
+      pattern: "Scheduled ETL Job (Cron)"
+      advantages:
+        - "Predictable server load"
+        - "Can cache/preprocess"
+        - "Flexible scheduling"
+      disadvantages:
+        - "Not real-time"
+        - "Delayed data"
+        - "Requires storage"
+      implementation_steps:
+        - "Create scheduled action in Odoo"
+        - "Implement export logic (CSV/JSON)"
+        - "Configure file destination (S3/SFTP)"
+        - "Add error handling and alerts"
+        - "Set up monitoring"
+
+# BI Tool Integration Patterns
+bi_tool_recommendations:
+  superset:
+    best_for:
+      - "SQL-based analytics"
+      - "Custom dashboards"
+      - "Embedded analytics"
+    connection_type: "direct_database"
+    features:
+      - "Row-level security"
+      - "Multi-company support"
+      - "Caching (Redis)"
+      - "Embedded dashboards"
+    setup_complexity: "medium"
+  
+  metabase:
+    best_for:
+      - "Quick insights"
+      - "Self-service BI"
+      - "Small teams"
+    connection_type: "direct_database"
+    features:
+      - "Easy setup"
+      - "Question-based queries"
+      - "Email reports"
+    setup_complexity: "low"
+  
+  grafana:
+    best_for:
+      - "Monitoring dashboards"
+      - "Time-series data"
+      - "Operational metrics"
+    connection_type: "postgresql_plugin"
+    features:
+      - "Real-time updates"
+      - "Alerting"
+      - "Multiple data sources"
+    setup_complexity: "low"
+  
+  powerbi:
+    best_for:
+      - "Enterprise reporting"
+      - "Microsoft ecosystem"
+      - "Complex calculations"
+    connection_type: "odbc_or_api"
+    features:
+      - "Advanced DAX formulas"
+      - "Integration with Office 365"
+      - "Power Query"
+    setup_complexity: "high"
+
+# Module Development Approach Selection
+development_approach:
+  - name: "use_odoo_studio"
+    condition:
+      all:
+        - complexity: "low"
+        - customization_level: "simple"
+      any:
+        - user_type: "business_user"
+        - requirement: "prototype"
+    recommendation:
+      approach: "Odoo Studio (No-Code/Low-Code)"
+      when_to_use:
+        - "Simple field additions"
+        - "Basic workflow changes"
+        - "Rapid prototyping"
+        - "Non-technical users"
+      limitations:
+        - "Limited to supported field types"
+        - "No complex business logic"
+        - "Studio license required"
+  
+  - name: "use_oca_module"
+    condition:
+      any:
+        - keyword: "standard feature"
+        - keyword: "common requirement"
+    recommendation:
+      approach: "Reuse OCA Module"
+      when_to_use:
+        - "Standard functionality exists"
+        - "Community-maintained solution"
+        - "Avoid reinventing the wheel"
+      steps:
+        - "Search OCA repositories"
+        - "Check compatibility (version)"
+        - "Review code quality"
+        - "Test in development"
+        - "Vendor module if needed"
+  
+  - name: "custom_module_development"
+    condition:
+      any:
+        - complexity: "medium"
+        - complexity: "high"
+        - requirement: "unique business logic"
+    recommendation:
+      approach: "Custom Python Module"
+      when_to_use:
+        - "Specific business requirements"
+        - "Complex calculations"
+        - "Integration with external systems"
+        - "Performance-critical features"
+      best_practices:
+        - "Follow OCA guidelines"
+        - "Use model inheritance"
+        - "Write unit tests"
+        - "Document thoroughly"
+        - "Version control"
+
+# OCA Module Suggestions by Functional Area
+oca_recommendations:
+  sales:
+    - name: "sale_quotation_builder"
+      use_case: "Advanced quote generation"
+      repository: "sale-workflow"
+    
+    - name: "sale_commission"
+      use_case: "Sales commission calculation"
+      repository: "commission"
+    
+    - name: "sale_advance_payment"
+      use_case: "Advance payment handling"
+      repository: "sale-workflow"
+  
+  inventory:
+    - name: "stock_available_unreserved"
+      use_case: "Real available quantity"
+      repository: "stock-logistics-warehouse"
+    
+    - name: "stock_request"
+      use_case: "Stock request workflow"
+      repository: "stock-logistics-warehouse"
+  
+  accounting:
+    - name: "account_payment_partner"
+      use_case: "Partner payment methods"
+      repository: "account-payment"
+    
+    - name: "account_financial_report"
+      use_case: "Financial reporting"
+      repository: "account-financial-reporting"
+  
+  reporting:
+    - name: "report_xlsx"
+      use_case: "Excel report generation"
+      repository: "reporting-engine"
+    
+    - name: "base_report_to_printer"
+      use_case: "Direct printing"
+      repository: "reporting-engine"
+  
+  api:
+    - name: "base_rest"
+      use_case: "REST API framework"
+      repository: "rest-framework"
+    
+    - name: "base_jsonify"
+      use_case: "JSON serialization"
+      repository: "server-tools"
+  
+  connector:
+    - name: "connector"
+      use_case: "Generic connector framework"
+      repository: "connector"
+
+# Security and Compliance Rules
+security_rules:
+  - name: "multi_company_isolation"
+    condition:
+      feature: "multi-company"
+    requirements:
+      - "Add company_id field to models"
+      - "Implement record rules for company isolation"
+      - "Test cross-company access prevention"
+      - "Document company switching behavior"
+  
+  - name: "data_privacy_gdpr"
+    condition:
+      keyword: "personal data"
+    requirements:
+      - "Implement data anonymization"
+      - "Add data retention policies"
+      - "Enable data export for users"
+      - "Implement deletion workflows"
+      - "Log data access"
+  
+  - name: "audit_trail"
+    condition:
+      any:
+        - industry: "finance"
+        - industry: "healthcare"
+        - requirement: "compliance"
+    requirements:
+      - "Enable mail tracking on models"
+      - "Log state changes"
+      - "Track user actions"
+      - "Implement approval workflows"
+      - "Retain audit logs"
+
+# Performance Optimization Rules
+performance_rules:
+  - name: "large_dataset_handling"
+    condition:
+      data_volume: ">100k records"
+    recommendations:
+      - "Use database indexes on filtered fields"
+      - "Implement pagination in list views"
+      - "Use search_count() before search_read()"
+      - "Avoid n+1 queries (use mapped() wisely)"
+      - "Consider archiving old records"
+  
+  - name: "complex_computations"
+    condition:
+      computation: "complex"
+    recommendations:
+      - "Use stored computed fields when appropriate"
+      - "Implement caching for expensive calculations"
+      - "Move heavy processing to scheduled actions"
+      - "Consider materialized views for reporting"
+  
+  - name: "reporting_optimization"
+    condition:
+      feature: "reporting"
+    recommendations:
+      - "Create database views for complex reports"
+      - "Use GROUP BY in SQL instead of Python loops"
+      - "Implement report caching"
+      - "Generate reports asynchronously for large datasets"
+
+# Testing Requirements
+testing_rules:
+  - name: "critical_business_logic"
+    condition:
+      any:
+        - module_type: "accounting"
+        - module_type: "payroll"
+        - feature: "financial"
+    requirements:
+      - "Unit tests for all computation methods"
+      - "Test state transitions"
+      - "Test constraints and validations"
+      - "Test multi-company scenarios"
+      - "Minimum 80% code coverage"
+  
+  - name: "integration_testing"
+    condition:
+      feature: "external_api"
+    requirements:
+      - "Mock external API calls in tests"
+      - "Test error handling"
+      - "Test timeout scenarios"
+      - "Test authentication failures"
+
+# Documentation Requirements
+documentation_rules:
+  - name: "public_module"
+    condition:
+      distribution: "public"
+    requirements:
+      - "Complete README.rst (OCA format)"
+      - "Docstrings for all public methods"
+      - "Usage examples"
+      - "Configuration guide"
+      - "Upgrade/migration notes"
+  
+  - name: "api_endpoints"
+    condition:
+      feature: "rest_api"
+    requirements:
+      - "OpenAPI/Swagger documentation"
+      - "Request/response examples"
+      - "Authentication guide"
+      - "Error code reference"
+
+# Version Compatibility
+version_rules:
+  current_version: "19.0"
+  supported_versions:
+    - "19.0"
+    - "18.0"  # Limited support
+  
+  migration_notes:
+    from_18_to_19:
+      - "Check for deprecated APIs"
+      - "Update manifest version"
+      - "Test thoroughly"
+      - "Review breaking changes in release notes"
+  
+  deprecation_warnings:
+    - api: "fields.Date.context_today()"
+      replacement: "fields.Date.today()"
+      deprecated_in: "17.0"
+      removed_in: "19.0"
+
+# CI/CD Pipeline Rules
+cicd_rules:
+  required_checks:
+    - "pylint (OCA configuration)"
+    - "flake8"
+    - "Unit tests (pytest)"
+    - "Code coverage >80%"
+    - "Security scan (bandit)"
+  
+  deployment_gates:
+    staging:
+      - "All tests pass"
+      - "Code review approved"
+    production:
+      - "Staging validation complete"
+      - "Backup completed"
+      - "Rollback plan documented"
+
+# Agent Behavior Configuration
+agent_behavior:
+  code_style: "oca"  # Follow OCA guidelines
+  prefer_reuse: true  # Suggest OCA modules first
+  generate_tests: true  # Always include unit tests
+  include_documentation: true  # Generate comprehensive docs
+  security_first: true  # Prioritize security considerations
+  
+  response_format:
+    include_explanation: true
+    include_alternatives: true
+    include_best_practices: true
+    include_examples: true
+  
+  default_assumptions:
+    odoo_version: "19.0"
+    deployment: "docker"
+    database: "postgresql_15"
+    python_version: "3.11"
