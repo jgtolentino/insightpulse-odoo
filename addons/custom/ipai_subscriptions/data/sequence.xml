@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Subscription Sequence -->
+    <record id="seq_subscription" model="ir.sequence">
+        <field name="name">Subscription</field>
+        <field name="code">ipai.subscription</field>
+        <field name="prefix">SUB/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Subscription Line Sequence -->
+    <record id="seq_subscription_line" model="ir.sequence">
+        <field name="name">Subscription Line</field>
+        <field name="code">ipai.subscription.line</field>
+        <field name="prefix">SUBL/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Usage Event Sequence -->
+    <record id="seq_usage_event" model="ir.sequence">
+        <field name="name">Usage Event</field>
+        <field name="code">ipai.usage.event</field>
+        <field name="prefix">USE/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Dunning Process Sequence -->
+    <record id="seq_dunning" model="ir.sequence">
+        <field name="name">Dunning Process</field>
+        <field name="code">ipai.dunning</field>
+        <field name="prefix">DUN/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>

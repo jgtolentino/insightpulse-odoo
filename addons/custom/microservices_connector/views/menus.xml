@@ -1,0 +1,14 @@
+<odoo>
+  <!-- Microservices Connector Menu Structure -->
+  <menuitem id="menu_microservices_root" name="Microservices" sequence="110"/>
+  
+  <menuitem id="menu_microservices_config" name="Configurations" 
+            parent="menu_microservices_root" 
+            action="action_microservices_config"
+            sequence="10"/>
+  
+  <menuitem id="menu_microservices_service" name="Services" 
+            parent="menu_microservices_root" 
+            action="action_microservices_service"
+            sequence="20"/>
+</odoo>

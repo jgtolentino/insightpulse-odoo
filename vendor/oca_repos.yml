@@ -1,0 +1,11 @@
+odoo_series: "19.0"
+repos:
+  - name: OCA/contract           # recurring contracts (Subscriptions core)
+    branch: "19.0"               # fallback to "18.0" if needed
+    modules: [contract, contract_sale, contract_invoice]
+  - name: OCA/server-tools
+    branch: "19.0"
+    modules: [queue_job, base_tier_validation, server_environment]
+  - name: OCA/reporting-engine
+    branch: "19.0"
+    modules: [report_xlsx]

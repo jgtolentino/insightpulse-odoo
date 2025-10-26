@@ -1,0 +1,48 @@
+name: 'insightpulse_odoo'
+version: '1.0.0'
+config-version: 2
+
+profile: 'insightpulse_odoo'
+
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+target-path: "target"
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  insightpulse_odoo:
+    # Staging models - raw data from Odoo
+    staging:
+      +schema: staging
+      +tags: ["staging"]
+      materialized: table
+      
+    # Intermediate models - transformations
+    intermediate:
+      +schema: intermediate
+      +tags: ["intermediate"]
+      materialized: table
+      
+    # Semantic models - business-ready
+    semantic:
+      +schema: semantic
+      +tags: ["semantic"]
+      materialized: table
+      
+    # Metrics layer
+    metrics:
+      +schema: metrics
+      +tags: ["metrics"]
+      materialized: table
+
+seeds:
+  +schema: seed_data
+  insightpulse_odoo:
+    tags: ["seed"]

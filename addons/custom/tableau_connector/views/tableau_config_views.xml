@@ -1,0 +1,115 @@
+<odoo>
+  <!-- Tableau Configuration Views -->
+  <record id="view_tableau_config_form" model="ir.ui.view">
+    <field name="name">tableau.config.form</field>
+    <field name="model">tableau.config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="test_connection" type="object" string="Test Connection" class="btn-primary"/>
+          <field name="connection_status" widget="statusbar" statusbar_visible="not_tested,success,failed"/>
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="server_url"/>
+              <field name="site_name"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="username"/>
+              <field name="password" password="True"/>
+              <field name="personal_access_token" password="True"/>
+            </group>
+          </group>
+          <group string="Connection Status">
+            <field name="last_connection_test" readonly="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_tableau_config_tree" model="ir.ui.view">
+    <field name="name">tableau.config.tree</field>
+    <field name="model">tableau.config</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="server_url"/>
+        <field name="connection_status"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Tableau Dashboard Views -->
+  <record id="view_tableau_dashboard_form" model="ir.ui.view">
+    <field name="name">tableau.dashboard.form</field>
+    <field name="model">tableau.dashboard</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="export_data_to_tableau" type="object" string="Export Data" class="btn-primary"/>
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="dashboard_id"/>
+              <field name="workbook_id"/>
+              <field name="config_id"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="description" nolabel="1"/>
+            </group>
+          </group>
+          <group string="Embedding">
+            <field name="embed_url" readonly="1"/>
+            <div class="alert alert-info" role="alert">
+              <strong>Embed URL:</strong> Use this URL to embed the dashboard in Odoo views.
+            </div>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_tableau_dashboard_tree" model="ir.ui.view">
+    <field name="name">tableau.dashboard.tree</field>
+    <field name="model">tableau.dashboard</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="dashboard_id"/>
+        <field name="config_id"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Actions -->
+  <record id="action_tableau_config" model="ir.actions.act_window">
+    <field name="name">Tableau Configurations</field>
+    <field name="res_model">tableau.config</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Configure your Tableau connections
+      </p>
+    </field>
+  </record>
+
+  <record id="action_tableau_dashboard" model="ir.actions.act_window">
+    <field name="name">Tableau Dashboards</field>
+    <field name="res_model">tableau.dashboard</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Manage your Tableau dashboards
+      </p>
+    </field>
+  </record>
+</odoo>

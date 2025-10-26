@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dashboard List Template -->
+    <template id="dashboard_list" name="Superset Dashboard List">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <style>
+                    .dashboard-card {
+                        border: 1px solid #dee2e6;
+                        border-radius: 8px;
+                        padding: 20px;
+                        margin-bottom: 20px;
+                        transition: box-shadow 0.3s;
+                    }
+                    .dashboard-card:hover {
+                        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+                    }
+                    .dashboard-title {
+                        font-size: 18px;
+                        font-weight: 600;
+                        margin-bottom: 10px;
+                    }
+                    .dashboard-description {
+                        color: #6c757d;
+                        margin-bottom: 15px;
+                    }
+                    .btn-view-dashboard {
+                        background-color: #007bff;
+                        color: white;
+                        padding: 8px 16px;
+                        border-radius: 4px;
+                        text-decoration: none;
+                        display: inline-block;
+                    }
+                    .btn-view-dashboard:hover {
+                        background-color: #0056b3;
+                        color: white;
+                    }
+                </style>
+            </t>
+            <div class="container mt-5">
+                <h1 class="mb-4">Superset Dashboards</h1>
+
+                <t t-if="dashboards">
+                    <div class="row">
+                        <t t-foreach="dashboards" t-as="dashboard">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="dashboard-card">
+                                    <div class="dashboard-title">
+                                        <t t-esc="dashboard.name"/>
+                                    </div>
+                                    <div class="dashboard-description">
+                                        <t t-if="dashboard.description">
+                                            <t t-esc="dashboard.description"/>
+                                        </t>
+                                        <t t-else="">
+                                            No description available
+                                        </t>
+                                    </div>
+                                    <a t-attf-href="/superset/embed/#{dashboard.id}" class="btn-view-dashboard">
+                                        View Dashboard
+                                    </a>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+                <t t-else="">
+                    <div class="alert alert-info">
+                        No active dashboards available. Please configure dashboards in Settings.
+                    </div>
+                </t>
+            </div>
+        </t>
+    </template>
+
+    <!-- Embedded Dashboard Template -->
+    <template id="embed_dashboard" name="Embedded Superset Dashboard">
+        <t t-call="web.layout">
+            <t t-set="head">
+                <style>
+                    .dashboard-container {
+                        width: 100%;
+                        height: calc(100vh - 100px);
+                        border: none;
+                        margin: 0;
+                        padding: 0;
+                    }
+                    .dashboard-header {
+                        padding: 15px 20px;
+                        background-color: #f8f9fa;
+                        border-bottom: 1px solid #dee2e6;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                    }
+                    .dashboard-title {
+                        font-size: 20px;
+                        font-weight: 600;
+                        margin: 0;
+                    }
+                    .token-info {
+                        font-size: 12px;
+                        color: #6c757d;
+                    }
+                    .dashboard-iframe {
+                        width: 100%;
+                        height: 100%;
+                        border: none;
+                    }
+                    .loading-overlay {
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(255,255,255,0.9);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        z-index: 1000;
+                    }
+                </style>
+                <script type="text/javascript">
+                    document.addEventListener('DOMContentLoaded', function() {
+                        const iframe = document.getElementById('superset-iframe');
+                        const loadingOverlay = document.getElementById('loading-overlay');
+
+                        // Hide loading overlay when iframe loads
+                        iframe.addEventListener('load', function() {
+                            loadingOverlay.style.display = 'none';
+                        });
+
+                        // Auto-refresh token before expiry
+                        const expiresAt = new Date('<t t-esc="expires_at"/>');
+                        const now = new Date();
+                        const timeToExpiry = expiresAt - now;
+
+                        // Refresh 5 minutes before expiry
+                        if (timeToExpiry > 300000) {
+                            setTimeout(function() {
+                                refreshToken();
+                            }, timeToExpiry - 300000);
+                        }
+
+                        function refreshToken() {
+                            fetch('/superset/token/refresh', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    jsonrpc: '2.0',
+                                    method: 'call',
+                                    params: {
+                                        dashboard_id: <t t-esc="dashboard.id"/>
+                                    }
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.result &amp;&amp; data.result.success) {
+                                    // Reload iframe with new token
+                                    location.reload();
+                                }
+                            })
+                            .catch(error => console.error('Token refresh failed:', error));
+                        }
+                    });
+                </script>
+            </t>
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <t t-esc="dashboard.name"/>
+                </h1>
+                <div class="token-info">
+                    Token expires: <t t-esc="expires_at"/>
+                </div>
+            </div>
+            <div class="dashboard-container">
+                <div id="loading-overlay" class="loading-overlay">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Loading dashboard...</span>
+                    </div>
+                </div>
+                <iframe
+                    id="superset-iframe"
+                    class="dashboard-iframe"
+                    t-att-src="embed_url"
+                    sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                />
+            </div>
+        </t>
+    </template>
+
+    <!-- Error Templates -->
+    <template id="dashboard_not_found" name="Dashboard Not Found">
+        <t t-call="web.layout">
+            <div class="container mt-5">
+                <div class="alert alert-danger">
+                    <h4>Dashboard Not Found</h4>
+                    <p><t t-esc="error"/></p>
+                    <a href="/superset/dashboards" class="btn btn-primary">View All Dashboards</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="dashboard_inactive" name="Dashboard Inactive">
+        <t t-call="web.layout">
+            <div class="container mt-5">
+                <div class="alert alert-warning">
+                    <h4>Dashboard Inactive</h4>
+                    <p><t t-esc="error"/></p>
+                    <a href="/superset/dashboards" class="btn btn-primary">View All Dashboards</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="token_error" name="Token Generation Error">
+        <t t-call="web.layout">
+            <div class="container mt-5">
+                <div class="alert alert-danger">
+                    <h4>Authentication Error</h4>
+                    <p><t t-esc="error"/></p>
+                    <p>Please contact your system administrator if this problem persists.</p>
+                    <a href="/superset/dashboards" class="btn btn-primary">View All Dashboards</a>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="embed_error" name="Embedding Error">
+        <t t-call="web.layout">
+            <div class="container mt-5">
+                <div class="alert alert-danger">
+                    <h4>Error Loading Dashboard</h4>
+                    <p><t t-esc="error"/></p>
+                    <p>Please try again or contact support.</p>
+                    <a href="/superset/dashboards" class="btn btn-primary">View All Dashboards</a>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

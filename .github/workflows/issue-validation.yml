@@ -1,0 +1,62 @@
+name: Issue Validation
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issues:
+    types: [labeled, unlabeled]
+
+jobs:
+  validate-issue-labels:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate decision label
+        run: |
+          # Get issue number from PR body or title
+          PR_NUMBER=${{ github.event.pull_request.number }}
+          ISSUE_NUMBER=$(gh pr view $PR_NUMBER --json body --jq '.body' | grep -o '#[0-9]*' | head -1 | tr -d '#' || echo "")
+          
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "❌ PR must reference an issue (e.g., #123)"
+            exit 1
+          fi
+
+          # Get issue labels
+          LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name' || echo "")
+          
+          if echo "$LABELS" | grep -q "decision:"; then
+            echo "✅ Issue has decision label"
+          else
+            echo "❌ Issue must have a decision label (decision:oca|ipai|sa)"
+            exit 1
+          fi
+
+          # Check for plan.yaml
+          if [ -f "plan.yaml" ]; then
+            echo "✅ plan.yaml found"
+          else
+            echo "❌ plan.yaml must exist in repository"
+            exit 1
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  validate-labels-on-issue:
+    if: github.event_name == 'issues'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check decision label
+        run: |
+          ISSUE_NUMBER=${{ github.event.issue.number }}
+          LABELS=$(gh issue view $ISSUE_NUMBER --json labels --jq '.labels[].name' || echo "")
+          
+          if echo "$LABELS" | grep -q "decision:"; then
+            echo "✅ Issue has decision label"
+          else
+            echo "⚠️ Issue should have a decision label (decision:oca|ipai|sa)"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

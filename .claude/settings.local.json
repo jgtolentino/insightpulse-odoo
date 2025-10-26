@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh issue list:*)",
+      "Bash(gh issue view:*)",
+      "Bash(gh pr view:*)",
+      "Bash(find:*)",
+      "Bash(python3 -m pylint:*)",
+      "Bash(python3 -m flake8:*)",
+      "Bash(pylint:*)",
+      "Bash(xargs ls:*)",
+      "Bash(tree:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

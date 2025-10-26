@@ -19,11 +19,11 @@ jobs:
           script: |
             set -e
             cd ~/insightpulse-odoo
-            
+
             echo "📁 Setting up directory..."
             mkdir -p ~/insightpulse-odoo
             cd ~/insightpulse-odoo
-            
+
             # Clone or update repository
             if [ ! -d ".git" ]; then
                 echo "📦 Cloning repository..."
@@ -32,21 +32,19 @@ jobs:
                 echo "🔄 Pulling latest changes..."
                 git pull origin main
             fi
-            
+
             echo "🐳 Pulling latest Docker images from registry..."
             docker compose pull odoo
-            
+
             echo "🚀 Restarting services with new images..."
             docker compose up -d --force-recreate odoo
-            
+
             DB="${{ secrets.ODOO_DB }}"
             echo "🔄 Updating Odoo modules..."
-            docker compose exec -T odoo odoo shell -d "$DB" <<'PY'
-env['ir.module.module'].update_list()
-PY
-            
+            docker compose exec -T odoo odoo shell -d "$DB" -c "env['ir.module.module'].update_list()"
+
             echo "🔄 Upgrading all modules..."
             docker compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d "$DB" -u all --stop-after-init
-            
+
             echo "✅ Production deployment completed successfully!"
             echo "🌐 Odoo available at: http://${{ secrets.PRODUCTION_HOST }}:8069"

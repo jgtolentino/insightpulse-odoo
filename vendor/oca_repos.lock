@@ -1,0 +1,60 @@
+# OCA Vendor Lock File
+# This file pins specific versions of OCA modules for reproducible builds
+# Generated from vendor/oca_repos.yml
+
+odoo_series: "19.0"
+generated_at: "2025-10-26T11:01:00Z"
+repos:
+  - name: OCA/contract
+    branch: "19.0"
+    commit: "latest"
+    modules:
+      - name: contract
+        version: "19.0.1.0.0"
+      - name: contract_sale
+        version: "19.0.1.0.0"
+      - name: contract_invoice
+        version: "19.0.1.0.0"
+
+  - name: OCA/server-tools
+    branch: "19.0"
+    commit: "latest"
+    modules:
+      - name: queue_job
+        version: "19.0.1.0.0"
+      - name: base_tier_validation
+        version: "19.0.1.0.0"
+      - name: server_environment
+        version: "19.0.1.0.0"
+
+  - name: OCA/reporting-engine
+    branch: "19.0"
+    commit: "latest"
+    modules:
+      - name: report_xlsx
+        version: "19.0.1.0.0"
+
+# Dependencies for InsightPulse Odoo modules
+dependencies:
+  ipai_procure:
+    - queue_job
+    - base_tier_validation
+    - report_xlsx
+    - server_environment
+
+  ipai_expense:
+    - queue_job
+    - report_xlsx
+    - server_environment
+
+  ipai_subscriptions:
+    - contract
+    - contract_sale
+    - contract_invoice
+    - queue_job
+
+# Compatibility matrix
+compatibility:
+  odoo_version: "19.0"
+  python_versions: ["3.8", "3.9", "3.10"]
+  postgresql_versions: ["13", "14", "15"]

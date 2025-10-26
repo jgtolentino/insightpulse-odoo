@@ -1,0 +1,36 @@
+<odoo>
+  <template id="blocked_page" name="Security Blocked Page">
+    <t t-call="web.html_container">
+      <div class="container mt-5">
+        <div class="row justify-content-center">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-danger text-white">
+                <h4 class="card-title mb-0">
+                  <i class="fa fa-ban me-2"></i>
+                  Access Denied
+                </h4>
+              </div>
+              <div class="card-body">
+                <div class="text-center mb-4">
+                  <i class="fa fa-shield-alt fa-4x text-danger mb-3"></i>
+                  <h3>Security Restriction</h3>
+                </div>
+                <p class="text-center" t-esc="message"/>
+                <div class="alert alert-warning mt-4">
+                  <strong>Security Notice:</strong> This feature has been disabled for security reasons in the production environment.
+                </div>
+                <div class="text-center mt-4">
+                  <a href="/web" class="btn btn-primary">
+                    <i class="fa fa-home me-2"></i>
+                    Return to Application
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </t>
+  </template>
+</odoo>

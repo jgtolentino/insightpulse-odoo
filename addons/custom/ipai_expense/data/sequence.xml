@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Expense Advance Sequence -->
+    <record id="seq_expense_advance" model="ir.sequence">
+        <field name="name">Expense Advance</field>
+        <field name="code">ipai.expense.advance</field>
+        <field name="prefix">EA/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- Expense Policy Sequence -->
+    <record id="seq_expense_policy" model="ir.sequence">
+        <field name="name">Expense Policy</field>
+        <field name="code">ipai.expense.policy</field>
+        <field name="prefix">EP/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+
+    <!-- OCR Audit Sequence -->
+    <record id="seq_ocr_audit" model="ir.sequence">
+        <field name="name">OCR Audit</field>
+        <field name="code">ipai.expense.ocr.audit</field>
+        <field name="prefix">OCR/%(year)s/</field>
+        <field name="padding">4</field>
+        <field name="company_id" eval="False"/>
+    </record>
+</odoo>
