@@ -1,12 +1,12 @@
 # Canonical labels for this repo
 - name: status:done
-  color: 2ea043
+  color: "2ea043"
   description: "Work completed and awaiting closure"
 
 - name: resolved
-  color: 0969da
+  color: "0969da"
   description: "Issue resolved; pending confirmation or auto-close"
 
 - name: autoclosed
-  color: 6e7781
+  color: "6e7781"
   description: "Closed automatically by CI workflow"
