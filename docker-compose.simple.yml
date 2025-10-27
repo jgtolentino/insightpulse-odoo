@@ -18,6 +18,7 @@ services:
 
   odoo:
     image: odoo:19
+    command: odoo -c /etc/odoo/odoo.conf
     environment:
       HOST: db
       USER: ${POSTGRES_USER:-odoo}
@@ -25,21 +26,12 @@ services:
     ports: ["8070:8069"]
     depends_on: [db]
     volumes:
-      # InsightPulse modules (source display)
-      - ./addons/insightpulse:/mnt/extra-addons/insightpulse
+      # InsightPulse modules
+      - ./addons/insightpulse:/mnt/extra-addons/insightpulse:ro
       # Custom modules (editable)
       - ./addons/custom:/mnt/extra-addons/custom
-      # BI Superset agent
-      - ./addons/bi_superset_agent:/mnt/extra-addons/bi_superset_agent
-      # Knowledge Notion clone
-      - ./addons/knowledge_notion_clone:/mnt/extra-addons/knowledge_notion_clone
-      # OCA modules (read-only, mounted at repo level for flexible discovery)
-      - ./addons/oca/web:/mnt/extra-addons/oca-web:ro
-      - ./addons/oca/account-financial-tools:/mnt/extra-addons/oca-account-financial-tools:ro
-      - ./addons/oca/account-invoicing:/mnt/extra-addons/oca-account-invoicing:ro
-      - ./addons/oca/hr:/mnt/extra-addons/oca-hr:ro
-      - ./addons/oca/manufacture:/mnt/extra-addons/oca-manufacture:ro
-      - ./addons/oca/reporting-engine:/mnt/extra-addons/oca-reporting-engine:ro
+      # OCA modules (parent directory mount, read-only)
+      - ./addons/oca/web:/mnt/extra-addons/oca:ro
       # Configuration
       - ./config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
     platform: ${PLATFORM_ODOO:-}
