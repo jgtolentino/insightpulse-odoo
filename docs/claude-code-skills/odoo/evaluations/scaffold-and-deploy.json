@@ -1,0 +1,37 @@
+{
+  "name": "Scaffold Custom Module and Deploy",
+  "skills": ["odoo19-oca-devops"],
+  "query": "Create an expense management module for Odoo 19 and generate a production deployment for insightpulseai.net",
+  "expected_behavior": [
+    "Step 1: Understands user wants to create an Odoo module",
+    "Step 2: Uses bash_tool to create module directory structure (addons/ipai_expense_management/)",
+    "Step 3: Generates __manifest__.py with AGPL-3 license, version 19.0.1.0.0, dependencies",
+    "Step 4: Creates __init__.py files for Python package initialization",
+    "Step 5: Generates README.rst in OCA format",
+    "Step 6: Creates models/, views/, security/ directories",
+    "Step 7: Generates ir.model.access.csv security file",
+    "Step 8: Creates menu_views.xml template",
+    "Step 9: Validates module structure matches OCA standards",
+    "Step 10: For deployment request, generates docker-compose.yml",
+    "Step 11: Creates nginx/nginx.conf with SSL and security headers",
+    "Step 12: Generates config/odoo.conf with production settings",
+    "Step 13: Creates .env.example with DB_PASSWORD placeholder",
+    "Step 14: Generates deploy.sh script",
+    "Step 15: Reports: 'Created module ipai_expense_management' with file list",
+    "Step 16: Reports: 'Generated production deployment for insightpulseai.net' with next steps"
+  ],
+  "success_criteria": [
+    "Module created in addons/ directory with proper structure",
+    "__manifest__.py has all required fields (name, version, license, author)",
+    "Version follows 19.0.x.y.z format",
+    "License is AGPL-3 or user-specified",
+    "README.rst exists in OCA format",
+    "security/ir.model.access.csv exists",
+    "Docker-compose.yml created with Odoo 19, PostgreSQL/Supabase, Nginx",
+    "nginx.conf includes SSL configuration and security headers",
+    "odoo.conf has workers=4, max_cron_threads=2",
+    ".env.example includes DB_PASSWORD, ADMIN_PASSWORD",
+    "deploy.sh is executable (mode 0755)",
+    "Uses bash_tool, create_file tools (no custom MCP servers required)"
+  ]
+}

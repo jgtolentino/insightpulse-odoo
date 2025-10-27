@@ -1,0 +1,6 @@
+{
+  "name": "Vendor OCA Modules",
+  "skills": ["odoo19-oca-devops"],
+  "query": "Vendor OCA accounting and helpdesk modules",
+  "success_criteria": ["repos.yaml created", "addons/oca/ populated", "Git commits pinned"]
+}

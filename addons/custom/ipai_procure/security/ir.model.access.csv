@@ -1,2 +1,11 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-admin_all_ipai_procure,admin_all_ipai_procure,model_ipai_purchase_requisition,base.group_system,1,1,1,1
+access_ipai_purchase_requisition_user,ipai.purchase.requisition.user,model_ipai_purchase_requisition,base.group_user,1,1,1,0
+access_ipai_purchase_requisition_manager,ipai.purchase.requisition.manager,model_ipai_purchase_requisition,base.group_system,1,1,1,1
+access_ipai_purchase_req_line_user,ipai.purchase.req.line.user,model_ipai_purchase_req_line,base.group_user,1,1,1,0
+access_ipai_purchase_req_line_manager,ipai.purchase.req.line.manager,model_ipai_purchase_req_line,base.group_system,1,1,1,1
+access_ipai_rfq_round_user,ipai.rfq.round.user,model_ipai_rfq_round,base.group_user,1,1,1,0
+access_ipai_rfq_round_manager,ipai.rfq.round.manager,model_ipai_rfq_round,base.group_system,1,1,1,1
+access_ipai_vendor_score_user,ipai.vendor.score.user,model_ipai_vendor_score,base.group_user,1,0,0,0
+access_ipai_vendor_score_manager,ipai.vendor.score.manager,model_ipai_vendor_score,base.group_system,1,1,1,1
+access_ipai_vendor_catalog_user,ipai.vendor.catalog.user,model_ipai_vendor_catalog,base.group_user,1,0,0,0
+access_ipai_vendor_catalog_manager,ipai.vendor.catalog.manager,model_ipai_vendor_catalog,base.group_system,1,1,1,1

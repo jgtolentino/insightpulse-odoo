@@ -1,7 +1,9 @@
 """Superset Embedded Dashboard Controller with CSP Security"""
 import json
 import logging
+import re
 from datetime import datetime, timedelta
+from urllib.parse import urlencode, quote
 
 from odoo import http
 from odoo.http import request
@@ -197,6 +199,50 @@ class SupersetEmbedController(http.Controller):
 
         return token
 
+    def _validate_filter_param(self, key, value):
+        """
+        Validate and sanitize filter parameters to prevent URL injection
+
+        Args:
+            key: Parameter key (must start with 'filter_')
+            value: Parameter value to validate
+
+        Returns:
+            tuple: (validated_key, validated_value) or None if invalid
+
+        Raises:
+            ValidationError: If parameter is malicious
+        """
+        # Validate key format: filter_<name> where name is alphanumeric+underscore
+        if not re.match(r'^filter_[a-zA-Z0-9_]+$', key):
+            _logger.warning(f"Invalid filter parameter key: {key}")
+            raise ValidationError(f"Invalid filter parameter format: {key}")
+
+        # Validate value constraints
+        if not isinstance(value, (str, int, float, bool)):
+            raise ValidationError(f"Invalid filter value type for {key}: {type(value)}")
+
+        # Convert to string and validate length (prevent DOS via huge params)
+        value_str = str(value)
+        if len(value_str) > 500:
+            raise ValidationError(f"Filter value too long for {key}: {len(value_str)} chars")
+
+        # Check for URL injection patterns
+        dangerous_patterns = [
+            r'javascript:',  # XSS
+            r'data:',        # Data URI XSS
+            r'<script',      # Script injection
+            r'onerror=',     # Event handler injection
+            r'\.\./',        # Path traversal
+            r'//',           # Protocol-relative URL
+        ]
+        for pattern in dangerous_patterns:
+            if re.search(pattern, value_str, re.IGNORECASE):
+                _logger.error(f"Detected injection attempt in filter {key}: {value_str[:100]}")
+                raise ValidationError(f"Invalid characters in filter value for {key}")
+
+        return (key, value_str)
+
     def _build_embed_url(self, dashboard, token, params):
         """
         Build Superset embed URL with authentication token
@@ -212,19 +258,26 @@ class SupersetEmbedController(http.Controller):
         base_url = dashboard.config_id.base_url.rstrip('/')
         dashboard_uuid = dashboard.dashboard_id
 
-        # Build query parameters
+        # Build query parameters (using dict for proper URL encoding)
         query_params = {
             'standalone': '1',
             'guest_token': token.token,
         }
 
-        # Add any additional filter parameters
+        # Add validated filter parameters
         if params:
             for key, value in params.items():
                 if key.startswith('filter_'):
-                    query_params[key] = value
+                    try:
+                        validated_key, validated_value = self._validate_filter_param(key, value)
+                        query_params[validated_key] = validated_value
+                    except ValidationError as e:
+                        _logger.error(f"Filter validation failed: {e}")
+                        # Skip invalid parameters instead of failing entire request
+                        continue
 
-        query_string = '&'.join([f"{k}={v}" for k, v in query_params.items()])
+        # Use urllib.parse.urlencode for proper URL encoding (prevents injection)
+        query_string = urlencode(query_params, safe='', quote_via=quote)
 
         return f"{base_url}/superset/dashboard/{dashboard_uuid}/?{query_string}"
 

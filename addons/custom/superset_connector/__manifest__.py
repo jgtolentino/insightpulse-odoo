@@ -1,6 +1,6 @@
 {
     "name": "Superset Connector",
-    "version": "19.0.251026.1",
+    "version": "19.0.251027.1",
     "category": "Connectors",
     "summary": "Apache Superset integration for Odoo",
     "description": """
@@ -9,6 +9,7 @@
     - Single Sign-On (SSO) integration
     - Dashboard management interface
     - Data source synchronization
+    - URL injection protection (CVSS 6.5 fix)
     """,
     "author": "InsightPulseAI",
     "website": "https://insightpulseai.net/odoo/apps/superset_connector",

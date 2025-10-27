@@ -1,1 +1,3 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_security_log_user,security.log.user,model_security_log,base.group_user,1,0,0,0
+access_security_log_manager,security.log.manager,model_security_log,base.group_system,1,1,1,1

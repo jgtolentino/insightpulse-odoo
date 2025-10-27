@@ -14,6 +14,7 @@
     "website": "https://insightpulseai.net/odoo/apps/apps_admin_enhancements",
     "depends": ["base"],
     "data": [
+        "security/ir.model.access.csv",
         "views/ir_module_views.xml",
         "data/cron_refresh.xml",
     ],
