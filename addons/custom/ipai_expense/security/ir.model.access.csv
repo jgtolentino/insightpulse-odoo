@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_expense_advance_user,ipai.expense.advance.user,model_ipai_expense_advance,base.group_user,1,1,1,0
+access_ipai_expense_advance_manager,ipai.expense.advance.manager,model_ipai_expense_advance,base.group_system,1,1,1,1
+access_ipai_expense_policy_user,ipai.expense.policy.user,model_ipai_expense_policy,base.group_user,1,0,0,0
+access_ipai_expense_policy_manager,ipai.expense.policy.manager,model_ipai_expense_policy,base.group_system,1,1,1,1
+access_ipai_expense_ocr_audit_user,ipai.expense.ocr.audit.user,model_ipai_expense_ocr_audit,base.group_user,1,0,0,0
+access_ipai_expense_ocr_audit_manager,ipai.expense.ocr.audit.manager,model_ipai_expense_ocr_audit,base.group_system,1,1,1,1

@@ -1,0 +1,14 @@
+<odoo>
+  <!-- Superset Connector Menu Structure -->
+  <menuitem id="menu_superset_root" name="Superset" sequence="100"/>
+  
+  <menuitem id="menu_superset_config" name="Configurations" 
+            parent="menu_superset_root" 
+            action="action_superset_config"
+            sequence="10"/>
+  
+  <menuitem id="menu_superset_dashboard" name="Dashboards" 
+            parent="menu_superset_root" 
+            action="action_superset_dashboard"
+            sequence="20"/>
+</odoo>

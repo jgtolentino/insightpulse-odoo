@@ -1,0 +1,14 @@
+<odoo>
+  <!-- Tableau Connector Menu Structure -->
+  <menuitem id="menu_tableau_root" name="Tableau" sequence="120"/>
+  
+  <menuitem id="menu_tableau_config" name="Configurations" 
+            parent="menu_tableau_root" 
+            action="action_tableau_config"
+            sequence="10"/>
+  
+  <menuitem id="menu_tableau_dashboard" name="Dashboards" 
+            parent="menu_tableau_root" 
+            action="action_tableau_dashboard"
+            sequence="20"/>
+</odoo>

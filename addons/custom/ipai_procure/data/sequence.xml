@@ -1,0 +1,20 @@
+<odoo>
+  <record id="seq_ipai_pr" model="ir.sequence">
+    <field name="name">IPAI PR</field>
+    <field name="code">ipai.pr</field>
+    <field name="prefix">PR%(y)s-</field>
+    <field name="padding">5</field>
+  </record>
+  <record id="seq_ipai_adv" model="ir.sequence">
+    <field name="name">IPAI Advance</field>
+    <field name="code">ipai.advance</field>
+    <field name="prefix">ADV%(y)s-</field>
+    <field name="padding">5</field>
+  </record>
+  <record id="seq_ipai_sub" model="ir.sequence">
+    <field name="name">IPAI Subscription</field>
+    <field name="code">ipai.subscription</field>
+    <field name="prefix">SUB%(y)s-</field>
+    <field name="padding">5</field>
+  </record>
+</odoo>

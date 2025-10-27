@@ -1,0 +1,142 @@
+<odoo>
+  <!-- Microservices Configuration Views -->
+  <record id="view_microservices_config_form" model="ir.ui.view">
+    <field name="name">microservices.config.form</field>
+    <field name="model">microservices.config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="run_self_test" type="object" string="Run Self-Test" class="btn-primary"/>
+          <field name="connection_status" widget="statusbar" statusbar_visible="not_tested,success,failed"/>
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="api_key" password="True"/>
+              <field name="auth_token" password="True"/>
+            </group>
+          </group>
+          <group string="Service Endpoints">
+            <field name="ocr_service_url"/>
+            <field name="llm_service_url"/>
+            <field name="agent_service_url"/>
+          </group>
+          <group string="Connection Status">
+            <field name="last_connection_test" readonly="1"/>
+          </group>
+        </sheet>
+        <notebook>
+          <page string="Health Logs">
+            <field name="health_log_ids">
+              <tree>
+                <field name="create_date" string="Check Date"/>
+                <field name="component"/>
+                <field name="status"/>
+                <field name="response_time"/>
+                <field name="error_message"/>
+              </tree>
+              <form>
+                <group>
+                  <group>
+                    <field name="create_date" readonly="1"/>
+                    <field name="component" readonly="1"/>
+                    <field name="status" readonly="1"/>
+                  </group>
+                  <group>
+                    <field name="response_time" readonly="1"/>
+                    <field name="total_check_time" readonly="1"/>
+                    <field name="error_message" readonly="1" nolabel="1"/>
+                  </group>
+                </group>
+              </form>
+            </field>
+          </page>
+        </notebook>
+      </form>
+    </field>
+  </record>
+
+    <record id="view_microservices_config_tree" model="ir.ui.view">
+      <field name="name">microservices.config.tree</field>
+      <field name="model">microservices.config</field>
+      <field name="arch" type="xml">
+        <list>
+        <field name="name"/>
+        <field name="connection_status"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Microservices Service Views -->
+  <record id="view_microservices_service_form" model="ir.ui.view">
+    <field name="name">microservices.service.form</field>
+    <field name="model">microservices.service</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="test_service_connection" type="object" string="Test Connection" class="btn-primary"/>
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="service_type"/>
+              <field name="config_id"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="description" nolabel="1"/>
+            </group>
+          </group>
+          <group string="Service Details">
+            <field name="endpoint_url" readonly="1"/>
+            <div class="alert alert-info" role="alert">
+              <strong>Service Type:</strong> {service_type} - {endpoint_url}
+            </div>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_microservices_service_tree" model="ir.ui.view">
+    <field name="name">microservices.service.tree</field>
+    <field name="model">microservices.service</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="service_type"/>
+        <field name="config_id"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Actions -->
+  <record id="action_microservices_config" model="ir.actions.act_window">
+    <field name="name">Microservices Configurations</field>
+    <field name="res_model">microservices.config</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Configure your microservices connections
+      </p>
+    </field>
+  </record>
+
+  <record id="action_microservices_service" model="ir.actions.act_window">
+    <field name="name">Microservices Services</field>
+    <field name="res_model">microservices.service</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Manage your microservices
+      </p>
+    </field>
+  </record>
+</odoo>

@@ -1,0 +1,14 @@
+{
+    "name": "IPAI Procure",
+    "version": "19.0.20251026.1",
+    "summary": "PR → RFQ → PO → GRN → 3WM with approvals, catalogs, rounds",
+    "author": "InsightPulseAI",
+    "website": "https://insightpulseai.net/odoo/apps/ipai_procure",
+    "license": "AGPL-3",
+    "depends": [
+        "base", "mail", "purchase", "stock", "account", "product", "uom",
+        "queue_job", "base_tier_validation", "report_xlsx", "server_environment"
+    ],
+    "data": ["security/ir.model.access.csv", "data/sequence.xml"],
+    "installable": True,
+}

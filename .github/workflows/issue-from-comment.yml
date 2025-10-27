@@ -1,0 +1,46 @@
+name: Issue from Comment
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  issues: write
+  contents: read
+  pull-requests: read
+jobs:
+  create:
+    if: startsWith(github.event.comment.body, '/create-issue ')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Parse command
+        id: parse
+        run: |
+          BODY="${{ github.event.comment.body }}"
+          PAYLOAD="${BODY#'/create-issue '}"
+          echo "$PAYLOAD" > payload.json
+          cat payload.json
+      - name: Create labels if missing
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const wanted = (require('./payload.json').labels || []);
+            for (const name of wanted) {
+              try {
+                await github.rest.issues.getLabel({owner: context.repo.owner, repo: context.repo.repo, name});
+              } catch {
+                await github.rest.issues.createLabel({owner: context.repo.owner, repo: context.repo.repo, name, color: '0E8A16'});
+              }
+            }
+      - name: Create issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const p = require('./payload.json');
+            const res = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: p.title,
+              body: p.body,
+              labels: p.labels || [],
+              assignees: p.assignees || []
+            });
+            core.setOutput('issue_url', res.data.html_url);

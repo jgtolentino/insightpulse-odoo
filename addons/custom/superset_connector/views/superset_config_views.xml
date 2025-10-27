@@ -1,0 +1,110 @@
+<odoo>
+  <!-- Superset Configuration Views -->
+  <record id="view_superset_config_form" model="ir.ui.view">
+    <field name="name">superset.config.form</field>
+    <field name="model">superset.config</field>
+    <field name="arch" type="xml">
+      <form>
+        <header>
+          <button name="test_connection" type="object" string="Test Connection" class="btn-primary"/>
+          <field name="connection_status" widget="statusbar" statusbar_visible="not_tested,success,failed"/>
+        </header>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="base_url"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="username"/>
+              <field name="password" password="True"/>
+              <field name="api_key" password="True"/>
+            </group>
+          </group>
+          <group string="Connection Status">
+            <field name="last_connection_test" readonly="1"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_superset_config_tree" model="ir.ui.view">
+    <field name="name">superset.config.tree</field>
+    <field name="model">superset.config</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="base_url"/>
+        <field name="connection_status"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Superset Dashboard Views -->
+  <record id="view_superset_dashboard_form" model="ir.ui.view">
+    <field name="name">superset.dashboard.form</field>
+    <field name="model">superset.dashboard</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <group>
+              <field name="name"/>
+              <field name="dashboard_id"/>
+              <field name="config_id"/>
+              <field name="is_active"/>
+            </group>
+            <group>
+              <field name="description" nolabel="1"/>
+            </group>
+          </group>
+          <group string="Embedding">
+            <field name="embed_url" readonly="1"/>
+            <div class="alert alert-info" role="alert">
+              <strong>Embed URL:</strong> Use this URL to embed the dashboard in Odoo views.
+            </div>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+
+  <record id="view_superset_dashboard_tree" model="ir.ui.view">
+    <field name="name">superset.dashboard.tree</field>
+    <field name="model">superset.dashboard</field>
+    <field name="arch" type="xml">
+      <list>
+        <field name="name"/>
+        <field name="dashboard_id"/>
+        <field name="config_id"/>
+        <field name="is_active"/>
+      </list>
+    </field>
+  </record>
+
+  <!-- Actions -->
+  <record id="action_superset_config" model="ir.actions.act_window">
+    <field name="name">Superset Configurations</field>
+    <field name="res_model">superset.config</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Configure your Superset connections
+      </p>
+    </field>
+  </record>
+
+  <record id="action_superset_dashboard" model="ir.actions.act_window">
+    <field name="name">Superset Dashboards</field>
+    <field name="res_model">superset.dashboard</field>
+    <field name="view_mode">tree,form</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Manage your Superset dashboards
+      </p>
+    </field>
+  </record>
+</odoo>

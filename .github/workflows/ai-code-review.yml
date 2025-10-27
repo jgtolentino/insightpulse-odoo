@@ -1,0 +1,70 @@
+name: AI Code Review
+on:
+  # Only trigger on PRs from branches within this repository (safe approach)
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches: [main, develop]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  ai-review:
+    # Only run on PRs from the same repository (not forks)
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: AI Code Review using GPT
+        uses: anc95/ChatGPT-CodeReview@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LANGUAGE: en
+          # Odoo-specific configuration
+          EXCLUDE: "*.po,*.pot,*.mo,*.pyc,__pycache__/,*.log,*.sql,*.csv,*.xml"
+          MODEL: gpt-4
+
+  # Alternative workflow for fork PRs (manual trigger)
+  fork-review:
+    if: github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code (safe mode)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}  # Only checkout base branch for security
+
+      - name: Comment on fork PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `🔒 **Security Notice: Fork PR Detected**\n\nFor security reasons, AI code review is not automatically performed on pull requests from forks.\n\n**Options:**\n1. **Merge to a branch in this repository** - Create a branch in this repo and open a PR from there\n2. **Manual review request** - Ask a maintainer to manually trigger the AI review\n3. **Security review** - A maintainer will review your changes manually\n\nThank you for your contribution! 🚀`;
+            await github.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            });
+
+  # Manual trigger for AI review (for forks or specific cases)
+  manual-review:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: AI Code Review (Manual Trigger)
+        uses: anc95/ChatGPT-CodeReview@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          LANGUAGE: en
+          EXCLUDE: "*.po,*.pot,*.mo,*.pyc,__pycache__/,*.log,*.sql,*.csv,*.xml"
+          MODEL: gpt-4

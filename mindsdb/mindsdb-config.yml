@@ -1,0 +1,165 @@
+# MindsDB Configuration for InsightPulse Odoo
+# Connects to Supabase for ML training and predictions
+
+version: "1.0"
+
+# Supabase Integration
+databases:
+  - name: "supabase"
+    type: "postgres"
+    connection:
+      host: "${SUPABASE_DB_HOST}"
+      port: 5432
+      database: "${SUPABASE_DB_NAME}"
+      user: "${SUPABASE_DB_USER}"
+      password: "${SUPABASE_DB_PASSWORD}"
+      ssl: true
+
+# ML Models Configuration
+models:
+  # Subscription Churn Prediction
+  - name: "subscription_churn_model"
+    predict: "churn"
+    connection: "supabase"
+    training_data: "SELECT * FROM ml_features.subscription_training WHERE churn IS NOT NULL"
+    problem_type: "classification"
+    engine: "lightwood"
+    parameters:
+      target: "churn"
+      time_aim: 200
+      use_gpu: false
+      stop_training_in_x_seconds: 300
+    schedule:
+      retrain: "weekly"
+      predict: "daily"
+
+  # Procurement Vendor Score Prediction
+  - name: "vendor_score_model"
+    predict: "vendor_score"
+    connection: "supabase"
+    training_data: "SELECT * FROM ml_features.vendor_scoring WHERE vendor_score IS NOT NULL"
+    problem_type: "regression"
+    engine: "lightwood"
+    parameters:
+      target: "vendor_score"
+      time_aim: 180
+      use_gpu: false
+
+  # Expense Fraud Detection
+  - name: "expense_fraud_model"
+    predict: "is_fraud"
+    connection: "supabase"
+    training_data: "SELECT * FROM ml_features.expense_fraud_training WHERE is_fraud IS NOT NULL"
+    problem_type: "classification"
+    engine: "lightwood"
+    parameters:
+      target: "is_fraud"
+      time_aim: 150
+      use_gpu: false
+
+# Prediction Jobs
+jobs:
+  # Daily subscription churn prediction
+  - name: "daily_subscription_churn_prediction"
+    model: "subscription_churn_model"
+    query: |
+      INSERT INTO predictions.subscription_churn 
+      (subscription_id, prediction, confidence, model_version)
+      SELECT 
+        s.subscription_id,
+        m.prediction,
+        m.confidence,
+        'subscription_churn_model_v1'
+      FROM supabase.ml_features.subscription_scoring s
+      JOIN subscription_churn_model m ON s.subscription_id = m.subscription_id
+    schedule: "0 2 * * *"  # Daily at 2 AM
+
+  # Weekly vendor score prediction
+  - name: "weekly_vendor_score_prediction"
+    model: "vendor_score_model"
+    query: |
+      INSERT INTO predictions.vendor_scores
+      (vendor_id, predicted_score, prediction_date, model_version)
+      SELECT 
+        v.vendor_id,
+        m.vendor_score,
+        NOW(),
+        'vendor_score_model_v1'
+      FROM supabase.ml_features.vendor_scoring v
+      JOIN vendor_score_model m ON v.vendor_id = m.vendor_id
+    schedule: "0 3 * * 1"  # Weekly on Monday at 3 AM
+
+  # Real-time expense fraud detection
+  - name: "realtime_expense_fraud_detection"
+    model: "expense_fraud_model"
+    query: |
+      INSERT INTO predictions.expense_fraud
+      (expense_id, is_fraud, confidence, prediction_date, model_version)
+      SELECT 
+        e.expense_id,
+        m.is_fraud,
+        m.confidence,
+        NOW(),
+        'expense_fraud_model_v1'
+      FROM supabase.ml_features.expense_fraud_scoring e
+      JOIN expense_fraud_model m ON e.expense_id = m.expense_id
+    schedule: "*/15 * * * *"  # Every 15 minutes
+
+# Model Monitoring
+monitoring:
+  - model: "subscription_churn_model"
+    metrics:
+      - accuracy
+      - precision
+      - recall
+      - f1_score
+    alert_thresholds:
+      accuracy: 0.85
+      f1_score: 0.80
+    retrain_thresholds:
+      accuracy: 0.75
+      f1_score: 0.70
+
+  - model: "vendor_score_model"
+    metrics:
+      - mae
+      - mse
+      - r2_score
+    alert_thresholds:
+      mae: 0.15
+      r2_score: 0.80
+
+# Feature Store Integration
+feature_store:
+  - name: "subscription_features"
+    connection: "supabase"
+    query: |
+      SELECT 
+        s.id as subscription_id,
+        s.partner_id,
+        s.mrr,
+        EXTRACT(DAY FROM NOW() - s.start_date) as subscription_age_days,
+        COUNT(i.id) as invoice_count,
+        COUNT(CASE WHEN i.payment_state = 'paid' AND i.invoice_date_due < NOW() THEN 1 END) as late_payment_count,
+        COUNT(t.id) as support_ticket_count,
+        CASE WHEN s.state = 'cancelled' THEN true ELSE false END as churn
+      FROM odoo_raw.ipai_subscription s
+      LEFT JOIN odoo_raw.account_move i ON s.id = i.subscription_id
+      LEFT JOIN odoo_raw.helpdesk_ticket t ON s.partner_id = t.partner_id
+      GROUP BY s.id, s.partner_id, s.mrr, s.start_date, s.state
+
+  - name: "vendor_features"
+    connection: "supabase"
+    query: |
+      SELECT 
+        v.id as vendor_id,
+        v.name,
+        COUNT(po.id) as purchase_count,
+        AVG(po.amount_total) as avg_purchase_amount,
+        COUNT(CASE WHEN po.state = 'purchase' THEN 1 END) as completed_orders,
+        COUNT(CASE WHEN po.state = 'cancel' THEN 1 END) as cancelled_orders,
+        AVG(EXTRACT(DAY FROM po.date_approve - po.date_order)) as avg_approval_days
+      FROM odoo_raw.res_partner v
+      LEFT JOIN odoo_raw.purchase_order po ON v.id = po.partner_id
+      WHERE v.supplier_rank > 0
+      GROUP BY v.id, v.name

@@ -1,0 +1,53 @@
+version: '3.8'
+services:
+  openmetadata-server:
+    image: openmetadata/server:1.4.0
+    container_name: openmetadata-server
+    restart: always
+    ports:
+      - "8585:8585"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: openmetadata
+      DB_USER: openmetadata_user
+      DB_PASSWORD: ${OPENMETADATA_DB_PASSWORD}
+      AIRFLOW_HOST: airflow-webserver
+      AIRFLOW_PORT: 8080
+      PIPELINE_SERVICE_CLIENT_ENDPOINT: http://openmetadata-server:8585/api
+      AUTHORIZER_CLASS_NAME: org.openmetadata.service.security.DefaultAuthorizer
+      AUTHENTICATION_PROVIDER: no-auth
+      ELASTICSEARCH_HOST: elasticsearch
+      ELASTICSEARCH_PORT: 9200
+    depends_on:
+      - postgres
+      - elasticsearch
+
+  postgres:
+    image: postgres:13
+    container_name: openmetadata-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: openmetadata
+      POSTGRES_USER: openmetadata_user
+      POSTGRES_PASSWORD: ${OPENMETADATA_DB_PASSWORD}
+    volumes:
+      - openmetadata_postgres_data:/var/lib/postgresql/data
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.16.2
+    container_name: openmetadata-elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - openmetadata_es_data:/usr/share/elasticsearch/data
+
+volumes:
+  openmetadata_postgres_data:
+  openmetadata_es_data:

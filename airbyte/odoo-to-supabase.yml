@@ -1,0 +1,178 @@
+version: "2.0"
+type: Configuration
+
+# Airbyte Configuration for Odoo → Supabase CDC Sync
+# This syncs Odoo Postgres to Supabase Postgres with incremental CDC
+
+definitions:
+  # Odoo Source Configuration
+  odoo_source:
+    type: "Postgres"
+    host: "${ODOO_DB_HOST}"
+    port: 5432
+    database: "${ODOO_DB_NAME}"
+    username: "${ODOO_DB_USER}"
+    password: "${ODOO_DB_PASSWORD}"
+    ssl: false
+    replication_method:
+      method: "CDC"
+    schemas: ["public"]
+    tables:
+      - "res_partner"
+      - "account_move"
+      - "account_move_line"
+      - "purchase_order"
+      - "purchase_order_line"
+      - "sale_order"
+      - "sale_order_line"
+      - "stock_move"
+      - "stock_picking"
+      - "hr_expense"
+      - "hr_expense_sheet"
+      - "ipai_subscription"
+      - "ipai_subscription_line"
+      - "ipai_purchase_requisition"
+      - "ipai_purchase_req_line"
+      - "ipai_expense_advance"
+      - "ipai_expense_policy"
+
+  # Supabase Destination Configuration
+  supabase_destination:
+    type: "Postgres"
+    host: "${SUPABASE_DB_HOST}"
+    port: 5432
+    database: "${SUPABASE_DB_NAME}"
+    username: "${SUPABASE_DB_USER}"
+    password: "${SUPABASE_DB_PASSWORD}"
+    ssl: true
+    schema: "odoo_raw"
+
+streams:
+  - stream:
+      name: "res_partner"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "account_move"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "account_move_line"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "purchase_order"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "purchase_order_line"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "sale_order"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "sale_order_line"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "stock_move"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "stock_picking"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "hr_expense"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "hr_expense_sheet"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_subscription"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_subscription_line"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_purchase_requisition"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_purchase_req_line"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_expense_advance"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+      
+  - stream:
+      name: "ipai_expense_policy"
+      sync_mode: "incremental"
+      destination_sync_mode: "upsert"
+      primary_key: ["id"]
+      cursor_field: "write_date"
+
+check:
+  - type: "Postgres"
+    query: "SELECT 1"
+
+# Connection schedule - run every 5 minutes
+schedule:
+  type: "basic"
+  units: 5
+  time_unit: "minutes"

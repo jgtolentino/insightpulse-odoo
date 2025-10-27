@@ -1,0 +1,104 @@
+name: Feature Request
+description: Request a new feature for InsightPulse Odoo
+title: "[FEATURE] "
+labels: ["enhancement"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to request a new feature! Please fill out the following details to help us understand your request.
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      description: Which domain does this feature belong to?
+      options:
+        - Procurement
+        - Expense Management
+        - Subscriptions
+        - Business Intelligence
+        - Machine Learning
+        - Agent System
+        - Security
+        - Integration
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Capabilities
+      description: What capabilities should this feature provide?
+      placeholder: |
+        - Automated workflow for procurement approvals
+        - Real-time analytics dashboard
+        - Integration with external BI tools
+    validations:
+      required: true
+
+  - type: dropdown
+    id: decision
+    attributes:
+      label: Implementation Decision
+      description: Which implementation approach should be used?
+      options:
+        - Odoo SA (Standard Odoo functionality)
+        - OCA (Odoo Community Association modules)
+        - IPAI (InsightPulse AI custom modules)
+        - TBD (To be determined by analysis)
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance Criteria
+      description: What specific requirements must be met for this feature to be considered complete?
+      placeholder: |
+        - [ ] Feature works in Odoo 19.0
+        - [ ] All tests pass
+        - [ ] Documentation is complete
+        - [ ] Security review completed
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: What modules or systems does this depend on?
+      placeholder: |
+        - OCA queue_job module
+        - Superset integration
+        - External API services
+
+  - type: textarea
+    id: implementation
+    attributes:
+      label: Implementation Notes
+      description: Any technical considerations or implementation details
+      placeholder: |
+        - Should use OCA base_tier_validation for approvals
+        - Needs to integrate with existing procurement workflow
+        - Requires new database tables
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues
+      description: Links to related issues or PRs
+      placeholder: |
+        - #123 (Related feature)
+        - #456 (Dependency issue)
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our [Code of Conduct](https://github.com/jgtolentino/insightpulse-odoo/blob/main/CODE_OF_CONDUCT.md)
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_microservices_config_user,microservices.config.user,model_microservices_config,base.group_user,1,1,1,0
+access_microservices_config_manager,microservices.config.manager,model_microservices_config,base.group_system,1,1,1,1
+access_microservices_service_user,microservices.service.user,model_microservices_service,base.group_user,1,1,1,0
+access_microservices_service_manager,microservices.service.manager,model_microservices_service,base.group_system,1,1,1,1
+access_microservices_health_log_user,microservices.health.log.user,model_microservices_health_log,base.group_user,1,0,0,0
+access_microservices_health_log_manager,microservices.health.log.manager,model_microservices_health_log,base.group_system,1,1,1,1
