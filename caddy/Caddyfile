@@ -1,0 +1,26 @@
+insightpulseai.net {
+  encode zstd gzip
+
+  # Odoo paths
+  @odoo path /odoo* /web* /longpolling* /calendar* /website* /shop*
+  handle @odoo {
+    reverse_proxy 127.0.0.1:8069
+  }
+
+  # Block database manager
+  @dbm path /web/database/* /database/*
+  respond @dbm 403
+
+  # Default
+  handle {
+    respond "OK" 200
+  }
+
+  # Security headers
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    Referrer-Policy "strict-origin-when-cross-origin"
+  }
+}

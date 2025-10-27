@@ -1,56 +1,141 @@
 name: production-deploy
+
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy"
+        required: true
+        default: "latest"
+      health_url:
+        description: "Override health URL"
+        required: false
+        default: "https://insightpulseai.net/odoo/web/login"
   workflow_run:
     workflows: ["dockerhub-publish"]
     types: [completed]
-permissions: { contents: read }
+
+permissions:
+  contents: read
+
+env:
+  SERVICE_NAME: odoo
+  HEALTH_RETRY_WAIT: "6"
+  HEALTH_RETRIES: "20"
+
 jobs:
   deploy:
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to production droplet
-        uses: appleboy/ssh-action@v1.0.3
+      - uses: actions/checkout@v4
+
+      - name: Resolve image tag
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "image_tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "image_tag=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set health URL
+        id: health
+        run: |
+          if [ -n "${{ github.event.inputs.health_url }}" ]; then
+            echo "url=${{ github.event.inputs.health_url }}" >> $GITHUB_OUTPUT
+          else
+            echo "url=https://insightpulseai.net/odoo/web/login" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install SSH
+        run: sudo apt-get update && sudo apt-get install -y openssh-client rsync jq
+
+      - name: SSH key
+        uses: webfactory/ssh-agent@v0.9.0
         with:
-          host: ${{ secrets.PRODUCTION_HOST }}
-          username: ${{ secrets.PRODUCTION_USER }}
-          key: ${{ secrets.PRODUCTION_SSH_KEY }}
-          script: |
-            set -e
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync deploy assets
+        run: |
+          ssh "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" "mkdir -p ~/insightpulse-odoo/deploy"
+          rsync -avz deploy/ "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:~/insightpulse-odoo/deploy/"
+          rsync -avz config/ "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}:~/insightpulse-odoo/config/"
+
+      - name: Remote deploy (8069 with rollback)
+        env:
+          IMAGE_TAG: ${{ steps.meta.outputs.image_tag }}
+          HEALTH_URL: ${{ steps.health.outputs.url }}
+          DOCKER_USER: ${{ secrets.DOCKER_USER }}
+          DOCKER_PAT: ${{ secrets.DOCKER_PAT }}
+        run: |
+          ssh "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" 'bash -s' <<'REMOTE'
+            set -eo pipefail
             cd ~/insightpulse-odoo
 
-            echo "📁 Setting up directory..."
-            mkdir -p ~/insightpulse-odoo
-            cd ~/insightpulse-odoo
-
-            # Clone or update repository
-            if [ ! -d ".git" ]; then
-                echo "📦 Cloning repository..."
-                git clone https://github.com/jgtolentino/insightpulse-odoo.git .
+            # Ensure env exists & write tag
+            mkdir -p deploy
+            touch deploy/.env
+            cp -a deploy/.env deploy/.env.previous || true
+            if grep -q '^ODOO_IMAGE_TAG=' deploy/.env; then
+              sed -i.bak "s/^ODOO_IMAGE_TAG=.*/ODOO_IMAGE_TAG=${IMAGE_TAG}/" deploy/.env
             else
-                echo "🔄 Pulling latest changes..."
-                git pull origin main
+              echo "ODOO_IMAGE_TAG=${IMAGE_TAG}" >> deploy/.env
             fi
 
-            echo "🐳 Pulling latest Docker images from registry..."
-            docker compose -f docker-compose.simple.yml pull odoo
+            # Ensure ODOO_HOST_PORT is set
+            if ! grep -q '^ODOO_HOST_PORT=' deploy/.env; then
+              echo "ODOO_HOST_PORT=8069" >> deploy/.env
+            fi
 
-            echo "🚀 Restarting services with new images..."
-            docker compose -f docker-compose.simple.yml up -d --force-recreate odoo
+            # Docker login
+            echo "$DOCKER_PAT" | docker login -u "$DOCKER_USER" --password-stdin
 
-            echo "⏳ Waiting for Odoo to start..."
-            sleep 30
+            # Snapshot previous image for rollback
+            PREV_IMAGE=$(docker compose -f deploy/docker-compose.bundle.yml ps --format json 2>/dev/null | jq -r ".[] | select(.Service==\"odoo\") | .Image" || true)
+            echo "Previous image: ${PREV_IMAGE:-<none>}"
 
-            DB="${{ secrets.ODOO_DB:-odoo }}"
-            echo "🔄 Updating Odoo modules..."
-            docker compose -f docker-compose.simple.yml exec -T odoo odoo shell -d "$DB" -c "env['ir.module.module'].update_list()"
+            # Pull and deploy
+            docker compose -f deploy/docker-compose.bundle.yml pull
+            docker compose -f deploy/docker-compose.bundle.yml up -d
 
-            echo "🔄 Upgrading all modules..."
-            docker compose -f docker-compose.simple.yml exec -T odoo odoo -c /etc/odoo/odoo.conf -d "$DB" -u all --stop-after-init
+            # Health check on public URL w/ 8069 fallback
+            set +e
+            ATT=0; OK=0
+            while [ $ATT -lt 20 ]; do
+              ATT=$((ATT+1))
+              if curl -fsSL --max-time 4 "$HEALTH_URL" >/dev/null 2>&1 || curl -fsSL --max-time 4 http://127.0.0.1:8069/web/login >/dev/null 2>&1; then
+                OK=1; break
+              fi
+              echo "Health check $ATT/20..."; sleep 6
+            done
+            set -e
 
-            echo "🏥 Running health check..."
-            curl -sf http://localhost:8070/web/health || echo "⚠️  Health check failed but continuing"
+            if [ $OK -ne 1 ]; then
+              echo "::warning::Health check failed. Rolling back..."
+              if [ -n "$PREV_IMAGE" ] && [ "$PREV_IMAGE" != "null" ]; then
+                # Rollback to previous image
+                TMP_ENV="deploy/.env.rollback"
+                cp -a deploy/.env "$TMP_ENV"
+                sed -i.bak "s/^ODOO_IMAGE_TAG=.*/ODOO_IMAGE_TAG=${PREV_IMAGE##*:}/" "$TMP_ENV" || true
+                docker compose --env-file "$TMP_ENV" -f deploy/docker-compose.bundle.yml up -d
+                rm -f "$TMP_ENV" "$TMP_ENV.bak"
+                echo "::error::Rollback complete (previous image: $PREV_IMAGE)"
+                exit 1
+              else
+                echo "::error::No previous image to rollback."
+                exit 1
+              fi
+            fi
 
-            echo "✅ Production deployment completed successfully!"
-            echo "🌐 Odoo available at: http://${{ secrets.PRODUCTION_HOST }}:8070"
+            echo "✅ Odoo 8069 bundle healthy"
+REMOTE
+
+      - name: Done
+        if: ${{ success() }}
+        run: echo "✅ Production deploy (8069) complete."

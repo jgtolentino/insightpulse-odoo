@@ -2,8 +2,9 @@ components:
   odoo:
     status: "healthy"
     version: "19.0"
-    port: 8070
-    commit: "2c9f071f"
+    port: 8069
+    commit: "b590b2ee"
+    deployment: "bundle"
     addons:
       oca:
         status: "ready"
@@ -25,3 +26,7 @@ components:
   mindsdb:
     status: "pending"
     note: "Not yet configured"
+
+ports:
+  odoo_http: 8069
+  superset_http: 8088

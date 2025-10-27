@@ -1,0 +1,89 @@
+name: Flip Canary (Odoo Host Port)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target host port for Odoo (8069=prod, 8070=canary)"
+        required: true
+        default: "8069"
+
+permissions:
+  contents: read
+
+env:
+  SERVICE_NAME: odoo
+  HEALTH_RETRY_WAIT: "5"
+  HEALTH_RETRIES: "20"
+
+jobs:
+  flip:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate target
+        id: validate
+        run: |
+          T="${{ github.event.inputs.target }}"
+          if [ "$T" != "8069" ] && [ "$T" != "8070" ]; then
+            echo "Invalid target: $T (must be 8069 or 8070)"; exit 1
+          fi
+          echo "target=$T" >> $GITHUB_OUTPUT
+
+      - name: Install SSH deps
+        run: sudo apt-get update && sudo apt-get install -y openssh-client jq curl
+
+      - name: SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+
+      - name: known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan "${{ secrets.PRODUCTION_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Flip target and reload
+        env:
+          TARGET: ${{ steps.validate.outputs.target }}
+        run: |
+          ssh "${{ secrets.PRODUCTION_USER }}@${{ secrets.PRODUCTION_HOST }}" 'bash -s' <<'REMOTE'
+            set -eo pipefail
+            cd ~/insightpulse-odoo
+
+            # 1) Set ODOO_HOST_PORT in env
+            mkdir -p deploy
+            touch deploy/.env
+            if grep -q '^ODOO_HOST_PORT=' deploy/.env; then
+              sed -i.bak "s/^ODOO_HOST_PORT=.*/ODOO_HOST_PORT=${TARGET}/" deploy/.env
+            else
+              echo "ODOO_HOST_PORT=${TARGET}" >> deploy/.env
+            fi
+            echo "Switched ODOO_HOST_PORT to ${TARGET}"
+
+            # 2) Restart stack
+            docker compose -f deploy/docker-compose.bundle.yml up -d
+
+            # 3) Health check on the chosen port
+            set +e
+            ATT=0; OK=0
+            while [ $ATT -lt 20 ]; do
+              ATT=$((ATT+1))
+              if curl -fsSL --max-time 4 "http://127.0.0.1:${TARGET}/web/login" >/dev/null 2>&1; then
+                OK=1; break
+              fi
+              echo "Health attempt $ATT/20..."; sleep 5
+            done
+            set -e
+
+            if [ $OK -ne 1 ]; then
+              echo "::error:: Health failed on port ${TARGET}."
+              exit 1
+            fi
+            echo "✅ Odoo healthy on ${TARGET}"
+REMOTE
+
+      - name: Done
+        if: ${{ success() }}
+        run: echo "Flip complete: Odoo now published on port ${{ steps.validate.outputs.target }}"

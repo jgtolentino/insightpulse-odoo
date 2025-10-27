@@ -1,0 +1,46 @@
+version: "3.8"
+
+services:
+  odoo:
+    image: jgtolentino/insightpulse-odoo:${ODOO_IMAGE_TAG}
+    container_name: odoo-bundle
+    restart: unless-stopped
+    env_file:
+      - ./.env
+    command: ["odoo", "-c", "/etc/odoo/odoo.conf"]
+    ports:
+      - "${ODOO_HOST_PORT:-8069}:8069"
+    depends_on:
+      - db
+    volumes:
+      - ../config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
+      # InsightPulse modules
+      - ../addons/insightpulse:/mnt/extra-addons/insightpulse:ro
+      # Custom modules
+      - ../addons/custom:/mnt/extra-addons/custom:ro
+      # OCA modules (parent dir mount)
+      - ../addons/oca/web:/mnt/extra-addons/oca:ro
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8069/web/login"]
+      interval: 10s
+      timeout: 4s
+      retries: 10
+
+  db:
+    image: postgres:15
+    container_name: odoo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odoo}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
