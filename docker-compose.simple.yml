@@ -22,7 +22,7 @@ services:
       HOST: db
       USER: ${POSTGRES_USER:-odoo}
       PASSWORD: ${POSTGRES_PASSWORD:-odoo}
-    ports: ["8069:8069"]
+    ports: ["8070:8069"]
     depends_on: [db]
     volumes:
       # InsightPulse modules (source display)
@@ -33,8 +33,13 @@ services:
       - ./addons/bi_superset_agent:/mnt/extra-addons/bi_superset_agent
       # Knowledge Notion clone
       - ./addons/knowledge_notion_clone:/mnt/extra-addons/knowledge_notion_clone
-      # OCA modules (read-only for safety)
-      - ./addons/oca:/mnt/extra-addons/oca:ro
+      # OCA modules (read-only, mounted at repo level for flexible discovery)
+      - ./addons/oca/web:/mnt/extra-addons/oca-web:ro
+      - ./addons/oca/account-financial-tools:/mnt/extra-addons/oca-account-financial-tools:ro
+      - ./addons/oca/account-invoicing:/mnt/extra-addons/oca-account-invoicing:ro
+      - ./addons/oca/hr:/mnt/extra-addons/oca-hr:ro
+      - ./addons/oca/manufacture:/mnt/extra-addons/oca-manufacture:ro
+      - ./addons/oca/reporting-engine:/mnt/extra-addons/oca-reporting-engine:ro
       # Configuration
       - ./config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
     platform: ${PLATFORM_ODOO:-}

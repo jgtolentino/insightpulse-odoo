@@ -11,7 +11,11 @@
       "Bash(xargs ls:*)",
       "Bash(tree:*)",
       "Bash(tar:*)",
-      "Bash(python3 scripts/vendor_oca_enhanced.py:*)"
+      "Bash(python3 scripts/vendor_oca_enhanced.py:*)",
+      "Bash(ssh:*)",
+      "Bash(git add:*)",
+      "Bash(git pull:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []
