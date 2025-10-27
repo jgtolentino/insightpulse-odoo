@@ -25,7 +25,18 @@ services:
     ports: ["8069:8069"]
     depends_on: [db]
     volumes:
-      - ./addons:/mnt/extra-addons
+      # InsightPulse modules (source display)
+      - ./addons/insightpulse:/mnt/extra-addons/insightpulse
+      # Custom modules (editable)
+      - ./addons/custom:/mnt/extra-addons/custom
+      # BI Superset agent
+      - ./addons/bi_superset_agent:/mnt/extra-addons/bi_superset_agent
+      # Knowledge Notion clone
+      - ./addons/knowledge_notion_clone:/mnt/extra-addons/knowledge_notion_clone
+      # OCA modules (read-only for safety)
+      - ./addons/oca:/mnt/extra-addons/oca:ro
+      # Configuration
+      - ./config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
     platform: ${PLATFORM_ODOO:-}
 
 volumes:

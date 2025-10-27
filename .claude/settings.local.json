@@ -9,7 +9,9 @@
       "Bash(python3 -m flake8:*)",
       "Bash(pylint:*)",
       "Bash(xargs ls:*)",
-      "Bash(tree:*)"
+      "Bash(tree:*)",
+      "Bash(tar:*)",
+      "Bash(python3 scripts/vendor_oca_enhanced.py:*)"
     ],
     "deny": [],
     "ask": []

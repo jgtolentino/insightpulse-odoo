@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Enhanced Apps List View with Source Information -->
+    <record id="view_module_kanban_inherit_source" model="ir.ui.view">
+        <field name="name">ir.module.module.kanban.source</field>
+        <field name="model">ir.module.module</field>
+        <field name="inherit_id" ref="base.module_view_kanban"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@class='oe_module_desc']" position="after">
+                <div class="oe_module_source" style="margin-top: 8px; font-size: 11px; color: #666;">
+                    <span class="badge" t-attf-class="badge-{{record.module_source.raw_value == 'oca' and 'info' or record.module_source.raw_value == 'custom' and 'success' or record.module_source.raw_value == 'odoo_community' and 'primary' or 'secondary'}}">
+                        <i class="fa fa-code-branch"/> <field name="module_source"/>
+                    </span>
+                    <field name="source_repository" widget="url" invisible="1"/>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Tree View with Source Column -->
+    <record id="view_module_tree_inherit_source" model="ir.ui.view">
+        <field name="name">ir.module.module.tree.source</field>
+        <field name="model">ir.module.module</field>
+        <field name="inherit_id" ref="base.module_view_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='author']" position="after">
+                <field name="module_source" optional="show"/>
+                <field name="is_oca_module" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Enhanced Form View with Source Information -->
+    <record id="view_module_form_inherit_source" model="ir.ui.view">
+        <field name="name">ir.module.module.form.source</field>
+        <field name="model">ir.module.module</field>
+        <field name="inherit_id" ref="base.module_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='author']" position="after">
+                <field name="module_source" readonly="1"/>
+                <field name="source_repository" widget="url" readonly="1"/>
+                <field name="source_path" readonly="1"/>
+            </xpath>
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_source_repository" 
+                        type="object" 
+                        class="oe_stat_button" 
+                        icon="fa-github"
+                        invisible="not source_repository">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">View</span>
+                        <span class="o_stat_text">Repository</span>
+                    </div>
+                </button>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Search View with Source Filters -->
+    <record id="view_module_filter_inherit_source" model="ir.ui.view">
+        <field name="name">ir.module.module.search.source</field>
+        <field name="model">ir.module.module</field>
+        <field name="inherit_id" ref="base.view_module_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='app']" position="after">
+                <separator/>
+                <filter string="Odoo Community" name="odoo_community" 
+                        domain="[('module_source', '=', 'odoo_community')]"/>
+                <filter string="OCA Modules" name="oca" 
+                        domain="[('module_source', '=', 'oca')]"/>
+                <filter string="Custom/InsightPulse AI" name="custom" 
+                        domain="[('module_source', '=', 'custom')]"/>
+                <filter string="Third Party" name="third_party" 
+                        domain="[('module_source', '=', 'third_party')]"/>
+            </xpath>
+            <xpath expr="//group[@name='group_by']" position="inside">
+                <filter string="Source" name="group_by_source" 
+                        context="{'group_by': 'module_source'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Menu Item for Module Sources -->
+    <menuitem id="menu_module_sources"
+              name="App Sources"
+              parent="base.menu_management"
+              action="base.open_module_tree"
+              sequence="20"
+              groups="base.group_system"/>
+</odoo>

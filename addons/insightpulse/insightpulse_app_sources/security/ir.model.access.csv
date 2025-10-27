@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ir_module_module_source_user,ir.module.module.source.user,base.model_ir_module_module,base.group_user,1,0,0,0
+access_ir_module_module_source_system,ir.module.module.source.system,base.model_ir_module_module,base.group_system,1,1,1,1

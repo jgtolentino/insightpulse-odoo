@@ -1,0 +1,4 @@
+*.backup
+odoo-multi-source-setup.tar.gz
+odoo-multi-source-setup/
+addons/oca/*/

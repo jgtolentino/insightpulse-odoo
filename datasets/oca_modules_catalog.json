@@ -1,0 +1,76 @@
+{
+  "version": "19.0",
+  "generated": "2025-10-27T14:12:11+08:00",
+  "repositories": {
+    "account-financial-tools": {
+      "description": "Financial Reports, Analysis, and Tools",
+      "url": "https://github.com/OCA/account-financial-tools.git",
+      "branch": "19.0",
+      "path": "addons/oca/account-financial-tools",
+      "module_count": 0,
+      "modules": []
+    },
+    "server-tools": {
+      "description": "Server Environment, Auto-backup, Date Ranges",
+      "url": "https://github.com/OCA/server-tools.git",
+      "branch": "19.0",
+      "path": "addons/oca/server-tools",
+      "module_count": 0,
+      "modules": []
+    },
+    "web": {
+      "description": "Responsive UI, Advanced Search, Notifications",
+      "url": "https://github.com/OCA/web.git",
+      "branch": "19.0",
+      "path": "addons/oca/web",
+      "module_count": 2,
+      "modules": [
+        {
+          "name": "web_environment_ribbon",
+          "path": "addons/oca/web/web_environment_ribbon",
+          "source": "oca",
+          "repository": "web"
+        },
+        {
+          "name": "web_favicon",
+          "path": "addons/oca/web/web_favicon",
+          "source": "oca",
+          "repository": "web"
+        }
+      ]
+    },
+    "reporting-engine": {
+      "description": "Excel Reports, PDF Enhancements, Templates",
+      "url": "https://github.com/OCA/reporting-engine.git",
+      "branch": "19.0",
+      "path": "addons/oca/reporting-engine",
+      "module_count": 0,
+      "modules": []
+    },
+    "account-invoicing": {
+      "description": "Invoice Automation and Management",
+      "url": "https://github.com/OCA/account-invoicing.git",
+      "branch": "19.0",
+      "path": "addons/oca/account-invoicing",
+      "module_count": 0,
+      "modules": []
+    },
+    "hr": {
+      "description": "HR Management, Expenses, Timesheets",
+      "url": "https://github.com/OCA/hr.git",
+      "branch": "19.0",
+      "path": "addons/oca/hr",
+      "module_count": 0,
+      "modules": []
+    },
+    "manufacture": {
+      "description": "Manufacturing Operations",
+      "url": "https://github.com/OCA/manufacture.git",
+      "branch": "19.0",
+      "path": "addons/oca/manufacture",
+      "module_count": 0,
+      "modules": []
+    }
+  },
+  "total_modules": 2
+}
