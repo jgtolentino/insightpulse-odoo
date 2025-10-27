@@ -6,7 +6,7 @@ import time
 import base64
 from cryptography.fernet import Fernet
 from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 import os
 
@@ -69,8 +69,8 @@ class MicroservicesConfig(models.Model):
             "Set ODOO_CREDENTIALS_KEY environment variable for better security."
         )
 
-        # Derive key using PBKDF2
-        kdf = PBKDF2(
+        # Derive key using PBKDF2HMAC
+        kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=b'odoo-microservices-salt',  # In production, use random salt stored securely
