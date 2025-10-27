@@ -1,4 +1,4 @@
-name: production-deploy
+name: Production Deploy (Odoo 19)
 
 on:
   workflow_dispatch:
