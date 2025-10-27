@@ -63,7 +63,7 @@ jobs:
             echo "Switched ODOO_HOST_PORT to ${TARGET}"
 
             # 2) Restart stack
-            docker compose -f deploy/docker-compose.bundle.yml up -d
+            docker compose -f deploy/odoo.bundle.yml up -d
 
             # 3) Health check on the chosen port
             set +e
