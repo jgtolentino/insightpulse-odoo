@@ -3,7 +3,7 @@ components:
     status: "healthy"
     version: "19.0"
     port: 8069
-    commit: "b590b2ee"
+    commit: "b19dd84b"
     deployment: "bundle"
     addons:
       oca:
@@ -18,15 +18,56 @@ components:
           - insightpulse_app_sources
       custom:
         status: "ready"
-        count: 8
+        modules:
+          - superset_menu
+        count: 9
+        note: "Superset BI menu integration replaces native Odoo dashboards"
   superset:
-    status: "configured"
+    status: "ready"
     port: 8088
-    note: "Read-only DSN pending configuration. Dashboards ready once validated."
+    integration: "odoo_menu"
+    dashboards:
+      - sales_main
+      - finance_main
+      - hr_main
+    note: "Integrated via custom Odoo menu module. BI read-only user pending."
   mindsdb:
     status: "pending"
     note: "Not yet configured"
 
+workflows:
+  seed_labels:
+    status: "operational"
+    labels_created: ["status:done", "resolved", "autoclosed"]
+  production_deploy:
+    status: "pending_test"
+    note: "Workflow configured with rollback, awaiting validation"
+  flip_canary:
+    status: "pending_test"
+    note: "Port switching workflow ready (8069 ↔ 8070)"
+
+security:
+  2fa: "pending"
+  rls: "enforced"
+  password_policy: "pending"
+  session_timeout: "default"
+
+email:
+  outgoing_smtp: "pending"
+  incoming_imap: "pending"
+  aliases: "pending"
+  domains: "insightpulseai.net"
+
 ports:
   odoo_http: 8069
   superset_http: 8088
+
+saas_parity_progress:
+  phase_1_dashboard_consolidation: "in_progress"
+  phase_2_module_installation: "pending"
+  phase_3_email_stack: "pending"
+  phase_4_bi_readonly_user: "pending"
+  phase_5_security_hardening: "pending"
+  phase_6_document_branding: "pending"
+  phase_7_validation: "pending"
+  phase_8_documentation: "in_progress"
