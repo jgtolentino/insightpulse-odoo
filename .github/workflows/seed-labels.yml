@@ -16,49 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Load labels.yml and apply
-        uses: actions/github-script@v7
+      - name: Sync labels
+        uses: EndBug/label-sync@v2
         with:
-          script: |
-            const fs = require("fs");
-            const yaml = require("js-yaml");
-            const path = ".github/labels.yml";
-            const def = yaml.load(fs.readFileSync(path, "utf8"));
-            const owner = context.repo.owner;
-            const repo  = context.repo.repo;
-
-            // get current labels
-            const current = await github.paginate(github.rest.issues.listLabelsForRepo, {
-              owner, repo, per_page: 100
-            });
-            const index = new Map(current.map(l => [l.name.toLowerCase(), l]));
-
-            for (const label of def) {
-              const name = label.name;
-              const lower = name.toLowerCase();
-              if (index.has(lower)) {
-                // update if changed
-                const cur = index.get(lower);
-                const needsUpdate =
-                  (label.color && cur.color?.toLowerCase() !== label.color.toLowerCase()) ||
-                  (label.description && (cur.description || "") !== label.description);
-                if (needsUpdate) {
-                  await github.rest.issues.updateLabel({
-                    owner, repo, name: cur.name,
-                    color: label.color,
-                    description: label.description || ""
-                  });
-                  core.info(`Updated label: ${name}`);
-                } else {
-                  core.info(`Unchanged label: ${name}`);
-                }
-              } else {
-                await github.rest.issues.createLabel({
-                  owner, repo,
-                  name,
-                  color: label.color,
-                  description: label.description || ""
-                });
-                core.info(`Created label: ${name}`);
-              }
-            }
+          config-file: .github/labels.yml
+          token: ${{ secrets.GITHUB_TOKEN }}
+          delete-other-labels: false
