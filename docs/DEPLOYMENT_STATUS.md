@@ -27,7 +27,7 @@
   - Custom module count: 9 (including superset_menu)
 
 ### 5. Assets Synced to Production
-- ✅ `deploy/docker-compose.bundle.yml`
+- ✅ `deploy/odoo.bundle.yml`
 - ✅ `deploy/.env.example`
 - ✅ `caddy/Caddyfile`
 - ✅ `config/odoo/odoo.conf`
@@ -35,7 +35,7 @@
 
 ## ⚠️ Issues Encountered
 
-### Production Bundle Deployment (deploy/docker-compose.bundle.yml)
+### Production Bundle Deployment (deploy/odoo.bundle.yml)
 **Status**: Partial - Containers start but Odoo returns HTTP 500
 
 **Root Cause**: Configuration mismatch or addon path issues with the bundle image
