@@ -1,0 +1,27 @@
+components:
+  odoo:
+    status: "healthy"
+    version: "19.0"
+    port: 8070
+    commit: "2c9f071f"
+    addons:
+      oca:
+        status: "ready"
+        note: "Mounted parent dir ./addons/oca/web → /mnt/extra-addons/oca; modules discovered."
+        modules:
+          - web_environment_ribbon
+          - web_favicon
+      insightpulse:
+        status: "ready"
+        modules:
+          - insightpulse_app_sources
+      custom:
+        status: "ready"
+        count: 8
+  superset:
+    status: "configured"
+    port: 8088
+    note: "Read-only DSN pending configuration. Dashboards ready once validated."
+  mindsdb:
+    status: "pending"
+    note: "Not yet configured"

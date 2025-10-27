@@ -1,0 +1,149 @@
+name: Auto-close Resolved Issues
+
+on:
+  workflow_run:
+    workflows:
+      - "Odoo CI"
+      - "production-deploy"
+    types: [completed]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  close-resolved-issues:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close issues labeled status:done or resolved
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // Fetch open issues with relevant labels
+            async function listAll(query) {
+              const results = [];
+              for await (const page of github.paginate.iterator(
+                github.rest.search.issuesAndPullRequests,
+                { q: query, per_page: 100 }
+              )) {
+                results.push(...page.data);
+              }
+              return results;
+            }
+
+            const labelQueries = [
+              `repo:${owner}/${repo} is:issue is:open label:"status:done"`,
+              `repo:${owner}/${repo} is:issue is:open label:"resolved"`
+            ];
+
+            const seen = new Set();
+            const issues = [];
+            for (const q of labelQueries) {
+              const batch = await listAll(q);
+              for (const item of batch) {
+                if (!seen.has(item.number)) {
+                  seen.add(item.number);
+                  issues.push(item);
+                }
+              }
+            }
+
+            core.info(`Found ${issues.length} issues to close.`);
+
+            for (const issue of issues) {
+              // Add a confirmation comment
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: issue.number,
+                body: [
+                  "✅ **Auto-closure**: CI passed and this issue is labeled as resolved.",
+                  "",
+                  "- Label(s): " + (issue.labels || []).map(l => typeof l === 'string' ? l : l.name).join(', '),
+                  "- Workflow: " + (context.eventName === 'workflow_run' ? context.payload.workflow_run?.name : 'manual dispatch'),
+                  "",
+                  "If this was closed in error, remove the `status:done` / `resolved` label and reopen."
+                ].join("\n")
+              });
+
+              // Add an audit label (optional)
+              try {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: issue.number,
+                  labels: ["autoclosed"]
+                });
+              } catch (e) {
+                core.warning(`Could not add 'autoclosed' label to #${issue.number}: ${e.message}`);
+              }
+
+              // Close the issue
+              await github.rest.issues.update({
+                owner, repo, issue_number: issue.number, state: "closed"
+              });
+
+              core.info(`Closed issue #${issue.number}: ${issue.title}`);
+            }
+
+  close-obsolete-prs:
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Close PRs labeled obsolete or resolved
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            const queries = [
+              `repo:${owner}/${repo} is:pr is:open label:obsolete`,
+              `repo:${owner}/${repo} is:pr is:open label:resolved`
+            ];
+
+            async function listAll(query) {
+              const results = [];
+              for await (const page of github.paginate.iterator(
+                github.rest.search.issuesAndPullRequests,
+                { q: query, per_page: 100 }
+              )) {
+                results.push(...page.data);
+              }
+              return results;
+            }
+
+            const prs = [];
+            for (const q of queries) {
+              const batch = await listAll(q);
+              for (const item of batch) {
+                prs.push(item);
+              }
+            }
+
+            core.info(`Found ${prs.length} PR(s) to close.`);
+
+            for (const pr of prs) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr.number,
+                body: "🧹 **Auto-closure**: Labeled as obsolete/resolved after successful CI. Reopen if still needed."
+              });
+              try {
+                await github.rest.issues.addLabels({
+                  owner, repo, issue_number: pr.number,
+                  labels: ["autoclosed"]
+                });
+              } catch {}
+              await github.rest.pulls.update({
+                owner, repo, pull_number: pr.number, state: "closed"
+              });
+              core.info(`Closed PR #${pr.number}: ${pr.title}`);
+            }
