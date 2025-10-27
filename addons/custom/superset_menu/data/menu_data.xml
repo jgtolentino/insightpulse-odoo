@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Replace native Dashboards menu with Superset BI & Analytics -->
+        <record id="menu_bi_analytics" model="ir.ui.menu">
+            <field name="name">BI &amp; Analytics</field>
+            <field name="sequence">50</field>
+            <field name="web_icon">bi_superset,static/description/icon.png</field>
+            <field name="action" eval="False"/>
+        </record>
+
+        <!-- Superset Sales Dashboard -->
+        <record id="action_superset_sales" model="ir.actions.act_url">
+            <field name="name">Sales Dashboard</field>
+            <field name="url">https://insightpulseai.net/superset/dashboard/sales_main</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="menu_superset_sales" model="ir.ui.menu">
+            <field name="name">Sales Dashboard</field>
+            <field name="parent_id" ref="menu_bi_analytics"/>
+            <field name="action" ref="action_superset_sales"/>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Superset Finance Dashboard -->
+        <record id="action_superset_finance" model="ir.actions.act_url">
+            <field name="name">Finance Dashboard</field>
+            <field name="url">https://insightpulseai.net/superset/dashboard/finance_main</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="menu_superset_finance" model="ir.ui.menu">
+            <field name="name">Finance Dashboard</field>
+            <field name="parent_id" ref="menu_bi_analytics"/>
+            <field name="action" ref="action_superset_finance"/>
+            <field name="sequence">20</field>
+        </record>
+
+        <!-- Superset HR Dashboard -->
+        <record id="action_superset_hr" model="ir.actions.act_url">
+            <field name="name">HR Dashboard</field>
+            <field name="url">https://insightpulseai.net/superset/dashboard/hr_main</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="menu_superset_hr" model="ir.ui.menu">
+            <field name="name">HR Dashboard</field>
+            <field name="parent_id" ref="menu_bi_analytics"/>
+            <field name="action" ref="action_superset_hr"/>
+            <field name="sequence">30</field>
+        </record>
+    </data>
+</odoo>
