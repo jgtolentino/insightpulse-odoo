@@ -1,0 +1,88 @@
+name: Parity Live Sync
+
+on:
+  schedule:
+    # Daily at 18:00 UTC (02:00 PH time next day)
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - 'scripts/export-live-modules.py'
+      - 'scripts/sync-live-to-docs.sh'
+      - '.github/workflows/parity-live-sync.yml'
+
+jobs:
+  live-snapshot:
+    name: Export Live Module Inventory
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install requests
+
+      - name: Export live module inventory
+        env:
+          ODOO_URL: ${{ secrets.ODOO_URL }}
+          ODOO_DB: ${{ secrets.ODOO_DB }}
+          ODOO_LOGIN: ${{ secrets.ODOO_LOGIN }}
+          ODOO_PASSWORD: ${{ secrets.ODOO_PASSWORD }}
+        run: |
+          python3 scripts/export-live-modules.py
+
+      - name: Sync to documentation
+        run: |
+          chmod +x scripts/sync-live-to-docs.sh
+          bash scripts/sync-live-to-docs.sh
+
+      - name: Check for changes
+        id: git_diff
+        run: |
+          git diff --quiet reports/ docs/ENTERPRISE_PARITY.md || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push changes
+        if: steps.git_diff.outputs.changed == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          SNAPSHOT_FILE=$(ls -t reports/live_modules_*.md | head -n1)
+          git add reports/ docs/ENTERPRISE_PARITY.md
+          git commit -m "docs(parity): sync live module inventory → $(basename "$SNAPSHOT_FILE")
+
+          Automated daily snapshot of live Odoo module inventory.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push
+
+      - name: Upload snapshot artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-module-inventory
+          path: |
+            reports/live_modules_*.csv
+            reports/live_modules_*.md
+          retention-days: 90
+
+      - name: Summary
+        run: |
+          SNAPSHOT_FILE=$(ls -t reports/live_modules_*.md | head -n1)
+          echo "### 📊 Live Module Inventory Snapshot" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat "$SNAPSHOT_FILE" >> $GITHUB_STEP_SUMMARY
