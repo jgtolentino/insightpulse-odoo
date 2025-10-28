@@ -261,7 +261,7 @@ Add/update:
 ssh root@188.166.237.231
 
 # Check installed modules
-docker compose -f deploy/docker-compose.bundle.yml exec odoo \
+docker compose -f deploy/odoo.bundle.yml exec odoo \
   odoo shell -d odoo <<EOF
 env['ir.module.module'].search([
     ('name', 'in', ['web_environment_ribbon', 'web_favicon',
@@ -426,11 +426,11 @@ git push origin v19.0.20251027-parity
 **Fix**:
 ```bash
 # Update module list first
-docker compose -f deploy/docker-compose.bundle.yml exec odoo \
+docker compose -f deploy/odoo.bundle.yml exec odoo \
   odoo -d odoo -u base --stop-after-init
 
 # Then install module
-docker compose -f deploy/docker-compose.bundle.yml exec odoo \
+docker compose -f deploy/odoo.bundle.yml exec odoo \
   odoo -d odoo -i <module_name> --stop-after-init
 ```
 
