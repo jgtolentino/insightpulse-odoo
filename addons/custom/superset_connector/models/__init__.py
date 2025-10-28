@@ -1,2 +1,1 @@
-from . import superset_config
-from . import superset_token
+from . import superset_config, superset_token

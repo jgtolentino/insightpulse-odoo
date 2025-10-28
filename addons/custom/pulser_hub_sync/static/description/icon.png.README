@@ -1,0 +1,14 @@
+Icon Placeholder
+================
+
+This file is a placeholder. Replace with an actual icon.png file (128x128 pixels recommended).
+
+The icon should represent GitHub integration, such as:
+- GitHub logo/octocat
+- Integration/webhook symbol
+- Sync/connection icon
+
+You can generate one at: https://icon-icons.com/icon/github/148875
+Or use a generic integration icon from Odoo's icon library.
+
+For now, the menu will use a default icon until icon.png is created.

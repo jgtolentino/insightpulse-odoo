@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_github_integration_user,github.integration.user,model_github_integration,base.group_user,1,0,0,0
+access_github_integration_manager,github.integration.manager,model_github_integration,base.group_system,1,1,1,1
+access_github_webhook_event_user,github.webhook.event.user,model_github_webhook_event,base.group_user,1,0,0,0
+access_github_webhook_event_manager,github.webhook.event.manager,model_github_webhook_event,base.group_system,1,1,1,1
