@@ -39,32 +39,63 @@ When a user opens the chat for the first time, they see:
 3. **Fallback**: For unmatched queries
    - Response: "I'm here to help! Try asking for documentation, support, or integrations."
 
-## API Integration (Optional)
+## LLM Integration
 
-The module includes a `/api/chat` endpoint that can be extended for AI integration:
+The module integrates with your existing **microservices LLM service** infrastructure:
 
-```python
-# controllers/chat.py
-@http.route('/api/chat', type='json', auth='public', methods=['POST'], csrf=False)
-def chat_endpoint(self, **kwargs):
-    # Integrate with OpenAI, Claude, or internal knowledge base
-    pass
-```
+### How It Works
 
-### API Request Format
+1. **User sends message** → Chat widget calls `/api/chat`
+2. **Widget checks rules** → If pattern matches (docs, support), responds immediately
+3. **Falls back to LLM** → If no rule matches, calls LLM service
+4. **LLM responds** → Returns intelligent, contextual answer
+
+### Configuration Required
+
+1. **Install microservices_connector module** (dependency)
+2. **Configure LLM service**:
+   - Go to: Settings → Microservices Configuration
+   - Set `LLM Service URL` (default: `http://llm-service:8001`)
+   - Set `Auth Token` (encrypted storage)
+   - Mark configuration as Active
+
+### API Endpoint Details
+
+**Route**: `POST /api/chat`
+
+**Request Format**:
 ```json
 {
-  "message": "user message here",
+  "message": "user question here",
   "source": "welcome-widget"
 }
 ```
 
-### API Response Format
+**Response Format**:
 ```json
 {
-  "reply": "bot response here"
+  "reply": "LLM-generated response or null"
 }
 ```
+
+**LLM Service Call**:
+The chat controller calls `{llm_service_url}/chat` with:
+```json
+{
+  "message": "user question",
+  "source": "welcome-widget",
+  "context": {
+    "product": "InsightPulseAI",
+    "channel": "website-chat-widget"
+  }
+}
+```
+
+### Behavior
+
+- **LLM available** → Returns intelligent AI-powered responses
+- **LLM unavailable** → Falls back to rule-based responses
+- **Error handling** → Logs errors, returns null (widget shows fallback message)
 
 ## Customization
 
