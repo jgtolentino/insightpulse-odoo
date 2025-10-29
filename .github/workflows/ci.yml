@@ -1,0 +1,14 @@
+name: ci
+on: [push, pull_request]
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install -U pip wheel ruff pytest sqlfluff sqlfluff-templater-jinja
+      - run: ruff check .
+      - run: ruff format --check .
+      - run: sqlfluff lint .
+      - run: pytest || true # keep optional until tests land
