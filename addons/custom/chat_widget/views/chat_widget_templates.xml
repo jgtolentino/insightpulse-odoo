@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- InsightPulseAI Chat Widget - Inject into all pages using web.layout -->
+    <template id="chat_widget_inject" inherit_id="web.layout" name="InsightPulseAI Chat Widget">
+        <xpath expr="//body" position="inside">
+            <!-- InsightPulseAI Welcome Bot (vanilla, no external libs) -->
+            <style>
+              :root { --ipai-purple:#6B4E71; --ipai-bg:#f6f8fa; }
+              #ipai-launcher{
+                position:fixed; right:18px; bottom:18px; width:54px; height:54px; border-radius:50%;
+                background:var(--ipai-purple); color:#fff; display:flex; align-items:center; justify-content:center;
+                box-shadow:0 10px 22px rgba(0,0,0,.18); cursor:pointer; font:600 16px/1 system-ui; z-index:9998;
+              }
+              #ipai-chat{
+                position:fixed; right:18px; bottom:84px; width:360px; max-width:92vw; height:520px; max-height:70vh;
+                background:#fff; border:1px solid #e5e7eb; border-radius:12px; overflow:hidden; box-shadow:0 18px 40px rgba(0,0,0,.22);
+                display:none; z-index:9999;
+              }
+              #ipai-head{
+                background:var(--ipai-purple); color:#fff; padding:12px 14px; display:flex; align-items:center; gap:10px;
+              }
+              #ipai-head img{ width:22px; height:22px; border-radius:6px; background:#fff; }
+              #ipai-body{ background:var(--ipai-bg); height:calc(100% - 112px); overflow:auto; padding:10px 10px 16px; }
+              .ipai-row{ display:flex; margin:10px 0; }
+              .ipai-bot,.ipai-user{
+                max-width:78%; padding:10px 12px; border-radius:12px; font:500 14px/1.35 system-ui;
+                word-wrap:break-word; white-space:pre-wrap;
+              }
+              .ipai-bot{ background:#e9eef6; color:#111827; border-top-left-radius:4px; }
+              .ipai-user{ margin-left:auto; background:#d7cfe0; color:#111827; border-top-right-radius:4px; }
+              #ipai-inputbar{ display:flex; gap:8px; padding:10px; border-top:1px solid #eee; background:#fff; }
+              #ipai-input{ flex:1; border:1px solid #e5e7eb; border-radius:10px; padding:10px 12px; font:500 14px system-ui; }
+              #ipai-send{ background:var(--ipai-purple); color:#fff; border:0; padding:0 14px; border-radius:10px; font:600 14px; }
+              #ipai-min{ margin-left:auto; background:transparent; border:0; color:#fff; font:600 18px; cursor:pointer; }
+              a.ipai-link{ color:#0d63c7; text-decoration:underline; }
+            </style>
+
+            <div id="ipai-launcher" aria-label="Open chat" title="Chat">💬</div>
+
+            <div id="ipai-chat" role="dialog" aria-label="Welcome Bot">
+              <div id="ipai-head">
+                <img alt="Bot" src="https://insightpulseai.net/static/welcome-bot-avatar.png" onerror="this.src='data:image/svg+xml;utf8,&lt;svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2222%22 height=%2222%22&gt;&lt;rect width=%2222%22 height=%2222%22 rx=%224%22 fill=%22white%22/&gt;&lt;circle cx=%2211%22 cy=%2211%22 r=%226%22 fill=%22%236B4E71%22/&gt;&lt;/svg&gt;';"/>
+                <strong>Welcome Bot</strong>
+                <button id="ipai-min" aria-label="Close">×</button>
+              </div>
+              <div id="ipai-body"></div>
+              <div id="ipai-inputbar">
+                <input id="ipai-input" type="text" placeholder="Say something…"/>
+                <button id="ipai-send">Send</button>
+              </div>
+            </div>
+
+            <script>
+            (() => {
+              const qs = s => document.querySelector(s);
+              const chat = qs('#ipai-chat'), body = qs('#ipai-body'), input = qs('#ipai-input');
+              const sendBtn = qs('#ipai-send'), launcher = qs('#ipai-launcher'), closer = qs('#ipai-min');
+
+              const RULES = [
+                { test: /(documentation|docs?|manual|guide|readme)/i,
+                  reply: () => `And tadaaa here you go! 🌟\n\n` +
+                    `• Product Docs: &lt;a class="ipai-link" href="https://insightpulseai.net/docs" target="_blank" rel="noopener"&gt;insightpulseai.net/docs&lt;/a&gt;\n` +
+                    `• API: &lt;a class="ipai-link" href="https://insightpulseai.net/api/docs" target="_blank" rel="noopener"&gt;/api/docs&lt;/a&gt;` },
+                { test: /(support|help|contact)/i,
+                  reply: () => `You can reach us at &lt;a class="ipai-link" href="mailto:business@insightpulseai.com"&gt;business@insightpulseai.com&lt;/a&gt;.` },
+              ];
+
+              const WELCOME = [
+                `Welcome to InsightPulseAI! 👋`,
+                `What are you looking for?`
+              ];
+
+              function addRow(text, who='bot') {
+                const row = document.createElement('div'); row.className='ipai-row';
+                const bubble = document.createElement('div'); bubble.className = who==='bot' ? 'ipai-bot' : 'ipai-user';
+                bubble.innerHTML = text; row.appendChild(bubble); body.appendChild(row);
+                body.scrollTop = body.scrollHeight;
+              }
+
+              async function aiFallback(prompt){
+                // Optional: if you stand up an endpoint, responses will be dynamic.
+                // Return null to keep rules-only behavior.
+                const endpoint = '/api/chat'; // change or remove if unused
+                try{
+                  const res = await fetch(endpoint, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({message: prompt, source:'welcome-widget'})});
+                  if(!res.ok) return null;
+                  const data = await res.json();
+                  return (data.reply || '').trim() || null;
+                }catch{ return null; }
+              }
+
+              async function handleSend() {
+                const text = input.value.trim(); if(!text) return;
+                addRow(escapeHtml(text), 'user'); input.value = ''; input.focus();
+
+                // Rule-based responses first
+                for (const r of RULES) {
+                  if (r.test.test(text)) { addRow(r.reply()); return; }
+                }
+                // Fallback to AI endpoint (optional)
+                const ai = await aiFallback(text);
+                if (ai) { addRow(escapeHtml(ai)); return; }
+
+                addRow(`I'm here to help! Try asking for &lt;em&gt;documentation&lt;/em&gt;, &lt;em&gt;support&lt;/em&gt;, or &lt;em&gt;integrations&lt;/em&gt;.`);
+              }
+
+              function escapeHtml(s){ return s.replace(/[&lt;&gt;"']/g, m=>({ '&amp;':'&amp;amp;','&lt;':'&amp;lt;','&gt;':'&amp;gt;','"':'&amp;quot;',"'":'&amp;#39;'}[m])); }
+
+              function openChat(){ chat.style.display='block'; launcher.style.display='none';
+                if (!body.dataset.greeted) { WELCOME.forEach(line => addRow(line)); body.dataset.greeted = '1'; } }
+              function closeChat(){ chat.style.display='none'; launcher.style.display='flex'; }
+
+              launcher.addEventListener('click', openChat);
+              closer.addEventListener('click', closeChat);
+              sendBtn.addEventListener('click', handleSend);
+              input.addEventListener('keydown', e=>{ if(e.key==='Enter'){ handleSend(); }});
+
+              // Auto-open on first load (optional):
+              // openChat();
+            })();
+            </script>
+        </xpath>
+    </template>
+</odoo>
