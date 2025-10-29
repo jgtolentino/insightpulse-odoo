@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_purchase_order_approval_user,purchase.order approval user,purchase.model_purchase_order,base.group_user,1,1,0,0
+access_hr_expense_approval_user,hr.expense approval user,hr_expense.model_hr_expense,base.group_user,1,1,0,0
+access_hr_expense_sheet_approval_user,hr.expense.sheet approval user,hr_expense.model_hr_expense_sheet,base.group_user,1,1,0,0
+access_account_move_approval_user,account.move approval user,account.model_account_move,base.group_user,1,1,0,0

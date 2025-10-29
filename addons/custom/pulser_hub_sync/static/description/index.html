@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Pulser Hub Sync</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .feature {
+            background: #ecf0f1;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .code {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pulser Hub Sync</h1>
+    <p>GitHub App integration for Odoo 19, providing webhook listeners and OAuth authentication for the pulser-hub GitHub App.</p>
+
+    <h2>Features</h2>
+
+    <div class="feature">
+        <h3>🔐 OAuth 2.0 Authentication</h3>
+        <p>Seamless GitHub App installation with OAuth callback handling at <code>/odoo/github/auth/callback</code></p>
+    </div>
+
+    <div class="feature">
+        <h3>🎣 Webhook Listener</h3>
+        <p>Receive and process GitHub webhook events at <code>/odoo/github/webhook</code></p>
+        <p>Supported events: push, pull_request, issues, workflow_run, and more</p>
+    </div>
+
+    <div class="feature">
+        <h3>🔒 Secure Authentication</h3>
+        <p>JWT-based authentication using RSA private keys with HMAC signature verification for webhooks</p>
+    </div>
+
+    <div class="feature">
+        <h3>📊 Event Tracking</h3>
+        <p>Complete audit trail of all webhook events with payload storage and reprocessing capabilities</p>
+    </div>
+
+    <h2>Configuration</h2>
+
+    <p>Set the following environment variables:</p>
+    <div class="code">
+export GITHUB_APP_ID=2191216<br>
+export GITHUB_APP_CLIENT_ID=Iv23liwGL7fnYySPPAjS<br>
+export GITHUB_APP_PEM_PATH=~/.github/apps/pulser-hub.pem<br>
+export GITHUB_APP_CLIENT_SECRET=your_client_secret_here
+    </div>
+
+    <h2>Usage</h2>
+    <ol>
+        <li>Install the module via Apps menu</li>
+        <li>Navigate to GitHub → Integrations</li>
+        <li>Install the pulser-hub app on your GitHub account</li>
+        <li>Configure webhook secret for signature verification</li>
+        <li>Monitor webhook events in GitHub → Webhook Events</li>
+    </ol>
+
+    <h2>Webhook Configuration</h2>
+    <p>Configure your GitHub App webhook to point to:</p>
+    <div class="code">
+https://your-odoo-domain.com/odoo/github/webhook
+    </div>
+
+    <p>Select the events you want to receive:</p>
+    <ul>
+        <li>Push events</li>
+        <li>Pull request events</li>
+        <li>Issue events</li>
+        <li>Workflow run events</li>
+    </ul>
+
+    <h2>Technical Details</h2>
+    <ul>
+        <li><strong>App ID:</strong> 2191216</li>
+        <li><strong>Client ID:</strong> Iv23liwGL7fnYySPPAjS</li>
+        <li><strong>Authentication:</strong> JWT with RS256 signing</li>
+        <li><strong>Token Expiry:</strong> 1 hour (automatic refresh)</li>
+    </ul>
+</body>
+</html>

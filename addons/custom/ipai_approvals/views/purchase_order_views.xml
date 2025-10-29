@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Purchase Order Form View Extension -->
+    <record id="view_purchase_order_form_approval" model="ir.ui.view">
+        <field name="name">purchase.order.form.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='button_confirm']" position="before">
+                <button name="action_submit_for_approval"
+                        string="Submit for Approval"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('requires_approval', '=', False), ('approval_request_id', '!=', False)]}"/>
+                <button name="action_approve_po"
+                        string="Approve"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('approval_request_id', '=', False), ('approval_state', '!=', 'pending')]}"/>
+                <button name="action_reject_po"
+                        string="Reject"
+                        type="object"
+                        class="btn-danger"
+                        attrs="{'invisible': ['|', ('approval_request_id', '=', False), ('approval_state', '!=', 'pending')]}"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_approval"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-check-circle"
+                        attrs="{'invisible': [('approval_request_id', '=', False)]}">
+                    <field name="approval_state" widget="badge" decoration-info="approval_state == 'draft'" decoration-warning="approval_state == 'pending'" decoration-success="approval_state == 'approved'" decoration-danger="approval_state == 'rejected'"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//page[@name='purchase_delivery_invoice']" position="after">
+                <page string="Approval" attrs="{'invisible': [('approval_request_id', '=', False)]}">
+                    <group>
+                        <field name="approval_request_id" readonly="1"/>
+                        <field name="requires_approval" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase Order Tree View Extension -->
+    <record id="view_purchase_order_tree_approval" model="ir.ui.view">
+        <field name="name">purchase.order.tree.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="approval_state" widget="badge" decoration-info="approval_state == 'draft'" decoration-warning="approval_state == 'pending'" decoration-success="approval_state == 'approved'" decoration-danger="approval_state == 'rejected'" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Purchase Order Search View Extension -->
+    <record id="view_purchase_order_filter_approval" model="ir.ui.view">
+        <field name="name">purchase.order.filter.approval</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.view_purchase_order_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='exception']" position="after">
+                <separator/>
+                <filter string="Pending Approval" name="pending_approval" domain="[('approval_state', '=', 'pending')]"/>
+                <filter string="Approved" name="approved" domain="[('approval_state', '=', 'approved')]"/>
+                <filter string="Rejected" name="rejected" domain="[('approval_state', '=', 'rejected')]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

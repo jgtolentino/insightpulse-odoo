@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Expense Sheet Form View Extension -->
+    <record id="view_hr_expense_sheet_form_approval" model="ir.ui.view">
+        <field name="name">hr.expense.sheet.form.approval</field>
+        <field name="model">hr.expense.sheet</field>
+        <field name="inherit_id" ref="hr_expense.view_hr_expense_sheet_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header/button[@name='approve_expense_sheets']" position="before">
+                <button name="action_submit_for_approval"
+                        string="Submit for Approval"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('requires_approval', '=', False), ('approval_request_id', '!=', False)]}"/>
+                <button name="action_approve_expense"
+                        string="Approve"
+                        type="object"
+                        class="oe_highlight"
+                        attrs="{'invisible': ['|', ('approval_request_id', '=', False), ('approval_state', '!=', 'pending')]}"/>
+                <button name="action_reject_expense"
+                        string="Reject"
+                        type="object"
+                        class="btn-danger"
+                        attrs="{'invisible': ['|', ('approval_request_id', '=', False), ('approval_state', '!=', 'pending')]}"/>
+            </xpath>
+
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_approval"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-check-circle"
+                        attrs="{'invisible': [('approval_request_id', '=', False)]}">
+                    <field name="approval_state" widget="badge" decoration-info="approval_state == 'draft'" decoration-warning="approval_state == 'pending'" decoration-success="approval_state == 'approved'" decoration-danger="approval_state == 'rejected'"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//notebook" position="inside">
+                <page string="Approval" attrs="{'invisible': [('approval_request_id', '=', False)]}">
+                    <group>
+                        <field name="approval_request_id" readonly="1"/>
+                        <field name="requires_approval" readonly="1"/>
+                    </group>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Expense Sheet Tree View Extension -->
+    <record id="view_hr_expense_sheet_tree_approval" model="ir.ui.view">
+        <field name="name">hr.expense.sheet.tree.approval</field>
+        <field name="model">hr.expense.sheet</field>
+        <field name="inherit_id" ref="hr_expense.view_hr_expense_sheet_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='state']" position="after">
+                <field name="approval_state" widget="badge" decoration-info="approval_state == 'draft'" decoration-warning="approval_state == 'pending'" decoration-success="approval_state == 'approved'" decoration-danger="approval_state == 'rejected'" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Expense Sheet Search View Extension -->
+    <record id="view_hr_expense_sheet_filter_approval" model="ir.ui.view">
+        <field name="name">hr.expense.sheet.filter.approval</field>
+        <field name="model">hr.expense.sheet</field>
+        <field name="inherit_id" ref="hr_expense.view_hr_expense_sheet_filter"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='approve']" position="after">
+                <separator/>
+                <filter string="Pending Approval" name="pending_approval" domain="[('approval_state', '=', 'pending')]"/>
+                <filter string="Approved" name="approved_status" domain="[('approval_state', '=', 'approved')]"/>
+                <filter string="Rejected" name="rejected" domain="[('approval_state', '=', 'rejected')]"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

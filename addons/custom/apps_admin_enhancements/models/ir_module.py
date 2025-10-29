@@ -7,7 +7,8 @@ class IrModuleModule(models.Model):
 
     source = fields.Selection(
         [("odoo", "Odoo"), ("oca", "OCA"), ("custom", "Custom")],
-        compute="_compute_source", store=False
+        compute="_compute_source",
+        store=False,
     )
     is_accessible = fields.Boolean(
         string="Accessible", compute="_compute_is_accessible", store=False

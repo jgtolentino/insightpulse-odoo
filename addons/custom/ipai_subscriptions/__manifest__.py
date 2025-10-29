@@ -5,12 +5,16 @@
     "author": "InsightPulseAI",
     "website": "https://insightpulseai.net/odoo/apps/ipai_subscriptions",
     "depends": [
-        "base", "mail", "account", "product", "uom", "contract", "contract_sale", "contract_invoice", "queue_job"
+        "base",
+        "mail",
+        "account",
+        "product",
+        "uom",
+        "contract",
+        "contract_sale",
+        "contract_invoice",
+        "queue_job",
     ],
-    "data": [
-        "security/ir.model.access.csv", 
-        "data/sequence.xml",
-        "data/cron.xml"
-    ],
+    "data": ["security/ir.model.access.csv", "data/sequence.xml", "data/cron.xml"],
     "installable": True,
 }

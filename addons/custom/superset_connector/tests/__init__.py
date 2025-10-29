@@ -1,4 +1,6 @@
-from . import test_superset_token
-from . import test_superset_config
-from . import test_embedded_controller
-from . import test_url_injection
+from . import (
+    test_embedded_controller,
+    test_superset_config,
+    test_superset_token,
+    test_url_injection,
+)

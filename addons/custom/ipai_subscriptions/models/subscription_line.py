@@ -4,7 +4,7 @@ from odoo import api, fields, models
 class IpaiSubscriptionLine(models.Model):
     _name = "ipai.subscription.line"
     _description = "Subscription Line"
-    
+
     subscription_id = fields.Many2one(
         "ipai.subscription", required=True, ondelete="cascade"
     )

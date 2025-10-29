@@ -6,12 +6,15 @@
     "website": "https://insightpulseai.net/odoo/apps/ipai_expense",
     "license": "AGPL-3",
     "depends": [
-        "base", "mail", "hr", "hr_expense", "account", "report_xlsx",
-        "queue_job", "server_environment"
+        "base",
+        "mail",
+        "hr",
+        "hr_expense",
+        "account",
+        "report_xlsx",
+        "queue_job",
+        "server_environment",
     ],
-    "data": [
-        "security/ir.model.access.csv",
-        "data/sequence.xml"
-    ],
+    "data": ["security/ir.model.access.csv", "data/sequence.xml"],
     "installable": True,
 }

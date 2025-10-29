@@ -1,0 +1,19 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_approval_flow_user,ipai.approval.flow user,model_ipai_approval_flow,base.group_user,1,0,0,0
+access_ipai_approval_flow_manager,ipai.approval.flow manager,model_ipai_approval_flow,base.group_system,1,1,1,1
+access_ipai_approval_stage_user,ipai.approval.stage user,model_ipai_approval_stage,base.group_user,1,0,0,0
+access_ipai_approval_stage_manager,ipai.approval.stage manager,model_ipai_approval_stage,base.group_system,1,1,1,1
+access_ipai_approval_request_user,ipai.approval.request user,model_ipai_approval_request,base.group_user,1,1,1,0
+access_ipai_approval_request_manager,ipai.approval.request manager,model_ipai_approval_request,base.group_system,1,1,1,1
+access_ipai_approval_log_user,ipai.approval.log user,model_ipai_approval_log,base.group_user,1,0,0,0
+access_ipai_approval_log_manager,ipai.approval.log manager,model_ipai_approval_log,base.group_system,1,1,1,1
+access_ipai_rate_policy_user,ipai.rate.policy user,model_ipai_rate_policy,base.group_user,1,0,0,0
+access_ipai_rate_policy_manager,ipai.rate.policy manager,model_ipai_rate_policy,base.group_system,1,1,1,1
+access_ipai_rate_band_user,ipai.rate.band user,model_ipai_rate_band,base.group_user,1,0,0,0
+access_ipai_rate_band_manager,ipai.rate.band manager,model_ipai_rate_band,base.group_system,1,1,1,1
+access_ipai_ai_workspace_user,ipai.ai.workspace user,model_ipai_ai_workspace,base.group_user,1,1,1,0
+access_ipai_ai_workspace_manager,ipai.ai.workspace manager,model_ipai_ai_workspace,base.group_system,1,1,1,1
+access_ipai_tenant_manager_user,ipai.tenant.manager user,model_ipai_tenant_manager,base.group_user,1,0,0,0
+access_ipai_tenant_manager_manager,ipai.tenant.manager manager,model_ipai_tenant_manager,base.group_system,1,1,1,1
+access_ipai_tenant_plan_user,ipai.tenant.plan user,model_ipai_tenant_plan,base.group_user,1,0,0,0
+access_ipai_tenant_plan_manager,ipai.tenant.plan manager,model_ipai_tenant_plan,base.group_system,1,1,1,1

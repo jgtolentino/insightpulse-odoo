@@ -41,6 +41,14 @@ jobs:
           ODOO_LOGIN: ${{ secrets.ODOO_LOGIN }}
           ODOO_PASSWORD: ${{ secrets.ODOO_PASSWORD }}
         run: |
+          if [ -z "$ODOO_URL" ]; then
+            echo "⚠️  ODOO_URL secret not configured - skipping live inventory sync"
+            echo "Configure secrets at: Settings → Secrets and variables → Actions"
+            mkdir -p reports
+            echo "# Live Module Inventory (Placeholder)" > reports/live_modules_placeholder.md
+            echo "Secrets not configured yet." >> reports/live_modules_placeholder.md
+            exit 0
+          fi
           python3 scripts/export-live-modules.py
 
       - name: Sync to documentation

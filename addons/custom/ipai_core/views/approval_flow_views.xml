@@ -1,0 +1,706 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Approval Flow Views -->
+    <record id="view_ipai_approval_flow_tree" model="ir.ui.view">
+        <field name="name">ipai.approval.flow.tree</field>
+        <field name="model">ipai.approval.flow</field>
+        <field name="arch" type="xml">
+            <tree string="Approval Flows">
+                <field name="name"/>
+                <field name="model_id"/>
+                <field name="request_count"/>
+                <field name="avg_approval_hours" widget="float_time"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_approval_flow_form" model="ir.ui.view">
+        <field name="name">ipai.approval.flow.form</field>
+        <field name="model">ipai.approval.flow</field>
+        <field name="arch" type="xml">
+            <form string="Approval Flow">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_ipai_approval_request)d"
+                                type="action"
+                                class="oe_stat_button"
+                                icon="fa-check-circle">
+                            <field name="request_count" widget="statinfo" string="Requests"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Purchase Order Approval"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="model_id" options="{'no_create': True}"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="parallel_execution"/>
+                            <field name="auto_escalate"/>
+                            <field name="default_timeout_hours"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe the purpose of this approval flow..."/>
+                    </group>
+                    <notebook>
+                        <page string="Approval Stages">
+                            <field name="stage_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="approver_ids" widget="many2many_tags"/>
+                                    <field name="approver_group_ids" widget="many2many_tags"/>
+                                    <field name="timeout_hours"/>
+                                    <field name="escalation_action"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Statistics">
+                            <group>
+                                <group>
+                                    <field name="request_count"/>
+                                    <field name="avg_approval_hours" widget="float_time"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ipai_approval_flow_search" model="ir.ui.view">
+        <field name="name">ipai.approval.flow.search</field>
+        <field name="model">ipai.approval.flow</field>
+        <field name="arch" type="xml">
+            <search string="Approval Flows">
+                <field name="name"/>
+                <field name="model_id"/>
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Model" name="group_model" context="{'group_by': 'model_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ipai_approval_flow" model="ir.actions.act_window">
+        <field name="name">Approval Flows</field>
+        <field name="res_model">ipai.approval.flow</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first approval flow
+            </p>
+            <p>
+                Approval flows define the stages and approvers for various business processes.
+            </p>
+        </field>
+    </record>
+
+    <!-- Approval Request Views -->
+    <record id="view_ipai_approval_request_tree" model="ir.ui.view">
+        <field name="name">ipai.approval.request.tree</field>
+        <field name="model">ipai.approval.request</field>
+        <field name="arch" type="xml">
+            <tree string="Approval Requests" decoration-info="state == 'draft'" decoration-warning="state == 'pending'" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'">
+                <field name="name"/>
+                <field name="flow_id"/>
+                <field name="current_stage_id"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state == 'pending'" decoration-success="state == 'approved'" decoration-danger="state == 'rejected'"/>
+                <field name="create_date"/>
+                <field name="duration_hours" widget="float_time"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_approval_request_form" model="ir.ui.view">
+        <field name="name">ipai.approval.request.form</field>
+        <field name="model">ipai.approval.request</field>
+        <field name="arch" type="xml">
+            <form string="Approval Request">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" states="draft" class="oe_highlight"/>
+                    <button name="action_approve" string="Approve" type="object" states="pending" class="oe_highlight"/>
+                    <button name="action_reject" string="Reject" type="object" states="pending" class="btn-danger"/>
+                    <button name="action_cancel" string="Cancel" type="object" states="draft,pending"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,pending,approved"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="flow_id" readonly="1"/>
+                            <field name="model_id" readonly="1"/>
+                            <field name="res_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="current_stage_id" readonly="1"/>
+                            <field name="create_date" readonly="1"/>
+                            <field name="start_date" readonly="1"/>
+                            <field name="complete_date" readonly="1"/>
+                            <field name="duration_hours" widget="float_time" readonly="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Approval Log">
+                            <field name="log_ids" readonly="1">
+                                <tree>
+                                    <field name="create_date"/>
+                                    <field name="user_id"/>
+                                    <field name="stage_id"/>
+                                    <field name="action"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ipai_approval_request_search" model="ir.ui.view">
+        <field name="name">ipai.approval.request.search</field>
+        <field name="model">ipai.approval.request</field>
+        <field name="arch" type="xml">
+            <search string="Approval Requests">
+                <field name="name"/>
+                <field name="flow_id"/>
+                <filter string="My Approvals" name="my_approvals" domain="[('current_stage_id.approver_ids', 'in', uid)]"/>
+                <separator/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Pending" name="pending" domain="[('state', '=', 'pending')]"/>
+                <filter string="Approved" name="approved" domain="[('state', '=', 'approved')]"/>
+                <filter string="Rejected" name="rejected" domain="[('state', '=', 'rejected')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Flow" name="group_flow" context="{'group_by': 'flow_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Stage" name="group_stage" context="{'group_by': 'current_stage_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ipai_approval_request" model="ir.actions.act_window">
+        <field name="name">Approval Requests</field>
+        <field name="res_model">ipai.approval.request</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_pending': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No approval requests yet
+            </p>
+            <p>
+                Approval requests are created automatically when documents require approval.
+            </p>
+        </field>
+    </record>
+
+    <!-- Rate Policy Views -->
+    <record id="view_ipai_rate_policy_tree" model="ir.ui.view">
+        <field name="name">ipai.rate.policy.tree</field>
+        <field name="model">ipai.rate.policy</field>
+        <field name="arch" type="xml">
+            <tree string="Rate Policies">
+                <field name="name"/>
+                <field name="percentile"/>
+                <field name="markup_percentage"/>
+                <field name="rounding_amount"/>
+                <field name="auto_update"/>
+                <field name="last_update_date"/>
+                <field name="update_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_rate_policy_form" model="ir.ui.view">
+        <field name="name">ipai.rate.policy.form</field>
+        <field name="model">ipai.rate.policy</field>
+        <field name="arch" type="xml">
+            <form string="Rate Policy">
+                <header>
+                    <button name="action_update_rates" string="Update Rates Now" type="object" class="oe_highlight"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Standard Rate Policy"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Calculation Parameters">
+                            <field name="lookback_months"/>
+                            <field name="percentile"/>
+                            <field name="markup_percentage"/>
+                            <field name="rounding_amount"/>
+                        </group>
+                        <group string="Automation">
+                            <field name="auto_update"/>
+                            <field name="cron_id" readonly="1" attrs="{'invisible': [('auto_update', '=', False)]}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe the purpose and application of this rate policy..."/>
+                    </group>
+                    <group string="Audit Information">
+                        <group>
+                            <field name="last_update_date" readonly="1"/>
+                            <field name="last_update_user_id" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="update_count" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ipai_rate_policy" model="ir.actions.act_window">
+        <field name="name">Rate Policies</field>
+        <field name="res_model">ipai.rate.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first rate policy
+            </p>
+            <p>
+                Rate policies automate the calculation of public rates based on vendor rates.
+            </p>
+        </field>
+    </record>
+
+    <!-- Rate Band Views -->
+    <record id="view_ipai_rate_band_tree" model="ir.ui.view">
+        <field name="name">ipai.rate.band.tree</field>
+        <field name="model">ipai.rate.band</field>
+        <field name="arch" type="xml">
+            <tree string="Rate Bands" editable="bottom">
+                <field name="role_id"/>
+                <field name="public_rate" widget="monetary"/>
+                <field name="vendor_rate_p50" widget="monetary" readonly="1"/>
+                <field name="vendor_rate_p60" widget="monetary" readonly="1"/>
+                <field name="vendor_rate_p75" widget="monetary" readonly="1"/>
+                <field name="sample_size" readonly="1"/>
+                <field name="last_update_date" readonly="1"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_rate_band_form" model="ir.ui.view">
+        <field name="name">ipai.rate.band.form</field>
+        <field name="model">ipai.rate.band</field>
+        <field name="arch" type="xml">
+            <form string="Rate Band">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="role_id"/>
+                            <field name="public_rate" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                        <group string="Vendor Rate Statistics">
+                            <field name="vendor_rate_p50" widget="monetary" readonly="1"/>
+                            <field name="vendor_rate_p60" widget="monetary" readonly="1"/>
+                            <field name="vendor_rate_p75" widget="monetary" readonly="1"/>
+                            <field name="sample_size" readonly="1"/>
+                        </group>
+                    </group>
+                    <group string="Audit Information">
+                        <field name="last_update_date" readonly="1"/>
+                        <field name="last_update_policy_id" readonly="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ipai_rate_band" model="ir.actions.act_window">
+        <field name="name">Rate Bands</field>
+        <field name="res_model">ipai.rate.band</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No rate bands defined yet
+            </p>
+            <p>
+                Rate bands are calculated automatically by rate policies based on vendor rates.
+            </p>
+        </field>
+    </record>
+
+    <!-- AI Workspace Views -->
+    <record id="view_ipai_ai_workspace_tree" model="ir.ui.view">
+        <field name="name">ipai.ai.workspace.tree</field>
+        <field name="model">ipai.ai.workspace</field>
+        <field name="arch" type="xml">
+            <tree string="AI Workspaces">
+                <field name="name"/>
+                <field name="res_model"/>
+                <field name="page_count"/>
+                <field name="query_count"/>
+                <field name="last_query_date"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_ai_workspace_form" model="ir.ui.view">
+        <field name="name">ipai.ai.workspace.form</field>
+        <field name="model">ipai.ai.workspace</field>
+        <field name="arch" type="xml">
+            <form string="AI Workspace">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Project Documentation"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="res_model" readonly="1"/>
+                            <field name="res_id" readonly="1"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="AI Features">
+                            <field name="enable_vector_search"/>
+                            <field name="enable_llm_chat"/>
+                            <field name="llm_provider" attrs="{'invisible': [('enable_llm_chat', '=', False)]}"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe the purpose of this workspace..."/>
+                    </group>
+                    <group string="Statistics">
+                        <group>
+                            <field name="page_count"/>
+                            <field name="query_count"/>
+                        </group>
+                        <group>
+                            <field name="last_query_date" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ipai_ai_workspace" model="ir.actions.act_window">
+        <field name="name">AI Workspaces</field>
+        <field name="res_model">ipai.ai.workspace</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first AI workspace
+            </p>
+            <p>
+                AI workspaces provide knowledge management and AI-powered search capabilities.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tenant Manager Views -->
+    <record id="view_ipai_tenant_manager_tree" model="ir.ui.view">
+        <field name="name">ipai.tenant.manager.tree</field>
+        <field name="model">ipai.tenant.manager</field>
+        <field name="arch" type="xml">
+            <tree string="Tenants" decoration-info="state == 'draft'" decoration-warning="state == 'provisioning'" decoration-success="state == 'active'" decoration-danger="state in ('suspended', 'terminated')">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="database_name"/>
+                <field name="plan_id"/>
+                <field name="state" widget="badge"/>
+                <field name="user_count"/>
+                <field name="activation_date"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_tenant_manager_form" model="ir.ui.view">
+        <field name="name">ipai.tenant.manager.form</field>
+        <field name="model">ipai.tenant.manager</field>
+        <field name="arch" type="xml">
+            <form string="Tenant">
+                <header>
+                    <button name="action_provision" string="Provision" type="object" states="draft" class="oe_highlight"/>
+                    <button name="action_suspend" string="Suspend" type="object" states="active" class="btn-warning"/>
+                    <button name="action_reactivate" string="Reactivate" type="object" states="suspended" class="oe_highlight"/>
+                    <button name="action_terminate" string="Terminate" type="object" states="active,suspended" class="btn-danger" confirm="Are you sure you want to terminate this tenant? This action cannot be undone."/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,provisioning,active"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" icon="fa-users">
+                            <field name="user_count" widget="statinfo" string="Users"/>
+                        </button>
+                        <button class="oe_stat_button" type="object" icon="fa-database">
+                            <field name="database_size_mb" widget="statinfo" string="Size (MB)"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="Tenant Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Basic Information">
+                            <field name="code"/>
+                            <field name="database_name" readonly="1"/>
+                            <field name="database_created" readonly="1"/>
+                            <field name="plan_id"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Administrator">
+                            <field name="admin_login"/>
+                            <field name="admin_email"/>
+                            <field name="admin_user_id" readonly="1"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe this tenant..."/>
+                    </group>
+                    <notebook>
+                        <page string="Usage Statistics">
+                            <group>
+                                <group>
+                                    <field name="user_count" readonly="1"/>
+                                    <field name="storage_mb" readonly="1"/>
+                                    <field name="api_calls_month" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Lifecycle Dates">
+                            <group>
+                                <group>
+                                    <field name="provision_date" readonly="1"/>
+                                    <field name="activation_date" readonly="1"/>
+                                </group>
+                                <group>
+                                    <field name="termination_date" readonly="1"/>
+                                    <field name="last_backup_date" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_ipai_tenant_manager_search" model="ir.ui.view">
+        <field name="name">ipai.tenant.manager.search</field>
+        <field name="model">ipai.tenant.manager</field>
+        <field name="arch" type="xml">
+            <search string="Tenants">
+                <field name="name"/>
+                <field name="code"/>
+                <field name="database_name"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Suspended" name="suspended" domain="[('state', '=', 'suspended')]"/>
+                <filter string="Terminated" name="terminated" domain="[('state', '=', 'terminated')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Plan" name="group_plan" context="{'group_by': 'plan_id'}"/>
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_ipai_tenant_manager" model="ir.actions.act_window">
+        <field name="name">Tenants</field>
+        <field name="res_model">ipai.tenant.manager</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first tenant
+            </p>
+            <p>
+                Tenants represent separate customer instances in your SaaS deployment.
+            </p>
+        </field>
+    </record>
+
+    <!-- Tenant Plan Views -->
+    <record id="view_ipai_tenant_plan_tree" model="ir.ui.view">
+        <field name="name">ipai.tenant.plan.tree</field>
+        <field name="model">ipai.tenant.plan</field>
+        <field name="arch" type="xml">
+            <tree string="Subscription Plans">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="price_monthly" widget="monetary"/>
+                <field name="max_users"/>
+                <field name="max_storage_mb"/>
+                <field name="tenant_count"/>
+                <field name="active"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_tenant_plan_form" model="ir.ui.view">
+        <field name="name">ipai.tenant.plan.form</field>
+        <field name="model">ipai.tenant.plan</field>
+        <field name="arch" type="xml">
+            <form string="Subscription Plan">
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" icon="fa-users">
+                            <field name="tenant_count" widget="statinfo" string="Tenants"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. Professional"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Pricing">
+                            <field name="price_monthly" widget="monetary"/>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="active" invisible="1"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group string="Limits">
+                            <field name="max_users"/>
+                            <field name="max_storage_mb"/>
+                            <field name="max_api_calls_month"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Describe this plan and its target customers..."/>
+                    </group>
+                    <group string="Features">
+                        <group>
+                            <field name="enable_ai_workspace"/>
+                            <field name="enable_advanced_analytics"/>
+                            <field name="enable_api_access"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ipai_tenant_plan" model="ir.actions.act_window">
+        <field name="name">Subscription Plans</field>
+        <field name="res_model">ipai.tenant.plan</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first subscription plan
+            </p>
+            <p>
+                Subscription plans define pricing and resource limits for tenants.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_ipai_core_root"
+              name="IPAI Core"
+              sequence="10"/>
+
+    <menuitem id="menu_ipai_approvals"
+              name="Approvals"
+              parent="menu_ipai_core_root"
+              sequence="10"/>
+
+    <menuitem id="menu_ipai_approval_flow"
+              name="Approval Flows"
+              parent="menu_ipai_approvals"
+              action="action_ipai_approval_flow"
+              sequence="10"/>
+
+    <menuitem id="menu_ipai_approval_request"
+              name="Approval Requests"
+              parent="menu_ipai_approvals"
+              action="action_ipai_approval_request"
+              sequence="20"/>
+
+    <menuitem id="menu_ipai_rates"
+              name="Rate Management"
+              parent="menu_ipai_core_root"
+              sequence="20"/>
+
+    <menuitem id="menu_ipai_rate_policy"
+              name="Rate Policies"
+              parent="menu_ipai_rates"
+              action="action_ipai_rate_policy"
+              sequence="10"/>
+
+    <menuitem id="menu_ipai_rate_band"
+              name="Rate Bands"
+              parent="menu_ipai_rates"
+              action="action_ipai_rate_band"
+              sequence="20"/>
+
+    <menuitem id="menu_ipai_ai_workspace"
+              name="AI Workspaces"
+              parent="menu_ipai_core_root"
+              action="action_ipai_ai_workspace"
+              sequence="30"/>
+
+    <menuitem id="menu_ipai_saas"
+              name="SaaS Operations"
+              parent="menu_ipai_core_root"
+              sequence="40"/>
+
+    <menuitem id="menu_ipai_tenant_manager"
+              name="Tenants"
+              parent="menu_ipai_saas"
+              action="action_ipai_tenant_manager"
+              sequence="10"/>
+
+    <menuitem id="menu_ipai_tenant_plan"
+              name="Subscription Plans"
+              parent="menu_ipai_saas"
+              action="action_ipai_tenant_plan"
+              sequence="20"/>
+
+</odoo>

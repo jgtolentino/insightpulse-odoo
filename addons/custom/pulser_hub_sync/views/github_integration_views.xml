@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- GitHub Integration Tree View -->
+        <record id="view_github_integration_tree" model="ir.ui.view">
+            <field name="name">github.integration.tree</field>
+            <field name="model">github.integration</field>
+            <field name="arch" type="xml">
+                <tree string="GitHub Integrations">
+                    <field name="account_login"/>
+                    <field name="installation_id"/>
+                    <field name="repository_selection"/>
+                    <field name="webhook_count"/>
+                    <field name="last_sync"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- GitHub Integration Form View -->
+        <record id="view_github_integration_form" model="ir.ui.view">
+            <field name="name">github.integration.form</field>
+            <field name="model">github.integration</field>
+            <field name="arch" type="xml">
+                <form string="GitHub Integration">
+                    <header>
+                        <button name="action_view_webhooks" type="object" string="View Webhooks" class="oe_highlight"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_button_box" name="button_box">
+                            <button name="action_view_webhooks" type="object" class="oe_stat_button" icon="fa-envelope">
+                                <field name="webhook_count" widget="statinfo" string="Webhooks"/>
+                            </button>
+                        </div>
+                        <widget name="web_ribbon" title="Inactive" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                        <group>
+                            <group name="app_info">
+                                <field name="app_id" readonly="1"/>
+                                <field name="installation_id" readonly="1"/>
+                                <field name="account_login"/>
+                                <field name="repository_selection"/>
+                            </group>
+                            <group name="tokens">
+                                <field name="token_expires_at"/>
+                                <field name="last_sync"/>
+                                <field name="active"/>
+                            </group>
+                        </group>
+                        <group string="Webhook Configuration">
+                            <field name="webhook_secret" password="True"/>
+                        </group>
+                        <group string="OAuth Tokens" groups="base.group_system">
+                            <field name="access_token" password="True"/>
+                            <field name="installation_token" password="True"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- GitHub Webhook Event Tree View -->
+        <record id="view_github_webhook_event_tree" model="ir.ui.view">
+            <field name="name">github.webhook.event.tree</field>
+            <field name="model">github.webhook.event</field>
+            <field name="arch" type="xml">
+                <tree string="GitHub Webhook Events" decoration-muted="processed==True" decoration-danger="processing_error!=False">
+                    <field name="create_date"/>
+                    <field name="event_type"/>
+                    <field name="repository"/>
+                    <field name="sender"/>
+                    <field name="delivery_id"/>
+                    <field name="processed"/>
+                    <field name="processing_error"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- GitHub Webhook Event Form View -->
+        <record id="view_github_webhook_event_form" model="ir.ui.view">
+            <field name="name">github.webhook.event.form</field>
+            <field name="model">github.webhook.event</field>
+            <field name="arch" type="xml">
+                <form string="GitHub Webhook Event">
+                    <header>
+                        <button name="action_reprocess" type="object" string="Reprocess" class="oe_highlight" attrs="{'invisible': [('processed', '=', True)]}"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group name="event_info">
+                                <field name="event_type"/>
+                                <field name="delivery_id"/>
+                                <field name="installation_id"/>
+                                <field name="repository"/>
+                                <field name="sender"/>
+                            </group>
+                            <group name="status">
+                                <field name="create_date"/>
+                                <field name="processed"/>
+                                <field name="processing_error" attrs="{'invisible': [('processing_error', '=', False)]}"/>
+                            </group>
+                        </group>
+                        <group string="Payload">
+                            <field name="payload" widget="ace" options="{'mode': 'json'}" nolabel="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- GitHub Integration Action -->
+        <record id="action_github_integration" model="ir.actions.act_window">
+            <field name="name">GitHub Integrations</field>
+            <field name="res_model">github.integration</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Configure your GitHub App integrations
+                </p>
+                <p>
+                    Connect your GitHub account using the pulser-hub app to receive webhook events and automate workflows.
+                </p>
+            </field>
+        </record>
+
+        <!-- GitHub Webhook Event Action -->
+        <record id="action_github_webhook_event" model="ir.actions.act_window">
+            <field name="name">GitHub Webhook Events</field>
+            <field name="res_model">github.webhook.event</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No webhook events received yet
+                </p>
+                <p>
+                    Configure your GitHub App webhook to point to /odoo/github/webhook
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu Items -->
+        <menuitem id="menu_github_root" name="GitHub" sequence="100" web_icon="pulser_hub_sync,static/description/icon.png"/>
+
+        <menuitem id="menu_github_integration" name="Integrations" parent="menu_github_root" action="action_github_integration" sequence="10"/>
+
+        <menuitem id="menu_github_webhook_event" name="Webhook Events" parent="menu_github_root" action="action_github_webhook_event" sequence="20"/>
+
+        <!-- OAuth Success Template -->
+        <template id="oauth_success" name="OAuth Success">
+            <t t-call="web.layout">
+                <div class="container">
+                    <div class="row mt-5">
+                        <div class="col-md-6 offset-md-3 text-center">
+                            <i class="fa fa-check-circle fa-5x text-success mb-3"></i>
+                            <h1>GitHub App Connected!</h1>
+                            <p class="lead">Successfully connected to <strong><t t-esc="account"/></strong></p>
+                            <p>Installation ID: <code><t t-esc="installation_id"/></code></p>
+                            <p class="mt-4">
+                                <a href="/web" class="btn btn-primary">Go to Odoo Dashboard</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+        <!-- OAuth Error Template -->
+        <template id="oauth_error" name="OAuth Error">
+            <t t-call="web.layout">
+                <div class="container">
+                    <div class="row mt-5">
+                        <div class="col-md-6 offset-md-3 text-center">
+                            <i class="fa fa-exclamation-triangle fa-5x text-danger mb-3"></i>
+                            <h1>GitHub Connection Failed</h1>
+                            <p class="lead">There was an error connecting your GitHub account.</p>
+                            <div class="alert alert-danger">
+                                <t t-esc="error"/>
+                            </div>
+                            <p class="mt-4">
+                                <a href="/web" class="btn btn-secondary">Go to Odoo Dashboard</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+
+    </data>
+</odoo>
