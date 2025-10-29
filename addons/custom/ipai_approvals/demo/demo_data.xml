@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Demo Users for Approval Testing -->
+        <record id="demo_user_procurement_manager" model="res.users">
+            <field name="name">John Procurement</field>
+            <field name="login">john.procurement</field>
+            <field name="email">john.procurement@example.com</field>
+            <field name="groups_id" eval="[(4, ref('purchase.group_purchase_manager'))]"/>
+        </record>
+
+        <record id="demo_user_finance_director" model="res.users">
+            <field name="name">Sarah Finance</field>
+            <field name="login">sarah.finance</field>
+            <field name="email">sarah.finance@example.com</field>
+            <field name="groups_id" eval="[(4, ref('account.group_account_manager'))]"/>
+        </record>
+
+        <record id="demo_user_expense_approver" model="res.users">
+            <field name="name">Mike Expense</field>
+            <field name="login">mike.expense</field>
+            <field name="email">mike.expense@example.com</field>
+            <field name="groups_id" eval="[(4, ref('hr_expense.group_hr_expense_team_approver'))]"/>
+        </record>
+
+    </data>
+</odoo>
