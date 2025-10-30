@@ -2,13 +2,19 @@
 target-version = "py312"
 line-length = 100
 extend-exclude = ["**/migrations/**", "node_modules", ".venv", ".direnv"]
-lint.select = ["E","F","W","I","UP","B","SIM","PL","RUF"]
-lint.ignore = ["E501"]  # rely on formatter for wrapping
+
+[tool.ruff.lint]
+select = ["E","F","W","I","UP","B","SIM","PL","RUF"]
+ignore = ["E501"]  # rely on formatter for wrapping
+
+[tool.ruff.lint.per-file-ignores]
+"**/__manifest__.py" = ["B018"]  # Dict literals in Odoo manifest files
+"**/__init__.py" = ["F401"]  # Odoo imports for side effects
 
 [tool.ruff.format]
 quote-style = "double"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["odoo", "addons", "insightpulse_odoo"]
 combine-as-imports = true
 

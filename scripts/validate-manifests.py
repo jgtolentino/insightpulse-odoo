@@ -46,16 +46,12 @@ VALID_LICENSES = {
 
 
 def find_manifest_files(addons_path: Path) -> List[Path]:
-    """Find all __manifest__.py files in addons directory."""
+    """Find all __manifest__.py files in addons directory (recursive)."""
     manifest_files = []
 
-    for addon_dir in addons_path.iterdir():
-        if not addon_dir.is_dir():
-            continue
-
-        manifest = addon_dir / '__manifest__.py'
-        if manifest.exists():
-            manifest_files.append(manifest)
+    # Search recursively for all __manifest__.py files
+    for manifest in addons_path.rglob('__manifest__.py'):
+        manifest_files.append(manifest)
 
     return manifest_files
 

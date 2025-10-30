@@ -1,2 +1,2 @@
 # Import models to make them available
-from . import models
+from . import models  # noqa: F401
