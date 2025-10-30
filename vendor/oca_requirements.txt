@@ -1,0 +1,7 @@
+# OCA Requirements for Docker Build
+# Format: REPO_URL BRANCH
+# This file is used by scripts/fetch_oca.sh during Docker image build
+
+https://github.com/OCA/contract 19.0
+https://github.com/OCA/server-tools 19.0
+https://github.com/OCA/reporting-engine 19.0

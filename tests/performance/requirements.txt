@@ -1,0 +1,5 @@
+# Performance Testing Dependencies for InsightPulse Odoo
+
+locust==2.20.0          # Load testing framework
+requests==2.31.0        # HTTP library
+faker==22.0.0           # Generate realistic test data

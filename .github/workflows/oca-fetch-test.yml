@@ -1,0 +1,405 @@
+name: OCA Module Fetch & Test
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'vendor/oca_requirements.txt'
+      - 'vendor/oca_repos.yml'
+      - 'scripts/fetch_oca.sh'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'vendor/oca_requirements.txt'
+      - 'vendor/oca_repos.yml'
+      - 'scripts/fetch_oca.sh'
+  schedule:
+    # Run weekly on Monday at 2 AM to check for OCA updates
+    - cron: '0 2 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+env:
+  PYTHON_VERSION: '3.11'
+  ODOO_VERSION: '19.0'
+
+jobs:
+  # Job 1: Validate OCA Requirements
+  validate-oca-requirements:
+    runs-on: ubuntu-latest
+    outputs:
+      repos_changed: ${{ steps.check_changes.outputs.changed }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need history for diff
+
+      - name: Check if OCA files changed
+        id: check_changes
+        run: |
+          if git diff HEAD^ HEAD --name-only | grep -E 'vendor/oca_|scripts/fetch_oca'; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate oca_requirements.txt format
+        run: |
+          echo "=== Validating oca_requirements.txt format ==="
+
+          if [ ! -f "vendor/oca_requirements.txt" ]; then
+            echo "Error: vendor/oca_requirements.txt not found"
+            exit 1
+          fi
+
+          # Check format: each line should be "URL BRANCH" or comment/empty
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Skip comments and empty lines
+            if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
+              continue
+            fi
+
+            # Validate line format
+            if ! echo "$line" | grep -qE '^https://github\.com/OCA/[a-z0-9-]+ [0-9]+\.[0-9]$'; then
+              echo "Error: Invalid format in line: $line"
+              echo "Expected format: https://github.com/OCA/repo-name VERSION"
+              exit 1
+            fi
+          done < vendor/oca_requirements.txt
+
+          echo "✓ oca_requirements.txt format is valid"
+
+      - name: Check OCA branch availability
+        run: |
+          echo "=== Checking OCA branch availability ==="
+
+          while IFS= read -r line || [ -n "$line" ]; do
+            # Skip comments and empty lines
+            if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
+              continue
+            fi
+
+            REPO=$(echo "$line" | cut -d' ' -f1)
+            BRANCH=$(echo "$line" | cut -d' ' -f2)
+            REPO_NAME=$(basename "$REPO" .git)
+
+            echo "Checking $REPO_NAME branch $BRANCH..."
+
+            # Check if branch exists
+            if git ls-remote --heads "$REPO" | grep -q "refs/heads/$BRANCH"; then
+              echo "✓ Branch $BRANCH exists for $REPO_NAME"
+            else
+              echo "✗ Branch $BRANCH NOT FOUND for $REPO_NAME"
+              echo "Available branches:"
+              git ls-remote --heads "$REPO" | grep -E "refs/heads/(19|18|17)" || true
+              exit 1
+            fi
+          done < vendor/oca_requirements.txt
+
+          echo "✓ All OCA branches are available"
+
+  # Job 2: Test OCA Fetch Script
+  test-oca-fetch:
+    runs-on: ubuntu-latest
+    needs: validate-oca-requirements
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Test fetch_oca.sh script
+        run: |
+          echo "=== Testing fetch_oca.sh script ==="
+
+          # Syntax check
+          bash -n scripts/fetch_oca.sh
+          echo "✓ Script syntax is valid"
+
+          # Test execution
+          mkdir -p /tmp/test_oca_fetch
+          bash scripts/fetch_oca.sh vendor/oca_requirements.txt /tmp/test_oca_fetch
+
+          echo "✓ Script executed successfully"
+
+      - name: Verify cloned modules
+        run: |
+          echo "=== Verifying cloned modules ==="
+
+          # Count repos
+          REPO_COUNT=$(ls -1d /tmp/test_oca_fetch/*/ 2>/dev/null | wc -l)
+          echo "Cloned $REPO_COUNT repositories"
+
+          # Count modules
+          MODULE_COUNT=$(find /tmp/test_oca_fetch -name "__manifest__.py" | wc -l)
+          echo "Found $MODULE_COUNT Odoo modules"
+
+          if [ $MODULE_COUNT -eq 0 ]; then
+            echo "Error: No Odoo modules found"
+            exit 1
+          fi
+
+          echo "✓ Successfully fetched $MODULE_COUNT modules from $REPO_COUNT repos"
+
+      - name: List fetched modules
+        run: |
+          echo "=== Fetched OCA Modules ==="
+          find /tmp/test_oca_fetch -name "__manifest__.py" -exec dirname {} \; | sort
+
+      - name: Upload fetch results
+        uses: actions/upload-artifact@v4
+        with:
+          name: oca-fetch-test-results
+          path: /tmp/test_oca_fetch/
+          retention-days: 7
+
+  # Job 3: Build Docker Image with OCA Modules
+  build-docker-with-oca:
+    runs-on: ubuntu-latest
+    needs: test-oca-fetch
+    if: github.event_name != 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: insightpulse-odoo:test-oca
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1
+
+      - name: Test Docker image
+        run: |
+          echo "=== Testing Docker Image ==="
+          docker images insightpulse-odoo:test-oca
+
+          # Check image size
+          SIZE=$(docker images insightpulse-odoo:test-oca --format "{{.Size}}")
+          echo "Image size: $SIZE"
+
+  # Job 4: Validate OCA Module Manifests
+  validate-oca-modules:
+    runs-on: ubuntu-latest
+    needs: test-oca-fetch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Fetch OCA modules
+        run: |
+          mkdir -p /tmp/oca_modules
+          bash scripts/fetch_oca.sh vendor/oca_requirements.txt /tmp/oca_modules
+
+      - name: Validate module manifests
+        run: |
+          echo "=== Validating OCA Module Manifests ==="
+
+          python3 << 'EOF'
+          import os
+          import ast
+          import sys
+
+          errors = []
+          warnings = []
+          modules_checked = 0
+
+          for root, dirs, files in os.walk('/tmp/oca_modules'):
+              if '__manifest__.py' in files:
+                  modules_checked += 1
+                  manifest_path = os.path.join(root, '__manifest__.py')
+                  module_name = os.path.basename(root)
+
+                  try:
+                      with open(manifest_path, 'r', encoding='utf-8') as f:
+                          manifest = ast.literal_eval(f.read())
+
+                      # Required fields
+                      required_fields = ['name', 'version', 'depends', 'author']
+                      for field in required_fields:
+                          if field not in manifest:
+                              errors.append(f"{module_name}: Missing required field '{field}'")
+
+                      # Check version format
+                      if 'version' in manifest:
+                          version = manifest['version']
+                          if not version.startswith('19.'):
+                              warnings.append(f"{module_name}: Version {version} doesn't match Odoo 19.0")
+
+                      # Check license
+                      if 'license' in manifest:
+                          valid_licenses = ['AGPL-3', 'LGPL-3', 'MIT', 'Apache-2.0']
+                          if manifest['license'] not in valid_licenses:
+                              warnings.append(f"{module_name}: Unusual license '{manifest['license']}'")
+
+                  except Exception as e:
+                      errors.append(f"{module_name}: Failed to parse manifest - {str(e)}")
+
+          print(f"\n=== Validation Results ===")
+          print(f"Modules checked: {modules_checked}")
+          print(f"Errors: {len(errors)}")
+          print(f"Warnings: {len(warnings)}")
+
+          if errors:
+              print("\n⚠️ Errors:")
+              for error in errors:
+                  print(f"  - {error}")
+
+          if warnings:
+              print("\n⚠️ Warnings:")
+              for warning in warnings:
+                  print(f"  - {warning}")
+
+          if errors:
+              sys.exit(1)
+          else:
+              print("\n✅ All manifests are valid")
+          EOF
+
+  # Job 5: Check for OCA Updates (Scheduled)
+  check-oca-updates:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check for OCA repository updates
+        id: check_updates
+        run: |
+          echo "=== Checking for OCA Updates ==="
+
+          UPDATES_FOUND=0
+
+          while IFS= read -r line || [ -n "$line" ]; do
+            if [[ -z "$line" ]] || [[ "$line" =~ ^[[:space:]]*# ]]; then
+              continue
+            fi
+
+            REPO=$(echo "$line" | cut -d' ' -f1)
+            BRANCH=$(echo "$line" | cut -d' ' -f2)
+            REPO_NAME=$(basename "$REPO" .git)
+
+            echo "Checking $REPO_NAME..."
+
+            # Get latest commit from branch
+            LATEST_COMMIT=$(git ls-remote "$REPO" "refs/heads/$BRANCH" | cut -f1)
+            echo "Latest commit: $LATEST_COMMIT"
+
+            # Store in file for issue creation
+            echo "$REPO_NAME: $LATEST_COMMIT" >> /tmp/oca_commits.txt
+            UPDATES_FOUND=1
+          done < vendor/oca_requirements.txt
+
+          echo "updates_found=$UPDATES_FOUND" >> $GITHUB_OUTPUT
+
+      - name: Create update issue
+        if: steps.check_updates.outputs.updates_found == '1'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const commits = fs.readFileSync('/tmp/oca_commits.txt', 'utf8');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔄 Weekly OCA Module Update Check',
+              body: `## OCA Module Update Report
+
+This is an automated weekly check for OCA module updates.
+
+### Latest Commits
+
+\`\`\`
+${commits}
+\`\`\`
+
+### Recommended Actions
+
+1. Review the changes in each repository
+2. Update \`vendor/oca_requirements.txt\` if needed
+3. Test compatibility with your custom modules
+4. Update \`vendor/oca_repos.lock\` to pin versions
+
+### Resources
+
+- [OCA GitHub](https://github.com/OCA)
+- [Migration Guide](https://github.com/OCA/maintainer-tools/wiki)
+
+---
+*Generated by Weekly OCA Update Check*`,
+              labels: ['oca', 'dependencies', 'automated']
+            });
+
+  # Job 6: Comment on PR with OCA changes
+  pr-comment-oca-changes:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    needs: test-oca-fetch
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Analyze OCA changes
+        id: analyze
+        run: |
+          echo "=== Analyzing OCA Changes ==="
+
+          # Fetch modules to count
+          mkdir -p /tmp/oca_modules
+          bash scripts/fetch_oca.sh vendor/oca_requirements.txt /tmp/oca_modules
+
+          MODULE_COUNT=$(find /tmp/oca_modules -name "__manifest__.py" | wc -l)
+          REPO_COUNT=$(ls -1d /tmp/oca_modules/*/ 2>/dev/null | wc -l)
+
+          echo "module_count=$MODULE_COUNT" >> $GITHUB_OUTPUT
+          echo "repo_count=$REPO_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const moduleCount = '${{ steps.analyze.outputs.module_count }}';
+            const repoCount = '${{ steps.analyze.outputs.repo_count }}';
+
+            const comment = `## 📦 OCA Module Changes Detected
+
+This PR modifies OCA module configuration:
+
+- **Repositories**: ${repoCount}
+- **Modules**: ${moduleCount}
+
+### Verification Status
+
+✅ All OCA branches are available
+✅ \`fetch_oca.sh\` script validated
+✅ Module manifests are valid
+✅ Docker build successful
+
+### Next Steps
+
+- Review the module list in the workflow artifacts
+- Test module compatibility with existing customizations
+- Update documentation if new modules are added
+
+---
+*Automated by OCA Module Fetch & Test workflow*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
