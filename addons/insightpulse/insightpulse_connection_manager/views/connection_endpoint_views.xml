@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Connection Endpoint Form View -->
+    <record id="view_connection_endpoint_form" model="ir.ui.view">
+        <field name="name">insightpulse.connection.endpoint.form</field>
+        <field name="model">insightpulse.connection.endpoint</field>
+        <field name="arch" type="xml">
+            <form string="Connection Details">
+                <header>
+                    <button name="action_test_connection" 
+                            string="Test Connection" 
+                            type="object" 
+                            class="btn-primary"/>
+                    <field name="last_test_result" widget="statusbar" statusbar_visible="untested,success,failed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_connections" icon="fa-plug">
+                            <field string="Connections" name="connection_count" widget="statinfo"/>
+                        </button>
+                    </div>
+                    
+                    <widget name="web_ribbon" title="Inactive" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+                    
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1><field name="name" placeholder="e.g. Production Supabase DB"/></h1>
+                    </div>
+                    
+                    <group>
+                        <group name="connection_info">
+                            <field name="endpoint_type" widget="radio"/>
+                            <field name="active" widget="boolean_toggle"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group name="status_info">
+                            <field name="last_test_date"/>
+                            <field name="last_test_message" attrs="{'invisible': [('last_test_message', '=', False)]}"/>
+                            <field name="icon" invisible="1"/>
+                            <field name="color" invisible="1"/>
+                        </group>
+                    </group>
+                    
+                    <notebook>
+                        <page string="Connection Settings" name="settings">
+                            <group>
+                                <group string="Server Details">
+                                    <field name="base_url" placeholder="db.spdtwktxdalcfigzeqrz.supabase.co"/>
+                                    <field name="port"/>
+                                    <field name="use_ssl"/>
+                                </group>
+                                <group string="Authentication">
+                                    <field name="database_name" placeholder="postgres"/>
+                                    <field name="username"/>
+                                    <field name="password" password="True"/>
+                                    <field name="api_key" password="True"/>
+                                </group>
+                            </group>
+                            <group string="Advanced">
+                                <field name="extra_params" placeholder='{"sslmode": "require", "connect_timeout": "10"}'/>
+                            </group>
+                        </page>
+                        
+                        <page string="Connection String" name="connection_string">
+                            <div class="alert alert-info" role="alert">
+                                Copy this connection string to connect to your endpoint from external applications.
+                            </div>
+                            <group>
+                                <field name="connection_string" readonly="1" widget="CopyClipboardChar"/>
+                            </group>
+                        </page>
+                        
+                        <page string="Environment Variables" name="env_vars">
+                            <div class="alert alert-info" role="alert">
+                                Copy these environment variables to your .env file.
+                            </div>
+                            <field name="env_vars" widget="ace" options="{'mode': 'sh'}"/>
+                        </page>
+                        
+                        <page string="Docker Compose" name="docker_compose">
+                            <div class="alert alert-info" role="alert">
+                                Add this snippet to your docker-compose.yml file.
+                            </div>
+                            <field name="docker_compose_snippet" widget="ace" options="{'mode': 'yaml'}"/>
+                        </page>
+                        
+                        <page string="Documentation" name="documentation">
+                            <group>
+                                <field name="description" widget="html"/>
+                                <field name="notes"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Connection Endpoint Tree View -->
+    <record id="view_connection_endpoint_tree" model="ir.ui.view">
+        <field name="name">insightpulse.connection.endpoint.tree</field>
+        <field name="model">insightpulse.connection.endpoint</field>
+        <field name="arch" type="xml">
+            <tree string="Connections" decoration-muted="not active" decoration-success="last_test_result=='success'" decoration-danger="last_test_result=='failed'">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="endpoint_type"/>
+                <field name="base_url"/>
+                <field name="last_test_result" widget="badge" decoration-success="last_test_result=='success'" decoration-danger="last_test_result=='failed'" decoration-muted="last_test_result=='untested'"/>
+                <field name="connection_count"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Connection Endpoint Kanban View (Supabase-style) -->
+    <record id="view_connection_endpoint_kanban" model="ir.ui.view">
+        <field name="name">insightpulse.connection.endpoint.kanban</field>
+        <field name="model">insightpulse.connection.endpoint</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard o_kanban_small_column">
+                <field name="name"/>
+                <field name="endpoint_type"/>
+                <field name="base_url"/>
+                <field name="connection_string"/>
+                <field name="env_vars"/>
+                <field name="last_test_result"/>
+                <field name="color"/>
+                <field name="icon"/>
+                <field name="active"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click oe_kanban_color_#{record.color.raw_value} #{record.active.raw_value ? '' : 'o_kanban_record_inactive'}">
+                            <div class="oe_kanban_content">
+                                <div class="o_kanban_record_top">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title">
+                                            <i t-att-class="record.icon.raw_value"></i>
+                                            <field name="name"/>
+                                        </strong>
+                                        <span class="o_kanban_record_subtitle">
+                                            <field name="endpoint_type"/>
+                                        </span>
+                                    </div>
+                                    <div class="o_dropdown_kanban dropdown">
+                                        <a class="dropdown-toggle o-no-caret btn" role="button" data-toggle="dropdown" data-display="static" href="#" aria-label="Dropdown menu" title="Dropdown menu">
+                                            <span class="fa fa-ellipsis-v"/>
+                                        </a>
+                                        <div class="dropdown-menu" role="menu">
+                                            <a role="menuitem" type="edit" class="dropdown-item">Edit</a>
+                                            <a role="menuitem" type="delete" class="dropdown-item">Delete</a>
+                                            <a role="menuitem" type="object" name="action_test_connection" class="dropdown-item">Test Connection</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_body">
+                                    <div class="text-muted">
+                                        <i class="fa fa-server"></i> <field name="base_url"/>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <span t-if="record.last_test_result.raw_value == 'success'" class="badge badge-success">
+                                            <i class="fa fa-check-circle"></i> Connected
+                                        </span>
+                                        <span t-if="record.last_test_result.raw_value == 'failed'" class="badge badge-danger">
+                                            <i class="fa fa-times-circle"></i> Failed
+                                        </span>
+                                        <span t-if="record.last_test_result.raw_value == 'untested'" class="badge badge-secondary">
+                                            <i class="fa fa-question-circle"></i> Not Tested
+                                        </span>
+                                    </div>
+                                    
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-secondary copy-connection-string" title="Copy Connection String">
+                                            <i class="fa fa-copy"></i> Connection String
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-secondary copy-env-vars ml-1" title="Copy Environment Variables">
+                                            <i class="fa fa-file-code-o"></i> .env
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="o_kanban_record_bottom mt-3">
+                                    <div class="oe_kanban_bottom_left">
+                                        <span class="badge badge-pill badge-info">
+                                            <i class="fa fa-plug"></i> <field name="connection_count"/> connections
+                                        </span>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <field name="active" widget="boolean_toggle"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Actions -->
+    <record id="action_connection_endpoint" model="ir.actions.act_window">
+        <field name="name">Connection Manager</field>
+        <field name="res_model">insightpulse.connection.endpoint</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Connect to your InsightPulse AI infrastructure
+            </p>
+            <p>
+                Manage connections to Supabase, Odoo, Superset, MCP servers, and more.<br/>
+                Get connection strings, environment variables, and Docker Compose snippets.
+            </p>
+        </field>
+    </record>
+</odoo>
