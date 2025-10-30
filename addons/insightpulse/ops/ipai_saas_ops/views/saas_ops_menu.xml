@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- SaaS Ops Root Menu -->
+    <menuitem id="menu_saas_ops_root"
+              name="SaaS Ops"
+              sequence="5"/>
+
+    <!-- Tenants Submenu -->
+    <menuitem id="menu_saas_tenant"
+              name="Tenants"
+              parent="menu_saas_ops_root"
+              action="action_saas_tenant"
+              sequence="10"/>
+
+    <!-- Backups Submenu -->
+    <menuitem id="menu_saas_backup"
+              name="Backups"
+              parent="menu_saas_ops_root"
+              action="action_saas_backup"
+              sequence="20"/>
+
+    <!-- Usage Submenu -->
+    <menuitem id="menu_saas_usage"
+              name="Usage"
+              parent="menu_saas_ops_root"
+              action="action_saas_usage"
+              sequence="30"/>
+
+    <!-- Security Groups -->
+    <record id="saas_ops_group_user" model="res.groups">
+        <field name="name">SaaS Ops User</field>
+        <field name="category_id" ref="base.module_category_operations"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="saas_ops_group_admin" model="res.groups">
+        <field name="name">SaaS Ops Admin</field>
+        <field name="category_id" ref="base.module_category_operations"/>
+        <field name="implied_ids" eval="[(4, ref('saas_ops_group_user'))]"/>
+    </record>
+</odoo>

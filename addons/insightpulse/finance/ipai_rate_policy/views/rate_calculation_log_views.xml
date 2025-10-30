@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- Rate Calculation Log Tree View -->
+    <record id="view_rate_calculation_log_tree" model="ir.ui.view">
+        <field name="name">rate.calculation.log.tree</field>
+        <field name="model">rate.calculation.log</field>
+        <field name="arch" type="xml">
+            <tree string="Rate Calculation Logs" create="false" edit="false">
+                <field name="calculation_date"/>
+                <field name="policy_id"/>
+                <field name="role_id"/>
+                <field name="p60_rate"/>
+                <field name="markup_percentage"/>
+                <field name="calculated_rate"/>
+                <field name="user_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Rate Calculation Log Form View -->
+    <record id="view_rate_calculation_log_form" model="ir.ui.view">
+        <field name="name">rate.calculation.log.form</field>
+        <field name="model">rate.calculation.log</field>
+        <field name="arch" type="xml">
+            <form string="Rate Calculation Log" create="false" edit="false">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="calculation_date"/>
+                            <field name="policy_id"/>
+                            <field name="policy_line_id"/>
+                            <field name="role_id"/>
+                        </group>
+                        <group>
+                            <field name="p60_rate"/>
+                            <field name="markup_percentage"/>
+                            <field name="calculated_rate"/>
+                            <field name="user_id"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rate Calculation Log Search View -->
+    <record id="view_rate_calculation_log_search" model="ir.ui.view">
+        <field name="name">rate.calculation.log.search</field>
+        <field name="model">rate.calculation.log</field>
+        <field name="arch" type="xml">
+            <search string="Rate Calculation Logs">
+                <field name="policy_id"/>
+                <field name="role_id"/>
+                <field name="user_id"/>
+                <filter string="Today" name="today"
+                        domain="[('calculation_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Last 7 Days" name="last_week"
+                        domain="[('calculation_date', '&gt;=', (context_today() - relativedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+                <group expand="0" string="Group By">
+                    <filter string="Policy" name="group_policy" context="{'group_by': 'policy_id'}"/>
+                    <filter string="Job Position" name="group_role" context="{'group_by': 'role_id'}"/>
+                    <filter string="Calculation Date" name="group_date" context="{'group_by': 'calculation_date'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Rate Calculation Log Action -->
+    <record id="action_rate_calculation_log" model="ir.actions.act_window">
+        <field name="name">Rate Calculation Logs</field>
+        <field name="res_model">rate.calculation.log</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_today': 1}</field>
+    </record>
+</odoo>

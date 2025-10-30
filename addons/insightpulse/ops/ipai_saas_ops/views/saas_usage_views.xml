@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_saas_usage_tree" model="ir.ui.view">
+        <field name="name">saas.usage.tree</field>
+        <field name="model">saas.usage</field>
+        <field name="arch" type="xml">
+            <tree string="SaaS Usage">
+                <field name="tenant_id"/>
+                <field name="usage_date"/>
+                <field name="metric_type"/>
+                <field name="value"/>
+                <field name="unit"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_saas_usage" model="ir.actions.act_window">
+        <field name="name">Usage</field>
+        <field name="res_model">saas.usage</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,202 @@
+name: DigitalOcean App Platform Deployment
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'addons/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - 'infra/do/**'
+      - '.github/workflows/digitalocean-deploy.yml'
+
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild Docker image'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DO_APP_ID: ${{ secrets.DO_APP_ID }}
+
+jobs:
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff pyyaml
+
+      - name: Lint Python code
+        run: |
+          ruff check addons/ --select=E,F,W --ignore=E501
+        continue-on-error: true
+
+      - name: Validate manifest files
+        run: |
+          python scripts/validate-manifests.py
+        continue-on-error: true
+
+      - name: Validate DigitalOcean spec
+        run: |
+          python -c "import yaml; yaml.safe_load(open('infra/do/odoo-saas-platform.yaml'))"
+
+  deploy:
+    name: Deploy to DigitalOcean
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Update app spec
+        id: update_spec
+        run: |
+          echo "Updating DigitalOcean app spec..."
+          doctl apps update ${{ env.DO_APP_ID }} --spec infra/do/odoo-saas-platform.yaml
+          echo "App spec updated successfully"
+
+      - name: Create deployment
+        id: deploy
+        run: |
+          echo "Creating new deployment..."
+
+          if [ "${{ github.event.inputs.force_rebuild }}" == "true" ]; then
+            DEPLOYMENT_ID=$(doctl apps create-deployment ${{ env.DO_APP_ID }} --force-rebuild --format ID --no-header)
+          else
+            DEPLOYMENT_ID=$(doctl apps create-deployment ${{ env.DO_APP_ID }} --format ID --no-header)
+          fi
+
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment
+        id: wait
+        run: |
+          echo "Waiting for deployment to complete..."
+          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment_id }}"
+          MAX_WAIT=1200  # 20 minutes
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            STATUS=$(doctl apps list-deployments ${{ env.DO_APP_ID }} --format ID,Phase --no-header | grep "$DEPLOYMENT_ID" | awk '{print $2}')
+
+            echo "Deployment status: $STATUS (elapsed: ${ELAPSED}s)"
+
+            if [ "$STATUS" == "ACTIVE" ]; then
+              echo "Deployment successful!"
+              echo "deployment_status=success" >> $GITHUB_OUTPUT
+              exit 0
+            elif [ "$STATUS" == "ERROR" ] || [ "$STATUS" == "CANCELED" ]; then
+              echo "Deployment failed with status: $STATUS"
+              echo "deployment_status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+
+            sleep 30
+            ELAPSED=$((ELAPSED + 30))
+          done
+
+          echo "Deployment timeout after ${MAX_WAIT}s"
+          echo "deployment_status=timeout" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Get deployment logs
+        if: failure()
+        run: |
+          echo "Fetching deployment logs..."
+          doctl apps logs ${{ env.DO_APP_ID }} --type build --follow=false || true
+          doctl apps logs ${{ env.DO_APP_ID }} --type run --follow=false || true
+
+  verify:
+    name: Verify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Get app URL
+        id: app_url
+        run: |
+          APP_URL=$(doctl apps get ${{ env.DO_APP_ID }} --format DefaultIngress --no-header)
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+          echo "App URL: $APP_URL"
+
+      - name: Health check
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "Waiting for app to be ready..."
+          sleep 60
+
+          echo "Running health check..."
+          MAX_RETRIES=10
+          RETRY=0
+
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            if curl -sf "https://${APP_URL}/web/health"; then
+              echo "Health check passed!"
+              exit 0
+            fi
+
+            echo "Health check failed, retrying... ($((RETRY + 1))/$MAX_RETRIES)"
+            sleep 30
+            RETRY=$((RETRY + 1))
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Smoke test
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "Running smoke tests..."
+
+          # Test main page
+          if curl -sf "https://${APP_URL}/web" > /dev/null; then
+            echo "✓ Main page accessible"
+          else
+            echo "✗ Main page failed"
+            exit 1
+          fi
+
+          # Test database connectivity
+          if curl -sf "https://${APP_URL}/web/database/selector" > /dev/null; then
+            echo "✓ Database selector accessible"
+          else
+            echo "✗ Database selector failed"
+            exit 1
+          fi
+
+      - name: Deployment summary
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **App URL**: https://${APP_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Smoke Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY

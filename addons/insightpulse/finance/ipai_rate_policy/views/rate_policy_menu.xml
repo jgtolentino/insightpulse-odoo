@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- Rate Policy Menu Root -->
+    <menuitem id="menu_rate_policy_root"
+              name="Rate Policies"
+              parent="account.menu_finance"
+              sequence="50"/>
+
+    <!-- Rate Policy Submenu -->
+    <menuitem id="menu_rate_policy"
+              name="Policies"
+              parent="menu_rate_policy_root"
+              action="action_rate_policy"
+              sequence="10"/>
+
+    <!-- Rate Calculation Logs Submenu -->
+    <menuitem id="menu_rate_calculation_log"
+              name="Calculation Logs"
+              parent="menu_rate_policy_root"
+              action="action_rate_calculation_log"
+              sequence="20"/>
+
+    <!-- Security Groups -->
+    <record id="rate_policy_group_user" model="res.groups">
+        <field name="name">Rate Policy User</field>
+        <field name="category_id" ref="base.module_category_accounting"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="rate_policy_group_manager" model="res.groups">
+        <field name="name">Rate Policy Manager</field>
+        <field name="category_id" ref="base.module_category_accounting"/>
+        <field name="implied_ids" eval="[(4, ref('rate_policy_group_user'))]"/>
+    </record>
+</odoo>

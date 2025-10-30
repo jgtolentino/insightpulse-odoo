@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ppm_program_user,ppm.program.user,model_ppm_program,ppm_group_user,1,0,0,0
+access_ppm_program_manager,ppm.program.manager,model_ppm_program,ppm_group_manager,1,1,1,1
+access_ppm_roadmap_user,ppm.roadmap.user,model_ppm_roadmap,ppm_group_user,1,0,0,0
+access_ppm_roadmap_manager,ppm.roadmap.manager,model_ppm_roadmap,ppm_group_manager,1,1,1,1
+access_ppm_risk_user,ppm.risk.user,model_ppm_risk,ppm_group_user,1,0,0,0
+access_ppm_risk_manager,ppm.risk.manager,model_ppm_risk,ppm_group_manager,1,1,1,1
+access_ppm_budget_user,ppm.budget.user,model_ppm_budget,ppm_group_user,1,0,0,0
+access_ppm_budget_manager,ppm.budget.manager,model_ppm_budget,ppm_group_manager,1,1,1,1

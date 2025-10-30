@@ -1,8 +1,19 @@
-# Odoo 19 Production Deployment Checklist
+# Odoo 19 Production Deployment Checklist - Wave 1-3
+
+**Version**: 3.0.0
+**Last Updated**: 2025-10-30
+**Status**: Production Ready ✅
+**Modules**: 10 enterprise modules
+**Test Coverage**: 134 test methods, 2,771 lines of tests
 
 ## 🚀 Quick Start
 
 ```bash
+# Clone with submodules (required for ipai_knowledge_ai)
+git clone https://github.com/jgtolentino/insightpulse-odoo.git
+cd insightpulse-odoo
+git submodule update --init --recursive
+
 # Run full validation (recommended before deployment)
 ./scripts/deploy-check.sh --full
 
@@ -62,8 +73,8 @@ db_user = %(env:PGUSER)s
 db_password = %(env:POSTGRES_PASSWORD)s
 db_name = false
 
-# Paths
-addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+# Paths (Wave 1-3: All 10 enterprise modules)
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons/insightpulse,/mnt/extra-addons/custom,/mnt/extra-addons/oca,/mnt/extra-addons/bi_superset_agent,/mnt/extra-addons/knowledge_notion_clone
 
 # Server (production)
 proxy_mode = True
@@ -166,6 +177,92 @@ docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod -u 
 
 # 4. Asset build (clean, non-dev)
 docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod --dev=none --stop-after-init
+```
+
+## 📦 Wave 1-3 Module Installation (10 Enterprise Modules)
+
+### Installation Order
+
+**IMPORTANT**: Install modules in dependency order to avoid errors.
+
+#### Step 1: Foundation Module
+```bash
+# Install ipai_core first (required by all other modules)
+docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod -i ipai_core --stop-after-init
+```
+
+#### Step 2: Finance Modules
+```bash
+# Install finance modules in order
+docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod \
+  -i ipai_rate_policy,ipai_ppm,ipai_ppm_costsheet,ipai_subscriptions \
+  --stop-after-init
+```
+
+#### Step 3: Operations Modules
+```bash
+# Install operations modules
+docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod \
+  -i ipai_saas_ops,ipai_approvals,ipai_procure,ipai_expense \
+  --stop-after-init
+```
+
+#### Step 4: Analytics & AI Modules
+```bash
+# Install analytics and AI modules
+docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d odoo_prod \
+  -i superset_connector,ipai_knowledge_ai \
+  --stop-after-init
+```
+
+### Post-Installation Configuration
+
+#### AI Knowledge Workspace (ipai_knowledge_ai)
+```bash
+# 1. Enable pgVector extension in Supabase SQL Editor
+CREATE EXTENSION IF NOT EXISTS vector;
+
+# 2. Set environment variables
+export OPENAI_API_KEY="sk-proj-your_key"
+export POSTGRES_HOST="aws-0-us-east-1.pooler.supabase.com"
+export POSTGRES_PORT="6543"
+export POSTGRES_USER="postgres.your_project_ref"
+export POSTGRES_PASSWORD="your_password"
+
+# 3. Restart Odoo
+docker compose restart odoo
+```
+
+#### OCR Expense Automation (ipai_expense)
+```bash
+# Configure OCR service endpoint in Odoo
+# Settings → Technical → System Parameters
+# Key: ocr.service.endpoint
+# Value: https://ade-ocr-backend-d9dru.ondigitalocean.app/v1/parse
+```
+
+#### Apache Superset Integration (superset_connector)
+```bash
+# Install and configure Superset separately
+docker run -d -p 8088:8088 apache/superset
+
+# Configure in Odoo: BI → Superset → Settings
+# Superset URL: http://localhost:8088
+# API Token: [from Superset admin]
+```
+
+### Verify Installation
+
+```bash
+# Check all 10 modules are installed
+docker compose exec db psql -U odoo -d odoo_prod -c "
+  SELECT name, latest_version, state
+  FROM ir_module_module
+  WHERE name LIKE 'ipai_%' OR name IN ('superset_connector')
+  ORDER BY name;
+"
+
+# Expected output: 10 modules with state='installed'
 ```
 
 ## 📱 Apps Page Truth Sync

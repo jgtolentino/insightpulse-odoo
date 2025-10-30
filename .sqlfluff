@@ -1,0 +1,7 @@
+[sqlfluff]
+dialect = postgres
+templater = jinja
+exclude_rules = L009  # line length handled by formatter
+
+[sqlfluff:rules]
+max_line_length = 100

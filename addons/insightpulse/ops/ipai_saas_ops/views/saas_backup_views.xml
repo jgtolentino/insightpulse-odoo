@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_saas_backup_tree" model="ir.ui.view">
+        <field name="name">saas.backup.tree</field>
+        <field name="model">saas.backup</field>
+        <field name="arch" type="xml">
+            <tree string="SaaS Backups">
+                <field name="name"/>
+                <field name="tenant_id"/>
+                <field name="backup_type"/>
+                <field name="backup_date"/>
+                <field name="status"/>
+                <field name="file_size_mb"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_saas_backup" model="ir.actions.act_window">
+        <field name="name">Backups</field>
+        <field name="res_model">saas.backup</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
