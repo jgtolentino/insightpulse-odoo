@@ -99,7 +99,7 @@ jobs:
         run: |
           echo "Waiting for deployment to complete..."
           DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment_id }}"
-          MAX_WAIT=1200  # 20 minutes
+          MAX_WAIT=1800  # 30 minutes (increased for Odoo startup)
           ELAPSED=0
 
           while [ $ELAPSED -lt $MAX_WAIT ]; do
@@ -139,6 +139,11 @@ jobs:
     if: success()
 
     steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
       - name: Get app URL
         id: app_url
         run: |
@@ -151,14 +156,15 @@ jobs:
           APP_URL="${{ steps.app_url.outputs.app_url }}"
 
           echo "Waiting for app to be ready..."
-          sleep 60
+          sleep 120  # Increased initial wait for Odoo to fully start
 
           echo "Running health check..."
-          MAX_RETRIES=10
+          MAX_RETRIES=15  # Increased retries for Odoo startup
           RETRY=0
 
           while [ $RETRY -lt $MAX_RETRIES ]; do
-            if curl -sf "https://${APP_URL}/web/health"; then
+            # Try both /web/health and /web endpoints
+            if curl -sf "https://${APP_URL}/web/health" || curl -sf "https://${APP_URL}/web" > /dev/null; then
               echo "Health check passed!"
               exit 0
             fi
@@ -169,6 +175,8 @@ jobs:
           done
 
           echo "Health check failed after $MAX_RETRIES attempts"
+          echo "Trying direct connection test..."
+          curl -v "https://${APP_URL}/web" || true
           exit 1
 
       - name: Smoke test

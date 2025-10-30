@@ -1,0 +1,493 @@
+name: OCA-Style Bot Automation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  pull_request_review:
+    types: [submitted, dismissed]
+  issue_comment:
+    types: [created]
+  push:
+    branches: [main, develop]
+  schedule:
+    # Run nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  # ============================================================================
+  # AUTO-LABEL PRs BASED ON REVIEWS AND CI STATUS
+  # ============================================================================
+  auto-label-pr:
+    if: >
+      github.event_name == 'pull_request' ||
+      github.event_name == 'pull_request_review'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Auto-label based on approvals and CI
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.issue.number || context.payload.pull_request.number;
+
+            if (!prNumber) {
+              core.info('No PR number found, skipping');
+              return;
+            }
+
+            // Get PR details
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: prNumber
+            });
+
+            // Get reviews
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner, repo, pull_number: prNumber
+            });
+
+            // Count approvals
+            const approvals = reviews.filter(r => r.state === 'APPROVED').length;
+
+            // Get CI status
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner, repo, ref: pr.head.sha
+            });
+
+            const ciPassed = checks.check_runs.every(c =>
+              c.conclusion === 'success' || c.conclusion === 'skipped'
+            );
+
+            // Check if PR title has WIP
+            const isWip = /\[wip\]|wip:/i.test(pr.title);
+
+            // Get current labels
+            const currentLabels = pr.labels.map(l => l.name);
+
+            // Determine labels to add/remove
+            const labelsToAdd = [];
+            const labelsToRemove = [];
+
+            // APPROVED label (2+ approvals)
+            if (approvals >= 2 && !currentLabels.includes('approved')) {
+              labelsToAdd.push('approved');
+            } else if (approvals < 2 && currentLabels.includes('approved')) {
+              labelsToRemove.push('approved');
+            }
+
+            // NEEDS REVIEW label (CI passed, not WIP, no approvals)
+            if (ciPassed && !isWip && approvals === 0 && !currentLabels.includes('needs review')) {
+              labelsToAdd.push('needs review');
+            } else if ((approvals > 0 || isWip) && currentLabels.includes('needs review')) {
+              labelsToRemove.push('needs review');
+            }
+
+            // READY TO MERGE label (approved + 5+ days old)
+            const prAge = Date.now() - new Date(pr.created_at).getTime();
+            const fiveDays = 5 * 24 * 60 * 60 * 1000;
+
+            if (approvals >= 2 && prAge > fiveDays && !currentLabels.includes('ready to merge')) {
+              labelsToAdd.push('ready to merge');
+            }
+
+            // Add labels
+            if (labelsToAdd.length > 0) {
+              core.info(`Adding labels: ${labelsToAdd.join(', ')}`);
+              await github.rest.issues.addLabels({
+                owner, repo, issue_number: prNumber,
+                labels: labelsToAdd
+              });
+            }
+
+            // Remove labels
+            for (const label of labelsToRemove) {
+              try {
+                core.info(`Removing label: ${label}`);
+                await github.rest.issues.removeLabel({
+                  owner, repo, issue_number: prNumber, name: label
+                });
+              } catch (e) {
+                core.warning(`Could not remove label ${label}: ${e.message}`);
+              }
+            }
+
+  # ============================================================================
+  # AUTO-DELETE MERGED PR BRANCHES
+  # ============================================================================
+  delete-merged-branches:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Delete source branch if from same repo
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            // Only delete if branch is from same repo
+            if (pr.head.repo.full_name !== context.repo.owner + '/' + context.repo.repo) {
+              core.info('Branch is from fork, skipping deletion');
+              return;
+            }
+
+            // Don't delete protected branches
+            const protectedBranches = ['main', 'develop', 'master'];
+            if (protectedBranches.includes(pr.head.ref)) {
+              core.info('Branch is protected, skipping deletion');
+              return;
+            }
+
+            try {
+              await github.rest.git.deleteRef({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                ref: `heads/${pr.head.ref}`
+              });
+              core.info(`✅ Deleted branch: ${pr.head.ref}`);
+
+              // Comment on PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number,
+                body: `🧹 **Branch \`${pr.head.ref}\` has been automatically deleted** after merge.`
+              });
+            } catch (error) {
+              core.warning(`Could not delete branch: ${error.message}`);
+            }
+
+  # ============================================================================
+  # MAINTAINER AUTO-MENTIONS
+  # ============================================================================
+  mention-maintainers:
+    if: github.event_name == 'pull_request' && github.event.action == 'opened'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Find modified addons and mention maintainers
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const pr = context.payload.pull_request;
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number
+            });
+
+            // Extract modified addon paths
+            const modifiedAddons = new Set();
+            for (const file of files) {
+              const match = file.filename.match(/^addons\/([^\/]+)\//);
+              if (match) {
+                modifiedAddons.add(match[1]);
+              }
+            }
+
+            if (modifiedAddons.size === 0) {
+              core.info('No addon modifications found');
+              return;
+            }
+
+            // Load maintainers from manifest files
+            const maintainersByAddon = {};
+            for (const addon of modifiedAddons) {
+              const manifestPath = `addons/${addon}/__manifest__.py`;
+              if (fs.existsSync(manifestPath)) {
+                try {
+                  const content = fs.readFileSync(manifestPath, 'utf8');
+                  // Extract maintainers (basic parsing)
+                  const maintainerMatch = content.match(/"maintainers":\s*\[(.*?)\]/s);
+                  if (maintainerMatch) {
+                    const maintainers = maintainerMatch[1]
+                      .split(',')
+                      .map(m => m.replace(/['"]/g, '').trim())
+                      .filter(m => m.length > 0);
+                    maintainersByAddon[addon] = maintainers;
+                  }
+                } catch (error) {
+                  core.warning(`Could not parse manifest for ${addon}`);
+                }
+              }
+            }
+
+            // Create comment
+            let commentBody = '## 👥 Maintainer Notifications\n\n';
+            commentBody += 'The following addons have been modified in this PR:\n\n';
+
+            for (const addon of modifiedAddons) {
+              const maintainers = maintainersByAddon[addon] || [];
+              if (maintainers.length > 0) {
+                const mentions = maintainers.map(m => `@${m}`).join(' ');
+                commentBody += `- **${addon}**: ${mentions}\n`;
+              } else {
+                commentBody += `- **${addon}**: ⚠️ No maintainers declared\n`;
+              }
+            }
+
+            commentBody += '\n_Maintainers are automatically notified when their addons are modified._';
+
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: commentBody
+            });
+
+  # ============================================================================
+  # BOT COMMANDS (/merge, /rebase, /migration)
+  # ============================================================================
+  bot-commands:
+    if: github.event_name == 'issue_comment' && github.event.action == 'created'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Process bot commands
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = context.payload.comment.body.trim();
+            const issue = context.payload.issue;
+
+            // Only process on PRs
+            if (!issue.pull_request) {
+              core.info('Comment not on PR, skipping');
+              return;
+            }
+
+            const prNumber = issue.number;
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+
+            // Check if user has write access
+            const { data: permission } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              username: context.payload.comment.user.login
+            });
+
+            const canMerge = ['admin', 'write'].includes(permission.permission);
+
+            // ========== /merge command ==========
+            if (comment.startsWith('/merge')) {
+              if (!canMerge) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: '❌ You do not have permission to merge PRs.'
+                });
+                return;
+              }
+
+              // Check if PR is mergeable
+              if (pr.mergeable === false) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: '❌ PR has merge conflicts. Please resolve them first.'
+                });
+                return;
+              }
+
+              // Extract version bump type
+              const bumpMatch = comment.match(/\/merge\s+(major|minor|patch|nobump)?/);
+              const bumpType = bumpMatch ? bumpMatch[1] : 'patch';
+
+              // Merge PR
+              try {
+                await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: prNumber,
+                  merge_method: 'squash',
+                  commit_title: pr.title,
+                  commit_message: pr.body
+                });
+
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `✅ **PR merged successfully**\n\nVersion bump: \`${bumpType}\``
+                });
+              } catch (error) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: `❌ **Merge failed**: ${error.message}`
+                });
+              }
+            }
+
+            // ========== /rebase command ==========
+            if (comment.startsWith('/rebase')) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: '🔄 **Rebase requested**\n\nPlease rebase your branch manually:\n```bash\ngit fetch origin\ngit rebase origin/' + pr.base.ref + '\ngit push --force-with-lease\n```'
+              });
+            }
+
+            // ========== /migration command ==========
+            if (comment.startsWith('/migration')) {
+              const moduleMatch = comment.match(/\/migration\s+(\w+)/);
+              const moduleName = moduleMatch ? moduleMatch[1] : 'unknown';
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `📦 **Migration tracking for \`${moduleName}\`**\n\nThis PR includes migration logic for the **${moduleName}** module.\n\n- [ ] Migration script created\n- [ ] Data migration tested\n- [ ] Documentation updated\n- [ ] Linked to migration issue`
+              });
+            }
+
+  # ============================================================================
+  # NIGHTLY: README GENERATION
+  # ============================================================================
+  generate-readme:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate addon README tables
+        run: |
+          python3 - <<'EOF'
+          import os
+          import ast
+          from pathlib import Path
+
+          def parse_manifest(path):
+              """Parse __manifest__.py file."""
+              try:
+                  with open(path, 'r') as f:
+                      return ast.literal_eval(f.read())
+              except Exception as e:
+                  print(f"Error parsing {path}: {e}")
+                  return {}
+
+          def generate_addon_table():
+              """Generate markdown table of all addons."""
+              addons = []
+
+              for root, dirs, files in os.walk('addons'):
+                  if '__manifest__.py' in files:
+                      manifest = parse_manifest(os.path.join(root, '__manifest__.py'))
+                      addon_name = os.path.basename(root)
+
+                      addons.append({
+                          'name': addon_name,
+                          'version': manifest.get('version', '?'),
+                          'summary': manifest.get('summary', 'No summary'),
+                          'category': manifest.get('category', 'Uncategorized'),
+                          'maintainers': ', '.join(manifest.get('maintainers', []))
+                      })
+
+              # Sort by name
+              addons.sort(key=lambda x: x['name'])
+
+              # Generate table
+              table = '# Addon Inventory\n\n'
+              table += '| Module | Version | Category | Summary | Maintainers |\n'
+              table += '|--------|---------|----------|---------|-------------|\n'
+
+              for addon in addons:
+                  table += f"| `{addon['name']}` | {addon['version']} | {addon['category']} | {addon['summary']} | {addon['maintainers']} |\n"
+
+              return table
+
+          # Generate and write
+          readme_content = generate_addon_table()
+          with open('ADDONS.md', 'w') as f:
+              f.write(readme_content)
+
+          print('✅ Generated ADDONS.md')
+          EOF
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add ADDONS.md
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "docs: auto-generate addon inventory table"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ============================================================================
+  # NIGHTLY: SETUPTOOLS GENERATION
+  # ============================================================================
+  generate-setup:
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install setuptools-odoo
+        run: |
+          pip install setuptools-odoo
+
+      - name: Generate setup.py files
+        run: |
+          # Generate setup.py for each addon
+          for addon in addons/*/; do
+            if [ -f "$addon/__manifest__.py" ]; then
+              echo "Generating setup.py for $addon"
+              cd "$addon"
+              odoo-module-migrate --no-commit || true
+              cd - > /dev/null
+            fi
+          done
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add addons/*/setup.py
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "build: auto-generate setup.py files"
+            git push
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

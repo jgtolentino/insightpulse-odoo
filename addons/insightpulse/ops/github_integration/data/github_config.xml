@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- GitHub App Configuration Parameters -->
+        <record id="github_app_id" model="ir.config_parameter">
+            <field name="key">github.app_id</field>
+            <field name="value">2191216</field>
+        </record>
+
+        <record id="github_client_id" model="ir.config_parameter">
+            <field name="key">github.client_id</field>
+            <field name="value">Iv23liwGL7fnYySPPAjS</field>
+        </record>
+
+        <!-- Note: These should be set manually in production for security -->
+        <!-- Settings → Technical → Parameters → System Parameters -->
+
+        <!-- github.client_secret = [YOUR_CLIENT_SECRET] -->
+        <!-- github.webhook_secret = [YOUR_WEBHOOK_SECRET] -->
+        <!-- github.private_key = [YOUR_PRIVATE_KEY_PEM] -->
+        <!-- github.installation_id = [YOUR_INSTALLATION_ID] -->
+    </data>
+</odoo>

@@ -97,12 +97,12 @@ jobs:
             echo "$DOCKER_PAT" | docker login -u "$DOCKER_USER" --password-stdin
 
             # Snapshot previous image for rollback
-            PREV_IMAGE=$(docker compose -f deploy/docker-compose.bundle.yml ps --format json 2>/dev/null | jq -r ".[] | select(.Service==\"odoo\") | .Image" || true)
+            PREV_IMAGE=$(docker compose -f deploy/odoo.bundle.yml ps --format json 2>/dev/null | jq -r ".[] | select(.Service==\"odoo\") | .Image" || true)
             echo "Previous image: ${PREV_IMAGE:-<none>}"
 
             # Pull and deploy
-            docker compose -f deploy/docker-compose.bundle.yml pull
-            docker compose -f deploy/docker-compose.bundle.yml up -d
+            docker compose -f deploy/odoo.bundle.yml pull
+            docker compose -f deploy/odoo.bundle.yml up -d
 
             # Health check on public URL w/ 8069 fallback
             set +e
@@ -123,7 +123,7 @@ jobs:
                 TMP_ENV="deploy/.env.rollback"
                 cp -a deploy/.env "$TMP_ENV"
                 sed -i.bak "s/^ODOO_IMAGE_TAG=.*/ODOO_IMAGE_TAG=${PREV_IMAGE##*:}/" "$TMP_ENV" || true
-                docker compose --env-file "$TMP_ENV" -f deploy/docker-compose.bundle.yml up -d
+                docker compose --env-file "$TMP_ENV" -f deploy/odoo.bundle.yml up -d
                 rm -f "$TMP_ENV" "$TMP_ENV.bak"
                 echo "::error::Rollback complete (previous image: $PREV_IMAGE)"
                 exit 1

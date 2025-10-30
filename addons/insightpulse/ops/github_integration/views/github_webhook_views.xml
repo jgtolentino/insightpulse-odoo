@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GitHub Webhook Event Tree View -->
+    <record id="view_github_webhook_event_tree" model="ir.ui.view">
+        <field name="name">github.webhook.event.tree</field>
+        <field name="model">github.webhook.event</field>
+        <field name="arch" type="xml">
+            <tree string="Webhook Events" decoration-success="status=='processed'"
+                  decoration-danger="status=='error'" decoration-muted="status=='ignored'">
+                <field name="create_date"/>
+                <field name="event_type"/>
+                <field name="delivery_id"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- GitHub Webhook Event Form View -->
+    <record id="view_github_webhook_event_form" model="ir.ui.view">
+        <field name="name">github.webhook.event.form</field>
+        <field name="model">github.webhook.event</field>
+        <field name="arch" type="xml">
+            <form string="Webhook Event">
+                <header>
+                    <field name="status" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="event_type"/>
+                        <field name="delivery_id"/>
+                        <field name="create_date"/>
+                    </group>
+                    <notebook>
+                        <page string="Payload">
+                            <field name="payload" widget="ace" options="{'mode': 'json'}"/>
+                        </page>
+                        <page string="Error" attrs="{'invisible': [('error_message', '=', False)]}">
+                            <field name="error_message"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- GitHub Webhook Event Action -->
+    <record id="action_github_webhook_event" model="ir.actions.act_window">
+        <field name="name">Webhook Events</field>
+        <field name="res_model">github.webhook.event</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No webhook events yet
+            </p>
+            <p>
+                Webhook events will appear here when GitHub sends them to /odoo/github/webhook
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_github_webhook"
+              name="Webhook Events"
+              parent="menu_github_integration"
+              action="action_github_webhook_event"
+              sequence="40"/>
+</odoo>

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Main Menu -->
+    <menuitem id="menu_github_integration"
+              name="GitHub"
+              web_icon="github_integration,static/description/icon.png"
+              sequence="100"/>
+
+    <!-- GitHub Repository Tree View -->
+    <record id="view_github_repository_tree" model="ir.ui.view">
+        <field name="name">github.repository.tree</field>
+        <field name="model">github.repository</field>
+        <field name="arch" type="xml">
+            <tree string="GitHub Repositories">
+                <field name="name"/>
+                <field name="full_name"/>
+                <field name="language"/>
+                <field name="stars_count"/>
+                <field name="open_issues_count"/>
+                <field name="private"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- GitHub Repository Form View -->
+    <record id="view_github_repository_form" model="ir.ui.view">
+        <field name="name">github.repository.form</field>
+        <field name="model">github.repository</field>
+        <field name="arch" type="xml">
+            <form string="GitHub Repository">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="full_name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="url" widget="url"/>
+                            <field name="language"/>
+                            <field name="default_branch"/>
+                        </group>
+                        <group>
+                            <field name="private"/>
+                            <field name="fork"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Statistics">
+                            <field name="stars_count"/>
+                            <field name="forks_count"/>
+                            <field name="open_issues_count"/>
+                        </group>
+                        <group string="Dates">
+                            <field name="created_at"/>
+                            <field name="updated_at"/>
+                            <field name="pushed_at"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- GitHub Repository Action -->
+    <record id="action_github_repository" model="ir.actions.act_window">
+        <field name="name">Repositories</field>
+        <field name="res_model">github.repository</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_github_repository"
+              name="Repositories"
+              parent="menu_github_integration"
+              action="action_github_repository"
+              sequence="10"/>
+</odoo>
