@@ -1,0 +1,185 @@
+# Traefik Configuration for Apache Superset
+# Path-based routing: http://insightpulseai.net/superset
+# Deployment: DigitalOcean Droplet with Traefik reverse proxy
+
+# ========================================
+# HTTP Routers
+# ========================================
+http:
+  routers:
+    # Superset HTTPS router
+    superset-https:
+      rule: "Host(`insightpulseai.net`) && PathPrefix(`/superset`)"
+      entryPoints:
+        - websecure  # HTTPS port 443
+      middlewares:
+        - superset-stripprefix
+        - superset-headers
+        - superset-ratelimit
+      service: superset-service
+      tls:
+        certResolver: letsencrypt
+
+    # Superset HTTP router (redirect to HTTPS)
+    superset-http:
+      rule: "Host(`insightpulseai.net`) && PathPrefix(`/superset`)"
+      entryPoints:
+        - web  # HTTP port 80
+      middlewares:
+        - redirect-to-https
+      service: superset-service
+
+  # ========================================
+  # Middlewares
+  # ========================================
+  middlewares:
+    # Strip /superset prefix before forwarding to backend
+    superset-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/superset"
+        forceSlash: false
+
+    # Security headers
+    superset-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 315360000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Frame-Options: "DENY"
+          X-Content-Type-Options: "nosniff"
+          X-XSS-Protection: "1; mode=block"
+          Referrer-Policy: "strict-origin-when-cross-origin"
+
+    # Rate limiting
+    superset-ratelimit:
+      rateLimit:
+        average: 100  # 100 requests per second
+        burst: 200    # Allow burst of 200 requests
+        period: 1s
+
+    # HTTPS redirect
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+
+  # ========================================
+  # Services
+  # ========================================
+  services:
+    superset-service:
+      loadBalancer:
+        servers:
+          # DigitalOcean App Platform internal URL
+          # Replace with actual DO App Platform URL after deployment
+          - url: "http://superset-analytics-xxxxx.ondigitalocean.app:8088"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 10s
+        sticky:
+          cookie:
+            name: superset_session
+            secure: true
+            httpOnly: true
+
+# ========================================
+# TLS Configuration
+# ========================================
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/insightpulseai.net.crt
+      keyFile: /etc/traefik/certs/insightpulseai.net.key
+
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305
+
+# ========================================
+# Let's Encrypt Configuration
+# ========================================
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@insightpulseai.net
+      storage: /etc/traefik/acme.json
+      httpChallenge:
+        entryPoint: web
+
+# ========================================
+# Entry Points
+# ========================================
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+
+# ========================================
+# Logging
+# ========================================
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log
+
+accessLog:
+  filePath: /var/log/traefik/access.log
+  bufferingSize: 100
+  filters:
+    statusCodes:
+      - "400-499"
+      - "500-599"
+
+# ========================================
+# API and Dashboard
+# ========================================
+api:
+  dashboard: true
+  insecure: false  # Disable insecure API access
+
+# ========================================
+# Providers
+# ========================================
+providers:
+  file:
+    filename: /etc/traefik/traefik.yml
+    watch: true
+
+  docker:
+    endpoint: "unix:///var/run/docker.sock"
+    exposedByDefault: false
+    watch: true
+
+# ========================================
+# Metrics
+# ========================================
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addServicesLabels: true
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.2
+      - 5.0

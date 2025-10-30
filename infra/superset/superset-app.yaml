@@ -1,0 +1,346 @@
+# DigitalOcean App Platform Specification
+# Apache Superset Production Deployment
+# Budget: $5-12/month (basic-xxs to basic-xs tier)
+# URL: http://insightpulseai.net/superset
+
+name: superset-analytics
+region: sgp  # Singapore for low latency
+
+services:
+  - name: superset-web
+    # GitHub source configuration
+    github:
+      repo: tbwahacker/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    # Instance configuration
+    # basic-xxs: 512MB RAM, 1 vCPU, $5/month
+    # basic-xs: 1GB RAM, 1 vCPU, $12/month (recommended for production)
+    instance_size_slug: basic-xs
+    instance_count: 1
+
+    # Build configuration
+    dockerfile_path: docker/superset/Dockerfile
+    source_dir: /
+    build_command: ""
+
+    # HTTP configuration
+    http_port: 8088
+
+    # Health check configuration
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 300  # Superset takes time to initialize
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Environment variables
+    envs:
+      # ===================================
+      # Database Configuration (Supabase PostgreSQL)
+      # ===================================
+      - key: DATABASE_DIALECT
+        scope: RUN_TIME
+        value: "postgresql"
+
+      - key: DATABASE_USER
+        scope: RUN_TIME
+        value: "postgres.spdtwktxdalcfigzeqrz"
+
+      - key: DATABASE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
+      - key: DATABASE_HOST
+        scope: RUN_TIME
+        value: "aws-1-us-east-1.pooler.supabase.com"
+
+      - key: DATABASE_PORT
+        scope: RUN_TIME
+        value: "6543"  # Connection pooler for high concurrency
+
+      - key: DATABASE_DB
+        scope: RUN_TIME
+        value: "postgres"
+
+      # ===================================
+      # Redis Configuration
+      # ===================================
+      - key: REDIS_HOST
+        scope: RUN_TIME
+        value: "redis"  # Internal service name (see workers below)
+
+      - key: REDIS_PORT
+        scope: RUN_TIME
+        value: "6379"
+
+      - key: REDIS_CELERY_DB
+        scope: RUN_TIME
+        value: "0"
+
+      - key: REDIS_RESULTS_DB
+        scope: RUN_TIME
+        value: "1"
+
+      # ===================================
+      # Superset Security Configuration
+      # ===================================
+      - key: SUPERSET_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "8UToEhL2C0ovd7S4maFPsi7e4mU05pqAH907G5yUaLsr9prnJdHu7+6k"
+
+      - key: SUPERSET_ENV
+        scope: RUN_TIME
+        value: "production"
+
+      - key: FLASK_DEBUG
+        scope: RUN_TIME
+        value: "false"
+
+      # ===================================
+      # Application Configuration
+      # ===================================
+      - key: SUPERSET_LOAD_EXAMPLES
+        scope: RUN_TIME
+        value: "no"
+
+      - key: SUPERSET_LOG_LEVEL
+        scope: RUN_TIME
+        value: "warning"
+
+      - key: SUPERSET_APP_ROOT
+        scope: RUN_TIME
+        value: "/superset"  # Path prefix for reverse proxy
+
+      - key: SUPERSET_WEBSERVER_PROTOCOL
+        scope: RUN_TIME
+        value: "https"
+
+      - key: SUPERSET_WEBSERVER_PORT
+        scope: RUN_TIME
+        value: "8088"
+
+      # ===================================
+      # Admin Account Configuration
+      # ===================================
+      - key: SUPERSET_ADMIN_USERNAME
+        scope: RUN_TIME
+        value: "admin"
+
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
+      - key: SUPERSET_ADMIN_FIRST_NAME
+        scope: RUN_TIME
+        value: "Admin"
+
+      - key: SUPERSET_ADMIN_LAST_NAME
+        scope: RUN_TIME
+        value: "User"
+
+      - key: SUPERSET_ADMIN_EMAIL
+        scope: RUN_TIME
+        value: "admin@insightpulseai.net"
+
+      # ===================================
+      # Gunicorn Configuration
+      # ===================================
+      - key: SUPERSET_WORKERS
+        scope: RUN_TIME
+        value: "4"
+
+      - key: SUPERSET_WORKER_CLASS
+        scope: RUN_TIME
+        value: "gevent"  # Async worker for high concurrency
+
+      - key: SUPERSET_WORKER_CONNECTIONS
+        scope: RUN_TIME
+        value: "1000"
+
+      - key: SUPERSET_TIMEOUT
+        scope: RUN_TIME
+        value: "120"
+
+      # ===================================
+      # Cache Configuration
+      # ===================================
+      - key: CACHE_DEFAULT_TIMEOUT
+        scope: RUN_TIME
+        value: "300"
+
+      - key: DATA_CACHE_DEFAULT_TIMEOUT
+        scope: RUN_TIME
+        value: "3600"
+
+      # ===================================
+      # Python Configuration
+      # ===================================
+      - key: PYTHONPATH
+        scope: RUN_TIME
+        value: "/app/pythonpath:/app/config"
+
+      - key: PYTHONUNBUFFERED
+        scope: RUN_TIME
+        value: "1"
+
+    # Routes configuration for /superset path
+    routes:
+      - path: /superset
+        preserve_path_prefix: false
+
+  # Celery Worker for async queries and alerts
+  - name: superset-worker
+    github:
+      repo: tbwahacker/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    instance_size_slug: basic-xxs  # 512MB sufficient for worker
+    instance_count: 1
+
+    dockerfile_path: docker/superset/Dockerfile
+    source_dir: /
+    run_command: "celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4"
+
+    envs:
+      # Inherit database and Redis configuration from main service
+      - key: DATABASE_DIALECT
+        scope: RUN_TIME
+        value: "postgresql"
+
+      - key: DATABASE_USER
+        scope: RUN_TIME
+        value: "postgres.spdtwktxdalcfigzeqrz"
+
+      - key: DATABASE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
+      - key: DATABASE_HOST
+        scope: RUN_TIME
+        value: "aws-1-us-east-1.pooler.supabase.com"
+
+      - key: DATABASE_PORT
+        scope: RUN_TIME
+        value: "6543"
+
+      - key: DATABASE_DB
+        scope: RUN_TIME
+        value: "postgres"
+
+      - key: REDIS_HOST
+        scope: RUN_TIME
+        value: "redis"
+
+      - key: REDIS_PORT
+        scope: RUN_TIME
+        value: "6379"
+
+      - key: SUPERSET_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "8UToEhL2C0ovd7S4maFPsi7e4mU05pqAH907G5yUaLsr9prnJdHu7+6k"
+
+      - key: SUPERSET_ENV
+        scope: RUN_TIME
+        value: "production"
+
+  # Celery Beat for scheduled tasks
+  - name: superset-beat
+    github:
+      repo: tbwahacker/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    instance_size_slug: basic-xxs  # Minimal resources needed
+    instance_count: 1
+
+    dockerfile_path: docker/superset/Dockerfile
+    source_dir: /
+    run_command: "celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedule"
+
+    envs:
+      # Same configuration as worker
+      - key: DATABASE_DIALECT
+        scope: RUN_TIME
+        value: "postgresql"
+
+      - key: DATABASE_USER
+        scope: RUN_TIME
+        value: "postgres.spdtwktxdalcfigzeqrz"
+
+      - key: DATABASE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
+      - key: DATABASE_HOST
+        scope: RUN_TIME
+        value: "aws-1-us-east-1.pooler.supabase.com"
+
+      - key: DATABASE_PORT
+        scope: RUN_TIME
+        value: "6543"
+
+      - key: DATABASE_DB
+        scope: RUN_TIME
+        value: "postgres"
+
+      - key: REDIS_HOST
+        scope: RUN_TIME
+        value: "redis"
+
+      - key: REDIS_PORT
+        scope: RUN_TIME
+        value: "6379"
+
+      - key: SUPERSET_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "8UToEhL2C0ovd7S4maFPsi7e4mU05pqAH907G5yUaLsr9prnJdHu7+6k"
+
+      - key: SUPERSET_ENV
+        scope: RUN_TIME
+        value: "production"
+
+# Internal services (not exposed externally)
+workers:
+  - name: redis
+    image:
+      registry_type: DOCR
+      repository: redis
+      tag: "7-alpine"
+
+    instance_size_slug: basic-xxs
+    instance_count: 1
+
+# Notes:
+# 1. Set secrets in DigitalOcean dashboard:
+#    - POSTGRES_PASSWORD
+#    - SUPERSET_SECRET_KEY (generated via: openssl rand -base64 42)
+#    - SUPERSET_ADMIN_PASSWORD
+#
+# 2. Total cost estimate:
+#    - superset-web (basic-xs): $12/month
+#    - superset-worker (basic-xxs): $5/month
+#    - superset-beat (basic-xxs): $5/month
+#    - redis (basic-xxs): $5/month
+#    Total: ~$27/month
+#
+# 3. For budget optimization, use basic-xxs for all services: ~$20/month
+#
+# 4. Custom domain configuration:
+#    - Add domain in DO dashboard
+#    - Configure DNS: CNAME record pointing to DO app URL
+#    - Enable HTTPS in app settings
+#
+# 5. Path-based routing at /superset requires Traefik or NGINX reverse proxy
+#    See: deploy/superset/traefik.yml for configuration
