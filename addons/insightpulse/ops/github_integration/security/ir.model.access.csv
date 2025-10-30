@@ -1,0 +1,11 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_github_repository_user,github.repository.user,model_github_repository,base.group_user,1,0,0,0
+access_github_repository_manager,github.repository.manager,model_github_repository,base.group_system,1,1,1,1
+access_github_pull_request_user,github.pull.request.user,model_github_pull_request,base.group_user,1,0,0,0
+access_github_pull_request_manager,github.pull.request.manager,model_github_pull_request,base.group_system,1,1,1,1
+access_github_issue_user,github.issue.user,model_github_issue,base.group_user,1,0,0,0
+access_github_issue_manager,github.issue.manager,model_github_issue,base.group_system,1,1,1,1
+access_github_webhook_event_user,github.webhook.event.user,model_github_webhook_event,base.group_user,1,0,0,0
+access_github_webhook_event_manager,github.webhook.event.manager,model_github_webhook_event,base.group_system,1,1,1,1
+access_github_push_event_user,github.push.event.user,model_github_push_event,base.group_user,1,0,0,0
+access_github_push_event_manager,github.push.event.manager,model_github_push_event,base.group_system,1,1,1,1
