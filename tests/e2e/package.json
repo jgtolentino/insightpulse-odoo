@@ -1,0 +1,21 @@
+{
+  "name": "insightpulse-odoo-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-End tests for InsightPulse Odoo using Playwright",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "test:update-snapshots": "playwright test --update-snapshots"
+  },
+  "keywords": ["odoo", "e2e", "playwright", "testing"],
+  "author": "InsightPulse AI",
+  "license": "LGPL-3.0",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.10.0",
+    "typescript": "^5.3.0"
+  }
+}
