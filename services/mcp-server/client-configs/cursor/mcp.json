@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "insightpulse-github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-http",
+        "https://insightpulseai.net/mcp/github?project=jgtolentino/insightpulse-odoo&features=branches,commits,issues,pr,workflows,search,files"
+      ],
+      "description": "InsightPulse GitHub MCP Server"
+    }
+  }
+}

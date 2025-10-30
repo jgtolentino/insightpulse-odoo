@@ -1,0 +1,264 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "InsightPulse GitHub MCP Server",
+    "description": "Model Context Protocol server for GitHub operations via pulser-hub GitHub App. Enables AI assistants to perform repository operations including branch management, commits, pull requests, issues, and workflow triggers.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "InsightPulse AI",
+      "url": "https://insightpulseai.net"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://insightpulseai.net",
+      "description": "Production MCP Server"
+    }
+  ],
+  "paths": {
+    "/mcp/github": {
+      "post": {
+        "summary": "MCP Protocol Endpoint",
+        "description": "JSON-RPC 2.0 endpoint for Model Context Protocol GitHub operations",
+        "operationId": "mcpGitHub",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "description": "Repository in owner/repo format (e.g., jgtolentino/insightpulse-odoo)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "jgtolentino/insightpulse-odoo",
+              "example": "jgtolentino/insightpulse-odoo"
+            }
+          },
+          {
+            "name": "features",
+            "in": "query",
+            "description": "Comma-separated list of enabled features: branches, commits, issues, pr, workflows, search, files",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "branches,commits,issues,pr,workflows,search,files",
+              "example": "branches,commits,pr"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MCPRequest"
+              },
+              "examples": {
+                "toolsList": {
+                  "summary": "List available tools",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": "1",
+                    "method": "tools/list",
+                    "params": {}
+                  }
+                },
+                "createBranch": {
+                  "summary": "Create a new branch",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": "2",
+                    "method": "tools/call",
+                    "params": {
+                      "name": "github_create_branch",
+                      "arguments": {
+                        "branch": "feat/new-feature",
+                        "from_branch": "main"
+                      }
+                    }
+                  }
+                },
+                "createPR": {
+                  "summary": "Create a pull request",
+                  "value": {
+                    "jsonrpc": "2.0",
+                    "id": "3",
+                    "method": "tools/call",
+                    "params": {
+                      "name": "github_create_pr",
+                      "arguments": {
+                        "title": "Add new feature",
+                        "head": "feat/new-feature",
+                        "base": "main",
+                        "body": "This PR adds a new feature"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful MCP protocol response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MCPResponse"
+                },
+                "examples": {
+                  "toolsListResponse": {
+                    "summary": "Tools list response",
+                    "value": {
+                      "jsonrpc": "2.0",
+                      "id": "1",
+                      "result": {
+                        "tools": [
+                          {
+                            "name": "github_create_branch",
+                            "description": "Create a new branch from a base branch"
+                          },
+                          {
+                            "name": "github_commit_files",
+                            "description": "Commit multiple files to a branch"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "successResponse": {
+                    "summary": "Tool call success",
+                    "value": {
+                      "jsonrpc": "2.0",
+                      "id": "2",
+                      "result": {
+                        "branch": "feat/new-feature",
+                        "sha": "abc123def456",
+                        "url": "https://api.github.com/repos/..."
+                      }
+                    }
+                  },
+                  "errorResponse": {
+                    "summary": "Tool call error",
+                    "value": {
+                      "jsonrpc": "2.0",
+                      "id": "3",
+                      "error": {
+                        "code": -32601,
+                        "message": "Tool not found: invalid_tool"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Health Check",
+        "description": "Check if MCP server is healthy and operational",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Server is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "mcp-github-server"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
+                    },
+                    "github_app_id": {
+                      "type": "string",
+                      "example": "2191216"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MCPRequest": {
+        "type": "object",
+        "required": ["jsonrpc", "method"],
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "enum": ["2.0"],
+            "description": "JSON-RPC version (always 2.0)"
+          },
+          "id": {
+            "type": "string",
+            "description": "Request identifier"
+          },
+          "method": {
+            "type": "string",
+            "enum": ["tools/list", "tools/call"],
+            "description": "MCP method to call"
+          },
+          "params": {
+            "type": "object",
+            "description": "Method parameters",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Tool name (for tools/call method)"
+              },
+              "arguments": {
+                "type": "object",
+                "description": "Tool arguments (for tools/call method)"
+              }
+            }
+          }
+        }
+      },
+      "MCPResponse": {
+        "type": "object",
+        "required": ["jsonrpc"],
+        "properties": {
+          "jsonrpc": {
+            "type": "string",
+            "enum": ["2.0"]
+          },
+          "id": {
+            "type": "string"
+          },
+          "result": {
+            "type": "object",
+            "description": "Success result"
+          },
+          "error": {
+            "type": "object",
+            "description": "Error information",
+            "properties": {
+              "code": {
+                "type": "integer"
+              },
+              "message": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

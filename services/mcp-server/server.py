@@ -14,7 +14,8 @@ from datetime import datetime, timedelta
 import jwt
 import httpx
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 # Configure logging
@@ -27,6 +28,9 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Mount static files for web UI
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 # GitHub App configuration from environment
 GITHUB_APP_ID = os.getenv("GITHUB_APP_ID", "2191216")  # pulser-hub App ID
 GITHUB_PRIVATE_KEY = os.getenv("GITHUB_PRIVATE_KEY", "")
@@ -36,6 +40,41 @@ DEFAULT_REPO_NAME = os.getenv("GITHUB_REPO_NAME", "insightpulse-odoo")
 
 # Token cache
 _token_cache: Dict[str, Any] = {}
+
+# Feature to tool mapping for query parameter filtering
+FEATURE_TOOL_MAP = {
+    "branches": ["github_create_branch", "github_list_branches"],
+    "commits": ["github_commit_files"],
+    "issues": ["github_create_issue", "github_list_issues"],
+    "pr": ["github_create_pr", "github_list_prs", "github_merge_pr"],
+    "workflows": ["github_trigger_workflow"],
+    "search": ["github_search_code"],
+    "files": ["github_read_file"]
+}
+
+
+def parse_project_param(project: str) -> tuple[str, str]:
+    """Parse project parameter into owner and repo."""
+    if "/" in project:
+        parts = project.split("/", 1)
+        return parts[0], parts[1]
+    return DEFAULT_REPO_OWNER, project
+
+
+def get_enabled_tools(features: Optional[List[str]] = None) -> Dict[str, Any]:
+    """Get enabled tools based on features parameter."""
+    if not features:
+        return MCP_TOOLS  # All tools enabled if no features specified
+
+    enabled_tools = {}
+    for feature in features:
+        feature = feature.strip().lower()
+        tool_names = FEATURE_TOOL_MAP.get(feature, [])
+        for tool_name in tool_names:
+            if tool_name in MCP_TOOLS:
+                enabled_tools[tool_name] = MCP_TOOLS[tool_name]
+
+    return enabled_tools if enabled_tools else MCP_TOOLS  # Fallback to all tools if no valid features
 
 
 class MCPRequest(BaseModel):
@@ -466,6 +505,12 @@ MCP_TOOLS = {
 }
 
 
+@app.get("/")
+async def serve_ui():
+    """Serve the MCP server web UI."""
+    return FileResponse("static/index.html")
+
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -481,6 +526,28 @@ async def health_check():
 async def mcp_endpoint(request: Request):
     """MCP protocol endpoint for GitHub operations."""
     try:
+        # Parse query parameters
+        query_params = dict(request.query_params)
+        project = query_params.get("project", f"{DEFAULT_REPO_OWNER}/{DEFAULT_REPO_NAME}")
+        features_param = query_params.get("features", "")
+
+        # Parse features list
+        features = [f.strip() for f in features_param.split(",") if f.strip()] if features_param else None
+
+        # Parse project into owner/repo
+        owner, repo = parse_project_param(project)
+
+        # Store in request state for tool access
+        request.state.default_owner = owner
+        request.state.default_repo = repo
+        request.state.enabled_features = features
+
+        # Get enabled tools based on features parameter
+        enabled_tools = get_enabled_tools(features)
+
+        # Log query parameters for monitoring
+        logger.info(f"MCP request: project={project}, features={features}, enabled_tools={len(enabled_tools)}")
+
         body = await request.json()
         mcp_request = MCPRequest(**body)
 
@@ -492,7 +559,7 @@ async def mcp_endpoint(request: Request):
                 "result": {
                     "tools": [
                         {"name": name, "description": func.__doc__.strip() if func.__doc__ else ""}
-                        for name, func in MCP_TOOLS.items()
+                        for name, func in enabled_tools.items()
                     ]
                 }
             })
@@ -502,18 +569,19 @@ async def mcp_endpoint(request: Request):
             tool_name = mcp_request.params.get("name")
             tool_params = mcp_request.params.get("arguments", {})
 
-            if tool_name not in MCP_TOOLS:
+            # Check if tool is enabled based on features filter
+            if tool_name not in enabled_tools:
                 return JSONResponse({
                     "jsonrpc": "2.0",
                     "id": mcp_request.id,
                     "error": {
                         "code": -32601,
-                        "message": f"Tool not found: {tool_name}"
+                        "message": f"Tool not enabled or not found: {tool_name}"
                     }
                 })
 
             try:
-                result = await MCP_TOOLS[tool_name](tool_params)
+                result = await enabled_tools[tool_name](tool_params)
                 return JSONResponse({
                     "jsonrpc": "2.0",
                     "id": mcp_request.id,

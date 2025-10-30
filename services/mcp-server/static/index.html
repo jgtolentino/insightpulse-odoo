@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightPulse MCP GitHub Server</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 0 4px rgba(16,185,129,0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .url-builder {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .feature-checkbox:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .feature-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .generated-url {
+            background: #1e293b;
+            color: #10b981;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #5a67d8;
+        }
+
+        .tool-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .tool-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 6px;
+        }
+
+        .tool-item h3 {
+            color: #667eea;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .tool-item p {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .client-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab:hover {
+            color: #667eea;
+        }
+
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .code-block {
+            background: #1e293b;
+            color: #e0e0e0;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102,126,234,0.3);
+        }
+
+        .test-section {
+            margin-top: 30px;
+        }
+
+        .test-result {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            min-height: 100px;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 40px;
+            padding: 20px;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 InsightPulse MCP GitHub Server</h1>
+            <p>Model Context Protocol server for GitHub operations via pulser-hub App</p>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span id="status-text">Server Status: <strong>Checking...</strong></span>
+            </div>
+        </div>
+
+        <!-- URL Builder Card -->
+        <div class="card">
+            <h2>🔧 URL Builder</h2>
+            <p>Configure your MCP server URL with custom parameters</p>
+
+            <div class="url-builder">
+                <div class="form-group">
+                    <label for="project">Project (owner/repo)</label>
+                    <input type="text" id="project" value="jgtolentino/insightpulse-odoo" placeholder="owner/repository">
+                </div>
+
+                <div class="form-group">
+                    <label>Features (Select enabled operations)</label>
+                    <div class="feature-grid">
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-branches" value="branches" checked>
+                            <label for="feat-branches">🌿 Branches</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-commits" value="commits" checked>
+                            <label for="feat-commits">💾 Commits</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-issues" value="issues" checked>
+                            <label for="feat-issues">🐛 Issues</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-pr" value="pr" checked>
+                            <label for="feat-pr">🔀 Pull Requests</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-workflows" value="workflows" checked>
+                            <label for="feat-workflows">⚙️ Workflows</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-search" value="search" checked>
+                            <label for="feat-search">🔍 Search</label>
+                        </div>
+                        <div class="feature-checkbox">
+                            <input type="checkbox" id="feat-files" value="files" checked>
+                            <label for="feat-files">📄 Files</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Generated URL</label>
+                    <div class="generated-url">
+                        <button class="copy-btn" onclick="copyURL()">Copy</button>
+                        <span id="generated-url"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Available Tools Card -->
+        <div class="card">
+            <h2>🛠️ Available GitHub Operations</h2>
+            <div class="tool-list" id="tool-list">
+                <div class="tool-item">
+                    <h3>github_create_branch</h3>
+                    <p>Create a new branch from a base branch</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_list_branches</h3>
+                    <p>List all repository branches</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_commit_files</h3>
+                    <p>Commit multiple files to a branch</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_create_pr</h3>
+                    <p>Create a pull request</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_list_prs</h3>
+                    <p>List pull requests with filters</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_merge_pr</h3>
+                    <p>Merge a pull request</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_create_issue</h3>
+                    <p>Create a GitHub issue</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_list_issues</h3>
+                    <p>List issues with filters</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_trigger_workflow</h3>
+                    <p>Trigger GitHub Actions workflow</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_search_code</h3>
+                    <p>Search code in repository</p>
+                </div>
+                <div class="tool-item">
+                    <h3>github_read_file</h3>
+                    <p>Read file contents from repository</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Client Configuration Card -->
+        <div class="card">
+            <h2>💻 Client Configuration</h2>
+            <div class="client-tabs">
+                <button class="tab active" onclick="switchTab('claude-code')">Claude Code</button>
+                <button class="tab" onclick="switchTab('cursor')">Cursor IDE</button>
+                <button class="tab" onclick="switchTab('chatgpt')">ChatGPT</button>
+            </div>
+
+            <div id="claude-code" class="tab-content active">
+                <h3>Claude Code (VS Code Extension)</h3>
+                <p>Add to <code>~/.claude/config.json</code>:</p>
+                <div class="code-block" id="claude-code-config"></div>
+                <p><a href="client-configs/claude-code/README.md" target="_blank">Full Setup Guide →</a></p>
+            </div>
+
+            <div id="cursor" class="tab-content">
+                <h3>Cursor IDE</h3>
+                <p>Add to <code>~/.cursor/mcp-settings.json</code>:</p>
+                <div class="code-block" id="cursor-config"></div>
+                <p><a href="client-configs/cursor/README.md" target="_blank">Full Setup Guide →</a></p>
+            </div>
+
+            <div id="chatgpt" class="tab-content">
+                <h3>ChatGPT Custom GPT</h3>
+                <p>Create a Custom GPT and import the OpenAPI specification:</p>
+                <div class="code-block">
+OpenAPI Spec: client-configs/chatgpt/openapi.json
+Server URL: <span id="chatgpt-url"></span>
+                </div>
+                <p><a href="client-configs/chatgpt/README.md" target="_blank">Full Setup Guide →</a></p>
+            </div>
+        </div>
+
+        <!-- Test Section -->
+        <div class="card test-section">
+            <h2>🧪 Test MCP Server</h2>
+            <p>Test the server connection and feature filtering</p>
+            <button class="btn" onclick="testServer()">Test Connection</button>
+            <div class="test-result" id="test-result">
+                Click "Test Connection" to verify server is operational
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>InsightPulse MCP GitHub Server v1.0.0</p>
+            <p><a href="README.md">Documentation</a> | <a href="https://github.com/jgtolentino/insightpulse-odoo">GitHub Repository</a></p>
+        </div>
+    </div>
+
+    <script>
+        // Update URL in real-time
+        function updateURL() {
+            const project = document.getElementById('project').value || 'jgtolentino/insightpulse-odoo';
+            const features = [];
+
+            document.querySelectorAll('.feature-checkbox input:checked').forEach(cb => {
+                features.push(cb.value);
+            });
+
+            const featuresParam = features.length > 0 ? features.join(',') : 'all';
+            const url = `https://insightpulseai.net/mcp/github?project=${project}&features=${featuresParam}`;
+
+            document.getElementById('generated-url').textContent = url;
+            updateClientConfigs(url);
+
+            return url;
+        }
+
+        function updateClientConfigs(url) {
+            const claudeConfig = {
+                mcpServers: {
+                    "insightpulse-github": {
+                        command: "npx",
+                        args: ["-y", "@modelcontextprotocol/server-http", url],
+                        description: "InsightPulse GitHub operations",
+                        env: {}
+                    }
+                }
+            };
+
+            const cursorConfig = {
+                mcpServers: {
+                    "insightpulse-github": {
+                        command: "npx",
+                        args: ["-y", "@modelcontextprotocol/server-http", url],
+                        description: "InsightPulse GitHub MCP Server"
+                    }
+                }
+            };
+
+            document.getElementById('claude-code-config').textContent = JSON.stringify(claudeConfig, null, 2);
+            document.getElementById('cursor-config').textContent = JSON.stringify(cursorConfig, null, 2);
+            document.getElementById('chatgpt-url').textContent = url;
+        }
+
+        function copyURL() {
+            const url = document.getElementById('generated-url').textContent;
+            navigator.clipboard.writeText(url);
+
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 2000);
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        async function checkServerStatus() {
+            try {
+                const response = await fetch('/health');
+                const data = await response.json();
+
+                if (data.status === 'ok') {
+                    document.getElementById('status-text').innerHTML =
+                        'Server Status: <strong style="color: #10b981;">Online</strong> | Version: ' + data.version;
+                } else {
+                    throw new Error('Server not healthy');
+                }
+            } catch (error) {
+                document.getElementById('status-text').innerHTML =
+                    'Server Status: <strong style="color: #ef4444;">Offline</strong>';
+            }
+        }
+
+        async function testServer() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '<p>Testing server connection...</p>';
+
+            try {
+                const url = updateURL();
+                const testRequest = {
+                    jsonrpc: "2.0",
+                    id: "test-1",
+                    method: "tools/list",
+                    params: {}
+                };
+
+                const response = await fetch('/mcp/github?' + url.split('?')[1], {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(testRequest)
+                });
+
+                const data = await response.json();
+
+                if (data.result && data.result.tools) {
+                    resultDiv.innerHTML = `
+                        <h3 style="color: #10b981;">✅ Connection Successful</h3>
+                        <p><strong>${data.result.tools.length}</strong> tools available</p>
+                        <ul style="margin-top: 10px;">
+                            ${data.result.tools.map(tool => `<li>${tool.name}</li>`).join('')}
+                        </ul>
+                    `;
+                } else {
+                    throw new Error('Unexpected response format');
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3 style="color: #ef4444;">❌ Connection Failed</h3>
+                    <p>${error.message}</p>
+                `;
+            }
+        }
+
+        // Event listeners
+        document.getElementById('project').addEventListener('input', updateURL);
+        document.querySelectorAll('.feature-checkbox input').forEach(cb => {
+            cb.addEventListener('change', updateURL);
+        });
+
+        // Initialize
+        updateURL();
+        checkServerStatus();
+    </script>
+</body>
+</html>

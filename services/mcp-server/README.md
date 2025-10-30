@@ -623,32 +623,54 @@ curl -X POST https://api.github.com/app/installations/61508966/access_tokens \
 
 ---
 
-## Integration with AI Assistants
+## Client Configuration
 
-### Claude Code
+Configure your AI assistant to use the InsightPulse GitHub MCP Server.
 
-**Add MCP Server**:
-```json
-{
-  "mcpServers": {
-    "github": {
-      "url": "https://mcp-github-server-xyz.ondigitalocean.app/mcp/github"
-    }
-  }
-}
-```
+**Production URL**: `https://insightpulseai.net/mcp/github`
 
-**Usage**:
-```
-"Create a new branch called feat/new-feature from main"
-→ MCP server calls github_create_branch
+**Query Parameters**:
+- `project` - Repository in `owner/repo` format (default: `jgtolentino/insightpulse-odoo`)
+- `features` - Comma-separated list of enabled features (default: all enabled)
 
-"Commit these files to the branch with message 'Add feature'"
-→ MCP server calls github_commit_files
+**Available Features**: `branches`, `commits`, `issues`, `pr`, `workflows`, `search`, `files`
 
-"Create a pull request for this branch"
-→ MCP server calls github_create_pr
-```
+### Supported Clients
+
+**Claude Code** (VS Code Extension)
+- Configuration: `~/.claude/config.json`
+- Guide: [client-configs/claude-code/README.md](client-configs/claude-code/README.md)
+- Example:
+  ```
+  https://insightpulseai.net/mcp/github?project=jgtolentino/insightpulse-odoo&features=branches,commits,issues,pr,workflows,search,files
+  ```
+
+**Cursor IDE**
+- Configuration: `~/.cursor/mcp-settings.json` or `.cursor/mcp.json`
+- Guide: [client-configs/cursor/README.md](client-configs/cursor/README.md)
+- Example: Same URL as Claude Code
+
+**ChatGPT** (Custom GPT)
+- Configuration: OpenAPI specification
+- Guide: [client-configs/chatgpt/README.md](client-configs/chatgpt/README.md)
+- OpenAPI Spec: [client-configs/chatgpt/openapi.json](client-configs/chatgpt/openapi.json)
+
+### Quick Start
+
+1. **Choose Your URL**:
+   - Full access: `?features=branches,commits,issues,pr,workflows,search,files`
+   - Read-only: `?features=search,files`
+   - CI/CD: `?features=workflows,pr`
+
+2. **Configure Client**: Follow client-specific setup guide
+
+3. **Test Connection**: Try `"List all branches in the repository"`
+
+### Documentation
+
+- **Complete Setup Guide**: [docs/CLIENT_SETUP.md](docs/CLIENT_SETUP.md)
+- **Query Parameters**: [docs/QUERY_PARAMETERS.md](docs/QUERY_PARAMETERS.md)
+- **Feature Mapping**: [docs/FEATURE_MAPPING.md](docs/FEATURE_MAPPING.md)
 
 ---
 
