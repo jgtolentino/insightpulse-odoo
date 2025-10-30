@@ -17,6 +17,29 @@ This module provides automated rate calculation functionality based on P60 base 
 - **State Management**: Draft → Active → Archived workflow
 - **Multi-Company**: Full multi-company support
 
+## Odoo Studio Compatibility
+
+**Studio Support**: ✅ Full customization support
+
+**Safe to Customize**:
+- Add custom fields (client references, notes, tags)
+- Create custom views (kanban, graph, pivot)
+- Add automated actions (notifications, webhooks)
+- Custom PDF reports
+
+**Recommended Automations**:
+- Email notifications when policy activated
+- Webhook to external systems on rate changes
+- Scheduled policy effectiveness reminders
+- Rate variance alerts
+
+**Protected Fields** (DO NOT modify):
+- `calculated_rate` (computed field)
+- `markup_percentage` calculation logic
+- State transition methods
+
+See [docs/STUDIO_GUIDE.md](../../../../docs/STUDIO_GUIDE.md) for detailed customization patterns.
+
 ## Models
 
 ### rate.policy
