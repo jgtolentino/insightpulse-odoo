@@ -30,3 +30,8 @@ venv.bak/
 .DS_Store
 Thumbs.db
 
+# Automation
+automation.log
+automation-report.txt
+.last_automation_run
+

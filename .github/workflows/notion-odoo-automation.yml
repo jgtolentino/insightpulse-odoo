@@ -1,0 +1,266 @@
+name: Notion to Odoo Module Automation
+
+on:
+  schedule:
+    # Run every weekday at 9 AM UTC (5 PM Manila time)
+    - cron: '0 9 * * 1-5'
+
+  workflow_dispatch:
+    # Manual trigger with options
+    inputs:
+      mode:
+        description: 'Mode'
+        required: true
+        default: 'batch'
+        type: choice
+        options:
+          - batch
+          - dry-run
+      notion_id:
+        description: 'Notion Card ID (for single mode)'
+        required: false
+        type: string
+
+jobs:
+  generate-modules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Continue CLI
+        run: |
+          npm i -g @continuedev/cli
+          cn --version
+
+      - name: Configure Continue CLI
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          mkdir -p ~/.continue/prompts
+
+          # Create config.json
+          cat > ~/.continue/config.json << 'JSON'
+          {
+            "mcpServers": {
+              "notion": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-notion"],
+                "env": {
+                  "NOTION_API_KEY": "${{ secrets.NOTION_API_KEY }}"
+                }
+              },
+              "github": {
+                "command": "npx",
+                "args": ["-y", "@modelcontextprotocol/server-github"],
+                "env": {
+                  "GITHUB_PERSONAL_ACCESS_TOKEN": "${{ secrets.GITHUB_TOKEN }}"
+                }
+              }
+            },
+            "models": [{
+              "title": "Claude Sonnet 4.5",
+              "provider": "anthropic",
+              "model": "claude-sonnet-4-20250514",
+              "apiKey": "${{ secrets.ANTHROPIC_API_KEY }}"
+            }]
+          }
+          JSON
+
+          # Copy prompts
+          cp -r .continue/prompts/* ~/.continue/prompts/
+
+      - name: Install Python dependencies
+        run: |
+          pip install pytest pylint black
+
+      - name: Run Notion → Odoo Automation
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          MODE="${{ github.event.inputs.mode || 'batch' }}"
+          NOTION_ID="${{ github.event.inputs.notion_id || '' }}"
+
+          if [ "$MODE" = "dry-run" ]; then
+            bash scripts/notion-to-odoo.sh --dry-run
+          elif [ -n "$NOTION_ID" ]; then
+            bash scripts/notion-to-odoo.sh --single "$NOTION_ID"
+          else
+            bash scripts/notion-to-odoo.sh --batch
+          fi
+
+      - name: Validate Generated Modules
+        if: success()
+        run: |
+          # Find newly generated modules
+          for module in addons/ipai_*; do
+            if [ -d "$module" ]; then
+              echo "Validating: $module"
+
+              # Check Python syntax
+              find "$module" -name "*.py" -exec python3 -m py_compile {} \;
+
+              # Run Black formatter check
+              black --check "$module" || true
+
+              # Run pylint (non-blocking)
+              pylint "$module" --exit-zero || true
+
+              # Check required files
+              for file in __init__.py __manifest__.py models/__init__.py security/ir.model.access.csv README.md; do
+                if [ ! -f "$module/$file" ]; then
+                  echo "⚠️  Missing: $module/$file"
+                fi
+              done
+            fi
+          done
+
+      - name: Run Module Tests
+        if: success()
+        continue-on-error: true
+        run: |
+          # Run tests for generated modules
+          for module in addons/ipai_*/tests; do
+            if [ -d "$module" ]; then
+              echo "Testing: $(dirname $module)"
+              python -m pytest "$module" -v || true
+            fi
+          done
+
+      - name: Generate Automation Report
+        if: always()
+        run: |
+          bash scripts/automation-monitor.sh > automation-report.txt
+          cat automation-report.txt
+
+      - name: Upload Automation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: automation-report
+          path: |
+            automation-report.txt
+            automation.log
+
+      - name: Commit Generated Modules
+        if: success() && github.event.inputs.mode != 'dry-run'
+        run: |
+          git config user.name "Continue CLI Bot"
+          git config user.email "bot@continue.dev"
+
+          # Add generated modules
+          git add addons/
+
+          # Check if there are changes
+          if git diff --staged --quiet; then
+            echo "No new modules generated"
+            exit 0
+          fi
+
+          # Commit with descriptive message
+          COMMIT_MSG="🤖 Auto-generated Odoo modules from Notion
+
+          Generated by Continue CLI automation
+          Date: $(date)
+          Run ID: ${{ github.run_id }}
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+
+          git commit -m "$COMMIT_MSG"
+
+      - name: Push Changes
+        if: success() && github.event.inputs.mode != 'dry-run'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Create Pull Request
+        if: success() && github.event.inputs.mode != 'dry-run'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "Auto-generated Odoo modules from Notion"
+          title: "🤖 New Odoo Modules from Notion Feature Requests"
+          body: |
+            ## Auto-Generated Modules
+
+            This PR contains Odoo modules automatically generated from Notion feature requests.
+
+            ### Generated By
+            - **Tool**: Continue CLI + Notion MCP
+            - **Run ID**: ${{ github.run_id }}
+            - **Date**: ${{ github.event.repository.updated_at }}
+
+            ### What to Review
+            - [ ] Module structure follows OCA guidelines
+            - [ ] All required files present
+            - [ ] Python syntax is valid
+            - [ ] Security rules are properly configured
+            - [ ] Tests have adequate coverage
+            - [ ] Documentation is complete
+
+            ### Testing
+            ```bash
+            # Install and test locally
+            docker-compose up -d
+            odoo-bin -d test_db --init=module_name
+            ```
+
+            ### Next Steps
+            1. Review code changes
+            2. Test in development environment
+            3. Update Notion cards if needed
+            4. Merge when ready
+
+            ---
+            🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+            Co-Authored-By: Claude <noreply@anthropic.com>
+          branch: automation/notion-modules-${{ github.run_id }}
+          delete-branch: true
+
+      - name: Notify on Failure
+        if: failure()
+        run: |
+          echo "::error::Automation failed. Check logs for details."
+
+          # Optional: Send notification to Slack/Discord
+          # curl -X POST "${{ secrets.SLACK_WEBHOOK }}" \
+          #   -H 'Content-Type: application/json' \
+          #   -d '{"text":"❌ Notion→Odoo automation failed"}'
+
+      - name: Post Success Summary
+        if: success()
+        run: |
+          echo "## ✅ Automation Success" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Modules generated and committed successfully." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Statistics" >> $GITHUB_STEP_SUMMARY
+          echo "- Run ID: ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Date: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- Mode: ${{ github.event.inputs.mode || 'batch' }}" >> $GITHUB_STEP_SUMMARY

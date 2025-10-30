@@ -1,0 +1,45 @@
+{
+  "mcpServers": {
+    "notion": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-notion"
+      ],
+      "env": {
+        "NOTION_API_KEY": "secret_YOUR_NOTION_INTEGRATION_TOKEN"
+      }
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "your_github_token"
+      }
+    }
+  },
+  "models": [
+    {
+      "title": "Claude Sonnet 4.5",
+      "provider": "anthropic",
+      "model": "claude-sonnet-4-20250514",
+      "apiKey": "YOUR_ANTHROPIC_API_KEY"
+    }
+  ],
+  "systemMessage": "You are an expert Odoo developer specializing in OCA-compliant module development for InsightPulse AI.",
+  "customCommands": [
+    {
+      "name": "generate-odoo-module",
+      "description": "Generate a complete OCA-compliant Odoo module",
+      "prompt": "Generate a complete Odoo 19 module following OCA guidelines. Include: models, views, security rules, manifest, and documentation."
+    },
+    {
+      "name": "notion-sync",
+      "description": "Sync feature requests from Notion",
+      "prompt": "Query Notion database for feature requests with status 'Ready for Development' and list them with full details."
+    }
+  ]
+}
