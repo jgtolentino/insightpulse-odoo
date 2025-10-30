@@ -8,19 +8,24 @@ Enables AI assistants (Claude, ChatGPT, etc.) to perform GitHub repository opera
 
 ## Overview
 
-This FastAPI-based MCP server exposes 11 GitHub operations as MCP tools, enabling AI assistants to:
-- Create branches and commits
-- Manage pull requests and issues
-- Trigger GitHub Actions workflows
-- Read file contents and search code
-- List branches and repository metadata
+This FastAPI-based MCP server exposes **39 comprehensive GitHub operations** as MCP tools, enabling AI assistants to:
+- **Branch Management**: Create, list, delete, get branch details (4 tools)
+- **Commit Operations**: Commit files, get commits, compare commits (4 tools)
+- **Issue Management**: Create, list, get, update, close issues (5 tools)
+- **Pull Request Operations**: Full CRUD operations and merging (6 tools)
+- **Workflow Automation**: Trigger and monitor GitHub Actions (3 tools)
+- **Code Search**: Search code, issues, commits across repositories (3 tools)
+- **File Operations**: Read, create, update, delete, list files (5 tools)
+- **Low-Level Git**: Direct access to refs, tags, trees, blobs (10 tools)
 
 **Technology Stack**:
 - **FastAPI** - Modern Python web framework
 - **MCP Protocol** - JSON-RPC 2.0 for AI tool integration
-- **GitHub App** - pulser-hub (App ID: 2191216)
+- **OAuth 2.0** - Authorization framework for ChatGPT integration
+- **GitHub App** - pulser-hub (App ID: 2191216, Installation: 61508966)
 - **Authentication** - JWT tokens with installation access tokens
 - **Deployment** - DigitalOcean App Platform
+- **Security** - Read-only mode, protected branch enforcement, query parameter filtering
 
 ---
 
@@ -44,9 +49,39 @@ JWT Authentication + Installation Tokens
 
 ---
 
+## Feature Groups & Tools
+
+**8 Feature Groups** | **39 Total Tools** | **Read-Only Mode Supported**
+
+### Query Parameter Configuration
+
+Control which tools are available using the `features` query parameter:
+
+```
+https://insightpulseai.net/mcp/github?project=owner/repo&features=branches,pr,git&read_only=true
+```
+
+**Available Features**:
+- `branches` - Branch operations (4 tools)
+- `commits` - Commit operations (4 tools)
+- `issues` - Issue management (5 tools)
+- `pr` - Pull request operations (6 tools)
+- `workflows` - GitHub Actions (3 tools)
+- `search` - Code/issue/commit search (3 tools)
+- `files` - File operations (5 tools)
+- `git` - Low-level git operations (10 tools)
+
+**Read-Only Mode**: Add `read_only=true` to restrict to 19 read-only tools and block 20 destructive operations.
+
+**Protected Branches**: `main`, `master`, `production`, `prod` cannot be deleted in any mode.
+
+---
+
 ## Available MCP Tools
 
-### 1. `github_create_branch`
+### Branch Management (4 tools)
+
+#### 1. `github_create_branch`
 **Purpose**: Create a new branch from a base branch
 
 **Parameters**:
@@ -354,6 +389,65 @@ JWT Authentication + Installation Tokens
 
 ---
 
+### Additional Tools (12-39)
+
+#### Branch Management (continued)
+
+**12. `github_delete_branch`** - Delete a branch (protected branches cannot be deleted)
+**13. `github_get_branch`** - Get detailed information about a specific branch
+
+#### Commit Operations
+
+**14. `github_get_commit`** - Get detailed commit information
+**15. `github_list_commits`** - List commits on a branch
+**16. `github_compare_commits`** - Compare two commits
+
+#### Issue Management (continued)
+
+**17. `github_get_issue`** - Get detailed issue information
+**18. `github_update_issue`** - Update issue title, body, state, labels
+**19. `github_close_issue`** - Close an issue
+
+#### Pull Request Operations (continued)
+
+**20. `github_get_pr`** - Get detailed pull request information
+**21. `github_update_pr`** - Update PR title, body, state
+**22. `github_close_pr`** - Close a pull request without merging
+
+#### Workflow Automation (continued)
+
+**23. `github_list_workflows`** - List all GitHub Actions workflows
+**24. `github_get_workflow_run`** - Get workflow run details and status
+
+#### Code Search (continued)
+
+**25. `github_search_issues`** - Search issues across repository
+**26. `github_search_commits`** - Search commits by message or author
+
+#### File Operations (continued)
+
+**27. `github_create_file`** - Create a new file in repository
+**28. `github_update_file`** - Update existing file contents
+**29. `github_delete_file`** - Delete a file from repository
+**30. `github_list_files`** - List files in a directory
+
+#### Low-Level Git Operations (10 tools)
+
+**31. `github_create_ref`** - Create a git reference (branch, tag)
+**32. `github_update_ref`** - Update an existing reference
+**33. `github_delete_ref`** - Delete a git reference
+**34. `github_get_ref`** - Get reference information
+**35. `github_list_refs`** - List all references in repository
+**36. `github_create_tag`** - Create an annotated tag
+**37. `github_get_tree`** - Get git tree object
+**38. `github_create_tree`** - Create a git tree object
+**39. `github_create_blob`** - Create a git blob object
+**40. `github_get_blob`** - Get git blob contents
+
+**Note**: For complete API documentation of tools 12-40, see the tool definitions in `server.py` or use the `tools/list` MCP method.
+
+---
+
 ## Installation & Deployment
 
 ### Local Development
@@ -467,6 +561,89 @@ curl https://$APP_URL/health
 
 ---
 
+## OAuth 2.0 Integration
+
+**ChatGPT Integration Support** - Full OAuth 2.0 authorization flow for AI assistant authentication.
+
+### OAuth Endpoints
+
+**Authorization Endpoint**: `https://insightpulseai.net/oauth/authorize`
+**Token Endpoint**: `https://insightpulseai.net/oauth/token`
+
+### Grant Types Supported
+
+1. **Authorization Code Grant** (ChatGPT integration)
+2. **Refresh Token Grant** (token renewal)
+
+### OAuth Configuration
+
+**Client Credentials**:
+```bash
+# Environment variables
+export OAUTH_CLIENT_ID="insightpulse-mcp-github"
+export OAUTH_CLIENT_SECRET="<openssl-rand-base64-32-output>"
+```
+
+**Default Client ID**: `insightpulse-mcp-github`
+**Client Secret**: Auto-generated on first start (check logs) or set via environment variable
+
+### OAuth Flow
+
+1. **Authorization Request**:
+   ```
+   GET /oauth/authorize?client_id=<id>&redirect_uri=<uri>&state=<state>&scope=github:all
+   ```
+
+2. **Authorization Code** (expires in 10 minutes):
+   - Server redirects to ChatGPT with authorization code
+   - Code format: `code=<urlsafe-token>`
+
+3. **Token Exchange**:
+   ```
+   POST /oauth/token
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=authorization_code&code=<code>&redirect_uri=<uri>&client_id=<id>&client_secret=<secret>
+   ```
+
+4. **Access Token Response**:
+   ```json
+   {
+     "access_token": "<token>",
+     "token_type": "Bearer",
+     "expires_in": 3600,
+     "refresh_token": "<refresh-token>",
+     "scope": "github:all"
+   }
+   ```
+
+5. **Token Refresh**:
+   ```
+   POST /oauth/token
+   Content-Type: application/x-www-form-urlencoded
+
+   grant_type=refresh_token&refresh_token=<token>&client_id=<id>&client_secret=<secret>
+   ```
+
+### ChatGPT Setup
+
+See complete ChatGPT integration guide: [docs/CHATGPT_MCP_SETUP.md](docs/CHATGPT_MCP_SETUP.md)
+
+**Quick Steps**:
+1. Open ChatGPT Settings → Model Context Protocol → Add Server
+2. Configure OAuth 2.0 with authorization and token URLs
+3. Use client ID and secret from server configuration
+4. Authorize and start using GitHub operations
+
+### Security Considerations
+
+- **Production**: Generate strong client secret with `openssl rand -base64 32`
+- **Token Storage**: Use Redis or database instead of in-memory (current implementation)
+- **Token Expiration**: Access tokens expire after 1 hour
+- **HTTPS Only**: Never expose OAuth endpoints over HTTP
+
+---
+
 ## Configuration
 
 ### Environment Variables
@@ -478,6 +655,8 @@ curl https://$APP_URL/health
 | `GITHUB_INSTALLATION_ID` | Yes | `61508966` | Installation ID for target repository |
 | `GITHUB_REPO_OWNER` | No | `jgtolentino` | Default repository owner |
 | `GITHUB_REPO_NAME` | No | `insightpulse-odoo` | Default repository name |
+| `OAUTH_CLIENT_ID` | No | `insightpulse-mcp-github` | OAuth 2.0 client ID |
+| `OAUTH_CLIENT_SECRET` | No | Auto-generated | OAuth 2.0 client secret (use strong secret in production) |
 
 ### GitHub App Permissions
 
@@ -633,7 +812,7 @@ Configure your AI assistant to use the InsightPulse GitHub MCP Server.
 - `project` - Repository in `owner/repo` format (default: `jgtolentino/insightpulse-odoo`)
 - `features` - Comma-separated list of enabled features (default: all enabled)
 
-**Available Features**: `branches`, `commits`, `issues`, `pr`, `workflows`, `search`, `files`
+**Available Features**: `branches`, `commits`, `issues`, `pr`, `workflows`, `search`, `files`, `git`
 
 ### Supported Clients
 
@@ -658,9 +837,10 @@ Configure your AI assistant to use the InsightPulse GitHub MCP Server.
 ### Quick Start
 
 1. **Choose Your URL**:
-   - Full access: `?features=branches,commits,issues,pr,workflows,search,files`
-   - Read-only: `?features=search,files`
-   - CI/CD: `?features=workflows,pr`
+   - Full access: `?features=branches,commits,issues,pr,workflows,search,files,git`
+   - Read-only: `?features=search,files&read_only=true`
+   - CI/CD: `?features=workflows,pr&read_only=true`
+   - Development: `?features=branches,commits,files,git`
 
 2. **Configure Client**: Follow client-specific setup guide
 
@@ -716,4 +896,4 @@ LGPL-3.0 (same as InsightPulse Odoo platform)
 
 **Maintained by**: InsightPulse AI
 **Last Updated**: 2025-10-30
-**Version**: 1.0.0
+**Version**: 2.0.0 (OAuth 2.0 + 39 Comprehensive Git Operations)
