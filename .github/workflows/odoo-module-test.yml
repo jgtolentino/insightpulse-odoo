@@ -1,0 +1,265 @@
+name: Odoo Module Auto-Test
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'addons/**'
+      - 'requirements.txt'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'addons/**'
+  workflow_dispatch:
+    inputs:
+      modules:
+        description: 'Comma-separated list of modules to test (leave empty for all)'
+        required: false
+        default: ''
+      test_tags:
+        description: 'Test tags to run (e.g., at_install, post_install)'
+        required: false
+        default: ''
+
+env:
+  ODOO_VERSION: '19.0'
+  PYTHON_VERSION: '3.11'
+  POSTGRES_VERSION: '16'
+
+jobs:
+  # Job 1: Detect changed modules
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.changed.outputs.modules }}
+      has_changes: ${{ steps.changed.outputs.has_changes }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed modules
+        id: changed
+        run: |
+          echo "=== Detecting Changed Modules ==="
+
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ] && [ -n "${{ github.event.inputs.modules }}" ]; then
+            # Manual trigger with specific modules
+            MODULES="${{ github.event.inputs.modules }}"
+            echo "Manual run - testing modules: $MODULES"
+            echo "modules=$MODULES" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Detect changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD)
+          fi
+
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+
+          # Extract module names from changed files
+          MODULES=""
+          while IFS= read -r file; do
+            if [[ "$file" =~ ^addons/([^/]+)/([^/]+)/ ]]; then
+              MODULE="${BASH_REMATCH[2]}"
+              if [[ ! "$MODULES" =~ (^|,)$MODULE(,|$) ]]; then
+                if [ -z "$MODULES" ]; then
+                  MODULES="$MODULE"
+                else
+                  MODULES="$MODULES,$MODULE"
+                fi
+              fi
+            fi
+          done <<< "$CHANGED_FILES"
+
+          if [ -z "$MODULES" ]; then
+            echo "No module changes detected"
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Changed modules: $MODULES"
+            echo "modules=$MODULES" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+  # Job 2: Build test Docker image
+  build-test-image:
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.test
+          push: false
+          tags: insightpulse-odoo:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          outputs: type=docker,dest=/tmp/odoo-test-image.tar
+
+      - name: Upload Docker image
+        uses: actions/upload-artifact@v4
+        with:
+          name: odoo-test-image
+          path: /tmp/odoo-test-image.tar
+          retention-days: 1
+
+  # Job 3: Run module tests
+  test-modules:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, build-test-image]
+    if: needs.detect-changes.outputs.has_changes == 'true'
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download Docker image
+        uses: actions/download-artifact@v4
+        with:
+          name: odoo-test-image
+          path: /tmp
+
+      - name: Load Docker image
+        run: |
+          docker load --input /tmp/odoo-test-image.tar
+          docker image ls -a
+
+      - name: Run module tests
+        env:
+          DB_HOST: postgres
+          DB_PORT: 5432
+          DB_USER: odoo
+          DB_PASSWORD: odoo
+          MODULE_LIST: ${{ needs.detect-changes.outputs.modules }}
+          TEST_TAGS: ${{ github.event.inputs.test_tags }}
+        run: |
+          docker run --rm \
+            --network host \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=odoo \
+            -e DB_PASSWORD=odoo \
+            -e MODULE_LIST="${MODULE_LIST}" \
+            -e TEST_TAGS="${TEST_TAGS}" \
+            insightpulse-odoo:test \
+            bash /usr/local/bin/test-odoo-modules.sh "${MODULE_LIST}"
+
+      - name: Generate test report
+        if: always()
+        run: |
+          echo "# Odoo Module Test Report" > test-report.md
+          echo "" >> test-report.md
+          echo "## Test Configuration" >> test-report.md
+          echo "- Odoo Version: ${{ env.ODOO_VERSION }}" >> test-report.md
+          echo "- Python Version: ${{ env.PYTHON_VERSION }}" >> test-report.md
+          echo "- PostgreSQL Version: ${{ env.POSTGRES_VERSION }}" >> test-report.md
+          echo "- Modules Tested: ${{ needs.detect-changes.outputs.modules }}" >> test-report.md
+          if [ -n "${{ github.event.inputs.test_tags }}" ]; then
+            echo "- Test Tags: ${{ github.event.inputs.test_tags }}" >> test-report.md
+          fi
+          echo "" >> test-report.md
+          echo "## Results" >> test-report.md
+          echo "See workflow logs for detailed results." >> test-report.md
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report
+          path: test-report.md
+
+  # Job 4: Code coverage (if available)
+  code-coverage:
+    runs-on: ubuntu-latest
+    needs: test-modules
+    if: always() && needs.detect-changes.outputs.has_changes == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install coverage tools
+        run: |
+          pip install coverage pytest-cov
+
+      - name: Generate coverage report
+        run: |
+          echo "Coverage reporting will be implemented once test suite is complete"
+          # coverage run -m pytest addons/
+          # coverage report
+          # coverage html
+
+  # Job 5: Comment on PR with results
+  pr-comment:
+    runs-on: ubuntu-latest
+    needs: [detect-changes, test-modules]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Download test report
+        uses: actions/download-artifact@v4
+        with:
+          name: test-report
+          path: ./
+
+      - name: Comment PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const testsPassed = '${{ needs.test-modules.result }}' === 'success';
+            const modules = '${{ needs.detect-changes.outputs.modules }}';
+
+            let comment = `## 🧪 Odoo Module Test Results\n\n`;
+
+            if ('${{ needs.detect-changes.outputs.has_changes }}' !== 'true') {
+              comment += '**No module changes detected** - tests skipped.\n';
+            } else if (testsPassed) {
+              comment += `✅ **All tests passed!**\n\n`;
+              comment += `**Modules tested:** ${modules}\n\n`;
+              comment += `All Odoo modules passed unit and integration tests.\n`;
+            } else {
+              comment += `❌ **Tests failed**\n\n`;
+              comment += `**Modules tested:** ${modules}\n\n`;
+              comment += `Please check the workflow logs for details.\n`;
+            }
+
+            comment += `\n---\n*Automated by Odoo Module Auto-Test workflow*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,95 @@
+# InsightPulse Odoo Test Dockerfile
+# Optimized for CI/CD testing with full test suite support
+
+FROM odoo:19.0
+
+USER root
+
+# Install test dependencies
+RUN apt-get update && apt-get install -y \
+    python3-pip \
+    git \
+    curl \
+    postgresql-client \
+    # For screenshot/reporting tests
+    wkhtmltopdf \
+    # For coverage reports
+    gcovr \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python test dependencies
+RUN pip3 install --no-cache-dir \
+    pytest \
+    pytest-cov \
+    pytest-odoo \
+    coverage \
+    pylint \
+    pylint-odoo \
+    flake8 \
+    black \
+    isort \
+    bandit \
+    # OCA tools
+    click-odoo \
+    click-odoo-contrib \
+    # Testing helpers
+    faker \
+    freezegun
+
+# Copy requirements and install
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Create test addons directories
+RUN mkdir -p /mnt/extra-addons/insightpulse \
+    /mnt/extra-addons/custom \
+    /mnt/extra-addons/oca \
+    /mnt/extra-addons/test-results
+
+# Copy OCA fetch script
+COPY scripts/fetch_oca.sh /usr/local/bin/fetch_oca.sh
+COPY vendor/oca_requirements.txt /tmp/oca_requirements.txt
+RUN chmod +x /usr/local/bin/fetch_oca.sh
+
+# Fetch OCA modules at build time
+RUN /usr/local/bin/fetch_oca.sh /tmp/oca_requirements.txt /mnt/extra-addons/oca
+
+# Copy test scripts
+COPY scripts/test-*.sh /usr/local/bin/ 2>/dev/null || true
+RUN chmod +x /usr/local/bin/test-*.sh 2>/dev/null || true
+
+# Copy addons
+COPY addons/insightpulse /mnt/extra-addons/insightpulse
+COPY addons/custom /mnt/extra-addons/custom
+
+# Set permissions
+RUN chown -R odoo:odoo /mnt/extra-addons
+
+# Create test configuration
+RUN echo "[options]\n\
+addons_path = /mnt/extra-addons/insightpulse,/mnt/extra-addons/custom,/mnt/extra-addons/oca,/usr/lib/python3/dist-packages/odoo/addons\n\
+data_dir = /var/lib/odoo\n\
+admin_passwd = admin\n\
+db_host = db\n\
+db_port = 5432\n\
+db_user = odoo\n\
+db_password = odoo\n\
+db_name = test_db\n\
+test_enable = True\n\
+test_file = /mnt/extra-addons/test-results/\n\
+log_level = test\n\
+without_demo = False\n\
+workers = 0\n" > /etc/odoo/odoo-test.conf
+
+# Switch to odoo user
+USER odoo
+
+# Set working directory
+WORKDIR /mnt/extra-addons
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8069/web/health || exit 1
+
+# Default command runs tests
+CMD ["odoo", "-c", "/etc/odoo/odoo-test.conf", "--test-enable", "--stop-after-init", "--log-level=test"]
