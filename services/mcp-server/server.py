@@ -8,13 +8,14 @@ to perform repository operations (create PRs, commits, issues, workflows, etc.).
 import os
 import time
 import logging
+import secrets
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timedelta
 
 import jwt
 import httpx
-from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi import FastAPI, HTTPException, Request, Form
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -40,6 +41,14 @@ DEFAULT_REPO_NAME = os.getenv("GITHUB_REPO_NAME", "insightpulse-odoo")
 
 # Token cache
 _token_cache: Dict[str, Any] = {}
+
+# OAuth storage (in-memory for now, use Redis/DB in production)
+_oauth_codes: Dict[str, Dict[str, Any]] = {}
+_oauth_tokens: Dict[str, Dict[str, Any]] = {}
+
+# OAuth configuration
+OAUTH_CLIENT_ID = os.getenv("OAUTH_CLIENT_ID", "insightpulse-mcp-github")
+OAUTH_CLIENT_SECRET = os.getenv("OAUTH_CLIENT_SECRET", secrets.token_urlsafe(32))
 
 # Feature to tool mapping for query parameter filtering
 FEATURE_TOOL_MAP = {
@@ -509,6 +518,128 @@ MCP_TOOLS = {
 async def serve_ui():
     """Serve the MCP server web UI."""
     return FileResponse("static/index.html")
+
+
+@app.get("/oauth/authorize")
+async def oauth_authorize(
+    client_id: str,
+    redirect_uri: str,
+    state: Optional[str] = None,
+    scope: Optional[str] = None
+):
+    """OAuth 2.0 authorization endpoint for ChatGPT integration."""
+    # Validate client_id
+    if client_id != OAUTH_CLIENT_ID:
+        raise HTTPException(status_code=400, detail="Invalid client_id")
+
+    # Generate authorization code
+    code = secrets.token_urlsafe(32)
+
+    # Store authorization code with expiration (10 minutes)
+    _oauth_codes[code] = {
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
+        "created_at": datetime.now(),
+        "expires_at": datetime.now() + timedelta(minutes=10),
+        "scope": scope or "github:all"
+    }
+
+    # Redirect back to ChatGPT with authorization code
+    redirect_url = f"{redirect_uri}?code={code}"
+    if state:
+        redirect_url += f"&state={state}"
+
+    logger.info(f"OAuth authorize: client_id={client_id}, redirect_uri={redirect_uri}")
+    return RedirectResponse(url=redirect_url)
+
+
+@app.post("/oauth/token")
+async def oauth_token(
+    grant_type: str = Form(...),
+    code: Optional[str] = Form(None),
+    redirect_uri: Optional[str] = Form(None),
+    client_id: str = Form(...),
+    client_secret: str = Form(...)
+):
+    """OAuth 2.0 token endpoint for ChatGPT integration."""
+    # Validate client credentials
+    if client_id != OAUTH_CLIENT_ID or client_secret != OAUTH_CLIENT_SECRET:
+        raise HTTPException(status_code=401, detail="Invalid client credentials")
+
+    if grant_type == "authorization_code":
+        # Validate authorization code
+        if code not in _oauth_codes:
+            raise HTTPException(status_code=400, detail="Invalid authorization code")
+
+        code_data = _oauth_codes[code]
+
+        # Check expiration
+        if datetime.now() > code_data["expires_at"]:
+            del _oauth_codes[code]
+            raise HTTPException(status_code=400, detail="Authorization code expired")
+
+        # Validate redirect_uri
+        if redirect_uri != code_data["redirect_uri"]:
+            raise HTTPException(status_code=400, detail="Redirect URI mismatch")
+
+        # Generate access token
+        access_token = secrets.token_urlsafe(32)
+        refresh_token = secrets.token_urlsafe(32)
+
+        # Store tokens
+        _oauth_tokens[access_token] = {
+            "client_id": client_id,
+            "scope": code_data["scope"],
+            "created_at": datetime.now(),
+            "expires_at": datetime.now() + timedelta(hours=1),
+            "refresh_token": refresh_token
+        }
+
+        # Clean up used authorization code
+        del _oauth_codes[code]
+
+        logger.info(f"OAuth token issued: client_id={client_id}")
+
+        return {
+            "access_token": access_token,
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "refresh_token": refresh_token,
+            "scope": code_data["scope"]
+        }
+
+    elif grant_type == "refresh_token":
+        # Handle refresh token flow
+        refresh_token = Form(None)
+        # Find access token by refresh token
+        for token, data in _oauth_tokens.items():
+            if data.get("refresh_token") == refresh_token:
+                # Generate new access token
+                new_access_token = secrets.token_urlsafe(32)
+                new_refresh_token = secrets.token_urlsafe(32)
+
+                _oauth_tokens[new_access_token] = {
+                    "client_id": client_id,
+                    "scope": data["scope"],
+                    "created_at": datetime.now(),
+                    "expires_at": datetime.now() + timedelta(hours=1),
+                    "refresh_token": new_refresh_token
+                }
+
+                # Remove old token
+                del _oauth_tokens[token]
+
+                return {
+                    "access_token": new_access_token,
+                    "token_type": "Bearer",
+                    "expires_in": 3600,
+                    "refresh_token": new_refresh_token,
+                    "scope": data["scope"]
+                }
+
+        raise HTTPException(status_code=400, detail="Invalid refresh token")
+
+    raise HTTPException(status_code=400, detail="Unsupported grant type")
 
 
 @app.get("/health")
