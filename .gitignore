@@ -2,3 +2,4 @@
 odoo-multi-source-setup.tar.gz
 odoo-multi-source-setup/
 addons/oca/*/
+.vscode/mcp.json
