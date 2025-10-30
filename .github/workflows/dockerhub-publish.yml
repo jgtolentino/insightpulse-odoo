@@ -10,6 +10,47 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Validate build context
+        run: |
+          echo "Validating Docker build context..."
+
+          # Check required files exist
+          required_files=(
+            "Dockerfile"
+            "requirements.txt"
+            "scripts/copy-addons.sh"
+            "addons/insightpulse"
+            "addons/custom"
+            "addons/oca"
+          )
+
+          for file in "${required_files[@]}"; do
+            if [ ! -e "$file" ]; then
+              echo "❌ ERROR: Required file/directory missing: $file"
+              exit 1
+            else
+              echo "✓ Found: $file"
+            fi
+          done
+
+          # Check optional addons (warn if missing)
+          optional_addons=(
+            "addons/bi_superset_agent"
+            "addons/knowledge_notion_clone"
+            "addons/web_environment_ribbon"
+            "addons/web_favicon"
+          )
+
+          for addon in "${optional_addons[@]}"; do
+            if [ -d "$addon" ]; then
+              echo "✓ Found optional addon: $addon"
+            else
+              echo "⊘ Optional addon not present (will be skipped): $addon"
+            fi
+          done
+
+          echo "Build context validation completed successfully"
+
       - name: DockerHub login
         uses: docker/login-action@v3
         with:
