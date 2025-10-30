@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>GitHub Integration (pulser-hub)</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 40px; max-width: 900px; margin: 0 auto; }
+        h1 { color: #24292e; border-bottom: 2px solid #0366d6; padding-bottom: 10px; }
+        h2 { color: #0366d6; margin-top: 30px; }
+        code { background: #f6f8fa; padding: 2px 6px; border-radius: 3px; font-size: 85%; }
+        pre { background: #f6f8fa; padding: 16px; border-radius: 6px; overflow-x: auto; }
+        .feature { margin: 20px 0; padding: 15px; background: #f6f8fa; border-left: 4px solid #0366d6; }
+        .warning { background: #fff3cd; border-left-color: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>GitHub Integration Module</h1>
+    <p><strong>Integrate GitHub with Odoo via the pulser-hub GitHub App</strong></p>
+
+    <h2>✨ Features</h2>
+    <div class="feature">
+        <strong>📡 Webhook Endpoint</strong><br>
+        <code>/odoo/github/webhook</code> - Receive and process GitHub events
+    </div>
+    <div class="feature">
+        <strong>🔐 OAuth Integration</strong><br>
+        <code>/odoo/github/auth/callback</code> - Handle app installation authorization
+    </div>
+    <div class="feature">
+        <strong>📋 Track Pull Requests</strong><br>
+        Monitor PRs, approvals, and merge status in Odoo
+    </div>
+    <div class="feature">
+        <strong>🐛 Track Issues</strong><br>
+        Sync GitHub issues with Odoo project tasks
+    </div>
+    <div class="feature">
+        <strong>🔄 Bidirectional Sync</strong><br>
+        Create GitHub issues from Odoo tasks and vice versa
+    </div>
+    <div class="feature">
+        <strong>🤖 Bot Commands</strong><br>
+        <code>/odoo-sync</code>, <code>/odoo-link</code>, <code>/odoo-status</code>
+    </div>
+
+    <h2>📦 Installation</h2>
+    <ol>
+        <li>Install Python dependencies: <code>pip install PyJWT requests</code></li>
+        <li>Install module in Odoo: <strong>Apps → Search "GitHub Integration" → Install</strong></li>
+        <li>Configure system parameters (see documentation)</li>
+    </ol>
+
+    <h2>⚙️ Configuration Required</h2>
+    <div class="feature warning">
+        <strong>⚠️ Important</strong><br>
+        You must configure these system parameters:<br>
+        <ul>
+            <li><code>github.client_secret</code> - GitHub App client secret</li>
+            <li><code>github.webhook_secret</code> - Webhook secret for signature verification</li>
+            <li><code>github.private_key</code> - Private key for API authentication</li>
+            <li><code>github.installation_id</code> - Installation ID for your organization</li>
+        </ul>
+        Navigate to: <strong>Settings → Technical → Parameters → System Parameters</strong>
+    </div>
+
+    <h2>📚 Documentation</h2>
+    <p>Full documentation available at:</p>
+    <ul>
+        <li><a href="https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/PULSER_HUB_INTEGRATION.md">Pulser-Hub Integration Guide</a></li>
+        <li><a href="https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/GITHUB_BOT.md">GitHub Bot Automation Guide</a></li>
+    </ul>
+
+    <h2>🔗 pulser-hub GitHub App</h2>
+    <ul>
+        <li><strong>App ID</strong>: 2191216</li>
+        <li><strong>Homepage</strong>: <a href="https://insightpulseai.net/pulser-hub">insightpulseai.net/pulser-hub</a></li>
+        <li><strong>Owner</strong>: @jgtolentino</li>
+    </ul>
+
+    <h2>📧 Support</h2>
+    <p>
+        <strong>Issues</strong>: <a href="https://github.com/jgtolentino/insightpulse-odoo/issues">GitHub Issues</a><br>
+        <strong>Email</strong>: support@insightpulse.ai
+    </p>
+
+    <h2>📝 License</h2>
+    <p>LGPL-3.0</p>
+</body>
+</html>
