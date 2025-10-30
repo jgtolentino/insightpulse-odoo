@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- Rate Policy Form View -->
+    <record id="view_rate_policy_form" model="ir.ui.view">
+        <field name="name">rate.policy.form</field>
+        <field name="model">rate.policy</field>
+        <field name="arch" type="xml">
+            <form string="Rate Policy">
+                <header>
+                    <button name="action_activate" string="Activate" type="object"
+                            invisible="state == 'active'" class="oe_highlight"/>
+                    <button name="action_archive_policy" string="Archive" type="object"
+                            invisible="state == 'archived'" class="btn-warning"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,active,archived"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Standard Rate Policy 2025"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="effective_date"/>
+                            <field name="markup_percentage"/>
+                        </group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Rate Lines" name="lines">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="role_id"/>
+                                    <field name="p60_base_rate"/>
+                                    <field name="calculated_rate"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Additional information about this rate policy..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Rate Policy Tree View -->
+    <record id="view_rate_policy_tree" model="ir.ui.view">
+        <field name="name">rate.policy.tree</field>
+        <field name="model">rate.policy</field>
+        <field name="arch" type="xml">
+            <tree string="Rate Policies">
+                <field name="name"/>
+                <field name="effective_date"/>
+                <field name="markup_percentage"/>
+                <field name="state" decoration-info="state == 'draft'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state == 'archived'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Rate Policy Search View -->
+    <record id="view_rate_policy_search" model="ir.ui.view">
+        <field name="name">rate.policy.search</field>
+        <field name="model">rate.policy</field>
+        <field name="arch" type="xml">
+            <search string="Rate Policies">
+                <field name="name"/>
+                <field name="effective_date"/>
+                <filter string="Active" name="active" domain="[('state', '=', 'active')]"/>
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Archived" name="archived" domain="[('state', '=', 'archived')]"/>
+                <group expand="0" string="Group By">
+                    <filter string="State" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Company" name="group_company" context="{'group_by': 'company_id'}"
+                            groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Rate Policy Action -->
+    <record id="action_rate_policy" model="ir.actions.act_window">
+        <field name="name">Rate Policies</field>
+        <field name="res_model">rate.policy</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first rate policy
+            </p>
+            <p>
+                Define automated rate calculation policies with P60 + markup.
+            </p>
+        </field>
+    </record>
+</odoo>

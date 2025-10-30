@@ -1,0 +1,117 @@
+# DigitalOcean App Platform Specification
+# InsightPulse Odoo 19.0 Enterprise SaaS Platform
+# Budget: $5/month (basic-xxs tier)
+
+name: odoo-saas-platform-staging
+region: sgp
+
+services:
+  - name: odoo-web-staging
+    # GitHub source configuration
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: feat/parity-live-sync
+      deploy_on_push: false
+
+    # Instance configuration (basic-xxs: 512MB RAM, 1 vCPU, $5/month)
+    instance_size_slug: basic-xxs
+    instance_count: 1
+
+    # Build configuration
+    dockerfile_path: Dockerfile
+    build_command: ""
+
+    # HTTP configuration
+    http_port: 8069
+
+    # Health check configuration
+    health_check:
+      http_path: /web/health
+      initial_delay_seconds: 180
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Environment variables
+    envs:
+      # Database configuration (Supabase)
+      - key: ODOO_DB_HOST
+        scope: RUN_TIME
+        value: "aws-0-us-east-1.pooler.supabase.com"
+
+      - key: ODOO_DB_PORT
+        scope: RUN_TIME
+        value: "6543"  # Supabase pooler port
+
+      - key: ODOO_DB_NAME
+        scope: RUN_TIME
+        value: "postgres"
+
+      - key: ODOO_DB_USER
+        scope: RUN_TIME
+        value: "postgres.xkxyvboeubffxxbebsll"
+
+      - key: ODOO_DB_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "ENC[WILL_BE_SET_VIA_DOCTL]"
+
+      # Odoo configuration
+      - key: ODOO_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "ENC[WILL_BE_SET_VIA_DOCTL]"
+
+      - key: ODOO_WORKERS
+        scope: RUN_TIME
+        value: "2"
+
+      - key: ODOO_MAX_CRON_THREADS
+        scope: RUN_TIME
+        value: "1"
+
+      - key: ODOO_DB_MAXCONN
+        scope: RUN_TIME
+        value: "8"
+
+      - key: ODOO_LIMIT_MEMORY_HARD
+        scope: RUN_TIME
+        value: "419430400"  # 400MB (80% of 512MB instance)
+
+      - key: ODOO_LIMIT_MEMORY_SOFT
+        scope: RUN_TIME
+        value: "335544320"  # 320MB (64% of 512MB instance)
+
+      - key: ODOO_LIMIT_TIME_CPU
+        scope: RUN_TIME
+        value: "300"
+
+      - key: ODOO_LIMIT_TIME_REAL
+        scope: RUN_TIME
+        value: "600"
+
+      # Addons path
+      - key: ODOO_ADDONS_PATH
+        scope: RUN_TIME
+        value: "/mnt/extra-addons/insightpulse,/mnt/extra-addons/custom,/mnt/extra-addons/oca,/usr/lib/python3/dist-packages/odoo/addons"
+
+      # AI configuration (optional - defaults to self-hosted)
+      - key: AI_PROVIDER
+        scope: RUN_TIME
+        value: "ollama"  # Use self-hosted Llama 3.2
+
+      - key: OLLAMA_BASE_URL
+        scope: RUN_TIME
+        value: "http://localhost:11434"
+
+      # Optional: OpenAI fallback (disabled by default for cost savings)
+      # - key: OPENAI_API_KEY
+      #   scope: RUN_TIME
+      #   type: SECRET
+      #   value: "${OPENAI_API_KEY}"
+
+    # Routes configuration
+    routes:
+      - path: /
+        preserve_path_prefix: true

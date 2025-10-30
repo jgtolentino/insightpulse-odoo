@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_ppm_risk_tree" model="ir.ui.view">
+        <field name="name">ppm.risk.tree</field>
+        <field name="model">ppm.risk</field>
+        <field name="arch" type="xml">
+            <tree string="Risks">
+                <field name="name"/>
+                <field name="risk_category"/>
+                <field name="risk_score"/>
+                <field name="status"/>
+                <field name="owner_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ppm_risk" model="ir.actions.act_window">
+        <field name="name">Risks</field>
+        <field name="res_model">ppm.risk</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

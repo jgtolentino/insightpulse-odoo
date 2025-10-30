@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_saas_tenant_tree" model="ir.ui.view">
+        <field name="name">saas.tenant.tree</field>
+        <field name="model">saas.tenant</field>
+        <field name="arch" type="xml">
+            <tree string="SaaS Tenants">
+                <field name="tenant_code"/>
+                <field name="name"/>
+                <field name="subdomain"/>
+                <field name="plan_id"/>
+                <field name="current_users"/>
+                <field name="max_users"/>
+                <field name="state" decoration-success="state == 'active'"
+                       decoration-warning="state == 'provisioning'"
+                       decoration-danger="state == 'suspended'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_saas_tenant_form" model="ir.ui.view">
+        <field name="name">saas.tenant.form</field>
+        <field name="model">saas.tenant</field>
+        <field name="arch" type="xml">
+            <form string="SaaS Tenant">
+                <header>
+                    <button name="action_provision" string="Provision" type="object"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_activate" string="Activate" type="object"
+                            invisible="state not in ('draft', 'suspended')" class="oe_highlight"/>
+                    <button name="action_suspend" string="Suspend" type="object"
+                            invisible="state != 'active'" class="btn-warning"/>
+                    <button name="action_terminate" string="Terminate" type="object"
+                            invisible="state == 'terminated'"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,provisioning,active"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="tenant_code"/>
+                            <field name="subdomain"/>
+                            <field name="database_name"/>
+                            <field name="admin_email"/>
+                        </group>
+                        <group>
+                            <field name="plan_id"/>
+                            <field name="max_users"/>
+                            <field name="current_users"/>
+                            <field name="storage_limit_gb"/>
+                            <field name="current_storage_gb"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Backups" name="backups">
+                            <field name="backup_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="backup_type"/>
+                                    <field name="backup_date"/>
+                                    <field name="status"/>
+                                    <field name="file_size_mb"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Usage" name="usage">
+                            <field name="usage_ids">
+                                <tree>
+                                    <field name="usage_date"/>
+                                    <field name="metric_type"/>
+                                    <field name="value"/>
+                                    <field name="unit"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_saas_tenant" model="ir.actions.act_window">
+        <field name="name">Tenants</field>
+        <field name="res_model">saas.tenant</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

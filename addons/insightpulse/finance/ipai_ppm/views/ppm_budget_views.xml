@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_ppm_budget_tree" model="ir.ui.view">
+        <field name="name">ppm.budget.tree</field>
+        <field name="model">ppm.budget</field>
+        <field name="arch" type="xml">
+            <tree string="Budgets">
+                <field name="name"/>
+                <field name="budget_type"/>
+                <field name="amount"/>
+                <field name="spent_amount"/>
+                <field name="remaining_amount"/>
+                <field name="utilization_percentage" widget="progressbar"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_ppm_budget" model="ir.actions.act_window">
+        <field name="name">Budgets</field>
+        <field name="res_model">ppm.budget</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_saas_tenant_user,saas.tenant.user,model_saas_tenant,saas_ops_group_user,1,0,0,0
+access_saas_tenant_admin,saas.tenant.admin,model_saas_tenant,saas_ops_group_admin,1,1,1,1
+access_saas_backup_user,saas.backup.user,model_saas_backup,saas_ops_group_user,1,0,0,0
+access_saas_backup_admin,saas.backup.admin,model_saas_backup,saas_ops_group_admin,1,1,1,1
+access_saas_usage_user,saas.usage.user,model_saas_usage,saas_ops_group_user,1,0,0,0
+access_saas_usage_admin,saas.usage.admin,model_saas_usage,saas_ops_group_admin,1,1,1,0

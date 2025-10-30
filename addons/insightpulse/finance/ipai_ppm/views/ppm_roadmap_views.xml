@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <record id="view_ppm_roadmap_gantt" model="ir.ui.view">
+        <field name="name">ppm.roadmap.gantt</field>
+        <field name="model">ppm.roadmap</field>
+        <field name="arch" type="xml">
+            <gantt date_start="target_date" date_stop="target_date" default_group_by="program_id">
+                <field name="name"/>
+                <field name="status"/>
+            </gantt>
+        </field>
+    </record>
+
+    <record id="action_ppm_roadmap" model="ir.actions.act_window">
+        <field name="name">Roadmaps</field>
+        <field name="res_model">ppm.roadmap</field>
+        <field name="view_mode">gantt,tree,form</field>
+    </record>
+</odoo>

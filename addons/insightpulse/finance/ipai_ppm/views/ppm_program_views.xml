@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- PPM Program Kanban View -->
+    <record id="view_ppm_program_kanban" model="ir.ui.view">
+        <field name="name">ppm.program.kanban</field>
+        <field name="model">ppm.program</field>
+        <field name="arch" type="xml">
+            <kanban>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="state"/>
+                <field name="project_count"/>
+                <field name="total_budget"/>
+                <field name="currency_id"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                </div>
+                                <span class="badge badge-pill" t-att-class="{'badge-success': record.state.raw_value == 'active', 'badge-info': record.state.raw_value == 'planning', 'badge-secondary': record.state.raw_value == 'draft'}">
+                                    <field name="state"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="code"/>
+                                <div>
+                                    <i class="fa fa-folder"/> <field name="project_count"/> Projects
+                                </div>
+                                <div>
+                                    <i class="fa fa-money"/> <field name="total_budget" widget="monetary"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- PPM Program Form View -->
+    <record id="view_ppm_program_form" model="ir.ui.view">
+        <field name="name">ppm.program.form</field>
+        <field name="model">ppm.program</field>
+        <field name="arch" type="xml">
+            <form string="PPM Program">
+                <header>
+                    <button name="action_start_planning" string="Start Planning" type="object"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_activate" string="Activate" type="object"
+                            invisible="state not in ('draft', 'planning')" class="oe_highlight"/>
+                    <button name="action_put_on_hold" string="Put On Hold" type="object"
+                            invisible="state != 'active'" class="btn-warning"/>
+                    <button name="action_complete" string="Complete" type="object"
+                            invisible="state != 'active'" class="btn-success"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ('completed', 'cancelled')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,planning,active,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g., Digital Transformation 2025"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="program_manager_id"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Projects" name="projects">
+                            <field name="project_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="user_id"/>
+                                    <field name="date_start"/>
+                                    <field name="date"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Roadmap" name="roadmap">
+                            <field name="roadmap_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="milestone_type"/>
+                                    <field name="target_date"/>
+                                    <field name="status"/>
+                                    <field name="progress" widget="progressbar"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Risks" name="risks">
+                            <field name="risk_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="risk_category"/>
+                                    <field name="risk_score"/>
+                                    <field name="status"/>
+                                    <field name="owner_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Budget" name="budget">
+                            <field name="budget_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="budget_type"/>
+                                    <field name="amount" sum="Total"/>
+                                    <field name="spent_amount" sum="Total Spent"/>
+                                    <field name="remaining_amount" sum="Total Remaining"/>
+                                    <field name="utilization_percentage" widget="progressbar"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </tree>
+                            </field>
+                            <group>
+                                <field name="total_budget" widget="monetary"/>
+                                <field name="currency_id" invisible="1"/>
+                            </group>
+                        </page>
+                        <page string="Description" name="description">
+                            <field name="description" widget="html"/>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Additional program notes..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- PPM Program Tree View -->
+    <record id="view_ppm_program_tree" model="ir.ui.view">
+        <field name="name">ppm.program.tree</field>
+        <field name="model">ppm.program</field>
+        <field name="arch" type="xml">
+            <tree string="PPM Programs">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="program_manager_id"/>
+                <field name="start_date"/>
+                <field name="end_date"/>
+                <field name="project_count"/>
+                <field name="total_budget" widget="monetary"/>
+                <field name="state" decoration-info="state == 'draft'"
+                       decoration-warning="state == 'planning'"
+                       decoration-success="state == 'active'"
+                       decoration-muted="state in ('completed', 'cancelled')"/>
+                <field name="currency_id" invisible="1"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- PPM Program Action -->
+    <record id="action_ppm_program" model="ir.actions.act_window">
+        <field name="name">Programs</field>
+        <field name="res_model">ppm.program</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first program
+            </p>
+            <p>
+                Manage programs, projects, budgets, and risks in one place.
+            </p>
+        </field>
+    </record>
+</odoo>

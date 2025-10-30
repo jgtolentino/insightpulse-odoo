@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_rate_policy_user,rate.policy.user,model_rate_policy,rate_policy_group_user,1,0,0,0
+access_rate_policy_manager,rate.policy.manager,model_rate_policy,rate_policy_group_manager,1,1,1,1
+access_rate_policy_line_user,rate.policy.line.user,model_rate_policy_line,rate_policy_group_user,1,0,0,0
+access_rate_policy_line_manager,rate.policy.line.manager,model_rate_policy_line,rate_policy_group_manager,1,1,1,1
+access_rate_calculation_log_user,rate.calculation.log.user,model_rate_calculation_log,rate_policy_group_user,1,0,0,0
+access_rate_calculation_log_manager,rate.calculation.log.manager,model_rate_calculation_log,rate_policy_group_manager,1,1,1,0

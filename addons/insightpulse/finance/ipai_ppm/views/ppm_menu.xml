@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Copyright 2025 InsightPulse AI -->
+<!-- License LGPL-3.0 or later (https://www.gnu.org/licenses/lgpl-3.0) -->
+<odoo>
+    <!-- PPM Root Menu -->
+    <menuitem id="menu_ppm_root"
+              name="PPM"
+              sequence="10"/>
+
+    <!-- Programs Submenu -->
+    <menuitem id="menu_ppm_program"
+              name="Programs"
+              parent="menu_ppm_root"
+              action="action_ppm_program"
+              sequence="10"/>
+
+    <!-- Roadmaps Submenu -->
+    <menuitem id="menu_ppm_roadmap"
+              name="Roadmaps"
+              parent="menu_ppm_root"
+              action="action_ppm_roadmap"
+              sequence="20"/>
+
+    <!-- Risks Submenu -->
+    <menuitem id="menu_ppm_risk"
+              name="Risks"
+              parent="menu_ppm_root"
+              action="action_ppm_risk"
+              sequence="30"/>
+
+    <!-- Budgets Submenu -->
+    <menuitem id="menu_ppm_budget"
+              name="Budgets"
+              parent="menu_ppm_root"
+              action="action_ppm_budget"
+              sequence="40"/>
+
+    <!-- Security Groups -->
+    <record id="ppm_group_user" model="res.groups">
+        <field name="name">PPM User</field>
+        <field name="category_id" ref="base.module_category_project"/>
+        <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+    </record>
+
+    <record id="ppm_group_manager" model="res.groups">
+        <field name="name">PPM Manager</field>
+        <field name="category_id" ref="base.module_category_project"/>
+        <field name="implied_ids" eval="[(4, ref('ppm_group_user'))]"/>
+    </record>
+</odoo>
