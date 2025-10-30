@@ -12,6 +12,9 @@ This script is designed to run **inside the Dockerfile** during the build proces
 
 - **Build-time optimization**: Uses shallow clones (`--depth 1`) to minimize image size
 - **Simple format**: Reads a plain text file with "REPO_URL BRANCH" format
+- **Comment support**: Skips lines starting with `#` and empty lines
+- **Error handling**: Validates file existence, malformed lines, and git clone failures
+- **Robust variable handling**: Properly quoted variables for path safety
 - **Docker-focused**: Designed for CI/CD and container builds
 - **Minimal dependencies**: Only requires git and bash
 
@@ -35,12 +38,21 @@ This script is designed to run **inside the Dockerfile** during the build proces
 The `vendor/oca_requirements.txt` file should contain one repository per line:
 
 ```
+# OCA Requirements for Docker Build
+# Format: REPO_URL BRANCH
+
 https://github.com/OCA/contract 19.0
 https://github.com/OCA/server-tools 19.0
 https://github.com/OCA/reporting-engine 19.0
 ```
 
-Format: `REPO_URL BRANCH`
+**Format**: `REPO_URL BRANCH`
+
+**Features**:
+- Lines starting with `#` are treated as comments and skipped
+- Empty lines are ignored
+- Whitespace-only lines are skipped
+- Supports both `.git` and non-`.git` URLs (automatically handled)
 
 ### Integration with Dockerfile
 
