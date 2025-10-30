@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements and install dependencies
 COPY requirements.txt .
+ENV PIP_BREAK_SYSTEM_PACKAGES=1
 RUN pip install --no-cache-dir --user -r requirements.txt
 
 # Production stage
@@ -22,6 +23,7 @@ COPY --from=builder /root/.local /root/.local
 
 # Copy application code
 COPY server.py .
+COPY static/ ./static/
 
 # Make sure scripts in .local are usable
 ENV PATH=/root/.local/bin:$PATH

@@ -2,10 +2,6 @@ name: mcp-github-server
 region: sgp
 services:
   - name: mcp-server
-    source:
-      repo: jgtolentino/insightpulse-odoo
-      branch: feat/parity-live-sync
-      deploy_on_push: true
     github:
       repo: jgtolentino/insightpulse-odoo
       branch: feat/parity-live-sync
@@ -34,5 +30,10 @@ services:
       - key: GITHUB_REPO_NAME
         value: "insightpulse-odoo"
       - key: GITHUB_PRIVATE_KEY
+        scope: RUN_TIME
+        type: SECRET
+      - key: OAUTH_CLIENT_ID
+        value: "insightpulse-mcp-github"
+      - key: OAUTH_CLIENT_SECRET
         scope: RUN_TIME
         type: SECRET
