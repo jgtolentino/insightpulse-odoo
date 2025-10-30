@@ -1,0 +1,46 @@
+name: pulser-hub-mcp
+region: sgp
+
+services:
+  - name: mcp-server
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    source_dir: services/mcp-server
+    dockerfile_path: services/mcp-server/Dockerfile
+
+    http_port: 8000
+
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+
+    envs:
+      - key: GITHUB_APP_ID
+        value: "2191216"
+        scope: RUN_TIME
+
+      - key: GITHUB_PRIVATE_KEY
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: GITHUB_INSTALLATION_ID
+        scope: RUN_TIME
+        type: SECRET
+
+    routes:
+      - path: /mcp/github
+      - path: /health
+      - path: /
+
+domains:
+  - domain: mcp.insightpulseai.net
+    type: PRIMARY
