@@ -1,0 +1,58 @@
+name: mcp-github-server
+region: sgp
+
+services:
+  - name: mcp-server
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    source_dir: services/mcp-server
+
+    dockerfile_path: services/mcp-server/Dockerfile
+
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    http_port: 8000
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    envs:
+      - key: GITHUB_APP_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: "2191216"  # pulser-hub App ID
+
+      - key: GITHUB_PRIVATE_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: "EV[1:hf16YVNb8yPFSxwZnuF5:H5cPT0qJsFj6++p8NW54eZLIBOkBSIEAZtE7bq4JEy5CzSb/0u9sLfKpfHZElPJhZh3Sj66jB2AUJG07dXBfbNJKZWPjqo2zt6Y34y0FjY8spTKlMgUH74Q7w3mxJ4YuwlYNKsNwjr0VU3wxJaU7a60peBRrqhqNIYX0FbDKokFxGECRVT0UjSNdaBcuWsH2SWHx+Pq4jy+W9PD39WzS3R+FDcSZzhw43xcKE2zqsRCvCdp/yWKjPQQEZxK7D1XFLZu1Gm3J6Fx94gS4vPvAzPIj8w6LJ9hbmO8rWO13K9lh25XkVCvpUbB4FPAtJ5f/X7qDTfYC4exOD2RUcNe2+HcGWa6dA0HRgc7rsCY03Y4V6MqBaLjXvF3OjgPamfx1FN15y2Y4P4y4QCXYq3TcOsewCo2XM3pJpSm8hOQNpV7tXqVfVOdJPTZkILHaLl7+f0LX93j+ew2DjYLOL4hX/2I6fY3cEhP1ZG/5M/lDCaApDLxNdaJFAiCOl2SQ4vwFcNZs6l8N32nP7NR8h6nZcdVOSMhKQN7eQb5VEOVQZMhWyMhGGn5RWKTEbZqP3hqhC3aAJnQ=]"
+
+      - key: GITHUB_INSTALLATION_ID
+        scope: RUN_TIME
+        type: SECRET
+        value: "61508966"  # Installation ID for jgtolentino/insightpulse-odoo
+
+      - key: GITHUB_REPO_OWNER
+        scope: RUN_TIME
+        value: "jgtolentino"
+
+      - key: GITHUB_REPO_NAME
+        scope: RUN_TIME
+        value: "insightpulse-odoo"
+
+    routes:
+      - path: /
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DEPLOYMENT_LIVE
+  - rule: DOMAIN_FAILED
