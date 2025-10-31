@@ -1,0 +1,83 @@
+# Production Dockerfile - InsightPulse Odoo
+# Replaces: SAP Concur, Clarity PPM, SAP Ariba, Manual Accounting
+# Annual Savings: $55,760
+
+FROM odoo:19.0
+
+LABEL maintainer="InsightPulse AI <support@insightpulseai.net>"
+LABEL description="Production Odoo with IPAI custom modules"
+LABEL version="1.0.0"
+
+# Switch to root for installations
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # OCR dependencies
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    libgomp1 \
+    # PDF processing
+    wkhtmltopdf \
+    # Database tools
+    postgresql-client \
+    # Network tools
+    curl \
+    wget \
+    git \
+    # Build tools
+    build-essential \
+    python3-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir \
+    # OCR processing
+    paddleocr==2.7.0 \
+    paddlepaddle==2.5.2 \
+    opencv-python-headless==4.8.1.78 \
+    # Supabase integration
+    supabase==2.0.3 \
+    # Notion integration (optional)
+    notion-client==2.2.1 \
+    # Additional tools
+    python-dateutil \
+    pytz \
+    requests \
+    # Queue processing
+    celery \
+    redis
+
+# Copy custom modules
+COPY --chown=odoo:odoo addons/custom/ /mnt/extra-addons/custom/
+
+# Copy OCA modules (if vendored)
+COPY --chown=odoo:odoo vendor/oca_requirements.txt /tmp/
+COPY --chown=odoo:odoo scripts/fetch_oca.sh /usr/local/bin/
+
+# Fetch OCA modules
+RUN chmod +x /usr/local/bin/fetch_oca.sh && \
+    /usr/local/bin/fetch_oca.sh /tmp/oca_requirements.txt /mnt/extra-addons/oca || true
+
+# Copy configuration
+COPY --chown=odoo:odoo config/odoo.production.conf /etc/odoo/odoo.conf
+
+# Set proper permissions
+RUN chown -R odoo:odoo /mnt/extra-addons && \
+    chmod -R 755 /mnt/extra-addons
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8069/web/health || exit 1
+
+# Switch back to odoo user
+USER odoo
+
+# Expose Odoo services
+EXPOSE 8069 8072
+
+# Default command
+CMD ["odoo", "-c", "/etc/odoo/odoo.conf"]
