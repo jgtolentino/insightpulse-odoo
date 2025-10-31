@@ -1,0 +1,27 @@
+{
+  "mcpServers": {
+    "docker": {
+      "command": "docker",
+      "args": ["run", "-i", "--rm", "mcp/docker"],
+      "description": "Manage Docker containers and images",
+      "env": {}
+    },
+    "github-pulser-hub": {
+      "url": "https://mcp.insightpulseai.net/mcp/github",
+      "description": "GitHub operations via pulser-hub app for insightpulse-odoo",
+      "env": {}
+    },
+    "github-pulser-hub-local": {
+      "url": "http://localhost:8000/mcp/github",
+      "description": "Local GitHub MCP server (for development)",
+      "env": {},
+      "disabled": true
+    }
+  },
+  "defaultRepository": "jgtolentino/insightpulse-odoo",
+  "preferences": {
+    "autoCommit": false,
+    "createPRs": true,
+    "defaultBranch": "main"
+  }
+}

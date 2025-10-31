@@ -1,0 +1,159 @@
+# DigitalOcean App Platform Specification
+# Leverages DigitalOcean GitHub App for auto-deployment
+#
+# Deploy: doctl apps create --spec .do/app.yaml
+# Update: doctl apps update <app-id> --spec .do/app.yaml
+
+spec:
+  name: insightpulse-odoo
+  region: sgp
+
+  # Auto-deploy from GitHub via DigitalOcean GitHub App
+  services:
+    - name: odoo
+      # GitHub integration (uses installed DO GitHub App)
+      github:
+        repo: jgtolentino/insightpulse-odoo
+        branch: main
+        deploy_on_push: true  # Auto-deploy when pushed to main
+
+      # Build configuration
+      dockerfile_path: Dockerfile
+      build_command: docker build -t $IMAGE_NAME .
+
+      # Runtime configuration
+      http_port: 8069
+      instance_count: 1
+      instance_size_slug: professional-xs  # 2GB RAM, 1 vCPU
+
+      # Health checks
+      health_check:
+        http_path: /web/health
+        initial_delay_seconds: 120  # Odoo takes time to start
+        period_seconds: 30
+        timeout_seconds: 10
+        success_threshold: 1
+        failure_threshold: 3
+
+      # Environment variables
+      envs:
+        # Database connection (auto-injected from db component)
+        - key: PGHOST
+          scope: RUN_TIME
+          value: ${db.HOSTNAME}
+        - key: PGPORT
+          scope: RUN_TIME
+          value: ${db.PORT}
+        - key: PGDATABASE
+          scope: RUN_TIME
+          value: ${db.DATABASE}
+        - key: PGUSER
+          scope: RUN_TIME
+          value: ${db.USERNAME}
+        - key: PGPASSWORD
+          scope: RUN_TIME
+          type: SECRET
+          value: ${db.PASSWORD}
+
+        # Redis connection (auto-injected from redis component)
+        - key: REDIS_URL
+          scope: RUN_TIME
+          type: SECRET
+          value: ${redis.DATABASE_URL}
+
+        # Odoo configuration
+        - key: ODOO_ADMIN_PASSWORD
+          scope: RUN_TIME
+          type: SECRET
+          # Set this in DO dashboard: Settings → App-Level Environment Variables
+
+        - key: ODOO_WORKERS
+          scope: RUN_TIME
+          value: "4"
+
+        - key: ODOO_MAX_CRON_THREADS
+          scope: RUN_TIME
+          value: "2"
+
+        - key: ODOO_DB_MAXCONN
+          scope: RUN_TIME
+          value: "64"
+
+        - key: ODOO_LIMIT_MEMORY_HARD
+          scope: RUN_TIME
+          value: "2684354560"  # 2.5GB
+
+        - key: ODOO_LIMIT_MEMORY_SOFT
+          scope: RUN_TIME
+          value: "2147483648"  # 2GB
+
+        - key: ODOO_DB_FILTER
+          scope: RUN_TIME
+          value: "^%d$"  # Database filtering for multi-tenancy
+
+        - key: ODOO_PROXY_MODE
+          scope: RUN_TIME
+          value: "True"
+
+        - key: ODOO_LIST_DB
+          scope: RUN_TIME
+          value: "False"  # Disable database listing for security
+
+      # HTTP routes
+      routes:
+        - path: /
+
+      # Alerts
+      alerts:
+        - rule: DEPLOYMENT_FAILED
+        - rule: DOMAIN_FAILED
+        - rule: CPU_UTILIZATION
+          value: 80
+        - rule: MEM_UTILIZATION
+          value: 90
+
+  # Database (managed PostgreSQL)
+  databases:
+    - name: db
+      engine: PG
+      version: "15"
+      production: true
+      cluster_name: insightpulse-db
+      size: db-s-1vcpu-1gb  # 1GB RAM, 1 vCPU, 10GB disk
+      num_nodes: 1
+
+    - name: redis
+      engine: REDIS
+      version: "7"
+      production: true
+      size: db-s-1vcpu-1gb
+
+  # Custom domains
+  domains:
+    - domain: insightpulseai.net
+      type: PRIMARY
+      zone: insightpulseai.net
+    - domain: www.insightpulseai.net
+      type: ALIAS
+      zone: insightpulseai.net
+
+  # Static site for docs (optional)
+  static_sites:
+    - name: docs
+      github:
+        repo: jgtolentino/insightpulse-odoo
+        branch: main
+        deploy_on_push: true
+      source_dir: /docs
+      output_dir: /
+      build_command: echo "Static docs"
+      routes:
+        - path: /docs
+
+# Features enabled by DigitalOcean GitHub App:
+# ✅ Auto-deploy on push to main
+# ✅ Deploy previews for pull requests
+# ✅ Commit status checks posted to GitHub
+# ✅ Deployment notifications
+# ✅ Automatic rollbacks on health check failures
+# ✅ Integration with GitHub Actions
