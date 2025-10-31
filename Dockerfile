@@ -11,10 +11,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev libjpeg-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Optional: wkhtmltopdf for PDF reports
+# wkhtmltopdf for PDF reports (Debian trixie compatibility)
+# Install fonts and runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    wkhtmltopdf \
-    && rm -rf /var/lib/apt/lists/*
+    ca-certificates curl xz-utils fontconfig \
+    libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
+    libjpeg62-turbo libpng16-16 libfreetype6 \
+    xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install wkhtmltopdf 0.12.6 (static, Qt patched)
+ARG WKHTML_VER=0.12.6-1
+RUN curl -fsSL "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTML_VER}/wkhtmltox-${WKHTML_VER}.amd64.tar.xz" \
+      -o /tmp/wkhtmltox.tar.xz \
+  && tar -xJf /tmp/wkhtmltox.tar.xz -C /tmp \
+  && mv /tmp/wkhtmltox/bin/* /usr/local/bin/ \
+  && rm -rf /tmp/wkhtmltox* /tmp/wkhtmltox.tar.xz \
+  && wkhtmltopdf --version
 
 WORKDIR /opt/odoo
 
@@ -38,9 +51,19 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Minimal runtime libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 libxml2 libxslt1.1 libldap-2.5-0 libsasl2-2 \
-    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
-    wkhtmltopdf \
+    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates xz-utils \
+    fontconfig libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
+    libpng16-16 libfreetype6 xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
+
+# Install wkhtmltopdf 0.12.6 (static, Qt patched) in runtime stage
+ARG WKHTML_VER=0.12.6-1
+RUN curl -fsSL "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTML_VER}/wkhtmltox-${WKHTML_VER}.amd64.tar.xz" \
+      -o /tmp/wkhtmltox.tar.xz \
+  && tar -xJf /tmp/wkhtmltox.tar.xz -C /tmp \
+  && mv /tmp/wkhtmltox/bin/* /usr/local/bin/ \
+  && rm -rf /tmp/wkhtmltox* /tmp/wkhtmltox.tar.xz \
+  && wkhtmltopdf --version
 
 # Create user and dirs
 RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \

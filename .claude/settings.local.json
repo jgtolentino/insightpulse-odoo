@@ -19,7 +19,10 @@
       "Bash(doctl apps create-deployment:*)",
       "Bash(doctl apps get:*)",
       "Bash(doctl apps update:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(doctl apps list-deployments:*)",
+      "Bash(doctl apps logs:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []
