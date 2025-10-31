@@ -45,7 +45,7 @@
                             type="object"
                             attrs="{'invisible': [('state', '!=', 'taxes')]}"/>
                     <button name="action_finalize_closing"
-                            string="Finalize & Lock Period"
+                            string="Finalize &amp; Lock Period"
                             type="object"
                             class="btn-success"
                             attrs="{'invisible': [('state', '!=', 'closing')]}"/>
