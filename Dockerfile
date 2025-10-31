@@ -20,14 +20,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
   && rm -rf /var/lib/apt/lists/*
 
-# Install wkhtmltopdf 0.12.6 (static, Qt patched)
-ARG WKHTML_VER=0.12.6-1
-RUN curl -fsSL "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTML_VER}/wkhtmltox-${WKHTML_VER}.amd64.tar.xz" \
-      -o /tmp/wkhtmltox.tar.xz \
-  && tar -xJf /tmp/wkhtmltox.tar.xz -C /tmp \
-  && mv /tmp/wkhtmltox/bin/* /usr/local/bin/ \
-  && rm -rf /tmp/wkhtmltox* /tmp/wkhtmltox.tar.xz \
-  && wkhtmltopdf --version
+# Install wkhtmltopdf (Qt-patched) via .deb (preferred / stable)
+# Option A: Ubuntu 22.04 (Jammy) package 0.12.6.1-2
+# Option B: Debian 11 (Bullseye) package 0.12.6.1-3 (often used on Debian 12 too)
+ARG WKHTML_DEB_URL_JAMMY="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+ARG WKHTML_DEB_URL_BULLSEYE="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
+
+RUN set -eux; \
+  apt-get update; \
+  apt-get install -y --no-install-recommends \
+    ca-certificates curl fontconfig \
+    libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
+    libjpeg62-turbo libpng16-16 libfreetype6 \
+    xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk; \
+  curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_JAMMY" \
+  || curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_BULLSEYE"; \
+  apt-get install -y --no-install-recommends /tmp/wkhtml.deb \
+  || (apt-get -f install -y && dpkg -i /tmp/wkhtml.deb); \
+  rm -f /tmp/wkhtml.deb; \
+  rm -rf /var/lib/apt/lists/*; \
+  wkhtmltopdf --version
 
 WORKDIR /opt/odoo
 
@@ -56,14 +68,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng16-16 libfreetype6 xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
 
-# Install wkhtmltopdf 0.12.6 (static, Qt patched) in runtime stage
-ARG WKHTML_VER=0.12.6-1
-RUN curl -fsSL "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTML_VER}/wkhtmltox-${WKHTML_VER}.amd64.tar.xz" \
-      -o /tmp/wkhtmltox.tar.xz \
-  && tar -xJf /tmp/wkhtmltox.tar.xz -C /tmp \
-  && mv /tmp/wkhtmltox/bin/* /usr/local/bin/ \
-  && rm -rf /tmp/wkhtmltox* /tmp/wkhtmltox.tar.xz \
-  && wkhtmltopdf --version
+# Install wkhtmltopdf (Qt-patched) via .deb (preferred / stable) in runtime stage
+ARG WKHTML_DEB_URL_JAMMY="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
+ARG WKHTML_DEB_URL_BULLSEYE="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
+
+RUN set -eux; \
+  apt-get update; \
+  curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_JAMMY" \
+  || curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_BULLSEYE"; \
+  apt-get install -y --no-install-recommends /tmp/wkhtml.deb \
+  || (apt-get -f install -y && dpkg -i /tmp/wkhtml.deb); \
+  rm -f /tmp/wkhtml.deb; \
+  rm -rf /var/lib/apt/lists/*; \
+  wkhtmltopdf --version
 
 # Create user and dirs
 RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
