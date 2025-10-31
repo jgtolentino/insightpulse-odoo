@@ -1,77 +1,49 @@
-# ---------- Build stage ----------
-FROM python:3.11-slim AS build
+# Production Dockerfile for InsightPulse Odoo 19.0
+# Based on official Odoo image (already includes wkhtmltopdf, dependencies)
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PIP_NO_CACHE_DIR=1
+FROM odoo:19.0
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential gcc curl git ca-certificates \
-    libxml2-dev libxslt1-dev libpq-dev libldap2-dev libsasl2-dev \
-    libffi-dev libjpeg-dev zlib1g-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Switch to root for setup
+USER root
 
-# Optional: wkhtmltopdf for PDF reports
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    wkhtmltopdf \
-    && rm -rf /var/lib/apt/lists/*
+# Install additional Python dependencies for custom modules
+COPY requirements.txt requirements-auto.txt /tmp/
+RUN pip3 install --no-cache-dir \
+    -r /tmp/requirements.txt \
+    -r /tmp/requirements-auto.txt \
+    && rm -f /tmp/requirements*.txt
 
-WORKDIR /opt/odoo
+# Copy custom addons and scripts
+COPY --chown=odoo:odoo addons/insightpulse /mnt/extra-addons/insightpulse
+COPY --chown=odoo:odoo addons/custom /mnt/extra-addons/custom
 
-# Copy only requirement manifests first for better layer caching
-COPY requirements.txt requirements-auto.txt ./
-RUN python -m pip install --upgrade pip wheel && \
-    pip wheel --wheel-dir /wheels -r requirements.txt && \
-    pip wheel --wheel-dir /wheels -r requirements-auto.txt
+# Copy OCA addons if they exist (optional)
+RUN mkdir -p /mnt/extra-addons/oca
+COPY --chown=odoo:odoo addons/oca /mnt/extra-addons/oca/ 2>/dev/null || true
 
-# Copy source
-COPY . /src
+# Copy utility scripts
+COPY --chown=odoo:odoo scripts /opt/odoo/scripts
 
-# ---------- Runtime stage ----------
-FROM python:3.11-slim AS runtime
+# Create necessary directories
+RUN mkdir -p /var/lib/odoo/sessions \
+    /var/lib/odoo/filestore \
+    && chown -R odoo:odoo /var/lib/odoo
 
-ENV DEBIAN_FRONTEND=noninteractive \
-    PIP_DISABLE_PIP_VERSION_CHECK=1 \
-    PYTHONUNBUFFERED=1 \
-    ODOO_RC=/etc/odoo/odoo.conf
+# Health check (Odoo 16+ supports /web/health)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=120s --retries=5 \
+    CMD curl -fsS http://localhost:${PORT:-8069}/web/health || exit 1
 
-# Minimal runtime libs
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 libxml2 libxslt1.1 libldap-2.5-0 libsasl2-2 \
-    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
-    wkhtmltopdf \
-    && rm -rf /var/lib/apt/lists/*
-
-# Create user and dirs
-RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
-    mkdir -p /var/lib/odoo/.local /var/log/odoo /mnt/extra-addons /var/lib/odoo/.cache/pip && \
-    chown -R odoo:odoo /var/lib/odoo /var/log/odoo /mnt/extra-addons
-
-# Install Odoo from official apt repository for better maintainability
-RUN curl -o odoo.deb https://nightly.odoo.com/19.0/nightly/deb/odoo_19.0.latest_all.deb && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ./odoo.deb && \
-    rm odoo.deb && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install python wheels built in stage 1
-COPY --from=build /wheels /wheels
-RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
-
-# Copy application code (custom addons and scripts)
-WORKDIR /opt/odoo
-COPY --chown=odoo:odoo --from=build /src/addons /mnt/extra-addons
-COPY --chown=odoo:odoo --from=build /src/scripts /opt/odoo/scripts
-
-# Healthcheck endpoint (Odoo supports /web/health from 16+)
-HEALTHCHECK --interval=30s --timeout=5s --retries=10 \
-  CMD curl -fsS http://localhost:8069/web/health || exit 1
-
-# Default config path (mounted via compose)
-VOLUME ["/var/lib/odoo", "/var/log/odoo", "/mnt/extra-addons"]
-
-# Run as non-root
+# Switch back to odoo user for security
 USER odoo
 
-EXPOSE 8069 8071
-CMD ["odoo", "-c", "/etc/odoo/odoo.conf"]
+# Expose ports
+# 8069: HTTP
+# 8072: Longpolling/Gevent (for real-time features)
+EXPOSE 8069 8072
+
+# Support DigitalOcean's $PORT environment variable
+ENV PORT=8069
+
+# Default command
+# Can be overridden in docker-compose or app.yaml
+CMD ["odoo"]

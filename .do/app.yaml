@@ -19,10 +19,17 @@ spec:
 
       # Build configuration
       dockerfile_path: Dockerfile
-      build_command: docker build -t $IMAGE_NAME .
 
       # Runtime configuration
       http_port: 8069
+
+      # Use image-based deployment (faster, more reliable)
+      # Uncomment to deploy from GHCR instead of building on DO:
+      # image:
+      #   registry_type: GHCR
+      #   registry: ghcr.io
+      #   repository: jgtolentino/insightpulse-odoo
+      #   tag: latest
       instance_count: 1
       instance_size_slug: professional-xs  # 2GB RAM, 1 vCPU
 
