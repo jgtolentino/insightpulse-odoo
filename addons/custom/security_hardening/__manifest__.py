@@ -11,7 +11,7 @@
     - Security monitoring
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/security_hardening",
+    "website": "https://insightpulseai.net/apps/security_hardening",
     "depends": ["base", "web"],
     "data": [
         "security/ir.model.access.csv",

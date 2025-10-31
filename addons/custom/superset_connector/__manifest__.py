@@ -12,7 +12,7 @@
     - URL injection protection (CVSS 6.5 fix)
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/superset_connector",
+    "website": "https://insightpulseai.net/apps/superset_connector",
     "depends": ["base", "web"],
     "data": [
         "security/ir.model.access.csv",

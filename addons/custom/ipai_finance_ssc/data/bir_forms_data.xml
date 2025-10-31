@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Sequences -->
+        <record id="seq_month_end_closing" model="ir.sequence">
+            <field name="name">Month-End Closing Sequence</field>
+            <field name="code">finance.ssc.month.end.closing</field>
+            <field name="prefix">MEC/%(range_year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">True</field>
+        </record>
+
+        <record id="seq_bir_form" model="ir.sequence">
+            <field name="name">BIR Form Sequence</field>
+            <field name="code">finance.ssc.bir.form</field>
+            <field name="prefix">BIR/%(range_year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">True</field>
+        </record>
+
+        <record id="seq_bank_reconciliation" model="ir.sequence">
+            <field name="name">Bank Reconciliation Sequence</field>
+            <field name="code">finance.ssc.bank.reconciliation</field>
+            <field name="prefix">RECON/%(range_year)s/</field>
+            <field name="padding">4</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">True</field>
+        </record>
+
+        <!-- Cron Jobs -->
+
+        <!-- Auto-generate month-end closings on the 1st of each month -->
+        <record id="cron_generate_month_end_closings" model="ir.cron">
+            <field name="name">Finance SSC: Generate Month-End Closings</field>
+            <field name="model_id" ref="model_finance_ssc_month_end_closing"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_generate_closings()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="numbercall">-1</field>
+            <field name="doall">False</field>
+            <field name="active">False</field>
+            <field name="priority">5</field>
+        </record>
+
+        <!-- Auto-generate BIR 1601-C forms monthly -->
+        <record id="cron_generate_bir_1601c" model="ir.cron">
+            <field name="name">Finance SSC: Generate BIR 1601-C Forms</field>
+            <field name="model_id" ref="model_finance_ssc_bir_form"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_generate_1601c_forms()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="numbercall">-1</field>
+            <field name="doall">False</field>
+            <field name="active">False</field>
+            <field name="priority">5</field>
+        </record>
+
+        <!-- Auto-generate BIR 2550Q forms quarterly -->
+        <record id="cron_generate_bir_2550q" model="ir.cron">
+            <field name="name">Finance SSC: Generate BIR 2550Q Forms</field>
+            <field name="model_id" ref="model_finance_ssc_bir_form"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_generate_2550q_forms()</field>
+            <field name="interval_number">3</field>
+            <field name="interval_type">months</field>
+            <field name="numbercall">-1</field>
+            <field name="doall">False</field>
+            <field name="active">False</field>
+            <field name="priority">5</field>
+        </record>
+
+        <!-- Sync to Supabase daily -->
+        <record id="cron_sync_to_supabase" model="ir.cron">
+            <field name="name">Finance SSC: Sync to Supabase</field>
+            <field name="model_id" ref="model_finance_ssc_supabase_connector"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_all_agencies()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall">False</field>
+            <field name="active">False</field>
+            <field name="priority">10</field>
+        </record>
+
+        <!-- Sync to Notion daily -->
+        <record id="cron_sync_to_notion" model="ir.cron">
+            <field name="name">Finance SSC: Sync to Notion</field>
+            <field name="model_id" ref="model_finance_ssc_notion_connector"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_all_agencies()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall">False</field>
+            <field name="active">False</field>
+            <field name="priority">10</field>
+        </record>
+
+        <!-- System Parameters -->
+
+        <!-- Supabase Configuration -->
+        <record id="param_supabase_url" model="ir.config_parameter">
+            <field name="key">supabase.url</field>
+            <field name="value">https://your-project.supabase.co</field>
+        </record>
+
+        <record id="param_supabase_key" model="ir.config_parameter">
+            <field name="key">supabase.key</field>
+            <field name="value">your_anon_key_here</field>
+        </record>
+
+        <!-- Notion Configuration -->
+        <record id="param_notion_token" model="ir.config_parameter">
+            <field name="key">notion.token</field>
+            <field name="value">secret_xxx</field>
+        </record>
+
+        <!-- BIR Form Templates -->
+        <record id="param_bir_1601c_template" model="ir.config_parameter">
+            <field name="key">bir.1601c.template</field>
+            <field name="value">default</field>
+        </record>
+
+        <record id="param_bir_2550q_template" model="ir.config_parameter">
+            <field name="key">bir.2550q.template</field>
+            <field name="value">default</field>
+        </record>
+
+        <record id="param_bir_1702rt_template" model="ir.config_parameter">
+            <field name="key">bir.1702rt.template</field>
+            <field name="value">default</field>
+        </record>
+
+        <!-- Month-End Closing Configuration -->
+        <record id="param_month_end_auto_checklist" model="ir.config_parameter">
+            <field name="key">month_end.auto_generate_checklist</field>
+            <field name="value">True</field>
+        </record>
+
+        <record id="param_month_end_trial_balance_timeout" model="ir.config_parameter">
+            <field name="key">month_end.trial_balance_timeout</field>
+            <field name="value">30</field>
+        </record>
+
+        <!-- Bank Reconciliation Configuration -->
+        <record id="param_bank_auto_match_threshold" model="ir.config_parameter">
+            <field name="key">bank_reconciliation.auto_match_threshold</field>
+            <field name="value">85</field>
+        </record>
+
+        <record id="param_bank_date_tolerance_days" model="ir.config_parameter">
+            <field name="key">bank_reconciliation.date_tolerance_days</field>
+            <field name="value">3</field>
+        </record>
+
+    </data>
+</odoo>

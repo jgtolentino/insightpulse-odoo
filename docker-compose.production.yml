@@ -1,0 +1,168 @@
+# Production Docker Compose - InsightPulse Odoo
+# Standalone deployment with all IPAI modules
+# Replaces: SAP Concur, Clarity PPM, SAP Ariba
+# Annual Savings: $55,760
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: insightpulse-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odoo}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data/pgdata
+    networks:
+      - insightpulse-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis (for queue_job module)
+  redis:
+    image: redis:7-alpine
+    container_name: insightpulse-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - odoo-redis-data:/data
+    networks:
+      - insightpulse-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Odoo Application
+  odoo:
+    build:
+      context: .
+      dockerfile: Dockerfile.production
+    image: insightpulse-odoo:production
+    container_name: insightpulse-odoo
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "${ODOO_HTTP_PORT:-8069}:8069"
+      - "${ODOO_LONGPOLLING_PORT:-8072}:8072"
+    environment:
+      # Database
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${POSTGRES_USER:-odoo}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      DB_NAME: ${POSTGRES_DB:-odoo}
+
+      # Admin
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin}
+
+      # SMTP (optional)
+      SMTP_SERVER: ${SMTP_SERVER:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+
+      # Redis
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    volumes:
+      # Persistent data
+      - odoo-web-data:/var/lib/odoo
+      - odoo-logs:/var/log/odoo
+
+      # Custom addons (for development - comment out in production)
+      # - ./addons/custom:/mnt/extra-addons/custom:ro
+
+      # Configuration (optional override)
+      # - ./config/odoo.production.conf:/etc/odoo/odoo.conf:ro
+    networks:
+      - insightpulse-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # Nginx Reverse Proxy (optional - for HTTPS)
+  nginx:
+    image: nginx:alpine
+    container_name: insightpulse-nginx
+    restart: unless-stopped
+    ports:
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTP_PORT:-80}:80"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - nginx-cache:/var/cache/nginx
+    networks:
+      - insightpulse-network
+    depends_on:
+      - odoo
+    profiles:
+      - with-nginx  # Enable with: docker-compose --profile with-nginx up
+
+volumes:
+  odoo-db-data:
+    driver: local
+  odoo-web-data:
+    driver: local
+  odoo-redis-data:
+    driver: local
+  odoo-logs:
+    driver: local
+  nginx-cache:
+    driver: local
+
+networks:
+  insightpulse-network:
+    driver: bridge
+
+# Production Deployment Instructions:
+#
+# 1. Create .env file:
+#    cp .env.example .env
+#    Edit .env with your settings
+#
+# 2. Build and start:
+#    docker-compose -f docker-compose.production.yml up -d
+#
+# 3. Check logs:
+#    docker-compose -f docker-compose.production.yml logs -f odoo
+#
+# 4. Access:
+#    http://localhost:8069
+#    Username: admin
+#    Password: (set in .env ADMIN_PASSWORD)
+#
+# 5. Install modules:
+#    Apps → Update Apps List
+#    Search: ipai_finance_ssc
+#    Click Install
+#
+# 6. Configure Supabase (optional):
+#    Settings → Technical → Parameters → System Parameters
+#    Add: supabase.url = https://your-project.supabase.co
+#    Add: supabase.key = your_anon_key
+#
+# 7. Backup:
+#    docker-compose -f docker-compose.production.yml exec db pg_dump -U odoo odoo > backup.sql
+#
+# 8. Stop:
+#    docker-compose -f docker-compose.production.yml down
+#
+# Annual Savings: $55,760 vs SAP Concur + Ariba + Clarity PPM

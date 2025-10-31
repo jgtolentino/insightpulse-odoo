@@ -11,7 +11,7 @@
     - Automatic module index refresh
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/apps_admin_enhancements",
+    "website": "https://insightpulseai.net/apps/apps_admin_enhancements",
     "depends": ["base"],
     "data": [
         "security/ir.model.access.csv",

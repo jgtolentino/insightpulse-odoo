@@ -10,7 +10,7 @@ on:
       health_url:
         description: "Override health URL"
         required: false
-        default: "https://insightpulseai.net/odoo/web/login"
+        default: "https://insightpulseai.net/web/login"
   workflow_run:
     workflows: ["dockerhub-publish"]
     types: [completed]
@@ -45,7 +45,7 @@ jobs:
           if [ -n "${{ github.event.inputs.health_url }}" ]; then
             echo "url=${{ github.event.inputs.health_url }}" >> $GITHUB_OUTPUT
           else
-            echo "url=https://insightpulseai.net/odoo/web/login" >> $GITHUB_OUTPUT
+            echo "url=https://insightpulseai.net/web/login" >> $GITHUB_OUTPUT
           fi
 
       - name: Install SSH

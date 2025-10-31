@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- BIR Form Tree View -->
+    <record id="view_bir_form_tree" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.form.tree</field>
+        <field name="model">finance.ssc.bir.form</field>
+        <field name="arch" type="xml">
+            <tree string="BIR Forms" decoration-info="state == 'draft'" decoration-warning="state in ('computing', 'validating')" decoration-success="state == 'filed'">
+                <field name="name"/>
+                <field name="agency_id"/>
+                <field name="form_type"/>
+                <field name="period_from"/>
+                <field name="period_to"/>
+                <field name="taxable_amount" sum="Total Taxable" widget="monetary"/>
+                <field name="tax_amount" sum="Total Tax" widget="monetary"/>
+                <field name="filing_deadline" widget="date"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-warning="state in ('computing', 'validating')" decoration-success="state == 'filed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- BIR Form Form View -->
+    <record id="view_bir_form_form" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.form.form</field>
+        <field name="model">finance.ssc.bir.form</field>
+        <field name="arch" type="xml">
+            <form string="BIR Form">
+                <header>
+                    <button name="action_compute_amounts"
+                            string="Compute from Accounting"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_validate"
+                            string="Validate"
+                            type="object"
+                            attrs="{'invisible': [('state', '!=', 'computing')]}"/>
+                    <button name="action_generate_ebir"
+                            string="Generate eBIR File"
+                            type="object"
+                            attrs="{'invisible': [('state', '!=', 'validated')]}"/>
+                    <button name="action_mark_filed"
+                            string="Mark as Filed"
+                            type="object"
+                            class="btn-success"
+                            attrs="{'invisible': [('state', '!=', 'generated')]}"/>
+                    <button name="action_reset_to_draft"
+                            string="Reset to Draft"
+                            type="object"
+                            attrs="{'invisible': [('state', 'in', ('draft', 'filed'))]}"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,computing,validated,generated,filed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_source_entries"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-book">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Source</span>
+                                <span class="o_stat_text">Entries</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Filed" bg_color="bg-success" attrs="{'invisible': [('state', '!=', 'filed')]}"/>
+                    <widget name="web_ribbon" title="Overdue" bg_color="bg-danger" attrs="{'invisible': ['|', ('state', '=', 'filed'), ('filing_deadline', '&gt;=', (context_today()).strftime('%Y-%m-%d'))]}"/>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="name" placeholder="BIR-1601C-2025-01-001"/>
+                        </h1>
+                        <div>
+                            <field name="form_type" widget="badge" attrs="{'invisible': [('form_type', '=', False)]}"/>
+                        </div>
+                    </div>
+
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="agency_id" options="{'no_create': True, 'no_open': True}"/>
+                            <field name="form_type"/>
+                            <field name="tin" readonly="1"/>
+                            <field name="rdo_code" readonly="1"/>
+                        </group>
+                        <group name="period_info" string="Period">
+                            <field name="period_from" widget="date"/>
+                            <field name="period_to" widget="date"/>
+                            <field name="filing_deadline" widget="date"/>
+                            <field name="filed_date" widget="date" attrs="{'invisible': [('state', '!=', 'filed')]}"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="amounts" string="Amounts">
+                            <group>
+                                <group string="Taxable Amounts">
+                                    <field name="taxable_amount" widget="monetary"/>
+                                    <field name="exempt_amount" widget="monetary"/>
+                                    <field name="zero_rated_amount" widget="monetary"/>
+                                </group>
+                                <group string="Tax Computation">
+                                    <field name="tax_amount" widget="monetary"/>
+                                    <field name="tax_withheld" widget="monetary"/>
+                                    <field name="tax_payable" widget="monetary"/>
+                                </group>
+                            </group>
+
+                            <!-- Form-specific fields -->
+                            <group attrs="{'invisible': [('form_type', '!=', '1601c')]}">
+                                <group string="1601-C Details">
+                                    <field name="withholding_compensation" widget="monetary" attrs="{'invisible': [('form_type', '!=', '1601c')]}"/>
+                                    <field name="withholding_expanded" widget="monetary" attrs="{'invisible': [('form_type', '!=', '1601c')]}"/>
+                                </group>
+                            </group>
+
+                            <group attrs="{'invisible': [('form_type', '!=', '2550q')]}">
+                                <group string="2550Q Details">
+                                    <field name="vat_output" widget="monetary" attrs="{'invisible': [('form_type', '!=', '2550q')]}"/>
+                                    <field name="vat_input" widget="monetary" attrs="{'invisible': [('form_type', '!=', '2550q')]}"/>
+                                </group>
+                            </group>
+
+                            <group attrs="{'invisible': [('form_type', '!=', '1702rt')]}">
+                                <group string="1702-RT Details">
+                                    <field name="gross_income" widget="monetary" attrs="{'invisible': [('form_type', '!=', '1702rt')]}"/>
+                                    <field name="deductions" widget="monetary" attrs="{'invisible': [('form_type', '!=', '1702rt')]}"/>
+                                    <field name="net_taxable_income" widget="monetary" attrs="{'invisible': [('form_type', '!=', '1702rt')]}"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page name="line_items" string="Line Items">
+                            <field name="line_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="description"/>
+                                    <field name="account_id"/>
+                                    <field name="move_line_id" readonly="1"/>
+                                    <field name="amount" sum="Total" widget="monetary"/>
+                                    <field name="tax_code"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page name="validation" string="Validation">
+                            <group>
+                                <group string="Validation Status">
+                                    <field name="has_validation_errors" widget="boolean" readonly="1"/>
+                                    <field name="atp_number" attrs="{'invisible': [('state', '!=', 'filed')]}"/>
+                                </group>
+                            </group>
+                            <field name="validation_messages" widget="html" readonly="1"/>
+                        </page>
+
+                        <page name="ebir" string="eBIR File">
+                            <group>
+                                <field name="ebir_filename" readonly="1"/>
+                                <field name="ebir_file" filename="ebir_filename" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <page name="notes" string="Notes">
+                            <field name="notes" placeholder="Internal notes about this BIR form..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- BIR Form Kanban View -->
+    <record id="view_bir_form_kanban" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.form.kanban</field>
+        <field name="model">finance.ssc.bir.form</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile" default_group_by="state">
+                <field name="id"/>
+                <field name="name"/>
+                <field name="agency_id"/>
+                <field name="form_type"/>
+                <field name="filing_deadline"/>
+                <field name="tax_amount"/>
+                <field name="state"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="name"/>
+                                    </strong>
+                                    <div class="o_kanban_record_subtitle">
+                                        <field name="agency_id"/> - <field name="form_type"/>
+                                    </div>
+                                </div>
+                                <span class="float-end">
+                                    <field name="state" widget="label" class="badge"/>
+                                </span>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <div>Deadline: <field name="filing_deadline"/></div>
+                                <div>Tax: <field name="tax_amount" widget="monetary"/></div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- BIR Form Search View -->
+    <record id="view_bir_form_search" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.form.search</field>
+        <field name="model">finance.ssc.bir.form</field>
+        <field name="arch" type="xml">
+            <search string="Search BIR Forms">
+                <field name="name" string="Reference"/>
+                <field name="agency_id" string="Agency"/>
+                <field name="form_type" string="Form Type"/>
+                <field name="tin" string="TIN"/>
+
+                <filter string="Draft" name="draft" domain="[('state', '=', 'draft')]"/>
+                <filter string="Validated" name="validated" domain="[('state', '=', 'validated')]"/>
+                <filter string="Filed" name="filed" domain="[('state', '=', 'filed')]"/>
+
+                <separator/>
+                <filter string="1601-C (Monthly Withholding)" name="form_1601c" domain="[('form_type', '=', '1601c')]"/>
+                <filter string="2550Q (Quarterly VAT)" name="form_2550q" domain="[('form_type', '=', '2550q')]"/>
+                <filter string="1702-RT (Annual Income Tax)" name="form_1702rt" domain="[('form_type', '=', '1702rt')]"/>
+
+                <separator/>
+                <filter string="Due This Month" name="due_this_month" domain="[('filing_deadline', '&gt;=', (context_today()).strftime('%Y-%m-01')), ('filing_deadline', '&lt;=', (context_today() + relativedelta(months=1, day=1, days=-1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Overdue" name="overdue" domain="[('filing_deadline', '&lt;', (context_today()).strftime('%Y-%m-%d')), ('state', '!=', 'filed')]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Agency" name="group_agency" context="{'group_by': 'agency_id'}"/>
+                    <filter string="Form Type" name="group_form_type" context="{'group_by': 'form_type'}"/>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Filing Deadline" name="group_deadline" context="{'group_by': 'filing_deadline'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- BIR Form Line Tree View -->
+    <record id="view_bir_form_line_tree" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.form.line.tree</field>
+        <field name="model">finance.ssc.bir.form.line</field>
+        <field name="arch" type="xml">
+            <tree string="BIR Form Lines" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="description"/>
+                <field name="account_id"/>
+                <field name="move_line_id" readonly="1"/>
+                <field name="amount" sum="Total" widget="monetary"/>
+                <field name="tax_code"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- BIR Forms Action -->
+    <record id="action_bir_forms" model="ir.actions.act_window">
+        <field name="name">BIR Forms</field>
+        <field name="res_model">finance.ssc.bir.form</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_validated': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first BIR form
+            </p>
+            <p>
+                Automate Philippine BIR tax compliance.
+                Generate Forms 1601-C, 2550Q, and 1702-RT directly from accounting data.
+            </p>
+        </field>
+    </record>
+
+    <!-- Submenu by Form Type -->
+    <record id="action_bir_form_1601c" model="ir.actions.act_window">
+        <field name="name">1601-C (Monthly Withholding)</field>
+        <field name="res_model">finance.ssc.bir.form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('form_type', '=', '1601c')]</field>
+        <field name="context">{'default_form_type': '1601c', 'search_default_due_this_month': 1}</field>
+    </record>
+
+    <record id="action_bir_form_2550q" model="ir.actions.act_window">
+        <field name="name">2550Q (Quarterly VAT)</field>
+        <field name="res_model">finance.ssc.bir.form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('form_type', '=', '2550q')]</field>
+        <field name="context">{'default_form_type': '2550q'}</field>
+    </record>
+
+    <record id="action_bir_form_1702rt" model="ir.actions.act_window">
+        <field name="name">1702-RT (Annual Income Tax)</field>
+        <field name="res_model">finance.ssc.bir.form</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('form_type', '=', '1702rt')]</field>
+        <field name="context">{'default_form_type': '1702rt'}</field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_bir_forms"
+              name="BIR Forms"
+              parent="menu_finance_ssc_root"
+              sequence="30"/>
+
+    <menuitem id="menu_bir_forms_all"
+              name="All Forms"
+              parent="menu_bir_forms"
+              action="action_bir_forms"
+              sequence="10"/>
+
+    <menuitem id="menu_bir_form_1601c"
+              name="1601-C (Monthly)"
+              parent="menu_bir_forms"
+              action="action_bir_form_1601c"
+              sequence="20"/>
+
+    <menuitem id="menu_bir_form_2550q"
+              name="2550Q (Quarterly)"
+              parent="menu_bir_forms"
+              action="action_bir_form_2550q"
+              sequence="30"/>
+
+    <menuitem id="menu_bir_form_1702rt"
+              name="1702-RT (Annual)"
+              parent="menu_bir_forms"
+              action="action_bir_form_1702rt"
+              sequence="40"/>
+
+</odoo>

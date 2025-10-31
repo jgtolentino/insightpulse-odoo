@@ -277,7 +277,7 @@ jobs:
 
             # Verify health
             sleep 30
-            curl -f https://insightpulseai.net/odoo/web/health || exit 1
+            curl -f https://insightpulseai.net/web/health || exit 1
 
             echo "✅ Emergency remediation deployed successfully"
 ```
@@ -571,7 +571,7 @@ git checkout <previous-commit-hash>
 docker-compose up -d --force-recreate odoo
 
 # Verify health
-curl -f https://insightpulseai.net/odoo/web/health
+curl -f https://insightpulseai.net/web/health
 ```
 
 **Rollback Time**: <5 minutes

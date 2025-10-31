@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+        <!-- Categories -->
+        <record id="module_category_finance_ssc" model="ir.module.category">
+            <field name="name">Finance SSC</field>
+            <field name="description">Finance Shared Service Center</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Security Groups -->
+        <record id="group_finance_ssc_user" model="res.groups">
+            <field name="name">Finance SSC User</field>
+            <field name="category_id" ref="module_category_finance_ssc"/>
+            <field name="implied_ids" eval="[(4, ref('account.group_account_invoice'))]"/>
+            <field name="comment">Basic user can view and create financial transactions</field>
+        </record>
+
+        <record id="group_finance_ssc_accountant" model="res.groups">
+            <field name="name">Finance SSC Accountant</field>
+            <field name="category_id" ref="module_category_finance_ssc"/>
+            <field name="implied_ids" eval="[(4, ref('group_finance_ssc_user')), (4, ref('account.group_account_user'))]"/>
+            <field name="comment">Accountant can manage month-end closing and reconciliations</field>
+        </record>
+
+        <record id="group_finance_ssc_manager" model="res.groups">
+            <field name="name">Finance SSC Manager</field>
+            <field name="category_id" ref="module_category_finance_ssc"/>
+            <field name="implied_ids" eval="[(4, ref('group_finance_ssc_accountant')), (4, ref('account.group_account_manager'))]"/>
+            <field name="comment">Manager has full access to all finance SSC features</field>
+        </record>
+
+        <!-- Record Rules -->
+
+        <!-- Agency: Users can see all agencies -->
+        <record id="finance_ssc_agency_rule_all" model="ir.rule">
+            <field name="name">Finance SSC: All Users can see all agencies</field>
+            <field name="model_id" ref="model_finance_ssc_agency"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_user'))]"/>
+        </record>
+
+        <!-- Agency: Only managers can create/write/delete -->
+        <record id="finance_ssc_agency_rule_manager" model="ir.rule">
+            <field name="name">Finance SSC: Managers can manage agencies</field>
+            <field name="model_id" ref="model_finance_ssc_agency"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Month-End Closing: Users can see all closings -->
+        <record id="finance_ssc_month_end_closing_rule_read" model="ir.rule">
+            <field name="name">Finance SSC: Users can read month-end closings</field>
+            <field name="model_id" ref="model_finance_ssc_month_end_closing"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Month-End Closing: Accountants can manage -->
+        <record id="finance_ssc_month_end_closing_rule_write" model="ir.rule">
+            <field name="name">Finance SSC: Accountants can manage month-end closings</field>
+            <field name="model_id" ref="model_finance_ssc_month_end_closing"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_accountant'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Month-End Closing: Managers can delete -->
+        <record id="finance_ssc_month_end_closing_rule_delete" model="ir.rule">
+            <field name="name">Finance SSC: Managers can delete month-end closings</field>
+            <field name="model_id" ref="model_finance_ssc_month_end_closing"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- BIR Forms: Users can read -->
+        <record id="finance_ssc_bir_form_rule_read" model="ir.rule">
+            <field name="name">Finance SSC: Users can read BIR forms</field>
+            <field name="model_id" ref="model_finance_ssc_bir_form"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- BIR Forms: Accountants can manage -->
+        <record id="finance_ssc_bir_form_rule_write" model="ir.rule">
+            <field name="name">Finance SSC: Accountants can manage BIR forms</field>
+            <field name="model_id" ref="model_finance_ssc_bir_form"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_accountant'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Bank Reconciliation: Accountants can manage -->
+        <record id="finance_ssc_bank_reconciliation_rule" model="ir.rule">
+            <field name="name">Finance SSC: Accountants can manage bank reconciliations</field>
+            <field name="model_id" ref="model_finance_ssc_bank_reconciliation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_accountant'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Consolidation: Managers can manage -->
+        <record id="finance_ssc_consolidation_rule" model="ir.rule">
+            <field name="name">Finance SSC: Managers can manage consolidations</field>
+            <field name="model_id" ref="model_finance_ssc_consolidation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Consolidation: Accountants can read -->
+        <record id="finance_ssc_consolidation_rule_read" model="ir.rule">
+            <field name="name">Finance SSC: Accountants can read consolidations</field>
+            <field name="model_id" ref="model_finance_ssc_consolidation"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_finance_ssc_accountant'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

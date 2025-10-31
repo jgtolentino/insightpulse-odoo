@@ -12,7 +12,7 @@
     - Encrypted credential storage with Fernet (CVSS 8.1 fix)
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/microservices_connector",
+    "website": "https://insightpulseai.net/apps/microservices_connector",
     "depends": ["base", "web"],
     "external_dependencies": {
         "python": ["cryptography"],

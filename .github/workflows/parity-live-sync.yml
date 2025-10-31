@@ -35,6 +35,7 @@ jobs:
           python3 -m pip install requests
 
       - name: Export live module inventory
+        id: export
         env:
           ODOO_URL: ${{ secrets.ODOO_URL }}
           ODOO_DB: ${{ secrets.ODOO_DB }}
@@ -44,38 +45,47 @@ jobs:
           if [ -z "$ODOO_URL" ]; then
             echo "⚠️  ODOO_URL secret not configured - skipping live inventory sync"
             echo "Configure secrets at: Settings → Secrets and variables → Actions"
-            mkdir -p reports
-            echo "# Live Module Inventory (Placeholder)" > reports/live_modules_placeholder.md
-            echo "Secrets not configured yet." >> reports/live_modules_placeholder.md
+            echo "export_success=false" >> $GITHUB_OUTPUT
             exit 0
           fi
+
           python3 scripts/export-live-modules.py
+          echo "export_success=true" >> $GITHUB_OUTPUT
 
       - name: Sync to documentation
+        if: steps.export.outputs.export_success == 'true'
         run: |
           chmod +x scripts/sync-live-to-docs.sh
           bash scripts/sync-live-to-docs.sh
 
       - name: Check for changes
+        if: steps.export.outputs.export_success == 'true'
         id: git_diff
         run: |
           git diff --quiet reports/ docs/ENTERPRISE_PARITY.md || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit and push changes
-        if: steps.git_diff.outputs.changed == 'true'
+        if: steps.export.outputs.export_success == 'true' && steps.git_diff.outputs.changed == 'true'
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           SNAPSHOT_FILE=$(ls -t reports/live_modules_*.md | head -n1)
+          SNAPSHOT_NAME=$(basename "$SNAPSHOT_FILE")
+
           git add reports/ docs/ENTERPRISE_PARITY.md
-          git commit -m "docs(parity): sync live module inventory → $(basename "$SNAPSHOT_FILE")
+
+          git commit -m "$(cat <<'EOF'
+          docs(parity): sync live module inventory → $SNAPSHOT_NAME
 
           Automated daily snapshot of live Odoo module inventory.
 
           🤖 Generated with [Claude Code](https://claude.com/claude-code)
 
-          Co-Authored-By: Claude <noreply@anthropic.com>"
+          Co-Authored-By: Claude <noreply@anthropic.com>
+          EOF
+          )"
+
           git push
 
       - name: Upload snapshot artifacts
@@ -89,8 +99,26 @@ jobs:
           retention-days: 90
 
       - name: Summary
+        if: always()
         run: |
-          SNAPSHOT_FILE=$(ls -t reports/live_modules_*.md | head -n1)
           echo "### 📊 Live Module Inventory Snapshot" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          cat "$SNAPSHOT_FILE" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.export.outputs.export_success }}" == "true" ]; then
+            SNAPSHOT_FILE=$(ls -t reports/live_modules_*.md 2>/dev/null | head -n1)
+            if [ -n "$SNAPSHOT_FILE" ] && [ -f "$SNAPSHOT_FILE" ]; then
+              cat "$SNAPSHOT_FILE" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "⚠️ No snapshot file found" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ **Secrets not configured** - Live inventory export skipped" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "To enable live module inventory sync:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Go to Settings → Secrets and variables → Actions" >> $GITHUB_STEP_SUMMARY
+            echo "2. Add the following secrets:" >> $GITHUB_STEP_SUMMARY
+            echo "   - \`ODOO_URL\`: Your Odoo instance URL" >> $GITHUB_STEP_SUMMARY
+            echo "   - \`ODOO_DB\`: Database name" >> $GITHUB_STEP_SUMMARY
+            echo "   - \`ODOO_LOGIN\`: Admin login" >> $GITHUB_STEP_SUMMARY
+            echo "   - \`ODOO_PASSWORD\`: Admin password" >> $GITHUB_STEP_SUMMARY
+          fi

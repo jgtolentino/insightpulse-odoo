@@ -23,7 +23,7 @@ Complete guide for the **pulser-hub** GitHub App - a custom integration connecti
 ## 🔗 Integration Endpoints
 
 ### OAuth Callback
-**URL**: `https://insightpulseai.net/odoo/github/auth/callback`
+**URL**: `https://insightpulseai.net/github/auth/callback`
 
 **Purpose**: Handle user authorization after GitHub App installation
 
@@ -34,7 +34,7 @@ Complete guide for the **pulser-hub** GitHub App - a custom integration connecti
 4. Token stored in Odoo for API operations
 
 ### Webhook Endpoint
-**URL**: `https://insightpulseai.net/odoo/github/webhook`
+**URL**: `https://insightpulseai.net/github/webhook`
 
 **Purpose**: Receive GitHub events in real-time
 
@@ -90,7 +90,7 @@ Complete guide for the **pulser-hub** GitHub App - a custom integration connecti
 3. User approves
    ↓
 4. GitHub redirects to:
-   https://insightpulseai.net/odoo/github/auth/callback?code=ABC123
+   https://insightpulseai.net/github/auth/callback?code=ABC123
    ↓
 5. Odoo exchanges code for access token
    ↓

@@ -15,7 +15,7 @@
     """,
     "license": "AGPL-3",
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/ipai_subscriptions",
+    "website": "https://insightpulseai.net/apps/ipai_subscriptions",
     "depends": [
         "base",
         "mail",

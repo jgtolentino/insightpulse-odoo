@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Agency: RIM - Research Institute for Mindanao -->
+        <record id="agency_rim" model="finance.ssc.agency">
+            <field name="code">RIM</field>
+            <field name="name">Research Institute for Mindanao</field>
+            <field name="tin">123-456-789-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">RIM Finance Manager</field>
+            <field name="contact_email">finance@rim.org.ph</field>
+            <field name="contact_phone">+63-82-123-4567</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Primary research organization focused on Mindanao development</field>
+        </record>
+
+        <!-- Agency: CKVC - Convergence Knowledge Ventures Corporation -->
+        <record id="agency_ckvc" model="finance.ssc.agency">
+            <field name="code">CKVC</field>
+            <field name="name">Convergence Knowledge Ventures Corporation</field>
+            <field name="tin">234-567-890-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">CKVC Finance Manager</field>
+            <field name="contact_email">finance@ckvc.com.ph</field>
+            <field name="contact_phone">+63-82-234-5678</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Knowledge management and consulting services</field>
+        </record>
+
+        <!-- Agency: BOM - Business of Mindanao -->
+        <record id="agency_bom" model="finance.ssc.agency">
+            <field name="code">BOM</field>
+            <field name="name">Business of Mindanao</field>
+            <field name="tin">345-678-901-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">BOM Finance Manager</field>
+            <field name="contact_email">finance@businessofmindanao.com</field>
+            <field name="contact_phone">+63-82-345-6789</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Business development and economic initiatives</field>
+        </record>
+
+        <!-- Agency: JPAL - Abdul Latif Jameel Poverty Action Lab -->
+        <record id="agency_jpal" model="finance.ssc.agency">
+            <field name="code">JPAL</field>
+            <field name="name">Abdul Latif Jameel Poverty Action Lab - SEA</field>
+            <field name="tin">456-789-012-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Manila, Philippines</field>
+            <field name="zip_code">1000</field>
+            <field name="contact_person">JPAL Finance Manager</field>
+            <field name="contact_email">finance@povertyactionlab.org</field>
+            <field name="contact_phone">+63-2-456-7890</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Poverty alleviation research and randomized evaluations</field>
+        </record>
+
+        <!-- Agency: JLI - Jaff Law Institute -->
+        <record id="agency_jli" model="finance.ssc.agency">
+            <field name="code">JLI</field>
+            <field name="name">Jaff Law Institute</field>
+            <field name="tin">567-890-123-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">JLI Finance Manager</field>
+            <field name="contact_email">finance@jafflawins.org</field>
+            <field name="contact_phone">+63-82-567-8901</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Legal education and training institution</field>
+        </record>
+
+        <!-- Agency: JAP - Jaff Advocacy Partners -->
+        <record id="agency_jap" model="finance.ssc.agency">
+            <field name="code">JAP</field>
+            <field name="name">Jaff Advocacy Partners</field>
+            <field name="tin">678-901-234-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">JAP Finance Manager</field>
+            <field name="contact_email">finance@jaffadvocacy.org</field>
+            <field name="contact_phone">+63-82-678-9012</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Policy advocacy and public interest initiatives</field>
+        </record>
+
+        <!-- Agency: LAS - Legal Advisory Services -->
+        <record id="agency_las" model="finance.ssc.agency">
+            <field name="code">LAS</field>
+            <field name="name">Legal Advisory Services</field>
+            <field name="tin">789-012-345-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">LAS Finance Manager</field>
+            <field name="contact_email">finance@legaladvisory.ph</field>
+            <field name="contact_phone">+63-82-789-0123</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Legal consulting and advisory services</field>
+        </record>
+
+        <!-- Agency: RMQB - Research Mindanao Quality Benchmarking -->
+        <record id="agency_rmqb" model="finance.ssc.agency">
+            <field name="code">RMQB</field>
+            <field name="name">Research Mindanao Quality Benchmarking</field>
+            <field name="tin">890-123-456-000</field>
+            <field name="rdo_code">116</field>
+            <field name="registered_address">Davao City, Philippines</field>
+            <field name="zip_code">8000</field>
+            <field name="contact_person">RMQB Finance Manager</field>
+            <field name="contact_email">finance@rmqb.org.ph</field>
+            <field name="contact_phone">+63-82-890-1234</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="active">True</field>
+            <field name="notes">Quality assurance and benchmarking research</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Agency Tree View -->
+    <record id="view_finance_ssc_agency_tree" model="ir.ui.view">
+        <field name="name">finance.ssc.agency.tree</field>
+        <field name="model">finance.ssc.agency</field>
+        <field name="arch" type="xml">
+            <tree string="Agencies">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="tin"/>
+                <field name="rdo_code"/>
+                <field name="currency_id"/>
+                <field name="active_transactions" widget="integer"/>
+                <field name="total_debit" widget="monetary"/>
+                <field name="total_credit" widget="monetary"/>
+                <field name="active" widget="boolean_toggle"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Agency Form View -->
+    <record id="view_finance_ssc_agency_form" model="ir.ui.view">
+        <field name="name">finance.ssc.agency.form</field>
+        <field name="model">finance.ssc.agency</field>
+        <field name="arch" type="xml">
+            <form string="Agency">
+                <header>
+                    <button name="action_sync_to_supabase"
+                            string="Sync to Supabase"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': [('supabase_enabled', '=', False)]}"/>
+                    <button name="action_sync_to_notion"
+                            string="Sync to Notion"
+                            type="object"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('notion_enabled', '=', False)]}"/>
+                    <field name="active" widget="boolean_button"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_transactions"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-list">
+                            <field name="active_transactions" widget="statinfo" string="Transactions"/>
+                        </button>
+                        <button name="action_view_month_end_closings"
+                                type="object"
+                                class="oe_stat_button"
+                                icon="fa-calendar-check-o">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Month-End</span>
+                                <span class="o_stat_text">Closings</span>
+                            </div>
+                        </button>
+                    </div>
+
+                    <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>
+
+                    <div class="oe_title">
+                        <label for="name" class="oe_edit_only"/>
+                        <h1>
+                            <field name="code" readonly="1"/>
+                            <span> - </span>
+                            <field name="name" placeholder="Agency Full Name"/>
+                        </h1>
+                    </div>
+
+                    <group>
+                        <group name="basic_info" string="Basic Information">
+                            <field name="display_name" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="currency_id"/>
+                            <field name="analytic_account_id" readonly="1"/>
+                        </group>
+                        <group name="bir_info" string="BIR Information">
+                            <field name="tin"/>
+                            <field name="rdo_code"/>
+                            <field name="registered_address"/>
+                            <field name="zip_code"/>
+                        </group>
+                    </group>
+
+                    <group name="contact_info" string="Contact Information">
+                        <group>
+                            <field name="contact_person"/>
+                            <field name="contact_email" widget="email"/>
+                        </group>
+                        <group>
+                            <field name="contact_phone" widget="phone"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page name="statistics" string="Statistics">
+                            <group>
+                                <group string="Transaction Summary">
+                                    <field name="active_transactions" readonly="1"/>
+                                    <field name="total_debit" widget="monetary" readonly="1"/>
+                                    <field name="total_credit" widget="monetary" readonly="1"/>
+                                    <field name="net_balance" widget="monetary" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page name="integration" string="Integration">
+                            <group>
+                                <group string="Supabase">
+                                    <field name="supabase_enabled"/>
+                                    <field name="supabase_last_sync" readonly="1"/>
+                                    <field name="supabase_sync_status" readonly="1"/>
+                                </group>
+                                <group string="Notion">
+                                    <field name="notion_enabled"/>
+                                    <field name="notion_page_id"/>
+                                    <field name="notion_last_sync" readonly="1"/>
+                                    <field name="notion_sync_status" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page name="notes" string="Notes">
+                            <field name="notes" placeholder="Internal notes about this agency..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Agency Kanban View -->
+    <record id="view_finance_ssc_agency_kanban" model="ir.ui.view">
+        <field name="name">finance.ssc.agency.kanban</field>
+        <field name="model">finance.ssc.agency</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_mobile">
+                <field name="id"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="tin"/>
+                <field name="active_transactions"/>
+                <field name="total_debit"/>
+                <field name="total_credit"/>
+                <field name="net_balance"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="o_kanban_record_top">
+                                <div class="o_kanban_record_headings">
+                                    <strong class="o_kanban_record_title">
+                                        <field name="code"/> - <field name="name"/>
+                                    </strong>
+                                </div>
+                            </div>
+                            <div class="o_kanban_record_body">
+                                <field name="tin"/>
+                            </div>
+                            <div class="o_kanban_record_bottom">
+                                <div class="oe_kanban_bottom_left">
+                                    <span><field name="active_transactions"/> transactions</span>
+                                </div>
+                                <div class="oe_kanban_bottom_right">
+                                    <span>Net: <field name="net_balance" widget="monetary"/></span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Agency Search View -->
+    <record id="view_finance_ssc_agency_search" model="ir.ui.view">
+        <field name="name">finance.ssc.agency.search</field>
+        <field name="model">finance.ssc.agency</field>
+        <field name="arch" type="xml">
+            <search string="Search Agencies">
+                <field name="code" string="Agency Code"/>
+                <field name="name" string="Agency Name"/>
+                <field name="tin" string="TIN"/>
+                <field name="rdo_code" string="RDO"/>
+
+                <filter string="Active" name="active" domain="[('active', '=', True)]"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+
+                <separator/>
+                <filter string="Supabase Enabled" name="supabase_enabled" domain="[('supabase_enabled', '=', True)]"/>
+                <filter string="Notion Enabled" name="notion_enabled" domain="[('notion_enabled', '=', True)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter string="Currency" name="group_currency" context="{'group_by': 'currency_id'}"/>
+                    <filter string="RDO" name="group_rdo" context="{'group_by': 'rdo_code'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Agency Action -->
+    <record id="action_finance_ssc_agency" model="ir.actions.act_window">
+        <field name="name">Agencies</field>
+        <field name="res_model">finance.ssc.agency</field>
+        <field name="view_mode">kanban,tree,form</field>
+        <field name="context">{'search_default_active': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first agency
+            </p>
+            <p>
+                Agencies represent the different organizations managed by the Finance SSC.
+                Each agency has its own analytic account for tracking transactions.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_finance_ssc_root"
+              name="Finance SSC"
+              sequence="10"
+              web_icon="ipai_finance_ssc,static/description/icon.png"/>
+
+    <menuitem id="menu_finance_ssc_agencies"
+              name="Agencies"
+              parent="menu_finance_ssc_root"
+              action="action_finance_ssc_agency"
+              sequence="10"/>
+
+</odoo>

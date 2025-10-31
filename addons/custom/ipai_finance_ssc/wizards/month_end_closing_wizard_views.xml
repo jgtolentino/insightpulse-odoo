@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Month-End Closing Wizard Form -->
+    <record id="view_month_end_closing_wizard_form" model="ir.ui.view">
+        <field name="name">finance.ssc.month.end.closing.wizard.form</field>
+        <field name="model">finance.ssc.month.end.closing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create Month-End Closings">
+                <group>
+                    <field name="mode" widget="radio"/>
+                </group>
+
+                <group attrs="{'invisible': [('mode', '!=', 'single')]}">
+                    <field name="agency_id" required="mode == 'single'" options="{'no_create': True, 'no_open': True}"/>
+                </group>
+
+                <group attrs="{'invisible': [('mode', '!=', 'multiple')]}">
+                    <field name="agency_ids" widget="many2many_tags" required="mode == 'multiple'" options="{'no_create': True, 'color_field': 'color'}"/>
+                </group>
+
+                <group>
+                    <field name="period" widget="date"/>
+                </group>
+
+                <group string="Options">
+                    <field name="auto_generate_checklist" widget="boolean_toggle"/>
+                    <field name="start_validation" widget="boolean_toggle"/>
+                </group>
+
+                <group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Estimated:</strong> <field name="estimated_closings" readonly="1"/> month-end closing(s) will be created
+                    </div>
+                </group>
+
+                <footer>
+                    <button string="Create Closings" name="action_create_closings" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Month-End Batch Process Wizard Form -->
+    <record id="view_month_end_batch_wizard_form" model="ir.ui.view">
+        <field name="name">finance.ssc.month.end.batch.wizard.form</field>
+        <field name="model">finance.ssc.month.end.batch.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Batch Process Month-End Closings">
+                <group>
+                    <field name="closing_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                </group>
+
+                <group>
+                    <field name="action" widget="radio"/>
+                </group>
+
+                <footer>
+                    <button string="Execute" name="action_execute" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Month-End Closing Wizard Action -->
+    <record id="action_month_end_closing_wizard" model="ir.actions.act_window">
+        <field name="name">Create Month-End Closings</field>
+        <field name="res_model">finance.ssc.month.end.closing.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_finance_ssc_month_end_closing"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+    <!-- Month-End Batch Process Wizard Action -->
+    <record id="action_month_end_batch_wizard" model="ir.actions.act_window">
+        <field name="name">Batch Process</field>
+        <field name="res_model">finance.ssc.month.end.batch.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_finance_ssc_month_end_closing"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+</odoo>

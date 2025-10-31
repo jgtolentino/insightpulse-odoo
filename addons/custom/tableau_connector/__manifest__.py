@@ -11,7 +11,7 @@
     - Dashboard management interface
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/tableau_connector",
+    "website": "https://insightpulseai.net/apps/tableau_connector",
     "depends": ["base", "web"],
     "data": [
         "security/ir.model.access.csv",
