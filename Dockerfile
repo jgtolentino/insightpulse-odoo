@@ -1,79 +1,77 @@
-# InsightPulse Odoo 19.0 Enterprise Production Dockerfile
-# Budget-optimized for DigitalOcean App Platform (basic-xxs: 512MB RAM)
+# ---------- Build stage ----------
+FROM python:3.11-slim AS build
 
-FROM odoo:19.0
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_CACHE_DIR=1
 
-# Install system dependencies
-USER root
-
-# Install Python dependencies and required packages
-RUN apt-get update && apt-get install -y \
-    python3-pip \
-    curl \
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential gcc curl git ca-certificates \
+    libxml2-dev libxslt1-dev libpq-dev libldap2-dev libsasl2-dev \
+    libffi-dev libjpeg-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
-COPY requirements.txt /tmp/requirements.txt
-RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+# Optional: wkhtmltopdf for PDF reports
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    wkhtmltopdf \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create addons directory structure
-RUN mkdir -p /mnt/extra-addons/insightpulse \
-    /mnt/extra-addons/custom \
-    /mnt/extra-addons/oca
+WORKDIR /opt/odoo
 
-# Copy addon copy script
-COPY scripts/copy-addons.sh /tmp/copy-addons.sh
-RUN chmod +x /tmp/copy-addons.sh
+# Copy only requirement manifests first for better layer caching
+COPY requirements.txt requirements-auto.txt ./
+RUN python -m pip install --upgrade pip wheel && \
+    pip wheel --wheel-dir /wheels -r requirements.txt && \
+    pip wheel --wheel-dir /wheels -r requirements-auto.txt
 
-# Copy addons directory and run conditional copy
-# This handles both present and missing optional addons gracefully
-COPY addons /tmp/addons
-RUN /tmp/copy-addons.sh /tmp/addons /mnt/extra-addons
+# Copy source
+COPY . /src
 
-# Build dynamic addons-path based on what was actually copied
-RUN ADDONS_PATH="/mnt/extra-addons/insightpulse,/mnt/extra-addons/custom,/mnt/extra-addons/oca"; \
-    for addon in bi_superset_agent knowledge_notion_clone web_environment_ribbon web_favicon; do \
-        if [ -d "/mnt/extra-addons/$addon" ]; then \
-            ADDONS_PATH="$ADDONS_PATH,/mnt/extra-addons/$addon"; \
-        fi; \
-    done; \
-    ADDONS_PATH="$ADDONS_PATH,/usr/lib/python3/dist-packages/odoo/addons"; \
-    echo "$ADDONS_PATH" > /tmp/addons-path.txt
+# ---------- Runtime stage ----------
+FROM python:3.11-slim AS runtime
 
-# Set permissions for addons
-RUN chown -R odoo:odoo /mnt/extra-addons
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PYTHONUNBUFFERED=1 \
+    ODOO_RC=/etc/odoo/odoo.conf
 
-# Switch back to odoo user for security
+# Minimal runtime libs
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 libxml2 libxslt1.1 libldap-2.5-0 libsasl2-2 \
+    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
+    wkhtmltopdf \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create user and dirs
+RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
+    mkdir -p /var/lib/odoo/.local /var/log/odoo /mnt/extra-addons /var/lib/odoo/.cache/pip && \
+    chown -R odoo:odoo /var/lib/odoo /var/log/odoo /mnt/extra-addons
+
+# Install Odoo from official apt repository for better maintainability
+RUN curl -o odoo.deb https://nightly.odoo.com/19.0/nightly/deb/odoo_19.0.latest_all.deb && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ./odoo.deb && \
+    rm odoo.deb && \
+    rm -rf /var/lib/apt/lists/*
+
+# Install python wheels built in stage 1
+COPY --from=build /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+
+# Copy application code (custom addons and scripts)
+WORKDIR /opt/odoo
+COPY --chown=odoo:odoo --from=build /src/addons /mnt/extra-addons
+COPY --chown=odoo:odoo --from=build /src/scripts /opt/odoo/scripts
+
+# Healthcheck endpoint (Odoo supports /web/health from 16+)
+HEALTHCHECK --interval=30s --timeout=5s --retries=10 \
+  CMD curl -fsS http://localhost:8069/web/health || exit 1
+
+# Default config path (mounted via compose)
+VOLUME ["/var/lib/odoo", "/var/log/odoo", "/mnt/extra-addons"]
+
+# Run as non-root
 USER odoo
 
-# Set working directory
-WORKDIR /var/lib/odoo
-
-# Expose Odoo HTTP port
-EXPOSE 8069
-
-# Health check endpoint
-HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=3 \
-    CMD curl -f http://localhost:8069/web/health || exit 1
-
-# Odoo configuration via environment variables (set in App Platform spec)
-# ODOO_DB_HOST, ODOO_DB_PORT, ODOO_DB_NAME, ODOO_DB_USER, ODOO_DB_PASSWORD
-# ODOO_ADMIN_PASSWORD, ODOO_WORKERS, ODOO_MAX_CRON_THREADS
-
-# Default command (can be overridden)
-# Use dynamically generated addons-path from build time
-CMD odoo \
-    --db_host=${ODOO_DB_HOST} \
-    --db_port=${ODOO_DB_PORT} \
-    --db_user=${ODOO_DB_USER} \
-    --db_password=${ODOO_DB_PASSWORD} \
-    --addons-path=$(cat /tmp/addons-path.txt) \
-    --workers=${ODOO_WORKERS:-2} \
-    --max-cron-threads=${ODOO_MAX_CRON_THREADS:-1} \
-    --db-maxconn=${ODOO_DB_MAXCONN:-8} \
-    --limit-memory-hard=${ODOO_LIMIT_MEMORY_HARD:-419430400} \
-    --limit-memory-soft=${ODOO_LIMIT_MEMORY_SOFT:-335544320} \
-    --limit-time-cpu=${ODOO_LIMIT_TIME_CPU:-300} \
-    --limit-time-real=${ODOO_LIMIT_TIME_REAL:-600} \
-    --proxy-mode \
-    --without-demo=all
+EXPOSE 8069 8071
+CMD ["odoo", "-c", "/etc/odoo/odoo.conf"]
