@@ -1,910 +1,758 @@
-# SaaS Replication Playbook: SAP → Odoo CE + OCA
+# SaaS Replication Playbook (Odoo CE + OCA + Custom Addons)
 
-Systematic methodology for replicating any SAP or SaaS application using Odoo Community Edition, OCA modules, and custom development.
-
----
-
-## 🎯 Overview
-
-This playbook provides a **6-phase systematic approach** to analyze, design, build, and deploy SaaS applications on Odoo.
-
-### Philosophy
-- **80/20 Rule**: Use OCA modules for 80% of features, build custom for 20%
-- **API-First**: Design for integration from day one
-- **Modular**: Each feature = separate addon
-- **Data-Driven**: Map data models before coding
-- **Automated**: CI/CD for everything
+**Goal:** Systematically replicate SAP/SaaS app capabilities using Odoo Community + OCA modules + custom addons. This playbook gives you a repeatable, automation-first workflow: discovery → design → scaffold → build → integrate → test → deploy → observe.
 
 ---
 
-## 📋 Phase 1: Feature Analysis & Mapping
+## 0) Guiding Principles
 
-### Step 1.1: Document Target Application
+* **80/20 Rule:** Prefer OCA modules for ~80% of needs; build the missing 20% as thin, well-tested custom addons.
+* **API-first:** Document APIs early; treat external SaaS as first-class integrations.
+* **Addons as units:** Each feature = one addon with its own tests, data, and docs.
+* **Security & Compliance:** Enforce linting, licenses, and security scanning in CI.
+* **Idempotence & Reproducibility:** Dockerized build; pinned Python/Odoo/OCA versions.
+* **Observability:** Logs + metrics + traces; error budgets and SLOs for features.
 
-Create a **Feature Inventory** document:
+---
 
-```bash
-# Use the automation script
-./scripts/analyze-saas-app.sh --app "SAP SuccessFactors" --output analysis/
-```
+## 1) Feature Analysis & OCA Mapping
 
-**Manual template:**
+Use this section to decompose the target SaaS/SAP domain into granular features and map to OCA.
+
+### 1.1 Feature Inventory Template
+
 ```markdown
-# SaaS Application Analysis: [APP NAME]
+# Feature: <Name>
+- Business goal:
+- Actors & roles:
+- Inputs:
+- Outputs:
+- KPIs/SLOs:
+- Must-have vs Nice-to-have:
 
-## Core Modules
-1. Module Name
-   - Primary Features
-   - Secondary Features
-   - Data Models
-   - Integrations
-   - User Roles
+## Existing Odoo/OCA Coverage
+- Candidate OCA repos: sale-workflow, account-financial-tools, hr, stock-logistics-*, server-tools, reporting-engine, queue, connector, vertical-*
+- Known modules: <list>
+- Gaps: <list>
 
-## User Flows
-1. Flow Name
-   - Steps
-   - Decision Points
-   - Data Inputs/Outputs
+## Data Contracts (ER model hints)
+- Core models: <list>
+- Relationships: <UML/ER hints>
+- Constraints/invariants: <list>
+
+## User Journeys
+- Journey 1: <steps>
+- Journey 2: <steps>
+
+## Risks & Edge Cases
+- Compliance, performance, data quality, migration, security
 ```
 
-### Step 1.2: Categorize Features
+### 1.2 OCA Discovery (Automated)
 
-Use this classification:
-
-| Category | Examples | Likely Solution |
-|----------|----------|-----------------|
-| **Core ERP** | Accounting, Sales, Inventory | Odoo CE modules |
-| **Industry Standard** | CRM, Project Management | OCA modules |
-| **Domain Specific** | Expense approval workflows | Custom modules |
-| **Integrations** | API, webhooks, SSO | Custom connectors |
-| **UI/UX Custom** | Dashboards, reports | Custom views/reports |
-
-### Step 1.3: Search OCA for Existing Modules
-
-```bash
-# Automated OCA search
-./scripts/search-oca-modules.sh --feature "expense management"
-```
-
-**Manual process:**
-1. Go to: https://github.com/OCA
-2. Search repositories for keywords
-3. Check module maturity:
-   - ✅ `installable: True` in manifest
-   - ✅ Version matches Odoo 19.0
-   - ✅ Active maintenance (commits in last 6 months)
-   - ✅ Tests present
-   - ✅ Good documentation
-
-### Step 1.4: Gap Analysis
-
-Create a **Feature-to-Module Matrix**:
-
-```bash
-# Generate matrix
-./scripts/generate-feature-matrix.sh --input analysis/features.yaml
-```
-
-**Output example:**
-```
-Feature                    | Odoo CE | OCA Module              | Custom | Priority
----------------------------|---------|-------------------------|--------|----------
-Employee Management        | ✅      | -                       | -      | High
-Expense Tracking           | ⚠️      | hr_expense_advance      | ✅     | High
-Approval Workflows         | -       | base_tier_validation    | ✅     | High
-Mobile App                 | -       | -                       | ✅     | Medium
-SSO Integration            | -       | auth_saml               | ⚠️     | High
-Advanced Reporting         | ⚠️      | -                       | ✅     | Medium
-```
-
-**Legend:**
-- ✅ = Available and sufficient
-- ⚠️ = Available but needs extension
-- ❌ = Not available, must build
+* Use **`scripts/search-oca-modules.sh`** (below) to search across OCA repos by keyword and Odoo version.
+* Export results to CSV and attach to the feature page.
 
 ---
 
-## 📐 Phase 2: Architecture Design
+## 2) Architecture & Design
 
-### Step 2.1: Data Model Design
+### 2.1 Module Topology
 
-**Use Odoo's model inheritance pattern:**
+* **Core** (domain models), **API** (controllers), **UI** (views/reports), **Integration** (connectors), **Ops** (monitoring hooks).
+* Keep addons small and composable. Avoid cross-import cycles (only depend downward).
 
-```python
-# Base model (if extending OCA/CE)
-class HRExpense(models.Model):
-    _inherit = 'hr.expense'
+### 2.2 Data Modeling
 
-    # Add custom fields
-    approval_level = fields.Integer()
-    expense_category_id = fields.Many2one('expense.category')
+* Normalize master data (partners, products, accounts, employees).
+* Referential integrity in Python constraints + SQL constraints for invariants.
+* Use **computed/stored fields** judiciously; prefer explicit writes in workflows.
 
-# New model (if creating from scratch)
-class ExpenseCategory(models.Model):
-    _name = 'expense.category'
-    _description = 'Expense Category'
+### 2.3 API & Events
 
-    name = fields.Char(required=True)
-    code = fields.Char(required=True)
-    limit_amount = fields.Float()
-    approval_required = fields.Boolean(default=True)
-```
+* REST endpoints under `/saas/<service>/<resource>` with token-based auth.
+* Outgoing calls via `requests` with retries/backoff; enqueue with `queue_job` (OCA) for robust async.
+* Domain events -> `bus`/`queue_job`/webhooks.
 
-**Create ERD:**
-```bash
-# Auto-generate ERD from models
-./scripts/generate-erd.sh --addon expense_management
-```
+### 2.4 Non-Functional
 
-### Step 2.2: Module Architecture
-
-**Organize by domain:**
-```
-addons/
-├── custom/
-│   ├── expense_management/          # Core domain
-│   │   ├── models/
-│   │   │   ├── expense.py
-│   │   │   ├── expense_category.py
-│   │   │   └── expense_report.py
-│   │   ├── views/
-│   │   ├── security/
-│   │   ├── data/
-│   │   └── __manifest__.py
-│   │
-│   ├── expense_approval/            # Workflow domain
-│   ├── expense_mobile/              # Channel domain
-│   └── expense_sap_integration/     # Integration domain
-```
-
-**Dependencies tree:**
-```mermaid
-expense_management (base)
-  ├── expense_approval (extends approval logic)
-  ├── expense_mobile (adds mobile views)
-  └── expense_sap_integration (sync with SAP)
-```
-
-### Step 2.3: Integration Architecture
-
-**API-First Design:**
-```python
-# REST API (using OCA rest_framework)
-class ExpenseAPI(restapi.Endpoint):
-    _name = 'expense.api'
-
-    @restapi.method([(["/expenses"], "GET")])
-    def get_expenses(self, **params):
-        """GET /api/expenses"""
-        return self._get_expenses(**params)
-
-    @restapi.method([(["/expenses"], "POST")])
-    def create_expense(self, **params):
-        """POST /api/expenses"""
-        return self._create_expense(**params)
-```
-
-**Webhook Architecture:**
-```python
-# Outgoing webhooks
-class ExpenseWebhook(models.Model):
-    _name = 'expense.webhook'
-
-    def _trigger_webhook(self, event, data):
-        """Send webhook on expense events"""
-        webhook_url = self.env['ir.config_parameter'].get_param('expense.webhook_url')
-        requests.post(webhook_url, json={
-            'event': event,
-            'data': data,
-            'timestamp': fields.Datetime.now()
-        })
-```
+* Performance: prefetch fields, batch writes, SQL indexes.
+* Security: record rules, ACLs, OWASP input validation.
+* Observability: structured logs, metrics (Prometheus), traces (OpenTelemetry exporters where relevant).
 
 ---
 
-## 🛠️ Phase 3: Automated Module Scaffolding
+## 3) Automated Scaffolding (Addons & Files)
 
-### Step 3.1: Use Module Generator
+Use **`scripts/scaffold-odoo-module.sh`** to generate an OCA-compliant addon skeleton, including:
+
+* `__manifest__.py` with metadata and dependencies
+* `models/`, `views/`, `security/`, `data/`, `tests/`
+* `README.rst`, `CHANGELOG.md`, `LICENSE`, badges
+* CI hooks: `pre-commit`, `pylint-odoo`, `ruff` (optional), `black`
+
+**Example:**
 
 ```bash
-# Generate base module structure
 ./scripts/scaffold-odoo-module.sh \
   --name expense_management \
+  --summary "Unified expense submission and approvals" \
   --category "Human Resources" \
-  --author "InsightPulse" \
-  --depends hr,account \
-  --models expense,expense_category,expense_report
-```
-
-**What it creates:**
-```
-expense_management/
-├── __init__.py
-├── __manifest__.py
-├── models/
-│   ├── __init__.py
-│   ├── expense.py
-│   ├── expense_category.py
-│   └── expense_report.py
-├── views/
-│   ├── expense_views.xml
-│   ├── expense_category_views.xml
-│   └── expense_report_views.xml
-├── security/
-│   └── ir.model.access.csv
-├── data/
-│   └── expense_category_data.xml
-├── tests/
-│   ├── __init__.py
-│   └── test_expense.py
-└── README.rst
-```
-
-### Step 3.2: Generate Model Boilerplate
-
-```bash
-# Generate model from template
-./scripts/generate-model.sh \
-  --module expense_management \
-  --model expense.category \
-  --fields name:char,code:char,limit_amount:float \
-  --security expense_user,expense_manager
-```
-
-**Generated code:**
-```python
-from odoo import models, fields, api
-
-class ExpenseCategory(models.Model):
-    _name = 'expense.category'
-    _description = 'Expense Category'
-    _order = 'name'
-
-    name = fields.Char(
-        string='Name',
-        required=True,
-        translate=True
-    )
-    code = fields.Char(
-        string='Code',
-        required=True
-    )
-    limit_amount = fields.Float(
-        string='Limit Amount',
-        digits='Product Price'
-    )
-
-    _sql_constraints = [
-        ('code_unique', 'UNIQUE(code)', 'Code must be unique!')
-    ]
-```
-
-### Step 3.3: Generate Views Automatically
-
-```bash
-# Generate tree, form, search views
-./scripts/generate-views.sh \
-  --module expense_management \
-  --model expense.category \
-  --views tree,form,search,pivot,graph
-```
-
-**Generated XML:**
-```xml
-<odoo>
-    <!-- Tree View -->
-    <record id="expense_category_view_tree" model="ir.ui.view">
-        <field name="name">expense.category.tree</field>
-        <field name="model">expense.category</field>
-        <field name="arch" type="xml">
-            <tree string="Expense Categories">
-                <field name="name"/>
-                <field name="code"/>
-                <field name="limit_amount"/>
-            </tree>
-        </field>
-    </record>
-
-    <!-- Form View -->
-    <record id="expense_category_view_form" model="ir.ui.view">
-        <field name="name">expense.category.form</field>
-        <field name="model">expense.category</field>
-        <field name="arch" type="xml">
-            <form string="Expense Category">
-                <sheet>
-                    <group>
-                        <field name="name"/>
-                        <field name="code"/>
-                        <field name="limit_amount"/>
-                    </group>
-                </sheet>
-            </form>
-        </field>
-    </record>
-
-    <!-- Action -->
-    <record id="expense_category_action" model="ir.actions.act_window">
-        <field name="name">Expense Categories</field>
-        <field name="res_model">expense.category</field>
-        <field name="view_mode">tree,form</field>
-    </record>
-
-    <!-- Menu -->
-    <menuitem id="expense_category_menu"
-              name="Expense Categories"
-              parent="hr_expense.menu_hr_expense"
-              action="expense_category_action"
-              sequence="10"/>
-</odoo>
+  --depends hr,account,mail \
+  --models expense,expense_category,expense_report \
+  --version 19.0 \
+  --license LGPL-3 \
+  --author "InsightPulse"
 ```
 
 ---
 
-## 👨‍💻 Phase 4: Development Workflow
+## 4) Development Workflow (TDD + OCA Standards)
 
-### Step 4.1: Development Environment
+1. **Create feature branch** from `main`.
+2. **Generate addon** with scaffold script.
+3. **Write tests first** (`tests/test_*.py`):
 
-```bash
-# Setup dev environment
-./scripts/setup-dev-env.sh --module expense_management
+   * Business rules, workflows, access rules, API contracts.
+4. **Implement models/views** incrementally; run tests locally in Docker.
+5. **Lint & format**: `pre-commit run -a` enforces `pylint-odoo`, `black`, import order.
+6. **Open PR**; CI runs: unit tests (with coverage ≥ 75%), XML/manifest lint, security scan, build image, run `odootest` matrix.
+7. **Code review**: follow OCA guidelines on naming, manifests, dependencies.
 
-# What it does:
-# 1. Creates Python venv
-# 2. Installs Odoo + dependencies
-# 3. Sets up test database
-# 4. Configures VSCode
-# 5. Installs pre-commit hooks
-```
-
-### Step 4.2: Live Development with Watch Mode
-
-```bash
-# Start Odoo with auto-reload
-docker compose -f docker-compose.dev.yml watch
-
-# What happens:
-# - File changes in addons/ sync instantly
-# - Odoo restarts automatically
-# - Browser auto-refreshes
-```
-
-### Step 4.3: Test-Driven Development
-
-```bash
-# Generate test scaffolding
-./scripts/generate-tests.sh \
-  --module expense_management \
-  --model expense.category \
-  --test-types unit,integration,access
-```
-
-**Generated test:**
-```python
-from odoo.tests.common import TransactionCase
-from odoo.exceptions import ValidationError
-
-class TestExpenseCategory(TransactionCase):
-
-    def setUp(self):
-        super().setUp()
-        self.ExpenseCategory = self.env['expense.category']
-
-    def test_01_create_category(self):
-        """Test creating expense category"""
-        category = self.ExpenseCategory.create({
-            'name': 'Travel',
-            'code': 'TRV',
-            'limit_amount': 5000.00
-        })
-        self.assertEqual(category.name, 'Travel')
-        self.assertEqual(category.code, 'TRV')
-
-    def test_02_code_unique(self):
-        """Test code uniqueness constraint"""
-        self.ExpenseCategory.create({
-            'name': 'Travel',
-            'code': 'TRV',
-        })
-        with self.assertRaises(ValidationError):
-            self.ExpenseCategory.create({
-                'name': 'Transport',
-                'code': 'TRV',  # Duplicate!
-            })
-
-    def test_03_access_rights(self):
-        """Test user access rights"""
-        user = self.env.ref('expense_management.expense_user')
-        category = self.ExpenseCategory.with_user(user).create({
-            'name': 'Meals',
-            'code': 'MEAL'
-        })
-        self.assertTrue(category.id)
-```
-
-**Run tests:**
-```bash
-# Run specific module tests
-pytest addons/custom/expense_management/tests/
-
-# Run with coverage
-pytest --cov=addons/custom/expense_management
-
-# Run in CI
-docker compose exec odoo odoo-bin -d test_db -u expense_management --test-enable --stop-after-init
-```
+**Coverage gate:** enforce 75% (config below). Exceptions require architectural justification.
 
 ---
 
-## 🔄 Phase 5: Integration & Data Migration
+## 5) Integration & Data Migration
 
-### Step 5.1: API Integration Template
+### 5.1 Connectors
 
-```python
-# addons/custom/expense_sap_integration/models/sap_connector.py
+* Use **`component`** and **`connector`** OCA frameworks if doing complex sync.
+* Model **binding records** for external IDs; queue jobs for push/pull; log job metadata.
 
-class SAPConnector(models.Model):
-    _name = 'sap.connector'
+### 5.2 Migration Plan Template
 
-    def sync_expenses_to_sap(self):
-        """Sync Odoo expenses to SAP"""
-        expenses = self.env['hr.expense'].search([
-            ('state', '=', 'approved'),
-            ('sap_synced', '=', False)
-        ])
-
-        for expense in expenses:
-            sap_data = self._prepare_sap_data(expense)
-            response = self._post_to_sap(sap_data)
-
-            if response.status_code == 200:
-                expense.sap_id = response.json()['id']
-                expense.sap_synced = True
-
-    def _prepare_sap_data(self, expense):
-        """Transform Odoo expense to SAP format"""
-        return {
-            'employeeId': expense.employee_id.sap_employee_id,
-            'expenseType': expense.category_id.sap_code,
-            'amount': expense.total_amount,
-            'date': expense.date.isoformat(),
-            'description': expense.name
-        }
-
-    def _post_to_sap(self, data):
-        """POST to SAP API"""
-        sap_url = self.env['ir.config_parameter'].get_param('sap.api_url')
-        sap_token = self.env['ir.config_parameter'].get_param('sap.api_token')
-
-        return requests.post(
-            f'{sap_url}/expenses',
-            json=data,
-            headers={'Authorization': f'Bearer {sap_token}'}
-        )
+```markdown
+# Migration <System → Odoo>
+- Scope: objects, fields, volumes, historical depth
+- Mapping tables: source → target
+- Transform rules: Python functions with unit tests
+- Loads: 1) master, 2) open txns, 3) histories (optional)
+- Validation: count checks, hash totals, spot audits
+- Cutover: blackout window, dry run → prod run, rollback plan
 ```
 
-### Step 5.2: Data Migration Scripts
+### 5.3 Validation Scripts
 
-```python
-# addons/custom/expense_management/migrations/19.0.1.0.0/post-migration.py
-
-def migrate(cr, version):
-    """Migrate data from old system"""
-
-    # Example: Import expenses from CSV
-    import csv
-    from odoo import api, SUPERUSER_ID
-
-    env = api.Environment(cr, SUPERUSER_ID, {})
-
-    with open('/tmp/legacy_expenses.csv') as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            # Map legacy data to Odoo
-            employee = env['hr.employee'].search([
-                ('employee_id', '=', row['employee_id'])
-            ], limit=1)
-
-            category = env['expense.category'].search([
-                ('code', '=', row['category_code'])
-            ], limit=1)
-
-            # Create expense
-            env['hr.expense'].create({
-                'employee_id': employee.id,
-                'category_id': category.id,
-                'name': row['description'],
-                'total_amount': float(row['amount']),
-                'date': row['expense_date']
-            })
-```
-
-### Step 5.3: Webhook Handlers
-
-```python
-# addons/custom/expense_webhooks/controllers/webhook.py
-
-from odoo import http
-from odoo.http import request
-import hmac
-import hashlib
-
-class ExpenseWebhook(http.Controller):
-
-    @http.route('/webhook/expense', type='json', auth='public', csrf=False)
-    def expense_webhook(self, **kwargs):
-        """Receive webhooks from external systems"""
-
-        # Verify signature
-        signature = request.httprequest.headers.get('X-Webhook-Signature')
-        if not self._verify_signature(signature, request.jsonrequest):
-            return {'error': 'Invalid signature'}, 401
-
-        # Process webhook
-        data = request.jsonrequest
-        event_type = data.get('event_type')
-
-        if event_type == 'expense.approved':
-            self._handle_expense_approved(data)
-        elif event_type == 'expense.rejected':
-            self._handle_expense_rejected(data)
-
-        return {'status': 'success'}
-
-    def _verify_signature(self, signature, payload):
-        """Verify webhook signature"""
-        secret = request.env['ir.config_parameter'].sudo().get_param('webhook.secret')
-        computed = hmac.new(
-            secret.encode(),
-            json.dumps(payload).encode(),
-            hashlib.sha256
-        ).hexdigest()
-        return hmac.compare_digest(signature, computed)
-```
+* CSV validators, referential checks, duplicate detection.
+* Reconcile counts before/after; write fixtures for regression.
 
 ---
 
-## 🧪 Phase 6: Testing & Deployment
+## 6) Testing, Deployment, Observability
 
-### Step 6.1: Automated Testing Pipeline
+### 6.1 Test Matrix
+
+* Units, integration (HTTP mocks), security tests (record rules), migration tests, PDF rendering (wkhtmltopdf smoke tests), performance micro-benchmarks.
+
+### 6.2 CI/CD (GitHub Actions example)
 
 ```yaml
-# .github/workflows/test-modules.yml
-
-name: Test Custom Modules
-
+name: odoo-ci
 on:
+  pull_request:
   push:
-    paths:
-      - 'addons/custom/**'
-
+    branches: [ main ]
 jobs:
-  test:
+  build-test:
     runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_DB: test_db
-          POSTGRES_USER: odoo
-          POSTGRES_PASSWORD: odoo
-
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.10' }
+      - name: Install system deps
         run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-dev libxslt1-dev libpq-dev
+      - name: Install python deps
+        run: |
+          python -m pip install --upgrade pip wheel
           pip install -r requirements.txt
-          pip install pytest pytest-odoo coverage
-
-      - name: Run tests
+      - name: Lint (pre-commit)
         run: |
-          # Test each custom module
-          for module in addons/custom/*/; do
-            module_name=$(basename $module)
-            echo "Testing $module_name..."
-
-            odoo-bin -d test_db \
-              --addons-path=addons/custom,addons/oca \
-              -i $module_name \
-              --test-enable \
-              --stop-after-init \
-              --log-level=test
-          done
-
-      - name: Check coverage
+          pip install pre-commit pylint-odoo black
+          pre-commit install
+          pre-commit run -a || (git diff && exit 1)
+      - name: Tests
+        env:
+          ODOO_LOG_LEVEL: test
         run: |
-          coverage run --source=addons/custom -m pytest
+          pip install coverage
+          coverage run -m pytest -q
           coverage report --fail-under=75
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ github.repository }}:${{ github.sha }} .
 ```
 
-### Step 6.2: Deployment Checklist
+### 6.3 Dockerfile (Debian trixie + wkhtmltopdf static)
 
-```bash
-# Automated deployment checklist
-./scripts/deploy-module.sh --module expense_management --env production
+```dockerfile
+ARG DEBIAN_FRONTEND=noninteractive
+FROM python:3.10-slim
 
-# What it checks:
-# ✓ All tests pass
-# ✓ Security rules defined
-# ✓ Access rights configured
-# ✓ Demo data present
-# ✓ README.rst exists
-# ✓ __manifest__.py valid
-# ✓ Dependencies available
-# ✓ Migrations present (if needed)
-# ✓ Translations complete
-# ✓ No pylint errors
+# System deps & fonts
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc build-essential git libxml2-dev libxslt1-dev libpq-dev \
+    ca-certificates curl xz-utils fontconfig \
+    libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
+    libjpeg62-turbo libpng16-16 libfreetype6 xfonts-base xfonts-75dpi \
+    fonts-dejavu fonts-liberation fonts-noto-cjk \
+  && rm -rf /var/lib/apt/lists/*
+
+# wkhtmltopdf 0.12.6 (Qt patched)
+ARG WKHTML_VER=0.12.6-1
+RUN curl -fsSL "https://github.com/wkhtmltopdf/packaging/releases/download/${WKHTML_VER}/wkhtmltox-${WKHTML_VER}.amd64.tar.xz" -o /tmp/wkhtmltox.tar.xz \
+ && tar -xJf /tmp/wkhtmltox.tar.xz -C /tmp \
+ && mv /tmp/wkhtmltox/bin/* /usr/local/bin/ \
+ && rm -rf /tmp/wkhtmltox* /tmp/wkhtmltox.tar.xz \
+ && wkhtmltopdf --version
+
+# Odoo env
+WORKDIR /opt/odoo
+COPY requirements.txt ./
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
+COPY . .
+CMD ["./entrypoint.sh"]
 ```
 
-### Step 6.3: Gradual Rollout
+### 6.4 DigitalOcean App Platform / Droplet
+
+* Build from Docker; enable **health checks** on `/web/health` (200 OK).
+* Zero-downtime: blue/green via two apps behind Load Balancer or rolling deploy with readiness probe.
+* Automated backups of Postgres; point-in-time if critical.
+
+### 6.5 Observability
+
+* **Prometheus** exporters for Postgres and Traefik; **Grafana** dashboards.
+* **Loki** or **ELK** for logs; **Sentry** for Python exceptions (Odoo hook in `ir.logging`).
+
+---
+
+## 7) Security Hardening
+
+* Least-privilege DB user; rotate DB/app secrets.
+* Enforce HTTPS (HSTS), secure cookies, CSP for reports and portal.
+* Validate all inbound payloads; rate-limit external APIs.
+* Static analysis (`bandit`, `safety`/`pip-audit`), dependency pinning.
+* Mandatory code owners for security-sensitive addons.
+
+---
+
+## 8) Rollback & Release Management
+
+* **Semantic Versioning** per addon.
+* Database migrations via `migrations/` with pre/post scripts.
+* Rollback: revert image, restore DB snapshot, replay queues.
+* Feature flags: gradual rollouts; dark launches for integrations.
+
+---
+
+## 9) Templates & Boilerplates
+
+### 9.1 `__manifest__.py` template
 
 ```python
-# Feature flags for gradual rollout
-class ExpenseFeatureFlags(models.Model):
-    _inherit = 'res.company'
+{
+    "name": "<module_name>",
+    "summary": "<one-line summary>",
+    "version": "19.0.1.0.0",
+    "author": "<Your Org>",
+    "license": "LGPL-3",
+    "website": "https://<your-site>",
+    "category": "<Category>",
+    "depends": ["base"],
+    "data": [
+        "security/ir.model.access.csv",
+        "views/<module_name>_menus.xml",
+        "views/<module_name>_views.xml",
+    ],
+    "demo": [
+        "demo/<module_name>_demo.xml"
+    ],
+    "installable": True,
+    "application": False,
+}
+```
 
-    enable_advanced_approval = fields.Boolean(
-        default=False,
-        help="Enable multi-level approval workflow"
-    )
+### 9.2 Pre-commit (OCA) minimal
 
-    enable_sap_sync = fields.Boolean(
-        default=False,
-        help="Enable SAP integration"
-    )
+```yaml
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks: [{ id: black }]
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: v9.0.0
+    hooks: [{ id: pylint-odoo }]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+```
 
-# Use in code
-if self.company_id.enable_advanced_approval:
-    # Use new approval logic
-    self._advanced_approval_workflow()
-else:
-    # Use legacy logic
-    self._simple_approval()
+### 9.3 Coverage config (pytest + coverage)
+
+```ini
+# pyproject.toml or setup.cfg
+[tool.pytest.ini_options]
+addopts = "-q"
+
+[tool.coverage.run]
+source = ["addons", "odoo_addons"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 75
+show_missing = true
+```
+
+### 9.4 Makefile helpers (optional)
+
+```make
+.PHONY: init lint test run shell
+init:
+	pre-commit install
+lint:
+	pre-commit run -a
+
+test:
+	coverage run -m pytest -q && coverage report --fail-under=75
+
+run:
+	docker compose up --build
+
+shell:
+	docker compose exec odoo bash
 ```
 
 ---
 
-## 📊 Automation Scripts Reference
+## 10) Automation Scripts
 
-All scripts are in `scripts/` directory:
+> Place these under `scripts/` and mark executable (`chmod +x`).
 
-### Analysis Scripts
+### 10.1 `scripts/scaffold-odoo-module.sh`
+
 ```bash
-./scripts/analyze-saas-app.sh
-./scripts/search-oca-modules.sh
-./scripts/generate-feature-matrix.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Defaults
+ODOO_VERSION="19.0"
+LICENSE="LGPL-3"
+AUTHOR="Your Company"
+CATEGORY="Tools"
+SUMMARY=""
+DEPENDS="base"
+MODELS=""
+
+usage() {
+  cat <<EOF
+Usage: $0 --name <module_name> [--version 19.0] [--license LGPL-3] \\
+          [--author "Your Company"] [--category "Tools"] \\
+          [--summary "One-liner"] [--depends a,b,c] [--models m1,m2]
+EOF
+}
+
+# Parse args
+NAME=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --name) NAME="$2"; shift 2;;
+    --version) ODOO_VERSION="$2"; shift 2;;
+    --license) LICENSE="$2"; shift 2;;
+    --author) AUTHOR="$2"; shift 2;;
+    --category) CATEGORY="$2"; shift 2;;
+    --summary) SUMMARY="$2"; shift 2;;
+    --depends) DEPENDS="$2"; shift 2;;
+    --models) MODELS="$2"; shift 2;;
+    -h|--help) usage; exit 0;;
+    *) echo "Unknown arg: $1"; usage; exit 1;;
+  esac
+done
+
+[[ -z "$NAME" ]] && { echo "--name is required"; exit 1; }
+
+MODULE_DIR="addons/${NAME}"
+mkdir -p "$MODULE_DIR"/{models,views,security,data,demo,tests,migrations}
+
+# __init__.py
+cat > "$MODULE_DIR/__init__.py" <<PY
+from . import models
+PY
+
+cat > "$MODULE_DIR/models/__init__.py" <<PY
+# auto-generated
+PY
+
+# models
+IFS=',' read -r -a MODEL_LIST <<< "${MODELS}"
+for M in "${MODEL_LIST[@]}"; do
+  [[ -z "$M" ]] && continue
+  low="${M,,}"
+  up="$(python3 - <<'PY'
+import sys
+s=sys.argv[1]
+print(''.join([w.capitalize() for w in s.replace('_',' ').split()]))
+PY
+ "$M")"
+  cat >> "$MODULE_DIR/models/__init__.py" <<PY
+from . import ${low}
+PY
+  cat > "$MODULE_DIR/models/${low}.py" <<PY
+from odoo import api, fields, models, _
+from odoo.exceptions import ValidationError
+
+class ${up}(models.Model):
+    _name = "${NAME}.${low}"
+    _description = "${up}"
+
+    name = fields.Char(required=True)
+    active = fields.Boolean(default=True)
+    # TODO: add fields
+
+    _sql_constraints = [
+        ("name_unique", "unique(name)", "Name must be unique"),
+    ]
+
+    @api.constrains("name")
+    def _check_name(self):
+        for rec in self:
+            if not rec.name:
+                raise ValidationError(_("Name required"))
+PY
+
+  # Basic views per model
+  cat >> "$MODULE_DIR/views/${NAME}_views.xml" <<XML
+<!-- ${up} -->
+<odoo>
+  <record id="view_${low}_tree" model="ir.ui.view">
+    <field name="name">${NAME}.${low}.tree</field>
+    <field name="model">${NAME}.${low}</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="active"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_${low}_form" model="ir.ui.view">
+    <field name="name">${NAME}.${low}.form</field>
+    <field name="model">${NAME}.${low}</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="active"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_${low}" model="ir.actions.act_window">
+    <field name="name">${up}</field>
+    <field name="res_model">${NAME}.${low}</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+</odoo>
+XML
+
+  cat >> "$MODULE_DIR/views/${NAME}_menus.xml" <<XML
+<odoo>
+  <menuitem id="menu_${NAME}_root" name="${NAME^}"/>
+  <menuitem id="menu_${low}" name="${up}" parent="menu_${NAME}_root" action="action_${low}"/>
+</odoo>
+XML
+
+done
+
+# access rules
+cat > "$MODULE_DIR/security/ir.model.access.csv" <<CSV
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+# add groups as needed
+CSV
+
+# manifest - build depends array properly
+DEPENDS_ARRAY=""
+if [[ "$DEPENDS" == *","* ]]; then
+  # Multiple dependencies
+  IFS=',' read -r -a DEP_LIST <<< "$DEPENDS"
+  DEPENDS_ARRAY="["
+  for i in "${!DEP_LIST[@]}"; do
+    DEPENDS_ARRAY+="\"${DEP_LIST[$i]}\""
+    [[ $i -lt $((${#DEP_LIST[@]}-1)) ]] && DEPENDS_ARRAY+=", "
+  done
+  DEPENDS_ARRAY+="]"
+else
+  # Single dependency
+  DEPENDS_ARRAY="[\"${DEPENDS}\"]"
+fi
+
+cat > "$MODULE_DIR/__manifest__.py" <<PY
+{
+    "name": "${NAME}",
+    "summary": "${SUMMARY}",
+    "version": "${ODOO_VERSION}.1.0.0",
+    "author": "${AUTHOR}",
+    "license": "${LICENSE}",
+    "website": "",
+    "category": "${CATEGORY}",
+    "depends": ${DEPENDS_ARRAY},
+    "data": [
+        "security/ir.model.access.csv",
+        "views/${NAME}_views.xml",
+        "views/${NAME}_menus.xml"
+    ],
+    "demo": [
+        "demo/${NAME}_demo.xml"
+    ],
+    "installable": True,
+    "application": False
+}
+PY
+
+# demo placeholder
+cat > "$MODULE_DIR/demo/${NAME}_demo.xml" <<XML
+<odoo>
+  <!-- Demo data here -->
+</odoo>
+XML
+
+# tests
+cat > "$MODULE_DIR/tests/__init__.py" <<PY
+# Test suite
+PY
+
+cat > "$MODULE_DIR/tests/test_${NAME}.py" <<PY
+from odoo.tests.common import TransactionCase
+
+class Test${NAME^}(TransactionCase):
+    def setUp(self):
+        super().setUp()
+        # Setup test data
+
+    def test_create_record(self):
+        # Basic CRUD test placeholder
+        record = self.env['${NAME}.${MODEL_LIST[0]:-model}'].create({
+            'name': 'Test Record'
+        })
+        self.assertTrue(record)
+        self.assertEqual(record.name, 'Test Record')
+PY
+
+# README
+cat > "$MODULE_DIR/README.rst" <<RST
+${NAME}
+=====================
+
+${SUMMARY}
+
+* Version: ${ODOO_VERSION}
+* License: ${LICENSE}
+* Author: ${AUTHOR}
+
+**Features**
+- Scaffolding-generated module
+- Add views, security, tests
+
+**Installation**
+- Add to addons path; update apps list; install.
+
+**Usage**
+- Navigate to menu '${NAME^}'.
+RST
+
+# Root-level quality configs (create if missing)
+if [ ! -f .pre-commit-config.yaml ]; then
+cat > .pre-commit-config.yaml <<YAML
+repos:
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+  - repo: https://github.com/OCA/pylint-odoo
+    rev: v9.0.0
+    hooks:
+      - id: pylint-odoo
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+YAML
+fi
+
+printf "\n✅ Module scaffolded: %s\n" "$MODULE_DIR"
 ```
 
-### Scaffolding Scripts
+### 10.2 `scripts/search-oca-modules.sh`
+
 ```bash
-./scripts/scaffold-odoo-module.sh
-./scripts/generate-model.sh
-./scripts/generate-views.sh
-./scripts/generate-tests.sh
-./scripts/generate-erd.sh
+#!/usr/bin/env bash
+set -euo pipefail
+
+FORMAT="table" # table|json|csv
+VERSION="19.0"
+KEYWORDS=""
+TOKEN="${GITHUB_TOKEN:-}"
+
+usage(){
+  cat <<EOF
+Usage: $0 --keywords "hr,expense,approval" [--version 19.0] [--format table|json|csv]
+Env: GITHUB_TOKEN (optional, increases rate limits)
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --keywords) KEYWORDS="$2"; shift 2;;
+    --version) VERSION="$2"; shift 2;;
+    --format) FORMAT="$2"; shift 2;;
+    -h|--help) usage; exit 0;;
+    *) echo "Unknown arg: $1"; usage; exit 1;;
+  esac
+done
+
+[[ -z "$KEYWORDS" ]] && { echo "--keywords required"; exit 1; }
+
+OCA_REPOS=(
+  account-financial-reporting account-financial-tools account-invoicing
+  bank-payment connector hr l10n-spain l10n-brazil
+  manufacturing mis-builder reporting-engine sale-workflow
+  server-backend server-tools stock-logistics-workflow
+)
+
+hdr(){ echo "repo,module,name,summary,version,installable"; }
+row(){ echo "$1,$2,$3,$4,$5,$6"; }
+
+search_repo(){
+  local repo="$1"
+  local q
+  q=$(printf "%s" "$KEYWORDS" | sed 's/,/|/g')
+  local url="https://api.github.com/repos/OCA/${repo}/contents"
+  local auth=()
+  [[ -n "$TOKEN" ]] && auth=(-H "Authorization: Bearer $TOKEN") || auth=()
+  # list top level dirs; filter addon dirs by manifest
+  curl -sSL "${url}" "${auth[@]}" 2>/dev/null | jq -r \
+    '.[] | select(.type=="dir") | .name' 2>/dev/null | while read -r addon; do
+      [[ -z "$addon" ]] && continue
+      murl="https://raw.githubusercontent.com/OCA/${repo}/${VERSION}/${addon}/__manifest__.py"
+      man=$(curl -sSL "$murl" 2>/dev/null || true)
+      [[ -z "$man" ]] && continue
+      name=$(python3 - <<PY
+import ast,sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(d.get('name',''))
+except Exception:
+ pass
+PY
+ <<<"$man")
+      summary=$(python3 - <<PY
+import ast,sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(d.get('summary','').replace(',', ';'))
+except Exception:
+ pass
+PY
+ <<<"$man")
+      installable=$(python3 - <<PY
+import ast,sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(d.get('installable',True))
+except Exception:
+ print(True)
+PY
+ <<<"$man")
+      if [[ "$name" =~ $(echo "$q") ]] || [[ "$summary" =~ $(echo "$q") ]]; then
+        case "$FORMAT" in
+          table) printf "%-28s %-32s %-40s %-6s %s\n" "$repo" "$addon" "$name" "$VERSION" "$summary";;
+          csv) row "$repo" "$addon" "$name" "$summary" "$VERSION" "$installable";;
+          json) jq -n --arg repo "$repo" --arg module "$addon" --arg name "$name" --arg summary "$summary" --arg version "$VERSION" --argjson installable "$installable" '{repo:$repo,module:$module,name:$name,summary:$summary,version:$version,installable:$installable}';;
+        esac
+      fi
+    done
+}
+
+if [[ "$FORMAT" == "csv" ]]; then hdr; fi
+for r in "${OCA_REPOS[@]}"; do
+  search_repo "$r"
+done
 ```
 
-### Development Scripts
-```bash
-./scripts/setup-dev-env.sh
-./scripts/run-tests.sh
-./scripts/check-quality.sh
-```
+### 10.3 `scripts/README.md` (Suggested Outline)
 
-### Deployment Scripts
-```bash
-./scripts/deploy-module.sh
-./scripts/migrate-data.sh
-./scripts/rollback-module.sh
+```markdown
+# scripts/
+
+## scaffold-odoo-module.sh
+- Generate OCA-compliant addon skeleton
+- Usage examples (see playbook)
+
+## search-oca-modules.sh
+- Search OCA repos by keywords/version; outputs table/JSON/CSV
+- Requires `jq`, `curl`, `python3`, and optional `GITHUB_TOKEN`
+
+## Common prerequisites
+- `jq`, `curl`, `python3`, `sed`, `awk`
+- Run `chmod +x scripts/*.sh`
 ```
 
 ---
 
-## 🎓 Best Practices
+## 11) Quality Gates & Checklists
 
-### DO:
-- ✅ **One feature per module** - Keep modules focused
-- ✅ **Inherit, don't modify** - Use `_inherit` to extend OCA/CE
-- ✅ **API-first** - Design REST APIs from day one
-- ✅ **Test everything** - Aim for 80%+ coverage
-- ✅ **Document everything** - README.rst + docstrings
-- ✅ **Use OCA tools** - maintainer-quality-tools, oca-gen-addon-readme
-- ✅ **Follow OCA conventions** - model naming, file structure
-- ✅ **Version semantically** - 19.0.1.0.0 format
+### 11.1 PR Checklist
 
-### DON'T:
-- ❌ **Modify core files** - Always inherit
-- ❌ **Hardcode values** - Use ir.config_parameter
-- ❌ **Skip security** - Always define access rules
-- ❌ **Forget migrations** - Provide upgrade paths
-- ❌ **Ignore performance** - Index database fields
-- ❌ **Mix concerns** - Separate business logic from UI
-- ❌ **Use sudo() carelessly** - Can bypass security
-- ❌ **Commit without testing** - Pre-commit hooks save time
+* [ ] Manifest complete (summary, license, depends)
+* [ ] Tests ≥ 75% coverage; new rules tested
+* [ ] Security review (ACL, record rules, SQL injections)
+* [ ] Docs updated (`README.rst`, usage, screenshots if UI)
+* [ ] Changelog entry
+
+### 11.2 Go-Live Checklist
+
+* [ ] Migration dry-run validated; sign-off from business
+* [ ] Monitoring dashboards ready; alerts configured
+* [ ] Backups verified; PITR tested
+* [ ] Rollback runbook validated
+* [ ] Feature flags set for progressive rollout
 
 ---
 
-## 📈 Success Metrics
+## 12) Example Replication Paths
 
-Track these KPIs for each replication project:
-
-| Metric | Target | How to Measure |
-|--------|--------|----------------|
-| **Feature Coverage** | >90% | Features implemented / Total features |
-| **OCA Usage** | >60% | OCA modules used / Total modules |
-| **Code Quality** | A+ | pylint-odoo score |
-| **Test Coverage** | >75% | pytest-cov report |
-| **Time to MVP** | <4 weeks | First deployable version |
-| **Bug Density** | <5/module | Bugs found in first month |
-| **Performance** | <2s page load | Odoo profiler |
-| **User Adoption** | >80% | Active users / Total users |
+* **SuccessFactors → Odoo HR**: OCA `hr`, `hr-expense`, custom approval flows, SSO via OAuth.
+* **SAP SD → Odoo Sales**: `sale-workflow`, custom pricing engines, EDI connectors.
+* **SAP FI → Odoo Accounting**: `account-*` OCA, advanced reporting via `mis-builder`.
 
 ---
 
-## 🗂️ Project Structure Template
+## 13) Next Steps
 
-```
-project-name/
-├── addons/
-│   ├── custom/
-│   │   ├── base_module/              # Core domain logic
-│   │   ├── workflow_module/          # Business workflows
-│   │   ├── integration_module/       # External integrations
-│   │   └── reporting_module/         # Analytics & reports
-│   └── oca/                           # OCA modules
-│
-├── analysis/
-│   ├── features.yaml                 # Feature inventory
-│   ├── feature-matrix.xlsx           # Gap analysis
-│   ├── data-model.mmd                # ERD (Mermaid)
-│   └── api-spec.yaml                 # OpenAPI specification
-│
-├── migrations/
-│   ├── legacy-data-export.sql
-│   └── data-transformation.py
-│
-├── scripts/
-│   ├── analyze-saas-app.sh
-│   ├── scaffold-odoo-module.sh
-│   ├── generate-model.sh
-│   ├── generate-views.sh
-│   ├── generate-tests.sh
-│   ├── deploy-module.sh
-│   └── README.md
-│
-├── docker-compose.dev.yml
-├── docker-compose.prod.yml
-├── requirements.txt
-└── README.md
-```
+1. Run `search-oca-modules.sh` for your target SaaS domain keywords.
+2. For each feature page, mark **Covered** / **Extend** / **Build**.
+3. Scaffold first addon and push a PR with tests + CI.
+4. Establish a fortnightly release train and keep the SLO dashboard visible.
 
 ---
 
-## 🚀 Quick Start Example
-
-Let's replicate **SAP SuccessFactors Expense Management**:
-
-### Step 1: Analyze
-```bash
-./scripts/analyze-saas-app.sh \
-  --app "SAP SuccessFactors" \
-  --module "Expense Management" \
-  --output analysis/sap-expense/
-```
-
-### Step 2: Search OCA
-```bash
-./scripts/search-oca-modules.sh \
-  --keywords "expense,approval,travel" \
-  --version 19.0
-```
-
-**Found OCA modules:**
-- `hr_expense` (Odoo CE - built-in)
-- `hr_expense_advance` (OCA)
-- `hr_expense_tier_validation` (OCA)
-- `hr_expense_sequence` (OCA)
-
-### Step 3: Identify Gaps
-
-**Need to build custom:**
-- Mobile receipt capture
-- SAP integration
-- Custom approval rules
-- Advanced analytics
-
-### Step 4: Scaffold Custom Modules
-```bash
-# Core expense extensions
-./scripts/scaffold-odoo-module.sh \
-  --name expense_insightpulse \
-  --depends hr_expense,hr_expense_advance
-
-# Mobile app
-./scripts/scaffold-odoo-module.sh \
-  --name expense_mobile \
-  --depends expense_insightpulse
-
-# SAP integration
-./scripts/scaffold-odoo-module.sh \
-  --name expense_sap_connector \
-  --depends expense_insightpulse
-```
-
-### Step 5: Develop
-```bash
-# Start dev environment
-docker compose -f docker-compose.dev.yml up -d
-
-# Install modules
-docker compose exec odoo odoo-bin \
-  -d dev_db \
-  -i expense_insightpulse,expense_mobile,expense_sap_connector \
-  --dev=all
-```
-
-### Step 6: Test & Deploy
-```bash
-# Run tests
-./scripts/run-tests.sh --module expense_insightpulse
-
-# Deploy to staging
-./scripts/deploy-module.sh \
-  --module expense_insightpulse \
-  --env staging
-
-# Deploy to production (after validation)
-./scripts/deploy-module.sh \
-  --module expense_insightpulse \
-  --env production
-```
-
-**Total time:** 2-4 weeks for MVP
-
----
-
-## 🔗 Resources
-
-### Odoo Official
-- [Developer Documentation](https://www.odoo.com/documentation/19.0/developer.html)
-- [Odoo Apps Store](https://apps.odoo.com/)
-- [Odoo GitHub](https://github.com/odoo/odoo)
-
-### OCA (Odoo Community Association)
-- [OCA GitHub](https://github.com/OCA)
-- [OCA Guidelines](https://github.com/OCA/maintainer-tools)
-- [Module Categories](https://github.com/OCA?q=&type=all&language=&sort=)
-
-### Tools
-- [pylint-odoo](https://github.com/OCA/pylint-odoo) - Odoo linting
-- [oca-gen-addon-readme](https://github.com/OCA/maintainer-tools) - Generate READMEs
-- [click-odoo](https://github.com/acsone/click-odoo) - CLI tools
-- [pytest-odoo](https://github.com/camptocamp/pytest-odoo) - Testing
-
-### Communities
-- [Odoo Community Forum](https://www.odoo.com/forum)
-- [OCA Discussions](https://github.com/OCA/maintainer-tools/discussions)
-- [r/Odoo on Reddit](https://reddit.com/r/Odoo)
-
----
-
-## 📞 Next Steps
-
-1. **Review** this playbook
-2. **Choose** a SaaS app to replicate
-3. **Run** the analysis scripts
-4. **Start** with scaffolding
-5. **Deploy** your first custom module
-
-**Questions?** Open an issue or check the automation scripts in `scripts/`
-
----
-
-**Status:** ✅ Playbook ready for use
-**Automation:** Scripts available in `scripts/` directory
-**Next:** Create first automation scripts
+*Maintainers: keep this playbook in the repo root as `SAAS_REPLICATION_PLAYBOOK.md` and evolve per project retrospectives.*

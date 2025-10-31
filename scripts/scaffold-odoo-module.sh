@@ -13,6 +13,7 @@ NC='\033[0m'
 
 # Default values
 MODULE_NAME=""
+SUMMARY=""
 CATEGORY="Uncategorized"
 AUTHOR="InsightPulse"
 DEPENDS="base"
@@ -52,11 +53,16 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_DIR="$2"
             shift 2
             ;;
+        --summary)
+            SUMMARY="$2"
+            shift 2
+            ;;
         -h|--help)
             echo "Usage: $0 --name MODULE_NAME [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --name NAME         Module name (required, e.g., expense_management)"
+            echo "  --summary TEXT      Module summary (one-liner description)"
             echo "  --category CAT      Category (default: Uncategorized)"
             echo "  --author AUTHOR     Author (default: InsightPulse)"
             echo "  --depends DEPS      Dependencies, comma-separated (default: base)"
@@ -66,6 +72,7 @@ while [[ $# -gt 0 ]]; do
             echo ""
             echo "Example:"
             echo "  $0 --name expense_management \\"
+            echo "     --summary \"Unified expense submission and approvals\" \\"
             echo "     --category \"Human Resources\" \\"
             echo "     --depends hr,account \\"
             echo "     --models expense,expense_category"
@@ -138,7 +145,7 @@ cat > "$MODULE_DIR/__manifest__.py" << EOF
     'name': '$(echo $MODULE_NAME | tr '_' ' ' | sed 's/\b\(.\)/\u\1/g')',
     'version': '$VERSION',
     'category': '$CATEGORY',
-    'summary': 'TODO: Add summary',
+    'summary': '${SUMMARY:-TODO: Add summary}',
     'description': '''
         TODO: Add detailed description
     ''',

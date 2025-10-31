@@ -13,6 +13,7 @@ NC='\033[0m'
 KEYWORDS=""
 VERSION="19.0"
 OUTPUT_FORMAT="table"
+TOKEN="${GITHUB_TOKEN:-}"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -37,8 +38,12 @@ while [[ $# -gt 0 ]]; do
             echo "  --version VERSION    Odoo version (default: 19.0)"
             echo "  --format FORMAT      Output format: table|json|csv (default: table)"
             echo ""
+            echo "Environment:"
+            echo "  GITHUB_TOKEN         GitHub token (optional, increases rate limits)"
+            echo ""
             echo "Example:"
-            echo "  $0 --keywords \"expense,approval,travel\""
+            echo "  $0 --keywords \"expense,approval,travel\" --format table"
+            echo "  GITHUB_TOKEN=ghp_xxx $0 --keywords \"expense\" --format json"
             exit 0
             ;;
         *)
@@ -61,16 +66,21 @@ IFS=',' read -ra KEYWORD_ARRAY <<< "$KEYWORDS"
 
 # OCA repositories to search
 OCA_REPOS=(
+    "account-financial-reporting"
     "account-financial-tools"
     "account-invoicing"
     "bank-payment"
+    "connector"
     "hr"
-    "project"
-    "sale-workflow"
-    "purchase-workflow"
-    "web"
-    "server-tools"
+    "l10n-spain"
+    "l10n-brazil"
+    "manufacturing"
+    "mis-builder"
     "reporting-engine"
+    "sale-workflow"
+    "server-backend"
+    "server-tools"
+    "stock-logistics-workflow"
 )
 
 echo -e "${BLUE}📦 Searching OCA repositories...${NC}"
@@ -81,38 +91,73 @@ RESULTS=$(mktemp)
 
 # Search GitHub API
 for repo in "${OCA_REPOS[@]}"; do
-    for keyword in "${KEYWORD_ARRAY[@]}"; do
-        keyword=$(echo "$keyword" | tr -d ' ')
+    url="https://api.github.com/repos/OCA/${repo}/contents"
+    auth_args=()
+    [[ -n "$TOKEN" ]] && auth_args=(-H "Authorization: Bearer $TOKEN")
 
-        # Search GitHub API
-        response=$(curl -s "https://api.github.com/search/code?q=${keyword}+repo:OCA/${repo}+filename:__manifest__.py" 2>/dev/null || echo "")
+    # List top-level directories
+    dirs=$(curl -sSL "${auth_args[@]}" "${url}" 2>/dev/null | jq -r '.[] | select(.type=="dir") | .name' 2>/dev/null || echo "")
 
-        if [ -n "$response" ]; then
-            # Parse JSON and extract module names
-            modules=$(echo "$response" | jq -r '.items[]? | .path' 2>/dev/null | sed 's|/__manifest__.py||' || echo "")
+    [[ -z "$dirs" ]] && continue
 
-            if [ -n "$modules" ]; then
-                while IFS= read -r module; do
-                    # Get manifest content to check version
-                    manifest_url="https://raw.githubusercontent.com/OCA/${repo}/${VERSION}/${module}/__manifest__.py"
-                    manifest=$(curl -s "$manifest_url" 2>/dev/null || echo "")
+    while IFS= read -r module; do
+        [[ -z "$module" ]] && continue
 
-                    if [[ "$manifest" == *"'version'"* ]] || [[ "$manifest" == *'"version"'* ]]; then
-                        installable=$(echo "$manifest" | grep -i "installable" | grep -i "true" || echo "")
+        # Get manifest
+        manifest_url="https://raw.githubusercontent.com/OCA/${repo}/${VERSION}/${module}/__manifest__.py"
+        manifest=$(curl -sSL "$manifest_url" 2>/dev/null || true)
 
-                        if [ -n "$installable" ]; then
-                            # Extract summary
-                            summary=$(echo "$manifest" | grep -i "summary" | sed "s/.*['\"]\(.*\)['\"]/\1/" | head -1)
-                            [ -z "$summary" ] && summary="No summary"
+        [[ -z "$manifest" ]] && continue
 
-                            # Save result
-                            echo "${repo}|${module}|${summary}|https://github.com/OCA/${repo}/tree/${VERSION}/${module}" >> "$RESULTS"
-                        fi
-                    fi
-                done <<< "$modules"
+        # Parse with Python for accuracy
+        name=$(python3 - <<PY 2>/dev/null
+import ast, sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(d.get('name',''))
+except Exception:
+ pass
+PY
+ <<<"$manifest")
+
+        summary=$(python3 - <<PY 2>/dev/null
+import ast, sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(d.get('summary','').replace(',', ';'))
+except Exception:
+ pass
+PY
+ <<<"$manifest")
+
+        installable=$(python3 - <<PY 2>/dev/null
+import ast, sys
+s=sys.stdin.read()
+try:
+ d=ast.literal_eval(s)
+ print(str(d.get('installable',True)))
+except Exception:
+ print('True')
+PY
+ <<<"$manifest")
+
+        # Filter by keywords
+        match=false
+        for keyword in "${KEYWORD_ARRAY[@]}"; do
+            keyword=$(echo "$keyword" | tr -d ' ')
+            if [[ "$name" =~ $keyword ]] || [[ "$summary" =~ $keyword ]] || [[ "$module" =~ $keyword ]]; then
+                match=true
+                break
             fi
+        done
+
+        if [[ "$match" == true ]] && [[ "$installable" == "True" ]]; then
+            [ -z "$summary" ] && summary="No summary"
+            echo "${repo}|${module}|${summary}|https://github.com/OCA/${repo}/tree/${VERSION}/${module}" >> "$RESULTS"
         fi
-    done
+    done <<< "$dirs"
 done
 
 # Display results
