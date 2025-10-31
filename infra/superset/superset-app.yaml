@@ -53,7 +53,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -101,7 +101,7 @@ services:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: FLASK_DEBUG
         scope: RUN_TIME
@@ -140,7 +140,7 @@ services:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: SUPERSET_ADMIN_FIRST_NAME
         scope: RUN_TIME
@@ -227,7 +227,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -261,7 +261,7 @@ services:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
   # Celery Beat for scheduled tasks
   - name: superset-beat
@@ -290,7 +290,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -324,7 +324,7 @@ services:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
 # Background workers (no HTTP exposure)
 workers:
@@ -355,7 +355,7 @@ workers:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -389,7 +389,7 @@ workers:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
   # Celery Beat for scheduled tasks
   - name: superset-beat
@@ -418,7 +418,7 @@ workers:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -452,7 +452,7 @@ workers:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
   # Redis cache service
   - name: redis
