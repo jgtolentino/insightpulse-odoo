@@ -1,0 +1,135 @@
+# Caddyfile for insightpulseai.net
+# Routes: Superset (/superset), Odoo (/odoo, /web, etc.)
+# Updated: 2025-10-31 - Added Superset support
+
+insightpulseai.net {
+  encode zstd gzip
+
+  # ==========================================
+  # Superset BI Dashboard
+  # ==========================================
+  # IMPORTANT: This MUST be first to take precedence over Odoo paths
+  @superset path /superset* /static/appbuilder* /static/assets*
+  handle @superset {
+    # Replace XXXXX with your actual DigitalOcean App Platform URL
+    # Get it by running: doctl apps list --format LiveURL,Name --no-header
+    # Example: superset-analytics-abcde.ondigitalocean.app
+    reverse_proxy https://SUPERSET-ANALYTICS-XXXXX.ondigitalocean.app {
+      # Forward proxy headers for Superset to detect correct scheme/host
+      header_up Host {upstream_hostport}
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Forwarded-For {remote_host}
+      header_up X-Real-IP {remote_host}
+
+      # Health check
+      health_uri /health
+      health_interval 30s
+      health_timeout 10s
+
+      # Timeouts for long-running queries
+      timeout 120s
+
+      # Trust upstream for TLS
+      transport http {
+        tls
+        tls_insecure_skip_verify
+      }
+    }
+  }
+
+  # ==========================================
+  # Odoo ERP
+  # ==========================================
+  @odoo path /odoo* /web* /longpolling* /calendar* /website* /shop*
+  handle @odoo {
+    reverse_proxy 127.0.0.1:8069 {
+      # Odoo-specific headers
+      header_up X-Forwarded-Host {host}
+      header_up X-Forwarded-Proto {scheme}
+      header_up X-Real-IP {remote_host}
+
+      # Long timeout for Odoo operations
+      timeout 300s
+    }
+  }
+
+  # ==========================================
+  # Security: Block Database Manager
+  # ==========================================
+  @dbm path /web/database/* /database/*
+  respond @dbm "Access Denied" 403 {
+    close
+  }
+
+  # ==========================================
+  # Health Check Endpoint
+  # ==========================================
+  @health path /health
+  respond @health "OK" 200
+
+  # ==========================================
+  # Default Handler
+  # ==========================================
+  handle {
+    respond "OK" 200
+  }
+
+  # ==========================================
+  # Security Headers
+  # ==========================================
+  header {
+    # HSTS
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+    # Content security
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Remove server header
+    -Server
+  }
+
+  # ==========================================
+  # Logging
+  # ==========================================
+  log {
+    output file /var/log/caddy/access.log {
+      roll_size 100mb
+      roll_keep 10
+      roll_keep_for 720h
+    }
+    format json
+    level INFO
+  }
+}
+
+# ==========================================
+# HTTP → HTTPS Redirect
+# ==========================================
+http://insightpulseai.net {
+  redir https://{host}{uri} permanent
+}
+
+# ==========================================
+# Configuration Notes
+# ==========================================
+# 1. Replace SUPERSET-ANALYTICS-XXXXX with your actual DO App URL
+#
+# 2. To get DO App URL:
+#    APP_ID=$(doctl apps list --format ID,Name --no-header | grep "superset-analytics" | awk '{print $1}')
+#    doctl apps get $APP_ID --format LiveURL --no-header
+#
+# 3. Test configuration:
+#    caddy validate --config /etc/caddy/Caddyfile
+#
+# 4. Reload Caddy:
+#    systemctl reload caddy
+#
+# 5. Test endpoints:
+#    curl -I https://insightpulseai.net/superset/health
+#    curl -I https://insightpulseai.net/odoo
+#
+# 6. Monitor logs:
+#    tail -f /var/log/caddy/access.log
