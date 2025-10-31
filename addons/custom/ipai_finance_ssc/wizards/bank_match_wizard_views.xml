@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Bank Match Wizard Form -->
+    <record id="view_bank_match_wizard_form" model="ir.ui.view">
+        <field name="name">finance.ssc.bank.match.wizard.form</field>
+        <field name="model">finance.ssc.bank.match.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Manual Bank Line Matching">
+                <group string="Bank Statement Line">
+                    <group>
+                        <field name="date" readonly="1"/>
+                        <field name="amount" readonly="1" widget="monetary"/>
+                    </group>
+                    <group>
+                        <field name="description" readonly="1"/>
+                        <field name="reconciliation_line_id" invisible="1"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                </group>
+
+                <separator string="Search Criteria"/>
+                <group>
+                    <field name="search_mode" widget="radio"/>
+                </group>
+
+                <group attrs="{'invisible': [('search_mode', '!=', 'manual')]}">
+                    <group>
+                        <field name="search_amount" widget="monetary"/>
+                        <field name="search_description"/>
+                    </group>
+                    <group>
+                        <field name="search_date_from" widget="date"/>
+                        <field name="search_date_to" widget="date"/>
+                        <field name="search_account_id"/>
+                    </group>
+                </group>
+
+                <group attrs="{'invisible': [('search_mode', '!=', 'manual')]}">
+                    <button string="Search" name="action_search_candidates" type="object" class="btn-primary"/>
+                </group>
+
+                <separator string="Matching Candidates"/>
+                <field name="candidate_ids" nolabel="1">
+                    <tree decoration-success="match_score &gt;= 80" decoration-info="match_score &gt;= 60 and match_score &lt; 80" decoration-warning="match_score &lt; 60" create="false" delete="false">
+                        <field name="match_score" widget="progressbar"/>
+                        <field name="date" widget="date"/>
+                        <field name="account_id"/>
+                        <field name="partner_id"/>
+                        <field name="name"/>
+                        <field name="ref"/>
+                        <field name="debit" widget="monetary"/>
+                        <field name="credit" widget="monetary"/>
+                        <field name="balance" widget="monetary"/>
+                        <button name="action_select" type="object" string="Select" class="btn-sm btn-primary"/>
+                    </tree>
+                </field>
+
+                <separator string="Selected Match"/>
+                <group>
+                    <field name="selected_move_line_id" domain="[('account_id.reconcile', '=', True), ('reconciled', '=', False), ('parent_state', '=', 'posted')]"/>
+                </group>
+
+                <footer>
+                    <button string="Match Selected" name="action_select_candidate" type="object" class="btn-primary"/>
+                    <button string="Create Journal Entry" name="action_create_journal_entry" type="object" class="btn-secondary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Bank Match Wizard Action -->
+    <record id="action_bank_match_wizard" model="ir.actions.act_window">
+        <field name="name">Manual Match</field>
+        <field name="res_model">finance.ssc.bank.match.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

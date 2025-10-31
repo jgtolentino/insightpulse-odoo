@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- BIR Filing Wizard Form -->
+    <record id="view_bir_filing_wizard_form" model="ir.ui.view">
+        <field name="name">finance.ssc.bir.filing.wizard.form</field>
+        <field name="model">finance.ssc.bir.filing.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Create BIR Forms">
+                <group>
+                    <field name="form_type" widget="radio"/>
+                </group>
+
+                <separator string="Agency Selection"/>
+                <group>
+                    <field name="mode" widget="radio"/>
+                </group>
+
+                <group attrs="{'invisible': [('mode', '!=', 'single')]}">
+                    <field name="agency_id" required="mode == 'single'" options="{'no_create': True, 'no_open': True}"/>
+                </group>
+
+                <group attrs="{'invisible': [('mode', '!=', 'multiple')]}">
+                    <field name="agency_ids" widget="many2many_tags" required="mode == 'multiple'" options="{'no_create': True, 'color_field': 'color'}"/>
+                </group>
+
+                <separator string="Period Selection"/>
+                <group>
+                    <field name="period_type" invisible="1"/>
+
+                    <group attrs="{'invisible': [('period_type', '!=', 'month')]}">
+                        <field name="period_month" required="period_type == 'month'"/>
+                        <field name="period_year" required="period_type == 'month'"/>
+                    </group>
+
+                    <group attrs="{'invisible': [('period_type', '!=', 'quarter')]}">
+                        <field name="period_quarter" required="period_type == 'quarter'"/>
+                        <field name="period_year" required="period_type == 'quarter'"/>
+                    </group>
+
+                    <group attrs="{'invisible': [('period_type', '!=', 'year')]}">
+                        <field name="period_year" required="period_type == 'year'"/>
+                    </group>
+                </group>
+
+                <group>
+                    <field name="period_from" readonly="1"/>
+                    <field name="period_to" readonly="1"/>
+                </group>
+
+                <separator string="Options"/>
+                <group>
+                    <field name="auto_compute" widget="boolean_toggle"/>
+                    <field name="auto_validate" widget="boolean_toggle"/>
+                </group>
+
+                <group>
+                    <div class="alert alert-info" role="alert">
+                        <strong>Estimated:</strong> <field name="estimated_forms" readonly="1"/> BIR form(s) will be created
+                    </div>
+                </group>
+
+                <footer>
+                    <button string="Create Forms" name="action_create_forms" type="object" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- BIR Filing Wizard Action -->
+    <record id="action_bir_filing_wizard" model="ir.actions.act_window">
+        <field name="name">Create BIR Forms</field>
+        <field name="res_model">finance.ssc.bir.filing.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="model_finance_ssc_bir_form"/>
+        <field name="binding_view_types">list</field>
+    </record>
+
+</odoo>

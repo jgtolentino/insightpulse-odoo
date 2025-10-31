@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Trial Balance Report Template -->
+    <template id="report_trial_balance_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="text-center">
+                    <h2>Trial Balance</h2>
+                    <h4><span t-field="o.agency_id.name"/></h4>
+                    <h5>Period: <span t-field="o.period"/></h5>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <strong>Agency:</strong> <span t-field="o.agency_id.code"/> - <span t-field="o.agency_id.name"/><br/>
+                        <strong>TIN:</strong> <span t-field="o.agency_id.tin"/><br/>
+                        <strong>RDO:</strong> <span t-field="o.agency_id.rdo_code"/>
+                    </div>
+                    <div class="col-6 text-end">
+                        <strong>Closing Reference:</strong> <span t-field="o.name"/><br/>
+                        <strong>Closing Date:</strong> <span t-field="o.closing_date"/><br/>
+                        <strong>Status:</strong> <span t-field="o.state" class="badge"/>
+                    </div>
+                </div>
+
+                <table class="table table-sm table-bordered mt-4">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th class="text-start">Account Code</th>
+                            <th class="text-start">Account Name</th>
+                            <th class="text-start">Type</th>
+                            <th class="text-end">Debit</th>
+                            <th class="text-end">Credit</th>
+                            <th class="text-end">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.trial_balance_ids" t-as="line">
+                            <tr>
+                                <td><span t-field="line.account_code"/></td>
+                                <td><span t-field="line.account_name"/></td>
+                                <td><span t-field="line.account_type"/></td>
+                                <td class="text-end">
+                                    <span t-field="line.debit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="line.credit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="line.balance" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #e9ecef; font-weight: bold;">
+                            <td colspan="3" class="text-end">TOTAL:</td>
+                            <td class="text-end">
+                                <span t-field="o.total_debit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="o.total_credit" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="o.balance_difference" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <t t-if="o.is_balanced">
+                            <div class="alert alert-success" role="alert">
+                                <strong>✓ Trial Balance is Balanced</strong><br/>
+                                Total Debit equals Total Credit
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="alert alert-danger" role="alert">
+                                <strong>⚠ Trial Balance is NOT Balanced</strong><br/>
+                                Difference: <span t-field="o.balance_difference" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h5>Prepared by:</h5>
+                        <p>_______________________________<br/>
+                        <span t-field="o.create_uid.name"/><br/>
+                        Date: <span t-field="o.create_date" t-options='{"widget": "date"}'/></p>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Report Action -->
+    <record id="action_report_trial_balance" model="ir.actions.report">
+        <field name="name">Trial Balance</field>
+        <field name="model">finance.ssc.month.end.closing</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ipai_finance_ssc.report_trial_balance_document</field>
+        <field name="report_file">ipai_finance_ssc.report_trial_balance_document</field>
+        <field name="binding_model_id" ref="model_finance_ssc_month_end_closing"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- BIR Form Report Template -->
+    <template id="report_bir_form_document">
+        <t t-call="web.external_layout">
+            <div class="page">
+                <div class="text-center">
+                    <h2>Bureau of Internal Revenue</h2>
+                    <h3><span t-field="o.form_type"/></h3>
+                    <h4><span t-field="o.agency_id.name"/></h4>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <h5>Taxpayer Information</h5>
+                        <strong>Name:</strong> <span t-field="o.agency_id.name"/><br/>
+                        <strong>TIN:</strong> <span t-field="o.tin"/><br/>
+                        <strong>RDO Code:</strong> <span t-field="o.rdo_code"/><br/>
+                        <strong>Address:</strong> <span t-field="o.agency_id.registered_address"/>
+                    </div>
+                    <div class="col-6 text-end">
+                        <h5>Form Details</h5>
+                        <strong>Form Reference:</strong> <span t-field="o.name"/><br/>
+                        <strong>Period From:</strong> <span t-field="o.period_from"/><br/>
+                        <strong>Period To:</strong> <span t-field="o.period_to"/><br/>
+                        <strong>Filing Deadline:</strong> <span t-field="o.filing_deadline"/>
+                    </div>
+                </div>
+
+                <!-- Form 1601-C -->
+                <t t-if="o.form_type == '1601c'">
+                    <h4 class="mt-4">Form 1601-C: Monthly Remittance Return of Income Taxes Withheld</h4>
+                    <table class="table table-sm table-bordered mt-2">
+                        <tr>
+                            <td><strong>Total Compensation Paid</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.taxable_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tax Withheld on Compensation</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.withholding_compensation" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Expanded Withholding Tax</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.withholding_expanded" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #e9ecef; font-weight: bold;">
+                            <td><strong>Total Tax Withheld</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.tax_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </t>
+
+                <!-- Form 2550Q -->
+                <t t-if="o.form_type == '2550q'">
+                    <h4 class="mt-4">Form 2550Q: Quarterly Value-Added Tax Return</h4>
+                    <table class="table table-sm table-bordered mt-2">
+                        <tr>
+                            <td><strong>Taxable Sales</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.taxable_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Zero-Rated Sales</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.zero_rated_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Exempt Sales</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.exempt_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Output VAT (12%)</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.vat_output" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Less: Input VAT</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.vat_input" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #e9ecef; font-weight: bold;">
+                            <td><strong>VAT Payable</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.tax_payable" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </t>
+
+                <!-- Form 1702-RT -->
+                <t t-if="o.form_type == '1702rt'">
+                    <h4 class="mt-4">Form 1702-RT: Annual Income Tax Return (Regular)</h4>
+                    <table class="table table-sm table-bordered mt-2">
+                        <tr>
+                            <td><strong>Gross Income</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.gross_income" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Less: Deductions</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.deductions" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #f8f9fa;">
+                            <td><strong>Net Taxable Income</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.net_taxable_income" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Income Tax Due</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.tax_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><strong>Less: Tax Withheld</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.tax_withheld" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr style="background-color: #e9ecef; font-weight: bold;">
+                            <td><strong>Tax Payable/(Refundable)</strong></td>
+                            <td class="text-end">
+                                <span t-field="o.tax_payable" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </t>
+
+                <!-- Line Items -->
+                <h5 class="mt-4">Supporting Details</h5>
+                <table class="table table-sm table-bordered">
+                    <thead>
+                        <tr style="background-color: #f8f9fa;">
+                            <th>Description</th>
+                            <th>Account</th>
+                            <th>Tax Code</th>
+                            <th class="text-end">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.line_ids" t-as="line">
+                            <tr>
+                                <td><span t-field="line.description"/></td>
+                                <td><span t-field="line.account_id.code"/> - <span t-field="line.account_id.name"/></td>
+                                <td><span t-field="line.tax_code"/></td>
+                                <td class="text-end">
+                                    <span t-field="line.amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+
+                <div class="row mt-4">
+                    <div class="col-6">
+                        <h5>Certification</h5>
+                        <p>I declare under the penalties of perjury that this return has been made in good faith, verified by me, and to the best of my knowledge and belief, is true and correct.</p>
+                        <p class="mt-4">
+                            _______________________________<br/>
+                            Signature Over Printed Name<br/>
+                            Date: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
+                        </p>
+                    </div>
+                    <div class="col-6 text-end">
+                        <t t-if="o.state == 'filed'">
+                            <div class="alert alert-success" role="alert">
+                                <strong>✓ FILED</strong><br/>
+                                Filed Date: <span t-field="o.filed_date"/><br/>
+                                <t t-if="o.atp_number">
+                                    ATP No.: <span t-field="o.atp_number"/>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Report Action -->
+    <record id="action_report_bir_form" model="ir.actions.report">
+        <field name="name">BIR Form</field>
+        <field name="model">finance.ssc.bir.form</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">ipai_finance_ssc.report_bir_form_document</field>
+        <field name="report_file">ipai_finance_ssc.report_bir_form_document</field>
+        <field name="binding_model_id" ref="model_finance_ssc_bir_form"/>
+        <field name="binding_type">report</field>
+    </record>
+
+</odoo>
