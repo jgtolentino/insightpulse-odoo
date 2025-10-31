@@ -15,7 +15,11 @@
       "Bash(ssh:*)",
       "Bash(git add:*)",
       "Bash(git pull:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(doctl apps create-deployment:*)",
+      "Bash(doctl apps get:*)",
+      "Bash(doctl apps update:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
