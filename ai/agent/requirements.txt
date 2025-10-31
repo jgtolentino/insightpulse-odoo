@@ -1,0 +1,2 @@
+# Trusted Agent Dependencies
+requests>=2.31.0

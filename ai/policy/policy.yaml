@@ -1,0 +1,34 @@
+# E2B Sandbox Policy for Trusted Agent
+# Enforces least-privilege execution with network and filesystem restrictions
+
+fs:
+  readOnly: true
+  allowedPaths:
+    - "/workspace"
+    - "/tmp"
+
+net:
+  denyPrivateCIDRs: true
+  allow:
+    - "https://api.github.com"
+    - "https://raw.githubusercontent.com"
+    # Add your Odoo API endpoint if needed
+    # - "https://your-odoo-api.example.com"
+
+secrets:
+  mount: false
+  envAllowlist:
+    - "TOKEN_READONLY_*"
+    - "GITHUB_TOKEN"
+    - "MCP_SERVER_URL"
+    - "MODEL_RUNNER_URL"
+
+timeout: 120s
+cpu: "1"
+memory: "1Gi"
+
+# Audit logging
+audit:
+  logLevel: info
+  includeEnv: false
+  includeStdout: true

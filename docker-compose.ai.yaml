@@ -1,0 +1,79 @@
+# Docker Compose AI Profile
+# Extends docker-compose.yml with AI services
+# Usage: docker compose --profile ai up -d
+
+services:
+  mcp-gateway:
+    # MCP Gateway enforces tool allowlist
+    # Replace with actual MCP Gateway image when available
+    image: mcp-gateway:latest  # TODO: Replace with real image
+    profiles: ["ai"]
+    environment:
+      MCP_ALLOWLIST: github,http,web-browsing
+      MCP_CATALOG_URL: ${MCP_CATALOG_URL:-https://your-org/mcp-allowlist.json}
+      LOG_LEVEL: ${MCP_LOG_LEVEL:-info}
+    ports:
+      - "${MCP_GATEWAY_PORT:-8089}:8080"
+    networks:
+      - ai-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  model-runner:
+    # Model Runner provides LLM inference
+    # Replace with actual Model Runner image when available
+    image: model-runner:latest  # TODO: Replace with real image
+    profiles: ["ai"]
+    environment:
+      MODEL_BACKENDS: ${MODEL_BACKENDS:-openai:gpt-4o-mini,ollama:llama3}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OLLAMA_HOST: ${OLLAMA_HOST:-http://localhost:11434}
+      LOG_LEVEL: ${MODEL_RUNNER_LOG_LEVEL:-info}
+    ports:
+      - "${MODEL_RUNNER_PORT:-8088}:8080"
+    networks:
+      - ai-net
+    depends_on:
+      mcp-gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  agent:
+    # Trusted Agent for Odoo development
+    build:
+      context: ./ai/agent
+      dockerfile: Dockerfile
+    profiles: ["ai"]
+    environment:
+      E2B_API_KEY: ${E2B_API_KEY:-}
+      E2B_POLICY: /policy/policy.yaml
+      MCP_SERVER_URL: ${MCP_SERVER_URL:-http://mcp-gateway:8080}
+      MODEL_RUNNER_URL: ${MODEL_RUNNER_URL:-http://model-runner:8080}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      GITHUB_REPO: ${GITHUB_REPO:-}
+      GITHUB_BASE: ${GITHUB_BASE:-main}
+    volumes:
+      - ./ai/policy:/policy:ro
+      - agent-workspace:/workspace
+    networks:
+      - ai-net
+    depends_on:
+      model-runner:
+        condition: service_healthy
+    command: ["--help"]  # Override with actual command
+    restart: unless-stopped
+
+networks:
+  ai-net:
+    driver: bridge
+
+volumes:
+  agent-workspace:
+    driver: local
