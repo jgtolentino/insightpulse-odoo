@@ -153,7 +153,103 @@ Use **`scripts/scaffold-odoo-module.sh`** to generate an OCA-compliant addon ske
 
 ### 6.1 Test Matrix
 
-* Units, integration (HTTP mocks), security tests (record rules), migration tests, PDF rendering (wkhtmltopdf smoke tests), performance micro-benchmarks.
+* **Unit tests (models, fields, constraints)** – ORM API, computed fields, onchange, SQL constraints.
+* **Business workflow tests** – happy/edge paths, multi-step approvals, state transitions, accounting postings.
+* **Security tests** – ACLs, record rules, sudo boundaries, group-based visibility; attempt privilege escalation and expect `AccessError`.
+* **API contract tests** – controllers/routes, authentication, pagination, filtering, error payloads; schema-checked (OpenAPI) and backward-compat tests.
+* **Integration tests** – external APIs with HTTP mocks (timeouts, 4xx/5xx, retries), queue jobs (`queue_job`) and idempotency.
+* **Migration/data-load tests** – ETL transforms, referential integrity, deduplication, round-trip counts/hash totals.
+* **Report/PDF tests** – wkhtmltopdf smoke (assets load, fonts glyphs), amounts/labels assertions.
+* **Performance & scalability** – ORM batch ops, N+1 detection, heavy-report benchmarks, job queue throughput.
+* **Concurrency & locking** – simulate parallel writes; verify transactional integrity and deadlock handling.
+* **Multi-company/tenant isolation** – data leakage checks, cross-company rules, company-dependent fields.
+* **I18n/L10n tests** – translations present, currency/rounding, timezone correctness.
+* **Install/upgrade/uninstall** – module installability, `migrations/` pre/post scripts, upgrade path, uninstallation leaves DB clean.
+* **Cron/mail/queue** – scheduled actions, mail gateways, bounce handling, retry/backoff semantics.
+* **UI (Tours)** – headless browser tours for core flows, portal/mobile responsiveness smoke.
+* **SRE/runbook tests** – health endpoints, readiness/liveness, backup/restore drill.
+
+#### 6.1.A Sample pytest snippets
+
+**Record rule should deny access to non-members**
+
+```python
+import pytest
+from odoo.exceptions import AccessError
+
+def test_record_rule_denies(env):
+    Model = env["my_mod.secure_model"].with_user(env.ref("base.public_user"))
+    rec = env["my_mod.secure_model"].create({"name": "X"})
+    with pytest.raises(AccessError):
+        Model.browse(rec.id).read(["name"])
+```
+
+**Workflow / posting assertions**
+
+```python
+def test_approval_flow(env):
+    req = env["my_mod.request"].create({"name": "R1", "amount": 100})
+    req.action_submit()
+    assert req.state == "submitted"
+    req.with_user(env.ref("my_mod.group_approver")).action_approve()
+    assert req.state == "approved"
+    move = req.account_move_id
+    assert move.amount_total == 100
+```
+
+**API contract (JSON schema)**
+
+```python
+import jsonschema
+
+def test_api_contract(http_client, token):
+    res = http_client.get("/saas/service/items", headers={"Authorization": f"Bearer {token}"})
+    assert res.status_code == 200
+    schema = {"type": "object", "properties": {"data": {"type": "array"}}}
+    jsonschema.validate(res.json(), schema)
+```
+
+**Idempotent queue job**
+
+```python
+def test_job_idempotent(env):
+    job_model = env["queue.job"]
+    payload = {"ext_id": "A1"}
+    env["my_mod.job_service"].enqueue_sync(payload)  # creates record
+    env["my_mod.job_service"].enqueue_sync(payload)  # should noop
+    recs = env["my_mod.target"].search([("external_id", "=", "A1")])
+    assert len(recs) == 1
+```
+
+**Concurrent write (advisory lock example)**
+
+```python
+from concurrent.futures import ThreadPoolExecutor
+
+def test_concurrent_updates(env):
+    rec = env["my_mod.counter"].create({"name": "C", "value": 0})
+    def inc(uid):
+        env_cr = env(cr=env.cr, uid=uid, context=dict(env.context))
+        env_cr["my_mod.counter"].browse(rec.id).increment()
+    users = [env.ref("base.user_admin").id, env.ref("base.user_root").id]
+    with ThreadPoolExecutor(max_workers=2) as ex:
+        list(ex.map(inc, users))
+    rec.refresh()
+    assert rec.value == 2
+```
+
+#### 6.1.B Non-functional acceptance gates
+
+* **P95 latency** for critical endpoints < *X* ms under *N* RPS.
+* **Job success rate** ≥ 99.5% with retry policy proven.
+* **PDF render success** ≥ 99.9% across top 5 templates.
+* **Error budget** & alert thresholds defined per SLO.
+
+#### 6.1.C Multi-tenant SaaS isolation checks
+
+* Different companies cannot read/write each other's records.
+* Cross-company many2one/many2many guarded by rules.
+* Admin-only endpoints bypass isolation only with `sudo()` + audit log.
 
 ### 6.2 CI/CD (GitHub Actions example)
 
