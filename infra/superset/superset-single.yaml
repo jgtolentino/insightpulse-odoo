@@ -22,7 +22,7 @@ services:
 
     health_check:
       http_path: /health
-      initial_delay_seconds: 300
+      initial_delay_seconds: 600  # 10 minutes for first-time migrations
       period_seconds: 30
       timeout_seconds: 10
       success_threshold: 1
