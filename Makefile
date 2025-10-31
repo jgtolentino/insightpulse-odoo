@@ -1,7 +1,7 @@
 # Odoo Development Makefile
 # Provides convenient shortcuts for common development tasks
 
-.PHONY: help init lint test run shell build clean coverage scaffold search
+.PHONY: help init lint test run shell build clean coverage scaffold search ai-up ai-down
 
 help:
 	@echo "Odoo Development Commands"
@@ -21,6 +21,10 @@ help:
 	@echo "Module Management:"
 	@echo "  make scaffold     - Generate new module (requires: NAME, MODELS, etc.)"
 	@echo "  make search       - Search OCA modules (requires: KEYWORDS)"
+	@echo ""
+	@echo "AI/Agents:"
+	@echo "  make ai-up        - Start AI services (MCP Gateway, Model Runner, Agent)"
+	@echo "  make ai-down      - Stop AI services"
 	@echo ""
 	@echo "Cleanup:"
 	@echo "  make clean        - Clean temporary files and caches"
@@ -102,3 +106,19 @@ search:
 	[ -n "$(VERSION)" ] && ARGS="$$ARGS --version $(VERSION)"; \
 	[ -n "$(FORMAT)" ] && ARGS="$$ARGS --format $(FORMAT)"; \
 	./scripts/search-oca-modules.sh $$ARGS
+
+ai-up:
+	@echo "🤖 Starting AI services (MCP Gateway, Model Runner, Agent)..."
+	@if [ -f docker-compose.ai.yaml ]; then \
+		docker compose --profile ai up -d; \
+	else \
+		echo "⚠️  docker-compose.ai.yaml not found"; \
+		echo "See Section 14.2 of SAAS_REPLICATION_PLAYBOOK.md for setup"; \
+		exit 1; \
+	fi
+	@echo "✅ AI services started"
+
+ai-down:
+	@echo "🛑 Stopping AI services..."
+	docker compose --profile ai down
+	@echo "✅ AI services stopped"

@@ -851,4 +851,155 @@ done
 
 ---
 
+## 14) Trusted AI with Docker + E2B (Agents, MCP, Model Runner)
+
+**Objective:** Let agents assist (code changes, docs, data tasks) without ever granting them direct access to prod infra. All agent actions run in **isolated sandboxes**, use **curated tools via MCP Gateway**, and are gated by CI before merge/deploy.
+
+### 14.1 Reference Architecture
+
+* **Local Dev:** `docker compose` profile `ai` spins up `mcp-gateway`, `model-runner`, and your `agent` sidecar next to `odoo`/`postgres`.
+* **CI:** Agent proposals arrive as PRs. CI enforces tests, coverage, lint, SBOM + vuln scan. No direct pushes.
+* **Prod:** Agents live as separate services; any code execution happens in **E2B sandboxes** with read-only FS, network allowlists, short-lived creds. Odoo remains a stable app service.
+
+### 14.2 Compose (AI profile)
+
+Create `docker-compose.ai.yaml` and activate with `--profile ai`.
+
+```yaml
+services:
+  mcp-gateway:
+    image: <mcp-gateway-image>
+    profiles: ["ai"]
+    environment:
+      MCP_ALLOWLIST: github,http,web-browsing
+      MCP_CATALOG_URL: https://<your-org>/mcp-allowlist.json
+      LOG_LEVEL: info
+    ports: ["8089:8080"]
+
+  model-runner:
+    image: <model-runner-image>
+    profiles: ["ai"]
+    environment:
+      MODEL_BACKENDS: openai:gpt-4o-mini,ollama:llama3
+      # Provide keys via secrets manager or env
+    depends_on: [mcp-gateway]
+
+  agent:
+    build: ./ai/agent
+    profiles: ["ai"]
+    environment:
+      E2B_API_KEY: ${E2B_API_KEY}
+      E2B_POLICY: /policy/policy.yaml
+      MCP_SERVER_URL: http://mcp-gateway:8080
+      MODEL_RUNNER_URL: http://model-runner:8080
+    volumes:
+      - ./ai/policy:/policy:ro
+    depends_on: [model-runner]
+```
+
+### 14.3 MCP Gateway Allowlist
+
+Only expose vetted tools to agents. Host this JSON and point `MCP_CATALOG_URL` to it.
+
+```json
+{
+  "allow": [
+    {"tool": "github", "version": ">=1.0.0"},
+    {"tool": "http",   "version": ">=1.0.0"},
+    {"tool": "browser", "version": ">=1.0.0"}
+  ],
+  "deny": [
+    {"tool": "shell",   "reason": "No raw shell for agents"},
+    {"tool": "ssh",     "reason": "Disallowed"}
+  ]
+}
+```
+
+### 14.4 E2B Sandbox Policy (example)
+
+Keep execution locked down; only whitelisted egress and paths.
+
+```yaml
+fs:
+  readOnly: true
+  allowedPaths: ["/workspace", "/tmp"]
+net:
+  denyPrivateCIDRs: true
+  allow:
+    - "https://api.github.com"
+    - "https://<your-api>"
+secrets:
+  mount: false
+  envAllowlist: ["TOKEN_READONLY_*"]
+timeout: 120s
+cpu: "1"
+memory: "1Gi"
+```
+
+### 14.5 Agent → PR Workflow (Guardrails)
+
+1. Agent runs in E2B sandbox and calls MCP tools only.
+2. Changes are sent as **PRs** with a run summary and sandbox run ID.
+3. **Required checks** (branch protection):
+
+   * Unit/Integration tests (≥75% coverage)
+   * Lint (pylint-odoo, black), XML/manifest validations
+   * SBOM + Vulnerability scan (block on High/Critical)
+   * Policy: modified files under `addons/` must have matching tests
+
+**GitHub Actions job (snippet):**
+
+```yaml
+jobs:
+  ai-policy-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with: { path: '.', output-file: 'sbom.spdx.json' }
+      - name: Vulnerability scan
+        run: |
+          pip install pip-audit
+          pip-audit --strict
+      - name: Verify tests changed with code
+        run: |
+          git diff --name-only origin/main...HEAD | grep '^addons/.\+\.py' && \
+          git diff --name-only origin/main...HEAD | grep '^addons/.\+tests/.\+\.py' || \
+          (echo 'Code changed without tests' && exit 1)
+```
+
+### 14.6 Observability & Audit
+
+* Log every agent action with a correlation ID and sandbox run ID; ship to Loki/ELK.
+
+```json
+{ "ts": "2025-10-31T05:20:11Z", "agent_id": "ai-bot-1", "sandbox_run": "e2b_abc123", "tool": "github.pulls.create", "odoo_model": "saas.request", "res_id": 123, "result": "success", "latency_ms": 842 }
+```
+
+* Odoo linkage: add `sandbox_run_id` + `agent_id` fields on the job/request models; expose in chatter for traceability.
+* Metrics: job success rate, tool error rates, P95 agent response latency.
+
+### 14.7 Security Posture
+
+* No prod secrets in agent containers; use read-only, least-privilege tokens.
+* Deny private CIDRs; allow only needed public endpoints.
+* Sign images; pin base images; block deploy on critical CVEs.
+* Periodic red-team: try to exfiltrate secrets or bypass MCP allowlist as regression tests.
+
+### 14.8 Developer UX
+
+* `make ai-up` → brings up AI profile; `make ai-down` → stops it.
+* Local model via Model Runner or point to your provider; switch with env.
+* Scaffolder can generate an **agent stub** (`ai/agent/`) wired to MCP & E2B (optional enhancement).
+
+### 14.9 Adding a New Tool (Runbook)
+
+1. Propose tool in MCP allowlist PR with risk notes.
+2. Add egress to E2B policy (if needed) and update tests.
+3. Dry-run locally (`--profile ai`), then merge allowlist.
+4. Observe agent runs; roll back by removing tool from allowlist if anomalies arise.
+
+---
+
 *Maintainers: keep this playbook in the repo root as `SAAS_REPLICATION_PLAYBOOK.md` and evolve per project retrospectives.*
