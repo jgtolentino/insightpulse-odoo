@@ -65,7 +65,7 @@ class IrModuleModule(models.Model):
                     repo = 'unknown'
                 module.source_repository = f'https://github.com/OCA/{repo}/tree/19.0/{module.name}'
             elif module.module_source == 'custom':
-                module.source_repository = f'https://insightpulseai.net/odoo/apps/{module.name}'
+                module.source_repository = f'https://insightpulseai.net/apps/{module.name}'
             else:
                 module.source_repository = False
 

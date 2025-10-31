@@ -19,7 +19,7 @@
   - `scripts/gh-app-list-installations.sh`
 
 ### 3. Webhook Configuration
-- **URL**: `https://insightpulseai.net/odoo/github/webhook` ✅ Configured
+- **URL**: `https://insightpulseai.net/github/webhook` ✅ Configured
 - **Secret**: `3c15843e35326dac8f976404716a4b99545f568c91d2c6d1851177762e6f762c` ✅ Set
 - **Content Type**: json ✅
 - **SSL Verification**: Enabled ✅
@@ -41,7 +41,7 @@ All properly configured:
 ## ⏳ Pending Deployment
 
 ### Module Installation Required
-The `pulser_hub_sync` module exists in the repository but needs to be installed on the production Odoo instance at `https://insightpulseai.net/odoo`.
+The `pulser_hub_sync` module exists in the repository but needs to be installed on the production Odoo instance at `https://insightpulseai.net`.
 
 #### Module Details
 - **Name**: Pulser Hub Sync
@@ -53,7 +53,7 @@ The `pulser_hub_sync` module exists in the repository but needs to be installed 
 #### Deployment Options
 
 **Option 1: Web Interface (Recommended)**
-1. Login to Odoo: https://insightpulseai.net/odoo
+1. Login to Odoo: https://insightpulseai.net
 2. Enable Developer Mode: Settings → Activate Developer Mode
 3. Apps → Update Apps List
 4. Search for "Pulser Hub Sync"
@@ -75,7 +75,7 @@ cd /path/to/odoo
 ```python
 import xmlrpc.client
 
-url = "https://insightpulseai.net/odoo"
+url = "https://insightpulseai.net"
 db = "odoo"
 username = "admin"
 password = "Postres_26"
@@ -102,7 +102,7 @@ After module installation, verify:
 
 ### 1. Health Check
 ```bash
-curl -sf https://insightpulseai.net/odoo/github/health | jq
+curl -sf https://insightpulseai.net/github/health | jq
 ```
 **Expected Response:**
 ```json

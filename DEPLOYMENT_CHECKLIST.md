@@ -441,7 +441,7 @@ docker compose restart odoo
 #### Step 6: Clear Browser Cache
 
 - Hard reload: **Ctrl+Shift+R** (Windows/Linux) or **Cmd+Shift+R** (Mac)
-- Or visit: `https://insightpulseai.net/odoo/web?debug=assets`
+- Or visit: `https://insightpulseai.net/web?debug=assets`
 - Check browser console to verify error is gone
 
 ### Reinstalling OCA Modules

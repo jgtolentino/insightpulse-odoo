@@ -129,7 +129,7 @@ http://insightpulseai.net {
 #
 # 5. Test endpoints:
 #    curl -I https://insightpulseai.net/superset/health
-#    curl -I https://insightpulseai.net/odoo
+#    curl -I https://insightpulseai.net
 #
 # 6. Monitor logs:
 #    tail -f /var/log/caddy/access.log

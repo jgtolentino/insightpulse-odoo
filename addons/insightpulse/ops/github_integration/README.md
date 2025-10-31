@@ -50,12 +50,12 @@ Ensure pulser-hub app has these webhook subscriptions:
 
 ### Webhook URL
 ```
-https://insightpulseai.net/odoo/github/webhook
+https://insightpulseai.net/github/webhook
 ```
 
 ### OAuth Callback URL
 ```
-https://insightpulseai.net/odoo/github/auth/callback
+https://insightpulseai.net/github/auth/callback
 ```
 
 ## Usage

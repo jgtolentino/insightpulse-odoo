@@ -14,7 +14,7 @@
     - Quality control integration
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/ipai_procure",
+    "website": "https://insightpulseai.net/apps/ipai_procure",
     "license": "AGPL-3",
     "depends": [
         "base",

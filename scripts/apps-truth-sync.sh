@@ -18,7 +18,7 @@ docker compose exec odoo python odoo-bin -c /etc/odoo/odoo.conf -d "$DB" --dev=n
 echo "✅ Apps registry and versions synced for $DB"
 echo ""
 echo "📝 Next steps:"
-echo "   1. Go to https://insightpulseai.net/odoo/apps"
+echo "   1. Go to https://insightpulseai.net/apps"
 echo "   2. Enable Developer mode (⋮ menu)"
 echo "   3. Click 'Update Apps List'"
 echo "   4. Apply any scheduled upgrades if shown"

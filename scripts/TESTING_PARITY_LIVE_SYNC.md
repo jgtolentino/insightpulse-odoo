@@ -99,7 +99,7 @@ To enable live Odoo exports, add secrets in GitHub:
 
 | Secret Name | Example Value | Description |
 |-------------|---------------|-------------|
-| `ODOO_URL` | `https://insightpulseai.net/odoo` | Your Odoo instance URL |
+| `ODOO_URL` | `https://insightpulseai.net` | Your Odoo instance URL |
 | `ODOO_DB` | `odoo_prod` | Database name |
 | `ODOO_LOGIN` | `admin@example.com` | Admin user login |
 | `ODOO_PASSWORD` | `your-secure-password` | Admin user password |

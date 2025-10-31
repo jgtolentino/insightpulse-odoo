@@ -6,7 +6,7 @@ Authenticates to live Odoo instance and exports ir.module.module data
 to CSV and Markdown reports for documentation and tracking.
 
 Usage:
-    export ODOO_URL="https://insightpulseai.net/odoo"
+    export ODOO_URL="https://insightpulseai.net"
     export ODOO_DB="odoo_prod"
     export ODOO_LOGIN="admin@example.com"
     export ODOO_PASSWORD="password"

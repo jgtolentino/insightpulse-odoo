@@ -55,7 +55,7 @@ Base URL: `https://insightpulseai.net` (or your Odoo domain)
 
 **Usage:**
 ```bash
-curl https://insightpulseai.net/odoo/github/health
+curl https://insightpulseai.net/github/health
 ```
 
 ---
@@ -506,7 +506,7 @@ All API endpoints return consistent error format:
 
 ### Test connectivity:
 ```bash
-curl https://insightpulseai.net/odoo/github/health
+curl https://insightpulseai.net/github/health
 ```
 
 ### Test issue creation:

@@ -14,7 +14,7 @@
     - Batch processing with retry logic
     """,
     "author": "InsightPulseAI",
-    "website": "https://insightpulseai.net/odoo/apps/ipai_expense",
+    "website": "https://insightpulseai.net/apps/ipai_expense",
     "license": "AGPL-3",
     "depends": [
         "base",

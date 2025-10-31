@@ -226,8 +226,8 @@ github_api.trigger_workflow(
 - **Homepage**: https://insightpulseai.net/pulser-hub
 
 **Endpoints**:
-- **Webhook**: `https://insightpulseai.net/odoo/github/webhook`
-- **OAuth Callback**: `https://insightpulseai.net/odoo/github/auth/callback`
+- **Webhook**: `https://insightpulseai.net/github/webhook`
+- **OAuth Callback**: `https://insightpulseai.net/github/auth/callback`
 
 **Architecture**:
 ```

@@ -4,7 +4,7 @@ Automated snapshots of live Odoo module inventory from production system.
 
 ## Overview
 
-This directory contains timestamped snapshots of the module registry from the live Odoo deployment at `insightpulseai.net/odoo`. Reports are generated automatically via CI/CD and can be generated manually for troubleshooting.
+This directory contains timestamped snapshots of the module registry from the live Odoo deployment at `insightpulseai.net`. Reports are generated automatically via CI/CD and can be generated manually for troubleshooting.
 
 ## Files
 
@@ -38,7 +38,7 @@ The `.github/workflows/parity-live-sync.yml` workflow runs daily at 18:00 UTC (0
 ### Manual
 ```bash
 # Set credentials (DO NOT commit these)
-export ODOO_URL="https://insightpulseai.net/odoo"
+export ODOO_URL="https://insightpulseai.net"
 export ODOO_DB="odoo_prod"
 export ODOO_LOGIN="admin@example.com"
 export ODOO_PASSWORD="password"
