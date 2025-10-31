@@ -37,6 +37,17 @@ repos:
         files: ^addons/.*\.py$
         args: [--max-line-length=88, --extend-ignore=E203,E501]
 
+  # Odoo-specific linting (OCA standards)
+  - repo: https://github.com/oca/pylint-odoo
+    rev: v9.0.5
+    hooks:
+      - id: pylint_odoo
+        name: pylint-odoo
+        files: ^addons/.*\.py$
+        args: ["--rcfile=.pylintrc-mandatory"]
+        additional_dependencies:
+          - pylint-odoo==9.0.5
+
   # Security vulnerability scanning
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5

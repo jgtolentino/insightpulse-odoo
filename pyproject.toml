@@ -19,6 +19,41 @@ known-first-party = ["odoo", "addons", "insightpulse_odoo"]
 combine-as-imports = true
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q --cov=addons --cov-report=term-missing --cov-report=xml --cov-report=html"
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[tool.coverage.run]
+source = ["addons"]
+omit = [
+    "*/tests/*",
+    "*/__init__.py",
+    "*/__manifest__.py",
+    "*/migrations/*",
+]
+parallel = true
+concurrency = ["multiprocessing"]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+fail_under = 75
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+]
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.coverage.xml]
+output = "coverage.xml"
