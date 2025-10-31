@@ -47,7 +47,6 @@ Key Features:
         # Master Data
         'data/agencies_data.xml',
         'data/bir_forms_data.xml',
-        'data/ir_cron_data.xml',
 
         # Views
         'views/agency_views.xml',
@@ -55,17 +54,15 @@ Key Features:
         'views/bir_forms_views.xml',
         'views/bank_reconciliation_views.xml',
         'views/consolidation_views.xml',
-        'views/menus.xml',
 
         # Wizards
         'wizards/month_end_closing_wizard_views.xml',
         'wizards/bir_filing_wizard_views.xml',
-        'wizards/consolidation_wizard_views.xml',
+        'wizards/bank_match_wizard_views.xml',
 
         # Reports
         'reports/trial_balance_report.xml',
         'reports/bir_forms_report.xml',
-        'reports/consolidation_report.xml',
     ],
     'demo': [],
     'installable': True,
