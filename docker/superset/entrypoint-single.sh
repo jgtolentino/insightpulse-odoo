@@ -3,6 +3,9 @@ set -e
 
 echo "🚀 Starting Superset single container..."
 
+# Set Superset configuration path
+export SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
+
 # Wait for Redis to be ready (started by supervisor)
 echo "⏳ Waiting for Redis..."
 sleep 5

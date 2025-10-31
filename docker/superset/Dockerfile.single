@@ -46,6 +46,9 @@ RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor
 # Supervisor configuration
 COPY docker/superset/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
+# Copy Superset production configuration
+COPY config/superset/superset_config_production.py /app/pythonpath/superset_config.py
+
 # Redis configuration
 RUN mkdir -p /var/lib/redis /var/log/redis \
     && chown -R superset:superset /var/lib/redis /var/log/redis
