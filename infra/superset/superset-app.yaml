@@ -98,6 +98,11 @@ services:
         scope: RUN_TIME
         value: "production"
 
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
       - key: FLASK_DEBUG
         scope: RUN_TIME
         value: "false"
@@ -253,6 +258,11 @@ services:
         scope: RUN_TIME
         value: "production"
 
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
   # Celery Beat for scheduled tasks
   - name: superset-beat
     github:
@@ -310,6 +320,11 @@ services:
       - key: SUPERSET_ENV
         scope: RUN_TIME
         value: "production"
+
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
 
 # Background workers (no HTTP exposure)
 workers:
@@ -371,6 +386,11 @@ workers:
         scope: RUN_TIME
         value: "production"
 
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
+
   # Celery Beat for scheduled tasks
   - name: superset-beat
     github:
@@ -428,6 +448,11 @@ workers:
       - key: SUPERSET_ENV
         scope: RUN_TIME
         value: "production"
+
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "Postgres_26"
 
   # Redis cache service
   - name: redis
