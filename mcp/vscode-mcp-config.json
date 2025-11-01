@@ -1,0 +1,208 @@
+{
+  "mcpServers": {
+    "pulser-hub": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "pulser-hub-mcp:latest"
+      ],
+      "description": "Pulser Hub MCP Server for Odoo and ecosystem integration"
+    },
+    "digitalocean": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-digitalocean"
+      ],
+      "env": {
+        "DIGITALOCEAN_TOKEN": "${env:DIGITALOCEAN_TOKEN}"
+      },
+      "description": "Digital Ocean infrastructure management"
+    },
+    "kubernetes": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-kubernetes"
+      ],
+      "env": {
+        "KUBECONFIG": "${env:KUBECONFIG}"
+      },
+      "description": "Kubernetes cluster operations"
+    },
+    "docker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-docker"
+      ],
+      "description": "Docker container management"
+    },
+    "github": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_TOKEN": "${env:GITHUB_TOKEN}"
+      },
+      "description": "GitHub repository management"
+    },
+    "superset": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-superset"
+      ],
+      "env": {
+        "SUPERSET_URL": "https://insightpulseai.net/odoo/superset",
+        "SUPERSET_USERNAME": "admin",
+        "SUPERSET_PASSWORD": "${env:SUPERSET_PASSWORD}"
+      },
+      "description": "Apache Superset analytics"
+    }
+  },
+  "mcp": {
+    "enabled": true,
+    "autoStart": true,
+    "logLevel": "info"
+  },
+  "integrations": {
+    "digitalocean": {
+      "enableMCP": true,
+      "clusterName": "superset-ai-cluster",
+      "region": "nyc3"
+    },
+    "kubernetes": {
+      "enableMCP": true,
+      "namespace": "superset",
+      "context": "do-nyc3-superset-ai-cluster"
+    },
+    "docker": {
+      "enableMCP": true,
+      "registry": "docker.io"
+    },
+    "superset": {
+      "enableMCP": true,
+      "baseUrl": "https://insightpulseai.net/odoo/superset",
+      "aiFeatures": true
+    }
+  },
+  "workflows": {
+    "deploy_superset": {
+      "name": "Deploy Superset with AI",
+      "description": "Orchestrate Superset deployment across MCP ecosystem",
+      "steps": [
+        {
+          "server": "digitalocean",
+          "tool": "do_kubernetes_create",
+          "parameters": {
+            "name": "superset-ai-cluster",
+            "region": "nyc3",
+            "version": "1.27.2-do.0"
+          }
+        },
+        {
+          "server": "kubernetes",
+          "tool": "k8s_namespace_create",
+          "parameters": {
+            "name": "superset",
+            "labels": {
+              "app": "superset"
+            }
+          }
+        },
+        {
+          "server": "docker",
+          "tool": "image_pull",
+          "parameters": {
+            "image": "apache/superset:latest"
+          }
+        },
+        {
+          "server": "superset",
+          "tool": "superset_dashboard_create",
+          "parameters": {
+            "name": "AI Analytics Dashboard",
+            "data_source": "odoo_analytics"
+          }
+        },
+        {
+          "server": "pulser-hub",
+          "tool": "orchestrate_deployment",
+          "parameters": {
+            "service_name": "superset",
+            "target_platform": "kubernetes"
+          }
+        }
+      ]
+    },
+    "create_analytics_dashboard": {
+      "name": "Create Analytics Dashboard",
+      "description": "Create comprehensive analytics dashboard using Superset",
+      "steps": [
+        {
+          "server": "superset",
+          "tool": "superset_dashboard_create",
+          "parameters": {
+            "name": "Odoo Business Intelligence",
+            "data_source": "odoo_postgres"
+          }
+        },
+        {
+          "server": "superset",
+          "tool": "superset_chart_create",
+          "parameters": {
+            "dashboard_id": "odoo-business-intelligence",
+            "chart_type": "line_chart",
+            "title": "Sales Trends"
+          }
+        },
+        {
+          "server": "pulser-hub",
+          "tool": "create_superset_dashboard",
+          "parameters": {
+            "dashboard_name": "Odoo Performance Metrics",
+            "data_source": "odoo_metrics"
+          }
+        }
+      ]
+    }
+  },
+  "toolRegistry": {
+    "totalTools": 98,
+    "servers": {
+      "pulser-hub": {
+        "tools": 5,
+        "categories": ["odoo", "deployment", "ecosystem"]
+      },
+      "kubernetes": {
+        "tools": 22,
+        "categories": ["cluster", "deployment", "monitoring", "networking"]
+      },
+      "docker": {
+        "tools": 1,
+        "categories": ["container"]
+      },
+      "docker-hub": {
+        "tools": 13,
+        "categories": ["registry", "image", "security"]
+      },
+      "github": {
+        "tools": 40,
+        "categories": ["repository", "ci_cd", "issues", "actions"]
+      },
+      "digitalocean": {
+        "tools": 3,
+        "categories": ["infrastructure", "kubernetes", "database"]
+      },
+      "superset": {
+        "tools": 3,
+        "categories": ["analytics", "dashboard", "chart"]
+      }
+    }
+  }
+}

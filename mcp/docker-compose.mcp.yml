@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # Pulser Hub MCP Server
+  pulser-hub-mcp:
+    image: pulser-hub-mcp:latest
+    container_name: pulser-hub-mcp
+    restart: unless-stopped
+    environment:
+      - MCP_LOG_LEVEL=info
+    volumes:
+      - ./logs:/app/logs
+    networks:
+      - mcp-network
+
+  # MCP Orchestrator (for cross-server coordination)
+  mcp-orchestrator:
+    image: node:18-alpine
+    container_name: mcp-orchestrator
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./orchestrator:/app
+    command: ["node", "orchestrator.js"]
+    environment:
+      - MCP_SERVERS_CONFIG=/app/servers.json
+      - DIGITALOCEAN_TOKEN=${DIGITALOCEAN_TOKEN}
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - SUPERSET_PASSWORD=${SUPERSET_PASSWORD}
+    networks:
+      - mcp-network
+    depends_on:
+      - pulser-hub-mcp
+
+  # MCP Bridge for VS Code Integration
+  mcp-bridge:
+    image: node:18-alpine
+    container_name: mcp-bridge
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./bridge:/app
+    command: ["node", "bridge.js"]
+    ports:
+      - "8081:8081"
+    environment:
+      - MCP_ORCHESTRATOR_URL=http://mcp-orchestrator:3000
+      - VSCODE_EXTENSION_PORT=8081
+    networks:
+      - mcp-network
+    depends_on:
+      - mcp-orchestrator
+
+  # MCP Dashboard (for monitoring)
+  mcp-dashboard:
+    image: node:18-alpine
+    container_name: mcp-dashboard
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - ./dashboard:/app
+    command: ["node", "dashboard.js"]
+    ports:
+      - "8082:8082"
+    environment:
+      - MCP_ORCHESTRATOR_URL=http://mcp-orchestrator:3000
+      - DASHBOARD_PORT=8082
+    networks:
+      - mcp-network
+    depends_on:
+      - mcp-orchestrator
+
+networks:
+  mcp-network:
+    driver: bridge
+
+volumes:
+  mcp-logs:
+    driver: local
