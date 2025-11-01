@@ -44,8 +44,12 @@ RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
     mkdir -p /var/lib/odoo/.local /var/log/odoo /mnt/extra-addons /var/lib/odoo/.cache/pip && \
     chown -R odoo:odoo /var/lib/odoo /var/log/odoo /mnt/extra-addons
 
-# Install Odoo from pip (Debian trixie compatibility - .deb has unmet dependencies)
-RUN pip install --no-cache-dir odoo==19.0
+# Install Odoo from source (19.0 branch - not yet on PyPI)
+RUN apt-get update && apt-get install -y --no-install-recommends git && \
+    git clone --depth 1 --branch 19.0 https://github.com/odoo/odoo.git /opt/odoo-src && \
+    cd /opt/odoo-src && \
+    pip install --no-cache-dir -e . && \
+    apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # Install python wheels built in stage 1
 COPY --from=build /wheels /wheels
