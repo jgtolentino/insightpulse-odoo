@@ -47,7 +47,7 @@ app.get('/callback', async (req: Request, res: Response) => {
       return res.redirect('/?error=config_error&error_description=OAuth credentials not configured');
     }
 
-    console.log(`Exchanging OAuth code for access token (client_id: ${clientId})`);
+    console.log('Exchanging OAuth code for access token');
 
     // Make request to GitHub to exchange code for token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
@@ -93,7 +93,8 @@ app.get('/callback', async (req: Request, res: Response) => {
 
     console.log('OAuth token exchange successful');
 
-    // Redirect back to frontend with token in hash (for client-side storage)
+    // Redirect back to frontend with token in URL fragment (hash)
+    // Note: URL fragments are NOT sent to the server, so the token won't appear in server logs or referrer headers
     res.redirect(`/#access_token=${accessToken}&token_type=${tokenData.token_type || 'bearer'}&scope=${encodeURIComponent(tokenData.scope || '')}`);
   } catch (error) {
     console.error('OAuth callback error:', error);
