@@ -33,6 +33,13 @@ log_error() {
     echo -e "${RED}❌${NC} $1"
 }
 
+# Helper function to sanitize numeric values
+sanitize_number() {
+    local value="$1"
+    value=$(echo "$value" | tr -d ' \n' | grep -o '[0-9]*' | head -1)
+    echo "${value:-0}"
+}
+
 # Module to audit (default to ipai_expense)
 MODULE_PATH="${1:-addons/custom/ipai_expense}"
 MODULE_NAME=$(basename "$MODULE_PATH")
@@ -54,8 +61,7 @@ echo -e "${BLUE}═════════════════════�
 echo ""
 
 log_info "1. Scanning for hardcoded credentials..."
-CREDS_FOUND=$(grep -r "password\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" --include="*.conf" 2>/dev/null | wc -l || echo 0)
-CREDS_FOUND=${CREDS_FOUND// /}
+CREDS_FOUND=$(sanitize_number "$(grep -r "password\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" --include="*.conf" 2>/dev/null | wc -l || echo 0)")
 if [ "$CREDS_FOUND" -gt 0 ]; then
     log_error "Found $CREDS_FOUND potential hardcoded credentials"
     grep -rn "password\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" --include="*.conf" 2>/dev/null | head -3
@@ -65,8 +71,7 @@ fi
 echo ""
 
 log_info "2. Scanning for API keys and tokens..."
-API_KEYS=$(grep -r "api_key\|API_KEY\|token\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)
-API_KEYS=${API_KEYS// /}
+API_KEYS=$(sanitize_number "$(grep -r "api_key\|API_KEY\|token\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)")
 if [ "$API_KEYS" -gt 0 ]; then
     log_error "Found $API_KEYS potential API keys/tokens"
     grep -rn "api_key\|API_KEY\|token\s*=\s*['\"]" "$MODULE_PATH" --include="*.py" 2>/dev/null | head -3
@@ -76,8 +81,7 @@ fi
 echo ""
 
 log_info "3. Checking for SQL injection vulnerabilities..."
-SQL_EXEC=$(grep -r "self\.env\.cr\.execute\|self\._cr\.execute" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)
-SQL_EXEC=${SQL_EXEC// /}
+SQL_EXEC=$(sanitize_number "$(grep -r "self\.env\.cr\.execute\|self\._cr\.execute" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)")
 if [ "$SQL_EXEC" -gt 0 ]; then
     log_warning "Found $SQL_EXEC direct SQL executions (review for parameterization)"
 else
@@ -86,8 +90,7 @@ fi
 echo ""
 
 log_info "4. Checking for insecure external API calls..."
-INSECURE_API=$(grep -r "verify=False\|timeout=None" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)
-INSECURE_API=${INSECURE_API// /}
+INSECURE_API=$(sanitize_number "$(grep -r "verify=False\|timeout=None" "$MODULE_PATH" --include="*.py" 2>/dev/null | wc -l || echo 0)")
 if [ "$INSECURE_API" -gt 0 ]; then
     log_error "Found $INSECURE_API insecure API configurations"
 else
@@ -192,10 +195,8 @@ echo ""
 log_info "9. Checking for potential performance issues..."
 # Check for fields that might need indexes
 if [ -d "$MODULE_PATH/models" ]; then
-    CHAR_FIELDS=$(grep -r "fields\.Char\|fields\.Text" "$MODULE_PATH/models" --include="*.py" 2>/dev/null | wc -l || echo 0)
-    CHAR_FIELDS=${CHAR_FIELDS// /}
-    INDEXED_FIELDS=$(grep -r "index=True" "$MODULE_PATH/models" --include="*.py" 2>/dev/null | wc -l || echo 0)
-    INDEXED_FIELDS=${INDEXED_FIELDS// /}
+    CHAR_FIELDS=$(sanitize_number "$(grep -r "fields\.Char\|fields\.Text" "$MODULE_PATH/models" --include="*.py" 2>/dev/null | wc -l || echo 0)")
+    INDEXED_FIELDS=$(sanitize_number "$(grep -r "index=True" "$MODULE_PATH/models" --include="*.py" 2>/dev/null | wc -l || echo 0)")
     echo "   Char/Text fields: $CHAR_FIELDS"
     echo "   Indexed fields: $INDEXED_FIELDS"
     
@@ -217,21 +218,11 @@ CRITICAL_ISSUES=0
 HIGH_ISSUES=0
 MEDIUM_ISSUES=0
 
-# Count issues (ensure numeric values)
-CREDS_FOUND=$(echo "$CREDS_FOUND" | tr -d ' \n' | grep -o '[0-9]*' | head -1)
-API_KEYS=$(echo "$API_KEYS" | tr -d ' \n' | grep -o '[0-9]*' | head -1)
-INSECURE_API=$(echo "$INSECURE_API" | tr -d ' \n' | grep -o '[0-9]*' | head -1)
-SQL_EXEC=$(echo "$SQL_EXEC" | tr -d ' \n' | grep -o '[0-9]*' | head -1)
-
-CREDS_FOUND=${CREDS_FOUND:-0}
-API_KEYS=${API_KEYS:-0}
-INSECURE_API=${INSECURE_API:-0}
-SQL_EXEC=${SQL_EXEC:-0}
-
-if [ "$CREDS_FOUND" -gt 0 ] 2>/dev/null; then ((CRITICAL_ISSUES++)); fi
-if [ "$API_KEYS" -gt 0 ] 2>/dev/null; then ((CRITICAL_ISSUES++)); fi
-if [ "$INSECURE_API" -gt 0 ] 2>/dev/null; then ((HIGH_ISSUES++)); fi
-if [ "$SQL_EXEC" -gt 0 ] 2>/dev/null; then ((MEDIUM_ISSUES++)); fi
+# Count issues (values already sanitized by helper function)
+if [ "$CREDS_FOUND" -gt 0 ]; then ((CRITICAL_ISSUES++)); fi
+if [ "$API_KEYS" -gt 0 ]; then ((CRITICAL_ISSUES++)); fi
+if [ "$INSECURE_API" -gt 0 ]; then ((HIGH_ISSUES++)); fi
+if [ "$SQL_EXEC" -gt 0 ]; then ((MEDIUM_ISSUES++)); fi
 
 echo "📊 Issue Count:"
 echo "   🔴 Critical: $CRITICAL_ISSUES"

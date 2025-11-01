@@ -360,8 +360,7 @@ if __name__ == '__main__':
     'maintainers': ['github_username'],
     'contributors': ['contributor1', 'contributor2'],
     'images': ['static/description/banner.png'],
-    '
-': ['keyword1', 'keyword2'],
+    'keywords': ['keyword1', 'keyword2'],
     
     # Data files
     'data': [

@@ -52,8 +52,8 @@ SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 **After (Secure)**:
 ```python
 # config/odoo.conf
-admin_passwd = ${ODOO_ADMIN_PASSWORD}
-db_password = ${ODOO_DB_PASSWORD}
+admin_passwd = %(ODOO_ADMIN_PASSWORD)s
+db_password = %(ODOO_DB_PASSWORD)s
 
 # models/config.py
 import os
