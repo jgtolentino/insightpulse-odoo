@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!-- Wizard form -->
+  <record id="view_pulser_gitops_wizard_form" model="ir.ui.view">
+    <field name="name">pulser.gitops.wizard.form</field>
+    <field name="model">pulser.gitops.wizard</field>
+    <field name="arch" type="xml">
+      <form string="Pulser Git-Ops Dispatch" create="false" edit="true">
+        <group>
+          <field name="branch" />
+          <field name="message" />
+        </group>
+        <group string="Optional KV Storage">
+          <field name="kv_key" />
+          <field name="kv_value" />
+        </group>
+        <group>
+          <field name="response" readonly="1" nolabel="1" attrs="{'invisible': [('response','=',False)]}"/>
+        </group>
+        <footer>
+          <button string="Dispatch" type="object" name="action_dispatch" class="btn-primary"/>
+          <button string="Cancel" special="cancel" class="btn-secondary"/>
+        </footer>
+      </form>
+    </field>
+  </record>
+
+  <!-- Window action for the wizard -->
+  <record id="action_pulser_gitops_wizard" model="ir.actions.act_window">
+    <field name="name">Pulser: Dispatch Git-Ops</field>
+    <field name="res_model">pulser.gitops.wizard</field>
+    <field name="view_mode">form</field>
+    <field name="target">new</field>
+    <field name="context">{}</field>
+  </record>
+
+  <!-- Top-level menu (optional) -->
+  <menuitem id="menu_pulser_root" name="Pulser" sequence="90" web_icon="pulser_webhook,static/description/icon.png"/>
+  <menuitem id="menu_pulser_gitops" name="Git-Ops" parent="menu_pulser_root" action="action_pulser_gitops_wizard"/>
+</odoo>

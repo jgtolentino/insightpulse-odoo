@@ -10,7 +10,7 @@ services:
   - name: superset-web
     # GitHub source configuration
     github:
-      repo: tbwahacker/insightpulse-odoo
+      repo: jgtolentino/insightpulse-odoo
       branch: main
       deploy_on_push: true
 
@@ -53,7 +53,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -98,6 +98,11 @@ services:
         scope: RUN_TIME
         value: "production"
 
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "SHWYXDMFAwXI1drT"
+
       - key: FLASK_DEBUG
         scope: RUN_TIME
         value: "false"
@@ -135,7 +140,7 @@ services:
       - key: SUPERSET_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: SUPERSET_ADMIN_FIRST_NAME
         scope: RUN_TIME
@@ -195,10 +200,12 @@ services:
       - path: /superset
         preserve_path_prefix: false
 
+# Background workers (no HTTP exposure)
+workers:
   # Celery Worker for async queries and alerts
   - name: superset-worker
     github:
-      repo: tbwahacker/insightpulse-odoo
+      repo: jgtolentino/insightpulse-odoo
       branch: main
       deploy_on_push: true
 
@@ -222,7 +229,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -253,10 +260,15 @@ services:
         scope: RUN_TIME
         value: "production"
 
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "SHWYXDMFAwXI1drT"
+
   # Celery Beat for scheduled tasks
   - name: superset-beat
     github:
-      repo: tbwahacker/insightpulse-odoo
+      repo: jgtolentino/insightpulse-odoo
       branch: main
       deploy_on_push: true
 
@@ -280,7 +292,7 @@ services:
       - key: DATABASE_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "Postgres_26"
+        value: "SHWYXDMFAwXI1drT"
 
       - key: DATABASE_HOST
         scope: RUN_TIME
@@ -311,11 +323,15 @@ services:
         scope: RUN_TIME
         value: "production"
 
-# Internal services (not exposed externally)
-workers:
+      - key: SUPERSET_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: "SHWYXDMFAwXI1drT"
+
+  # Redis cache service
   - name: redis
     image:
-      registry_type: DOCR
+      registry_type: DOCKER_HUB
       repository: redis
       tag: "7-alpine"
 

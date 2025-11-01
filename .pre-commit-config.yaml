@@ -37,6 +37,17 @@ repos:
         files: ^addons/.*\.py$
         args: [--max-line-length=88, --extend-ignore=E203,E501]
 
+  # Odoo-specific linting (OCA standards)
+  - repo: https://github.com/oca/pylint-odoo
+    rev: v9.0.5
+    hooks:
+      - id: pylint_odoo
+        name: pylint-odoo
+        files: ^addons/.*\.py$
+        args: ["--rcfile=.pylintrc-mandatory"]
+        additional_dependencies:
+          - pylint-odoo==9.0.5
+
   # Security vulnerability scanning
   - repo: https://github.com/PyCQA/bandit
     rev: 1.7.5
@@ -51,6 +62,24 @@ repos:
     hooks:
       - id: markdownlint
         files: \.md$
+
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+        name: actionlint
+        description: Lint GitHub Actions workflow files
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: hadolint
+        description: Lint Dockerfiles
+        files: Dockerfile.*|.*\.dockerfile$
 
 # Default configuration
 default_language_version:

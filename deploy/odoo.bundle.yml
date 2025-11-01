@@ -1,46 +1,52 @@
-version: "3.8"
+version: "3.9"
+
+x-env: &odoo_env
+  TZ: Asia/Manila
+  # app config
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+  # db config (Odoo reads from odoo.conf; Postgres vars are for the db container)
+  PGUSER: ${POSTGRES_USER:-odoo}
+  PGPASSWORD: ${POSTGRES_PASSWORD:-odoo}
 
 services:
-  odoo:
-    image: jgtolentino/insightpulse-odoo:${ODOO_IMAGE_TAG}
-    container_name: odoo-bundle
-    restart: unless-stopped
-    env_file:
-      - ./.env
-    command: ["odoo", "-c", "/etc/odoo/odoo.conf"]
-    ports:
-      - "${ODOO_HOST_PORT:-8069}:8069"
-    depends_on:
-      - db
-    volumes:
-      - ../config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
-      # InsightPulse modules
-      - ../addons/insightpulse:/mnt/extra-addons/insightpulse:ro
-      # Custom modules
-      - ../addons/custom:/mnt/extra-addons/custom:ro
-      # OCA modules (parent dir mount)
-      - ../addons/oca/web:/mnt/extra-addons/oca:ro
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8069/web/login"]
-      interval: 10s
-      timeout: 4s
-      retries: 10
-
   db:
     image: postgres:15
-    container_name: odoo-db
-    restart: unless-stopped
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-odoo}
       POSTGRES_USER: ${POSTGRES_USER:-odoo}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    volumes:
-      - pgdata:/var/lib/postgresql/data
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo} -d ${POSTGRES_DB:-postgres}"]
       interval: 10s
       timeout: 5s
-      retries: 5
+      retries: 12
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  odoo:
+    image: ${ODOO_IMAGE:-jgtolentino/insightpulse-odoo}:${ODOO_IMAGE_TAG:-latest}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *odoo_env
+    volumes:
+      # filestore persistence (default location for odoo user)
+      - odoodata:/var/lib/odoo
+      # mount your extra addons next to deploy/ (../custom_addons on the server)
+      - ../addons:/mnt/extra-addons:rw
+      # ship your odoo.conf via rsync to ../config/odoo/odoo.conf
+      - ../config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
+    ports:
+      - "${ODOO_HOST_PORT:-8069}:8069"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSL --max-time 4 http://127.0.0.1:8069/web/login >/dev/null || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
 
 volumes:
-  pgdata:
+  dbdata:
+  odoodata:

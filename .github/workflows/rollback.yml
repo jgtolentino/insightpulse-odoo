@@ -1,0 +1,80 @@
+name: rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      deployment_id:
+        description: 'Deployment ID to rollback to (leave empty for previous)'
+        required: false
+
+permissions:
+  contents: read
+
+env:
+  STAGING_APP_ID: 7f7b673b-35ed-4b20-a2ae-11e74c2109bf
+  PRODUCTION_APP_ID: b1bb1b07-46a6-4bbb-85a2-e1e8c7f263b9
+
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve app ID
+        id: app
+        run: |
+          if [ "${{ github.event.inputs.environment }}" = "production" ]; then
+            echo "app_id=${{ env.PRODUCTION_APP_ID }}" >> $GITHUB_OUTPUT
+          else
+            echo "app_id=${{ env.STAGING_APP_ID }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Get previous deployment
+        id: previous
+        if: ${{ github.event.inputs.deployment_id == '' }}
+        run: |
+          PREV_ID=$(doctl apps list-deployments ${{ steps.app.outputs.app_id }} \
+            --format ID,Phase \
+            --no-header | grep ACTIVE | head -2 | tail -1 | awk '{print $1}')
+          echo "deployment_id=$PREV_ID" >> $GITHUB_OUTPUT
+
+      - name: Perform rollback
+        run: |
+          TARGET="${{ github.event.inputs.deployment_id || steps.previous.outputs.deployment_id }}"
+          if [ -z "$TARGET" ]; then
+            echo "❌ No deployment ID found for rollback"
+            exit 1
+          fi
+          
+          echo "🔄 Rolling back to deployment: $TARGET"
+          doctl apps create-deployment ${{ steps.app.outputs.app_id }} \
+            --deployment-id "$TARGET" --wait
+
+      - name: Verify rollback
+        run: |
+          chmod +x scripts/health_check.sh
+          URL=$(doctl apps get ${{ steps.app.outputs.app_id }} --format DefaultIngress --no-header)
+          ./scripts/health_check.sh "https://$URL/web/login" 20 15
+
+      - name: Notify
+        if: always()
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ Rollback successful for ${{ github.event.inputs.environment }}"
+          else
+            echo "❌ Rollback failed for ${{ github.event.inputs.environment }}"
+          fi

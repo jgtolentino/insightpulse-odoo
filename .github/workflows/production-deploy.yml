@@ -134,7 +134,7 @@ jobs:
             fi
 
             echo "✅ Odoo 8069 bundle healthy"
-REMOTE
+          REMOTE
 
       - name: Done
         if: ${{ success() }}

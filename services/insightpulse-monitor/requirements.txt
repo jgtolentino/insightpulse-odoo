@@ -1,0 +1,6 @@
+fastmcp>=0.2.0
+supabase>=2.3.0
+httpx>=0.26.0
+uvicorn>=0.27.0
+pydantic>=2.5.0
+python-dotenv>=1.0.0

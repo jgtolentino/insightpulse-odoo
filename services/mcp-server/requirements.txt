@@ -1,18 +1,7 @@
-# MCP Server Dependencies for pulser-hub GitHub Integration
-
-# Web Framework
 fastapi==0.104.1
 uvicorn[standard]==0.24.0
-
-# GitHub App Authentication
+pydantic==2.5.0
 PyJWT==2.8.0
-cryptography==41.0.7  # Required for JWT RS256
-
-# HTTP Client
+cryptography==41.0.7
 httpx==0.25.2
-
-# Data Validation
-pydantic==2.5.2
-
-# Logging (built-in, listed for reference)
-# logging - Python standard library
+python-multipart==0.0.6

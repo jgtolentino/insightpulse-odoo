@@ -1,13 +1,5 @@
-# DigitalOcean App Platform Spec for MCP Server
-#
-# Deploy with: doctl apps create --spec app.yaml
-# Update with: doctl apps update <app-id> --spec app.yaml
-
 name: pulser-hub-mcp
-region: nyc
-domains:
-  - domain: mcp.insightpulseai.net
-    type: PRIMARY
+region: sgp
 
 services:
   - name: mcp-server
@@ -15,18 +7,22 @@ services:
       repo: jgtolentino/insightpulse-odoo
       branch: main
       deploy_on_push: true
-
-    source_dir: /services/mcp-server
-
+    source_dir: services/mcp-server
     dockerfile_path: services/mcp-server/Dockerfile
 
-    # Build configuration
-    build_command: pip install -r requirements.txt
+    http_port: 8000
 
-    # Runtime configuration
-    run_command: python server.py
+    instance_count: 1
+    instance_size_slug: basic-xxs
 
-    # Environment variables
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+
     envs:
       - key: GITHUB_APP_ID
         value: "2191216"
@@ -35,48 +31,16 @@ services:
       - key: GITHUB_PRIVATE_KEY
         scope: RUN_TIME
         type: SECRET
-        # Set this in DigitalOcean dashboard: App Settings → Environment Variables
-        # Value: Your pulser-hub private key (PEM format)
 
       - key: GITHUB_INSTALLATION_ID
         scope: RUN_TIME
         type: SECRET
-        # Set this in DigitalOcean dashboard
-        # Find at: https://github.com/settings/installations/<installation_id>
 
-      - key: PORT
-        value: "8000"
-        scope: RUN_TIME
-
-    # Resource allocation
-    instance_count: 1
-    instance_size_slug: basic-xxs  # $5/month
-
-    # HTTP configuration
-    http_port: 8000
-
-    # Health check
-    health_check:
-      http_path: /health
-      initial_delay_seconds: 10
-      period_seconds: 30
-      timeout_seconds: 10
-      success_threshold: 1
-      failure_threshold: 3
-
-    # Routes
     routes:
+      - path: /mcp/github
+      - path: /health
       - path: /
-        preserve_path_prefix: true
 
-# Database (none required - stateless service)
-databases: []
-
-# Static sites (none)
-static_sites: []
-
-# Background workers (none)
-workers: []
-
-# Jobs (none)
-jobs: []
+domains:
+  - domain: mcp.insightpulseai.net
+    type: PRIMARY

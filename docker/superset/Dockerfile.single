@@ -1,0 +1,86 @@
+# Apache Superset Single Container
+# Runs Redis and Superset in one container
+
+ARG SUPERSET_VERSION=latest
+FROM apache/superset:${SUPERSET_VERSION}
+
+LABEL maintainer="InsightPulse AI <admin@insightpulseai.net>"
+LABEL description="Apache Superset Single Container with embedded Redis"
+
+USER root
+
+# Install Redis and supervisor
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    redis-server \
+    supervisor \
+    libpq-dev \
+    build-essential \
+    gcc \
+    g++ \
+    python3-dev \
+    curl \
+    wget \
+    ca-certificates \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install database drivers into Superset virtualenv (following official docs)
+RUN . /app/.venv/bin/activate && \
+    uv pip install \
+    psycopg2-binary==2.9.9 \
+    gevent==24.2.1 \
+    greenlet==3.0.3 \
+    pymysql==1.1.0 \
+    pymongo==4.6.1 \
+    redis==5.0.1 \
+    hiredis==2.3.2 \
+    flask-talisman==1.1.0 \
+    flask-limiter==3.5.0 \
+    sentry-sdk==1.40.0
+
+# Create supervisor config
+RUN mkdir -p /etc/supervisor/conf.d /var/log/supervisor
+
+# Supervisor configuration
+COPY docker/superset/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Copy Superset production configuration
+COPY config/superset/superset_config_production.py /app/pythonpath/superset_config.py
+
+# Redis configuration
+RUN mkdir -p /var/lib/redis /var/log/redis \
+    && chown -R superset:superset /var/lib/redis /var/log/redis
+
+# Superset directories
+RUN mkdir -p \
+    /app/superset_home/uploads \
+    /app/superset_home/sqllab \
+    && chown -R superset:superset /app/superset_home
+
+# Security hardening
+RUN chmod 755 /app/superset_home \
+    && chmod 755 /app/superset_home/uploads \
+    && chmod 755 /app/superset_home/sqllab \
+    && find / -xdev -perm /6000 -type f -exec chmod a-s {} \; || true
+
+# Health check (10min start-period for first-time migrations)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=600s --retries=3 \
+    CMD curl -f http://localhost:8088/health || exit 1
+
+USER superset
+
+WORKDIR /app
+
+EXPOSE 8088
+
+ENV PYTHONPATH="/app/pythonpath:/app/config" \
+    SUPERSET_ENV="production" \
+    FLASK_APP="superset.app:create_app()"
+
+# Entrypoint
+COPY docker/superset/entrypoint-single.sh /app/entrypoint.sh
+USER root
+RUN chmod +x /app/entrypoint.sh
+USER superset
+
+CMD ["/app/entrypoint.sh"]

@@ -55,13 +55,6 @@ RUN pip install --no-cache-dir \
     greenlet==3.0.3 \
     # Additional database drivers (optional, for connecting to data sources)
     pymysql==1.1.0 \
-    mysqlclient==2.2.4 \
-    # BigQuery support
-    pybigquery==0.10.2 \
-    # Snowflake support
-    snowflake-sqlalchemy==1.5.1 \
-    # Redshift support
-    sqlalchemy-redshift==0.8.14 \
     # MongoDB support
     pymongo==4.6.1 \
     # Redis support for caching

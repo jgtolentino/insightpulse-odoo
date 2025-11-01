@@ -1,0 +1,19 @@
+name: fin-workspace-mcp
+services:
+  - name: pulser-hub-mcp
+    source_dir: mcp
+    dockerfile_path: mcp/Dockerfile
+    http_port: 8080
+    run_command: >
+      python -m uvicorn app.pulser_hub_mcp.main:create_app
+      --factory --host 0.0.0.0 --port ${PORT}
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /
+    health_check:
+      http_path: /healthz
+      initial_delay_seconds: 5
+    envs:
+      - key: UVICORN_NO_UVLOOP
+        value: "1"

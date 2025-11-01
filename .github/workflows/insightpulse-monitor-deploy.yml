@@ -1,0 +1,229 @@
+name: InsightPulse Monitor - Deploy
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/insightpulse-monitor/**'
+      - '.github/workflows/insightpulse-monitor-deploy.yml'
+
+  workflow_dispatch:
+    inputs:
+      force_rebuild:
+        description: 'Force rebuild Docker image'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  DO_MONITOR_APP_ID: ${{ secrets.DO_MONITOR_APP_ID }}
+  REGISTRY_NAME: insightpulse-monitor
+
+jobs:
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        working-directory: services/insightpulse-monitor
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff mypy
+
+      - name: Lint Python code
+        working-directory: services/insightpulse-monitor
+        run: |
+          ruff check . --select=E,F,W --ignore=E501
+        continue-on-error: true
+
+      - name: Type check
+        working-directory: services/insightpulse-monitor
+        run: |
+          mypy server.py --ignore-missing-imports
+        continue-on-error: true
+
+      - name: Validate app.yaml
+        run: |
+          python -c "import yaml; yaml.safe_load(open('services/insightpulse-monitor/app.yaml'))"
+
+  build:
+    name: Build Docker Image
+    needs: validate
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: services/insightpulse-monitor
+          file: services/insightpulse-monitor/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REGISTRY_NAME }}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REGISTRY_NAME }}:${{ github.sha }}
+          cache-from: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REGISTRY_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKERHUB_USERNAME }}/${{ env.REGISTRY_NAME }}:buildcache,mode=max
+
+  deploy:
+    name: Deploy to DigitalOcean
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Update app spec
+        id: update_spec
+        run: |
+          echo "Updating DigitalOcean app spec..."
+          doctl apps update ${{ env.DO_MONITOR_APP_ID }} --spec services/insightpulse-monitor/app.yaml
+          echo "App spec updated successfully"
+
+      - name: Create deployment
+        id: deploy
+        run: |
+          echo "Creating new deployment..."
+
+          if [ "${{ github.event.inputs.force_rebuild }}" == "true" ]; then
+            DEPLOYMENT_ID=$(doctl apps create-deployment ${{ env.DO_MONITOR_APP_ID }} --force-rebuild --format ID --no-header)
+          else
+            DEPLOYMENT_ID=$(doctl apps create-deployment ${{ env.DO_MONITOR_APP_ID }} --format ID --no-header)
+          fi
+
+          echo "deployment_id=$DEPLOYMENT_ID" >> $GITHUB_OUTPUT
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+      - name: Wait for deployment
+        id: wait
+        run: |
+          echo "Waiting for deployment to complete..."
+          DEPLOYMENT_ID="${{ steps.deploy.outputs.deployment_id }}"
+          MAX_WAIT=900  # 15 minutes
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            STATUS=$(doctl apps list-deployments ${{ env.DO_MONITOR_APP_ID }} --format ID,Phase --no-header | grep "$DEPLOYMENT_ID" | awk '{print $2}')
+
+            echo "Deployment status: $STATUS (elapsed: ${ELAPSED}s)"
+
+            if [ "$STATUS" == "ACTIVE" ]; then
+              echo "Deployment successful!"
+              echo "deployment_status=success" >> $GITHUB_OUTPUT
+              exit 0
+            elif [ "$STATUS" == "ERROR" ] || [ "$STATUS" == "CANCELED" ]; then
+              echo "Deployment failed with status: $STATUS"
+              echo "deployment_status=failed" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+
+            sleep 30
+            ELAPSED=$((ELAPSED + 30))
+          done
+
+          echo "Deployment timeout after ${MAX_WAIT}s"
+          echo "deployment_status=timeout" >> $GITHUB_OUTPUT
+          exit 1
+
+      - name: Get deployment logs
+        if: failure()
+        run: |
+          echo "Fetching deployment logs..."
+          doctl apps logs ${{ env.DO_MONITOR_APP_ID }} --type build --follow=false || true
+          doctl apps logs ${{ env.DO_MONITOR_APP_ID }} --type run --follow=false || true
+
+  verify:
+    name: Verify Deployment
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Get app URL
+        id: app_url
+        run: |
+          APP_URL=$(doctl apps get ${{ env.DO_MONITOR_APP_ID }} --format DefaultIngress --no-header)
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+          echo "App URL: $APP_URL"
+
+      - name: Health check
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "Waiting for app to be ready..."
+          sleep 30
+
+          echo "Running health check..."
+          MAX_RETRIES=10
+          RETRY=0
+
+          while [ $RETRY -lt $MAX_RETRIES ]; do
+            if curl -sf "https://${APP_URL}/health" > /dev/null; then
+              echo "Health check passed!"
+              exit 0
+            fi
+
+            echo "Health check failed, retrying... ($((RETRY + 1))/$MAX_RETRIES)"
+            sleep 15
+            RETRY=$((RETRY + 1))
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts"
+          curl -v "https://${APP_URL}/health" || true
+          exit 1
+
+      - name: Test MCP endpoints
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "Testing MCP tools list..."
+          curl -X POST "https://${APP_URL}/mcp" \
+            -H "Content-Type: application/json" \
+            -d '{"method":"tools/list","params":{}}' \
+            --fail-with-body
+
+      - name: Deployment summary
+        run: |
+          APP_URL="${{ steps.app_url.outputs.app_url }}"
+
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Deployed successfully" >> $GITHUB_STEP_SUMMARY
+          echo "- **App URL**: https://${APP_URL}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Health Check**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **MCP Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deployment Time**: $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "- **Git SHA**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY

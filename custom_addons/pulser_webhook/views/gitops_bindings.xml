@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!-- Project Task Binding -->
+  <record id="server_action_pulser_gitops_project_task" model="ir.actions.server">
+    <field name="name">Pulser: Dispatch Git-Ops…</field>
+    <field name="state">code</field>
+    <field name="code">
+      action = {
+        "type": "ir.actions.act_window",
+        "res_model": "pulser.gitops.wizard",
+        "view_mode": "form",
+        "target": "new",
+        "context": {
+          "active_model": context.get("active_model"),
+          "active_id": context.get("active_id"),
+          "active_ids": context.get("active_ids"),
+        },
+      }
+    </field>
+    <field name="binding_type">action</field>
+    <field name="binding_view_types">form</field>
+    <field name="binding_model_id" ref="project.model_project_task"/>
+  </record>
+
+  <!-- Sale Order Binding -->
+  <record id="server_action_pulser_gitops_sale_order" model="ir.actions.server">
+    <field name="name">Pulser: Dispatch Git-Ops…</field>
+    <field name="state">code</field>
+    <field name="code">
+      action = {
+        "type": "ir.actions.act_window",
+        "res_model": "pulser.gitops.wizard",
+        "view_mode": "form",
+        "target": "new",
+        "context": {
+          "active_model": context.get("active_model"),
+          "active_id": context.get("active_id"),
+          "active_ids": context.get("active_ids"),
+        },
+      }
+    </field>
+    <field name="binding_type">action</field>
+    <field name="binding_view_types">form</field>
+    <field name="binding_model_id" ref="sale.model_sale_order"/>
+  </record>
+
+  <!-- Invoice/Bill (account.move) Binding -->
+  <record id="server_action_pulser_gitops_account_move" model="ir.actions.server">
+    <field name="name">Pulser: Dispatch Git-Ops…</field>
+    <field name="state">code</field>
+    <field name="code">
+      action = {
+        "type": "ir.actions.act_window",
+        "res_model": "pulser.gitops.wizard",
+        "view_mode": "form",
+        "target": "new",
+        "context": {
+          "active_model": context.get("active_model"),
+          "active_id": context.get("active_id"),
+          "active_ids": context.get("active_ids"),
+        },
+      }
+    </field>
+    <field name="binding_type">action</field>
+    <field name="binding_view_types">form</field>
+    <field name="binding_model_id" ref="account.model_account_move"/>
+  </record>
+
+  <!-- Employee Expense Binding -->
+  <record id="server_action_pulser_gitops_hr_expense" model="ir.actions.server">
+    <field name="name">Pulser: Dispatch Git-Ops…</field>
+    <field name="state">code</field>
+    <field name="code">
+      action = {
+        "type": "ir.actions.act_window",
+        "res_model": "pulser.gitops.wizard",
+        "view_mode": "form",
+        "target": "new",
+        "context": {
+          "active_model": context.get("active_model"),
+          "active_id": context.get("active_id"),
+          "active_ids": context.get("active_ids"),
+        },
+      }
+    </field>
+    <field name="binding_type">action</field>
+    <field name="binding_view_types">form</field>
+    <field name="binding_model_id" ref="hr_expense.model_hr_expense"/>
+  </record>
+
+  <!-- Purchase Order Binding -->
+  <record id="server_action_pulser_gitops_purchase_order" model="ir.actions.server">
+    <field name="name">Pulser: Dispatch Git-Ops…</field>
+    <field name="state">code</field>
+    <field name="code">
+      action = {
+        "type": "ir.actions.act_window",
+        "res_model": "pulser.gitops.wizard",
+        "view_mode": "form",
+        "target": "new",
+        "context": {
+          "active_model": context.get("active_model"),
+          "active_id": context.get("active_id"),
+          "active_ids": context.get("active_ids"),
+        },
+      }
+    </field>
+    <field name="binding_type">action</field>
+    <field name="binding_view_types">form</field>
+    <field name="binding_model_id" ref="purchase.model_purchase_order"/>
+  </record>
+</odoo>

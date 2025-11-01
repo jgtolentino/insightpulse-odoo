@@ -1,0 +1,35 @@
+# Development and testing dependencies for InsightPulse Odoo
+
+# Testing framework
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-xdist>=3.3.0  # Parallel test execution
+coverage[toml]>=7.3.0
+
+# Code quality
+pylint>=3.0.0
+pylint-odoo>=9.0.5
+flake8>=6.1.0
+black>=23.12.0
+isort>=5.12.0
+ruff>=0.1.0
+
+# Security scanning
+bandit>=1.7.5
+
+# Type checking
+mypy>=1.7.0
+
+# Pre-commit hooks
+pre-commit>=3.5.0
+
+# Documentation
+sphinx>=7.2.0
+sphinx-rtd-theme>=2.0.0
+
+# SQL linting (for dbt and raw SQL)
+sqlfluff>=2.3.0
+
+# Development utilities
+ipython>=8.17.0
+ipdb>=0.13.13

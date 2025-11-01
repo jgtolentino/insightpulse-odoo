@@ -1,13 +1,25 @@
-name: ci
-on: [push, pull_request]
+name: Quick CI Check
+on:
+  push:
+    branches-ignore:
+      - main  # Main branch uses ci-deploy.yml
+  pull_request:
+
 jobs:
-  lint-test:
+  quick-lint:
+    name: Quick Lint & Format Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with: { python-version: "3.11" }  # Align with Odoo 19.0
-      - run: pip install -U pip wheel ruff pytest
-      - run: ruff check . || true  # Make optional until linting is fixed
-      - run: ruff format --check . || true  # Make optional
-      - run: pytest || true # keep optional until tests land
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+      - name: Install tools
+        run: pip install -U pip wheel ruff pytest
+      - name: Ruff lint
+        run: ruff check . || true
+      - name: Ruff format check
+        run: ruff format --check . || true
+      - name: Quick test
+        run: pytest --collect-only || true
