@@ -26,6 +26,19 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    // Check for OAuth errors in query parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+
+    if (error) {
+      console.error('OAuth error:', error, errorDescription);
+      alert(`Authentication failed: ${errorDescription || error}`);
+      window.history.replaceState({}, document.title, '/');
+      return;
+    }
+
+    // Check for access token in hash (from OAuth callback)
     const hash = window.location.hash;
     if (hash) {
       const params = new URLSearchParams(hash.substring(1));

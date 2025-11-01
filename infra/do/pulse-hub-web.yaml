@@ -11,6 +11,11 @@ ingress:
       name: pulse-hub-api
     match:
       path:
+        prefix: /callback
+  - component:
+      name: pulse-hub-api
+    match:
+      path:
         prefix: /webhook
   - component:
       name: pulse-hub-api
