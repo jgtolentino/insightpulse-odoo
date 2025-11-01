@@ -44,12 +44,8 @@ RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
     mkdir -p /var/lib/odoo/.local /var/log/odoo /mnt/extra-addons /var/lib/odoo/.cache/pip && \
     chown -R odoo:odoo /var/lib/odoo /var/log/odoo /mnt/extra-addons
 
-# Install Odoo from official apt repository for better maintainability
-RUN curl -o odoo.deb https://nightly.odoo.com/19.0/nightly/deb/odoo_19.0.latest_all.deb && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ./odoo.deb && \
-    rm odoo.deb && \
-    rm -rf /var/lib/apt/lists/*
+# Install Odoo from pip (Debian trixie compatibility - .deb has unmet dependencies)
+RUN pip install --no-cache-dir odoo==19.0
 
 # Install python wheels built in stage 1
 COPY --from=build /wheels /wheels
