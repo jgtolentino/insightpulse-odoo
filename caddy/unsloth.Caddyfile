@@ -1,0 +1,11 @@
+unsloth.localhost:80 {
+    reverse_proxy unsloth:8888
+    @root path /
+    handle @root {
+        redir /lab
+    }
+}
+
+unsloth-api.localhost:80 {
+    reverse_proxy unsloth-api:8000
+}

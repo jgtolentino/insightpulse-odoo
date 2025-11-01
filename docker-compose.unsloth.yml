@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  unsloth:
+    image: unsloth/unsloth:latest
+    container_name: unsloth
+    restart: unless-stopped
+    environment:
+      JUPYTER_PASSWORD: "${UNSLOTH_JUPYTER_PASSWORD}"
+      JUPYTER_PORT: "${UNSLOTH_PORT:-8888}"
+      USER_PASSWORD: "${UNSLOTH_USER_PASSWORD:-unsloth}"
+      SSH_KEY: "${UNSLOTH_SSH_PUBKEY:-}"
+    ports:
+      - "${UNSLOTH_PORT:-8888}:8888"     # Jupyter
+      - "${UNSLOTH_SSH_PORT:-2222}:2222" # SSH (optional)
+    volumes:
+      - ./datasets:/workspace/work/datasets
+      - ./ml/unsloth-notebooks:/workspace/work
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+    networks: [default]
+
+  # Minimal inference API sharing the same notebooks volume
+  unsloth-api:
+    image: unsloth/unsloth:latest
+    container_name: unsloth-api
+    restart: unless-stopped
+    working_dir: /workspace/work
+    command: >
+      bash -lc "pip install --no-cache-dir fastapi uvicorn[standard] &&
+                uvicorn api.app:app --host 0.0.0.0 --port 8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./ml/unsloth-notebooks:/workspace/work
+      - ./datasets:/workspace/work/datasets
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+    runtime: nvidia
+    networks: [default]

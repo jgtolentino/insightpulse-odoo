@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ip_unsloth_wizard,access_ip_unsloth_wizard,model_ip_unsloth_wizard,base.group_system,1,1,1,1
