@@ -1,7 +1,7 @@
 import type { GitHubScope } from '../types/github';
 
 export const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || '';
-export const GITHUB_REDIRECT_URI = import.meta.env.VITE_GITHUB_REDIRECT_URI || 'http://localhost:3000/callback';
+export const GITHUB_REDIRECT_URI = import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:3000/callback';
 export const API_BASE_URL = 'https://api.github.com';
 
 export const GITHUB_SCOPES: GitHubScope[] = [
