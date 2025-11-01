@@ -44,7 +44,6 @@ export class GitHubService {
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: scopes,
-      response_type: 'token',
     });
     return `https://github.com/login/oauth/authorize?${params.toString()}`;
   }

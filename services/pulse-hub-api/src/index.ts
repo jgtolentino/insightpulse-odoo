@@ -20,6 +20,89 @@ app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', service: 'pulse-hub-api', timestamp: new Date().toISOString() });
 });
 
+// OAuth callback endpoint
+app.get('/callback', async (req: Request, res: Response) => {
+  try {
+    const { code, state, error } = req.query;
+
+    // Handle OAuth errors
+    if (error) {
+      console.error('OAuth error:', error);
+      const errorDescription = req.query.error_description || 'Authorization failed';
+      return res.redirect(`/?error=${encodeURIComponent(error as string)}&error_description=${encodeURIComponent(errorDescription as string)}`);
+    }
+
+    // Validate code parameter
+    if (!code || typeof code !== 'string') {
+      console.error('No authorization code received');
+      return res.redirect('/?error=no_code&error_description=No authorization code received');
+    }
+
+    // Exchange code for access token
+    const clientId = process.env.GITHUB_CLIENT_ID;
+    const clientSecret = process.env.GITHUB_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      console.error('GitHub OAuth credentials not configured');
+      return res.redirect('/?error=config_error&error_description=OAuth credentials not configured');
+    }
+
+    console.log('Exchanging OAuth code for access token');
+
+    // Make request to GitHub to exchange code for token
+    const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        client_id: clientId,
+        client_secret: clientSecret,
+        code: code,
+        ...(state && { state: state as string }),
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error('Token exchange failed:', errorText);
+      return res.redirect('/?error=token_exchange_failed&error_description=Failed to exchange code for token');
+    }
+
+    const tokenData = await tokenResponse.json() as {
+      access_token?: string;
+      token_type?: string;
+      scope?: string;
+      error?: string;
+      error_description?: string;
+    };
+
+    // Check for errors in token response
+    if (tokenData.error) {
+      console.error('Token exchange error:', tokenData.error_description);
+      return res.redirect(`/?error=${encodeURIComponent(tokenData.error)}&error_description=${encodeURIComponent(tokenData.error_description || 'Token exchange failed')}`);
+    }
+
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      console.error('No access token in response');
+      return res.redirect('/?error=no_token&error_description=No access token received');
+    }
+
+    console.log('OAuth token exchange successful');
+
+    // Redirect back to frontend with token in URL fragment (hash)
+    // Note: URL fragments are NOT sent to the server, so the token won't appear in server logs or referrer headers
+    res.redirect(`/#access_token=${accessToken}&token_type=${tokenData.token_type || 'bearer'}&scope=${encodeURIComponent(tokenData.scope || '')}`);
+  } catch (error) {
+    console.error('OAuth callback error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+    res.redirect(`/?error=callback_error&error_description=${encodeURIComponent(errorMessage)}`);
+  }
+});
+
 // GitHub webhook signature verification
 function verifyGitHubSignature(payload: string, signature: string, secret: string): boolean {
   if (!signature) return false;

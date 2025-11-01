@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { GitHubConnection, GitHubScope } from './types/github';
 import { GITHUB_SCOPES } from './config/github';
 import ConnectionStatus from './components/ConnectionStatus';
@@ -25,7 +25,36 @@ function App() {
     }
   }, [darkMode]);
 
+  const handleConnect = useCallback(async (token: string) => {
+    try {
+      const service = new GitHubService(token);
+      const user = await service.getCurrentUser();
+
+      setConnection((prev) => ({
+        isConnected: true,
+        accessToken: token,
+        user,
+        selectedScopes: prev.selectedScopes,
+      }));
+    } catch (error) {
+      console.error('Failed to connect:', error);
+    }
+  }, []);
+
   useEffect(() => {
+    // Check for OAuth errors in query parameters
+    const searchParams = new URLSearchParams(window.location.search);
+    const error = searchParams.get('error');
+    const errorDescription = searchParams.get('error_description');
+
+    if (error) {
+      console.error('OAuth error:', error, errorDescription);
+      alert(`Authentication failed: ${errorDescription || error}`);
+      window.history.replaceState({}, document.title, '/');
+      return;
+    }
+
+    // Check for access token in hash (from OAuth callback)
     const hash = window.location.hash;
     if (hash) {
       const params = new URLSearchParams(hash.substring(1));
@@ -36,23 +65,7 @@ function App() {
         window.history.replaceState({}, document.title, '/');
       }
     }
-  }, []);
-
-  const handleConnect = async (token: string) => {
-    try {
-      const service = new GitHubService(token);
-      const user = await service.getCurrentUser();
-
-      setConnection({
-        isConnected: true,
-        accessToken: token,
-        user,
-        selectedScopes: connection.selectedScopes,
-      });
-    } catch (error) {
-      console.error('Failed to connect:', error);
-    }
-  };
+  }, [handleConnect]);
 
   const handleDisconnect = () => {
     setConnection({

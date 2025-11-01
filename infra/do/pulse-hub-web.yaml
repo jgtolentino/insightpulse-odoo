@@ -3,10 +3,10 @@ features:
 ingress:
   rules:
   - component:
-      name: pulse-hub
+      name: pulse-hub-api
     match:
       path:
-        prefix: /
+        prefix: /callback
   - component:
       name: pulse-hub-api
     match:
@@ -17,6 +17,11 @@ ingress:
     match:
       path:
         prefix: /health
+  - component:
+      name: pulse-hub
+    match:
+      path:
+        prefix: /
 name: pulse-hub-web
 region: sgp
 services:
