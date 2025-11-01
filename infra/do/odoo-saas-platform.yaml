@@ -9,7 +9,7 @@ services:
   - name: odoo-web
     # GitHub source configuration
     github:
-      repo: tbwahacker/insightpulse-odoo
+      repo: jgtolentino/insightpulse-odoo
       branch: main
       deploy_on_push: true
 
@@ -35,10 +35,10 @@ services:
 
     # Environment variables
     envs:
-      # Database configuration (Supabase)
+      # Database configuration (Supabase - spdtwktxdalcfigzeqrz)
       - key: ODOO_DB_HOST
         scope: RUN_TIME
-        value: "${POSTGRES_HOST}"
+        value: "aws-1-us-east-1.pooler.supabase.com"
 
       - key: ODOO_DB_PORT
         scope: RUN_TIME
@@ -50,18 +50,18 @@ services:
 
       - key: ODOO_DB_USER
         scope: RUN_TIME
-        value: "${POSTGRES_USER}"
+        value: "postgres.spdtwktxdalcfigzeqrz"
 
       - key: ODOO_DB_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "${POSTGRES_PASSWORD}"
+        value: "SHWYXDMFAwXI1drT"
 
       # Odoo configuration
       - key: ODOO_ADMIN_PASSWORD
         scope: RUN_TIME
         type: SECRET
-        value: "${ODOO_ADMIN_PASSWORD}"
+        value: "InsightPulse2025!Admin"
 
       - key: ODOO_WORKERS
         scope: RUN_TIME
