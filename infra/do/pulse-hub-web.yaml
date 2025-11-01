@@ -50,8 +50,7 @@ services:
     value: https://spdtwktxdalcfigzeqrz.supabase.co
   - key: SUPABASE_SERVICE_ROLE_KEY
     scope: RUN_TIME
-    type: SECRET
-    value: EV[1:TODO:REPLACE_WITH_SERVICE_ROLE_KEY]
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZHR3a3R4ZGFsY2ZpZ3plcXJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDY0NDAzNSwiZXhwIjoyMDc2MjIwMDM1fQ.Rhdi18B5EuUeaSGfdB4rqZ6UoPSrJ9IbzkN_YboyvhU
 static_sites:
 - build_command: npm ci && npm run build
   catchall_document: index.html
