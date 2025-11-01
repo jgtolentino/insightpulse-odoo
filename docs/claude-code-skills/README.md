@@ -1,7 +1,7 @@
 # Claude Code Skills Catalog
 
-**Last Updated**: October 27, 2025
-**Total Skills**: 60+ specialized skills for Claude Code
+**Last Updated**: November 1, 2025
+**Total Skills**: 61+ specialized skills for Claude Code (including Audit Skill)
 **Source**: Integrated from Claude Desktop skill packs + Anthropic official repository
 
 ---
@@ -22,6 +22,42 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 ---
 
 ## 📂 Skill Categories
+
+### 🔍 Audit & Security (Priority P0) **NEW**
+**Location**: `audit-skill/`
+
+**Primary Skill**: `audit-skill/SKILL.md` (12.6KB)
+- Comprehensive security audit capabilities
+- Code quality and OCA compliance validation
+- Module structure auditing
+- Performance analysis
+- Dependency vulnerability scanning
+- Configuration security checks
+
+**Key Files**:
+- `audit-skill/SKILL.md` - Main audit skill documentation
+- `audit-skill/reference/security-audit-guide.md` - Security audit procedures (19.7KB)
+- `audit-skill/reference/module-audit-guide.md` - Module structure validation (22.9KB)
+- `audit-skill/examples/security-audit-example.md` - Security audit walkthrough (13.2KB)
+- `audit-skill/examples/module-audit-example.md` - Module audit walkthrough (17.2KB)
+- `audit-skill/evaluations/test-scenarios.md` - Test scenarios for validation (12.9KB)
+
+**Use Cases**:
+- ✅ Detect hardcoded credentials and secrets
+- ✅ Identify SQL injection and XSS vulnerabilities
+- ✅ Validate OCA module structure compliance
+- ✅ Check security rules and access controls
+- ✅ Audit performance issues (missing indexes, N+1 queries)
+- ✅ Scan dependencies for vulnerabilities
+- ✅ Generate comprehensive audit reports
+
+**Integration**:
+- Works with existing `scripts/audit-modules.sh`
+- Compatible with `SECURITY_AUDIT_REPORT.md` format
+- Integrates with CI/CD security gates
+- Supports multiple audit types: security, code-quality, module-structure, performance
+
+---
 
 ### 🔧 Odoo Development (Priority P0)
 **Location**: `odoo/`
@@ -214,7 +250,9 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 - Infrastructure as code
 - Security hardening
 
-**odoo-security-engineer** + `odoo/SKILL.md` (security sections)
+**odoo-security-engineer** + `audit-skill/SKILL.md` + `odoo/SKILL.md`
+- Comprehensive security audits
+- Vulnerability detection and remediation
 - Access control implementation
 - RLS policy creation
 - Security audit workflows
@@ -233,7 +271,17 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 
 ## 📖 Common Workflows
 
-### 1. Create OCA-Compliant Odoo Module
+### 1. Perform Security Audit
+```
+1. Read: docs/claude-code-skills/audit-skill/SKILL.md
+2. Read: docs/claude-code-skills/audit-skill/reference/security-audit-guide.md
+3. Follow security-audit-example.md walkthrough
+4. Run automated scans (grep, bandit, safety)
+5. Generate comprehensive audit report
+6. Track remediation in GitHub issues
+```
+
+### 2. Create OCA-Compliant Odoo Module
 ```
 1. Read: docs/claude-code-skills/odoo/SKILL.md
 2. Read: docs/claude-code-skills/odoo/reference/oca-module-structure.md
@@ -243,7 +291,7 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 6. Validate against OCA standards
 ```
 
-### 2. Document Meeting in Notion
+### 3. Document Meeting in Notion
 ```
 1. Read: docs/claude-code-skills/notion/notion-meeting-intelligence/SKILL.md
 2. Extract meeting transcript
@@ -252,7 +300,17 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 5. Format with decision records
 ```
 
-### 3. Generate Architecture Diagram
+### 4. Audit Module Structure
+```
+1. Read: docs/claude-code-skills/audit-skill/SKILL.md
+2. Read: docs/claude-code-skills/audit-skill/reference/module-audit-guide.md
+3. Follow module-audit-example.md walkthrough
+4. Validate manifest, security, models, views
+5. Generate compliance report
+6. Fix issues before OCA submission
+```
+
+### 5. Generate Architecture Diagram
 ```
 1. Read: docs/claude-code-skills/diagrams/drawio-enhanced/SKILL.md (when extracted)
 2. Analyze system components
@@ -261,7 +319,7 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 5. Export to PNG/SVG
 ```
 
-### 4. Deploy to Production
+### 6. Deploy to Production
 ```
 1. Read: docs/claude-code-skills/odoo/reference/docker-production.md
 2. Read: docs/claude-code-skills/odoo/examples/production-deployment.md
@@ -309,6 +367,9 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 - Complete incomplete modules (6 of 8 at 15-65%)
 
 **Skills Available for Remediation**:
+- `audit-skill/SKILL.md` - **NEW** Comprehensive audit capabilities
+- `audit-skill/reference/security-audit-guide.md` - Security vulnerability detection
+- `audit-skill/reference/module-audit-guide.md` - Module structure validation
 - `odoo/SKILL.md` - Module scaffolding and OCA compliance
 - `odoo/reference/oca-module-structure.md` - Access control patterns
 - `odoo/reference/docker-production.md` - Production hardening
@@ -319,6 +380,12 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 ## 🔍 Finding Skills
 
 ### By Use Case
+
+**"I need to audit security vulnerabilities"** **NEW**
+→ Read `audit-skill/SKILL.md` and `audit-skill/reference/security-audit-guide.md`
+
+**"I need to validate module structure"** **NEW**
+→ Read `audit-skill/SKILL.md` and `audit-skill/reference/module-audit-guide.md`
 
 **"I need to create an Odoo module"**
 → Read `odoo/SKILL.md` and `odoo/reference/oca-module-structure.md`
@@ -347,7 +414,7 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 → `odoo/reference/docker-production.md`, deployment examples
 
 **odoo-security-engineer**
-→ `odoo/SKILL.md` (security sections), access control references
+→ `audit-skill/SKILL.md`, `audit-skill/reference/security-audit-guide.md`, access control references
 
 **project-coordinator**
 → `notion/knowledge-capture/`, `project-management/pmbok/`
@@ -390,6 +457,7 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 **Git LFS**: Not required unless individual files exceed 100MB
 
 **Extraction Status**:
+- ✅ Audit skill (newly created - 98.4KB) **NEW**
 - ✅ Odoo skills (odoo19-oca-devops.zip)
 - ✅ Notion skills (4 files)
 - ✅ Anthropic official (skills-main.zip)
@@ -408,13 +476,25 @@ Since Claude Code cannot use uploaded skills like Claude Desktop, all skills are
 
 ## 🚀 Quick Links
 
+### Core Skills
+- **[Audit Skill](./audit-skill/SKILL.md)** - **NEW** Comprehensive security and quality audits
 - [Odoo Development Skill](./odoo/SKILL.md)
 - [OCA Module Structure](./odoo/reference/oca-module-structure.md)
 - [Production Deployment](./odoo/reference/docker-production.md)
+
+### Reference Guides
+- **[Security Audit Guide](./audit-skill/reference/security-audit-guide.md)** - **NEW**
+- **[Module Audit Guide](./audit-skill/reference/module-audit-guide.md)** - **NEW**
+
+### Examples
+- **[Security Audit Example](./audit-skill/examples/security-audit-example.md)** - **NEW**
+- **[Module Audit Example](./audit-skill/examples/module-audit-example.md)** - **NEW**
+
+### Other Skills
 - [Notion Knowledge Capture](./notion/notion-knowledge-capture/SKILL.md)
 - [Skill Creator (Meta-Skill)](./anthropic-official/skill-creator/SKILL.md)
 - [MCP Builder](./anthropic-official/mcp-builder/SKILL.md)
 
 ---
 
-**Ready to use**: Start with `odoo/SKILL.md` for Odoo development tasks!
+**Ready to use**: Start with `audit-skill/SKILL.md` for comprehensive audits or `odoo/SKILL.md` for Odoo development tasks!
