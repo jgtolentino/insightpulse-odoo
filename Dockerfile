@@ -11,35 +11,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev libjpeg-dev zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# wkhtmltopdf for PDF reports (Debian trixie compatibility)
-# Install fonts and runtime dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl xz-utils fontconfig \
-    libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
-    libjpeg62-turbo libpng16-16 libfreetype6 \
-    xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
-  && rm -rf /var/lib/apt/lists/*
-
-# Install wkhtmltopdf (Qt-patched) via .deb (preferred / stable)
-# Option A: Ubuntu 22.04 (Jammy) package 0.12.6.1-2
-# Option B: Debian 11 (Bullseye) package 0.12.6.1-3 (often used on Debian 12 too)
-ARG WKHTML_DEB_URL_JAMMY="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
-ARG WKHTML_DEB_URL_BULLSEYE="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
-
-RUN set -eux; \
-  apt-get update; \
-  apt-get install -y --no-install-recommends \
-    ca-certificates curl fontconfig \
-    libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
-    libjpeg62-turbo libpng16-16 libfreetype6 \
-    xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk; \
-  curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_JAMMY" \
-  || curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_BULLSEYE"; \
-  apt-get install -y --no-install-recommends /tmp/wkhtml.deb \
-  || (apt-get -f install -y && dpkg -i /tmp/wkhtml.deb); \
-  rm -f /tmp/wkhtml.deb; \
-  rm -rf /var/lib/apt/lists/*; \
-  wkhtmltopdf --version
+# Note: wkhtmltopdf removed - Odoo 19.0 uses Python-based PDF rendering by default
 
 WORKDIR /opt/odoo
 
@@ -63,24 +35,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # Minimal runtime libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 libxml2 libxslt1.1 libldap-2.5-0 libsasl2-2 \
-    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates xz-utils \
-    fontconfig libxrender1 libxext6 libx11-6 libxcb1 libx11-xcb1 libxcb-render0 libxcb-shm0 \
-    libpng16-16 libfreetype6 xfonts-base xfonts-75dpi fonts-dejavu fonts-liberation fonts-noto-cjk \
+    libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
+    fonts-dejavu fonts-liberation fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
-
-# Install wkhtmltopdf (Qt-patched) via .deb (preferred / stable) in runtime stage
-ARG WKHTML_DEB_URL_JAMMY="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-2/wkhtmltox_0.12.6.1-2.jammy_amd64.deb"
-ARG WKHTML_DEB_URL_BULLSEYE="https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bullseye_amd64.deb"
-
-RUN set -eux; \
-  apt-get update; \
-  curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_JAMMY" \
-  || curl -fL -o /tmp/wkhtml.deb "$WKHTML_DEB_URL_BULLSEYE"; \
-  apt-get install -y --no-install-recommends /tmp/wkhtml.deb \
-  || (apt-get -f install -y && dpkg -i /tmp/wkhtml.deb); \
-  rm -f /tmp/wkhtml.deb; \
-  rm -rf /var/lib/apt/lists/*; \
-  wkhtmltopdf --version
 
 # Create user and dirs
 RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
