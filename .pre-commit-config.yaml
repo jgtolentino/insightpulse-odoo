@@ -63,6 +63,24 @@ repos:
       - id: markdownlint
         files: \.md$
 
+  # GitHub Actions linting
+  - repo: https://github.com/rhysd/actionlint
+    rev: v1.6.26
+    hooks:
+      - id: actionlint
+        name: actionlint
+        description: Lint GitHub Actions workflow files
+        files: ^\.github/workflows/.*\.ya?ml$
+
+  # Dockerfile linting
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        name: hadolint
+        description: Lint Dockerfiles
+        files: Dockerfile.*|.*\.dockerfile$
+
 # Default configuration
 default_language_version:
   python: python3

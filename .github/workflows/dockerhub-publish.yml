@@ -1,72 +1,92 @@
 name: dockerhub-publish
+
 on:
   push:
-    branches: ["main"]
-  workflow_dispatch: {}
+    branches: [ main ]
+    tags: [ "v*" ]
+  workflow_dispatch:
+
+env:
+  DOCKER_REPO: ${{ secrets.DOCKERHUB_USERNAME }}/insightpulse-odoo
+  ODOO_VERSION: "19.0"
+
+permissions:
+  contents: read
+  packages: read
+  security-events: write   # for SARIF upload
+
+concurrency:
+  group: dockerhub-publish-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-push:
+  lint-actions:
+    name: Lint GitHub Actions (actionlint)
     runs-on: ubuntu-latest
-    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - name: actionlint
+        uses: reviewdog/action-actionlint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-check
+          level: error
+
+  lint-dockerfile:
+    name: Lint Dockerfile (hadolint)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: error
+          format: sarif
+          output-file: hadolint.sarif
+      - name: Upload SARIF to Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: hadolint.sarif
+
+  build-and-push:
+    name: Build & Push (Docker Hub)
+    needs: [lint-actions, lint-dockerfile]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate build context
-        run: |
-          echo "Validating Docker build context..."
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
 
-          # Check required files exist
-          required_files=(
-            "Dockerfile"
-            "requirements.txt"
-            "scripts/copy-addons.sh"
-            "addons/insightpulse"
-            "addons/custom"
-            "addons/oca"
-          )
-
-          for file in "${required_files[@]}"; do
-            if [ ! -e "$file" ]; then
-              echo "❌ ERROR: Required file/directory missing: $file"
-              exit 1
-            else
-              echo "✓ Found: $file"
-            fi
-          done
-
-          # Check optional addons (warn if missing)
-          optional_addons=(
-            "addons/bi_superset_agent"
-            "addons/knowledge_notion_clone"
-            "addons/web_environment_ribbon"
-            "addons/web_favicon"
-          )
-
-          for addon in "${optional_addons[@]}"; do
-            if [ -d "$addon" ]; then
-              echo "✓ Found optional addon: $addon"
-            else
-              echo "⊘ Optional addon not present (will be skipped): $addon"
-            fi
-          done
-
-          echo "Build context validation completed successfully"
-
-      - name: DockerHub login
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          registry: docker.io
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REPO }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,prefix=sha-,format=long
+            type=ref,event=tag
 
-      - name: Build & push multi-arch
+      - name: Build & Push (linux/amd64)
         uses: docker/build-push-action@v6
         with:
           context: .
+          file: ./Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
-          tags: docker.io/${{ secrets.DOCKERHUB_USERNAME }}/insightpulse-odoo:main
+          platforms: linux/amd64
+          build-args: |
+            ODOO_VERSION=${{ env.ODOO_VERSION }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: true
           sbom: true

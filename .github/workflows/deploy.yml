@@ -1,0 +1,95 @@
+name: deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: false
+        default: 'latest'
+  repository_dispatch:
+    types: [deploy_request]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  STAGING_APP_ID: 7f7b673b-35ed-4b20-a2ae-11e74c2109bf
+  PRODUCTION_APP_ID: b1bb1b07-46a6-4bbb-85a2-e1e8c7f263b9
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve deployment parameters
+        id: params
+        run: |
+          ENV="${{ github.event.inputs.environment || 'staging' }}"
+          TAG="${{ github.event.inputs.image_tag || 'latest' }}"
+          
+          if [ "$ENV" = "production" ]; then
+            APP_ID="${{ env.PRODUCTION_APP_ID }}"
+            SPEC="infra/do/ade-ocr-service.yaml"
+          else
+            APP_ID="${{ env.STAGING_APP_ID }}"
+            SPEC="infra/do/expense-flow-api.yaml"
+          fi
+          
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+          echo "app_id=$APP_ID" >> $GITHUB_OUTPUT
+          echo "spec=$SPEC" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Update app spec with image tag
+        run: |
+          sed -i "s|tag: .*|tag: ${{ steps.params.outputs.tag }}|g" ${{ steps.params.outputs.spec }}
+
+      - name: Validate app spec
+        run: doctl apps spec validate ${{ steps.params.outputs.spec }}
+
+      - name: Deploy to DigitalOcean
+        run: |
+          doctl apps update ${{ steps.params.outputs.app_id }} --spec ${{ steps.params.outputs.spec }}
+          doctl apps create-deployment ${{ steps.params.outputs.app_id }} --force-rebuild --wait
+
+      - name: Get deployment URL
+        id: url
+        run: |
+          URL=$(doctl apps get ${{ steps.params.outputs.app_id }} --format DefaultIngress --no-header)
+          echo "url=https://$URL" >> $GITHUB_OUTPUT
+
+      - name: Health check
+        run: |
+          chmod +x scripts/health_check.sh
+          ./scripts/health_check.sh "${{ steps.url.outputs.url }}/web/login" 20 15
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Deployment successful to ${{ steps.params.outputs.environment }}"
+          echo "🌐 URL: ${{ steps.url.outputs.url }}"
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "❌ Health check failed, initiating rollback..."
+          chmod +x scripts/rollback_do.sh
+          ./scripts/rollback_do.sh ${{ steps.params.outputs.app_id }}

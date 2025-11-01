@@ -1,0 +1,3 @@
+ignored:
+  - DL3008   # apt-get install should pin versions; acceptable here for fast CI builds
+failure-threshold: error

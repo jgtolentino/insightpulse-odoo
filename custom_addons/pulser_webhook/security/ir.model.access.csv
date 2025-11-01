@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_pulser_gitops_wizard_user,access_pulser_gitops_wizard_user,model_pulser_gitops_wizard,base.group_user,1,1,1,1
