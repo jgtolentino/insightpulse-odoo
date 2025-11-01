@@ -32,9 +32,9 @@ ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
     ODOO_RC=/etc/odoo/odoo.conf
 
-# Minimal runtime libs
+# Minimal runtime libs (Debian trixie compatibility)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 libxml2 libxslt1.1 libldap-2.5-0 libsasl2-2 \
+    libpq5 libxml2 libxslt1.1 libldap2 libsasl2-2 \
     libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
     fonts-dejavu fonts-liberation fonts-noto-cjk \
     && rm -rf /var/lib/apt/lists/*
