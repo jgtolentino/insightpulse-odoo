@@ -1,0 +1,94 @@
+features:
+- buildpack-stack=ubuntu-22
+ingress:
+  rules:
+  - component:
+      name: pulse-hub
+    match:
+      path:
+        prefix: /
+  - component:
+      name: pulse-hub-api
+    match:
+      path:
+        prefix: /webhook
+  - component:
+      name: pulse-hub-api
+    match:
+      path:
+        prefix: /health
+name: pulse-hub-web
+region: sgp
+services:
+- name: pulse-hub-api
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: jgtolentino/insightpulse-odoo
+  source_dir: services/pulse-hub-api
+  build_command: npm ci && npm run build
+  run_command: npm start
+  instance_count: 1
+  instance_size_slug: basic-xxs
+  http_port: 3000
+  envs:
+  - key: PORT
+    value: "3000"
+  - key: GITHUB_APP_ID
+    value: "2191216"
+  - key: GITHUB_CLIENT_ID
+    value: Iv23liwGL7fnYySPPAjS
+  - key: GITHUB_CLIENT_SECRET
+    scope: RUN_TIME
+    type: SECRET
+    value: EV[1:nN/L3o5HgOQsX6ETJqWx5Hu+D5LPLdVN:ei23mMscHSvBIQvz8udrCDAYWuD1IdP5USa/U46x3qLl+LVR5CXKm+ZuDs6vUwlo9yGl9MjI0lE=]
+  - key: GITHUB_WEBHOOK_SECRET
+    scope: RUN_TIME
+    type: SECRET
+    value: EV[1:TODO:REPLACE_WITH_WEBHOOK_SECRET]
+  - key: SUPABASE_URL
+    value: https://spdtwktxdalcfigzeqrz.supabase.co
+  - key: SUPABASE_SERVICE_ROLE_KEY
+    scope: RUN_TIME
+    type: SECRET
+    value: EV[1:TODO:REPLACE_WITH_SERVICE_ROLE_KEY]
+static_sites:
+- build_command: npm ci && npm run build
+  catchall_document: index.html
+  envs:
+  - key: VITE_GITHUB_APP_ID
+    scope: BUILD_TIME
+    value: "2191216"
+  - key: VITE_GITHUB_CLIENT_ID
+    scope: BUILD_TIME
+    value: Iv23liwGL7fnYySPPAjS
+  - key: VITE_GITHUB_CLIENT_SECRET
+    scope: BUILD_TIME
+    type: SECRET
+    value: EV[1:nN/L3o5HgOQsX6ETJqWx5Hu+D5LPLdVN:ei23mMscHSvBIQvz8udrCDAYWuD1IdP5USa/U46x3qLl+LVR5CXKm+ZuDs6vUwlo9yGl9MjI0lE=]
+  - key: VITE_MCP_SERVER_URL
+    scope: BUILD_TIME
+    value: https://mcp.insightpulseai.net
+  - key: VITE_SUPABASE_URL
+    scope: BUILD_TIME
+    value: https://spdtwktxdalcfigzeqrz.supabase.co
+  - key: VITE_SUPABASE_ANON_KEY
+    scope: BUILD_TIME
+    value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZHR3a3R4ZGFsY2ZpZ3plcXJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2NDQwMzUsImV4cCI6MjA3NjIyMDAzNX0.IHBJ0cNTMKJvRozljqaEqWph_gC0zlW2Td5Xl_GENs4
+  - key: VITE_NEXTAUTH_URL
+    scope: BUILD_TIME
+    value: https://pulse-hub-web-an645.ondigitalocean.app
+  - key: VITE_OAUTH_REDIRECT_URI
+    scope: BUILD_TIME
+    value: https://pulse-hub-web-an645.ondigitalocean.app/callback
+  - key: NEXTAUTH_SECRET
+    scope: BUILD_TIME
+    type: SECRET
+    value: EV[1:oOYfGTymBgwqiF26hrJ8QdgnCFpblwdT:tYunjv+TwrUzT+NcXFLi4YtWkO6WMHNew4u/N1FiFDMLnb8bw/qvKWZKIsDDQ5JOXNALxc3l+iBtywnC]
+  github:
+    branch: main
+    deploy_on_push: true
+    repo: jgtolentino/insightpulse-odoo
+  name: pulse-hub
+  output_dir: dist
+  source_dir: pulse-hub
