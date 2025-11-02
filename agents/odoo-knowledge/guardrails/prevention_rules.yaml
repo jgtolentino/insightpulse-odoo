@@ -1,0 +1,106 @@
+# Odoo Module Development Prevention Guardrails
+# Auto-generated from forum knowledge base
+# Purpose: Prevent common errors BEFORE they happen
+
+prevention_rules:
+  - id: GR-POS-001
+    name: "POS Backend Sync Enforcement"
+    category: "point_of_sale"
+    severity: "high"
+    trigger: "pos_module_update"
+    description: "Ensure POS custom fields sync to backend"
+    condition: "custom fields in pos.order.line"
+    enforce:
+      - "Override export_json() method"
+      - "Override import_json() method"
+      - "Verify field exists in both POS and backend models"
+    reason: "Prevent POS order line custom field not syncing to backend"
+    autopatch: "apply_pos_export_import_fix"
+    examples:
+      - "serial_id field not appearing in backend orders"
+      - "custom product attributes lost after sync"
+
+  - id: GR-ACCT-002
+    name: "Invoice Numbering Sequence Enforcement"
+    category: "accounting"
+    severity: "critical"
+    trigger: "accounting_module_update"
+    description: "Enforce ir.sequence for invoice numbering"
+    condition: "custom numbering override detected"
+    enforce:
+      - "Block hardcoded numbering in compute methods"
+      - "Require ir.sequence reference"
+      - "Validate sequence uniqueness"
+    reason: "Prevent skipped or duplicate invoice numbers"
+    autopatch: "switch_to_ir_sequence"
+    examples:
+      - "Invoice numbers jumping or duplicating"
+      - "Custom numbering pattern failing"
+
+  - id: GR-PORTAL-003
+    name: "Portal View Inheritance Integrity"
+    category: "portal"
+    severity: "medium"
+    trigger: "portal_view_inheritance"
+    description: "Validate portal view inheritance chain"
+    condition: "inherit_id not found in portal/helpdesk modules"
+    enforce:
+      - "Search correct base module (portal/helpdesk)"
+      - "Require view existence check before inheritance"
+      - "Validate XML ID reference"
+    reason: "Prevent portal ticket view not found errors"
+    autopatch: "correct_inherit_view"
+    examples:
+      - "Custom portal view not loading"
+      - "Inherited view not found in module"
+
+  - id: GR-MANIFEST-004
+    name: "Manifest Version Validation"
+    category: "module_structure"
+    severity: "critical"
+    trigger: "manifest_edit"
+    description: "Validate manifest metadata before install"
+    condition: "manifest version mismatch or missing depends"
+    enforce:
+      - "Ensure version matches Odoo server version"
+      - "Validate all depends exist"
+      - "Check required manifest keys"
+    reason: "Prevent module not installable/skipped errors"
+    autopatch: "fix_manifest_metadata"
+    examples:
+      - "Module shows as 'not installable'"
+      - "Module skipped during installation"
+
+  - id: GR-SHOPIFY-005
+    name: "Shopify Payment State Reconciliation"
+    category: "connectors"
+    severity: "high"
+    trigger: "shopify_import"
+    description: "Handle payment state changes during import"
+    condition: "payment state = pending"
+    enforce:
+      - "Poll for final payment state"
+      - "Reconcile payment changes before backend push"
+      - "Add retry logic for state updates"
+    reason: "Prevent orders not importing when payment edited"
+    autopatch: "repair_payment_state_sync"
+    examples:
+      - "Shopify orders stuck in pending"
+      - "Payment changes not reflected in Odoo"
+
+  - id: GR-VIEW-006
+    name: "Tree View Decoration Validator"
+    category: "views"
+    severity: "low"
+    trigger: "tree_view_edit"
+    description: "Validate tree view decoration syntax"
+    condition: "decoration attribute without valid condition"
+    enforce:
+      - "Require domain condition for decorations"
+      - "Validate field references exist"
+      - "Check decoration syntax"
+    reason: "Prevent tree view decorations silently ignored"
+    autopatch: "validate_tree_decoration"
+    examples:
+      - "Row colors not showing in list view"
+      - "Decoration attributes not working"
