@@ -1,0 +1,31 @@
+{
+  "name": "pulser-hub-mcp-server",
+  "version": "1.0.0",
+  "description": "MCP server for Odoo operations via Model Context Protocol",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": ["mcp", "odoo", "model-context-protocol"],
+  "author": "InsightPulse",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.5.0",
+    "fastify": "^4.28.1",
+    "fastify-websocket": "^8.0.0",
+    "@fastify/websocket": "^10.0.1",
+    "undici": "^6.19.8",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.3"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

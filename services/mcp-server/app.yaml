@@ -10,20 +10,38 @@ services:
     source_dir: services/mcp-server
     dockerfile_path: services/mcp-server/Dockerfile
 
-    http_port: 8000
+    http_port: 8080
 
     instance_count: 1
     instance_size_slug: basic-xxs
 
     health_check:
-      http_path: /health
-      initial_delay_seconds: 10
+      http_path: /healthz
+      initial_delay_seconds: 15
       period_seconds: 30
-      timeout_seconds: 3
+      timeout_seconds: 5
       success_threshold: 1
       failure_threshold: 3
 
     envs:
+      # Odoo Configuration (required)
+      - key: ODOO_URL
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+      - key: ODOO_DB
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+      - key: ODOO_USER
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+      - key: ODOO_PASSWORD
+        scope: RUN_AND_BUILD_TIME
+        type: SECRET
+
+      # GitHub App Configuration (optional, for future use)
       - key: GITHUB_APP_ID
         value: "2191216"
         scope: RUN_TIME
@@ -36,10 +54,19 @@ services:
         scope: RUN_TIME
         type: SECRET
 
+      # Node environment
+      - key: NODE_ENV
+        value: "production"
+        scope: RUN_TIME
+
+      - key: LOG_LEVEL
+        value: "info"
+        scope: RUN_TIME
+
     routes:
-      - path: /mcp/github
-      - path: /health
       - path: /
+      - path: /healthz
+      - path: /ws
 
 domains:
   - domain: mcp.insightpulseai.net
