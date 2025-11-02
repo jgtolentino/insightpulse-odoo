@@ -1,0 +1,80 @@
+name: Weekly Odoo Knowledge Base Update
+
+on:
+  schedule:
+    # Run every Sunday at 2 AM UTC
+    - cron: '0 2 * * 0'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  scrape-and-update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install playwright beautifulsoup4 lxml requests
+          playwright install chromium
+
+      - name: Run scraper
+        id: scrape
+        working-directory: agents/odoo-knowledge/crawler
+        run: |
+          python scrape_solved_threads.py
+          echo "issue_count=$(grep -o '"url":' ../knowledge/solved_threads_raw.json | wc -l)" >> $GITHUB_OUTPUT
+
+      - name: Process solutions (optional)
+        working-directory: agents/odoo-knowledge/scraper
+        run: |
+          if [ -f process_solutions_simple.py ]; then
+            python process_solutions_simple.py || echo "Processing failed, continuing..."
+          fi
+        continue-on-error: true
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "Odoo Knowledge Bot"
+          git config user.email "bot@insightpulse.ai"
+
+          if git diff --quiet agents/odoo-knowledge/knowledge/; then
+            echo "No changes detected"
+            exit 0
+          fi
+
+          git add agents/odoo-knowledge/knowledge/
+          git commit -m "chore: update Odoo knowledge base (${{ steps.scrape.outputs.issue_count }} issues)
+
+          Automated weekly scraper run
+          Workflow: ${{ github.workflow }}
+          Run: ${{ github.run_number }}"
+
+          git push
+
+      - name: Create summary
+        run: |
+          echo "## 📊 Scraper Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Issues scraped**: ${{ steps.scrape.outputs.issue_count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow**: ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Scraper failed - check logs"
+          # Add notification here (Slack, email, etc.)

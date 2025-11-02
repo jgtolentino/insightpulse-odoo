@@ -1,0 +1,21 @@
+[Unit]
+Description=Odoo Knowledge Base Scraper
+After=network.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/home/user/insightpulse-odoo/agents/odoo-knowledge/crawler
+ExecStart=/home/user/insightpulse-odoo/agents/odoo-knowledge/crawler/run_scraper_cron.sh
+StandardOutput=append:/home/user/insightpulse-odoo/logs/scraper/systemd.log
+StandardError=append:/home/user/insightpulse-odoo/logs/scraper/systemd.log
+
+# Restart on failure
+Restart=on-failure
+RestartSec=300
+
+# Timeout after 2 hours (scraping can take time)
+TimeoutStartSec=7200
+
+[Install]
+WantedBy=multi-user.target

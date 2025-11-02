@@ -1,0 +1,25 @@
+# Odoo Knowledge Base Scraper - Cron Configuration
+#
+# This file configures automated scraping of Odoo forum
+# to continuously update the knowledge base
+
+# Run every Sunday at 2 AM (weekly updates)
+0 2 * * 0 cd /home/user/insightpulse-odoo/agents/odoo-knowledge/crawler && ./run_scraper_cron.sh >> /home/user/insightpulse-odoo/logs/scraper/cron.log 2>&1
+
+# Alternative schedules (uncomment as needed):
+
+# Daily at 3 AM
+# 0 3 * * * cd /home/user/insightpulse-odoo/agents/odoo-knowledge/crawler && ./run_scraper_cron.sh
+
+# Twice a week (Sunday and Wednesday at 2 AM)
+# 0 2 * * 0,3 cd /home/user/insightpulse-odoo/agents/odoo-knowledge/crawler && ./run_scraper_cron.sh
+
+# Monthly (1st of each month at 2 AM)
+# 0 2 1 * * cd /home/user/insightpulse-odoo/agents/odoo-knowledge/crawler && ./run_scraper_cron.sh
+
+# Installation Instructions:
+# 1. Copy this file content
+# 2. Run: crontab -e
+# 3. Paste the schedule line(s) you want
+# 4. Save and exit
+# 5. Verify: crontab -l

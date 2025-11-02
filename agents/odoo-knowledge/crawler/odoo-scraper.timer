@@ -1,0 +1,13 @@
+[Unit]
+Description=Odoo Knowledge Base Scraper Timer
+Requires=odoo-scraper.service
+
+[Timer]
+# Run weekly on Sunday at 2 AM
+OnCalendar=Sun *-*-* 02:00:00
+
+# Run immediately if system was off during scheduled time
+Persistent=true
+
+[Install]
+WantedBy=timers.target
