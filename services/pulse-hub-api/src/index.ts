@@ -2,14 +2,15 @@ import express, { Request, Response } from 'express';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 import 'dotenv/config';
+import { env } from './env.js';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = env.PORT;
 
 // Supabase client
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
-  process.env.SUPABASE_SERVICE_ROLE_KEY || ''
+  env.SUPABASE_URL,
+  env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Middleware
@@ -38,10 +39,10 @@ app.post('/webhook', async (req: Request, res: Response) => {
     const deliveryId = req.headers['x-github-delivery'] as string;
 
     // Verify webhook secret
-    const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || '';
+    const webhookSecret = env.GITHUB_WEBHOOK_SECRET;
     const payload = JSON.stringify(req.body);
 
-    if (!verifyGitHubSignature(payload, signature, webhookSecret)) {
+    if (webhookSecret && !verifyGitHubSignature(payload, signature, webhookSecret)) {
       console.error('Invalid webhook signature');
       return res.status(401).json({ error: 'Invalid signature' });
     }
