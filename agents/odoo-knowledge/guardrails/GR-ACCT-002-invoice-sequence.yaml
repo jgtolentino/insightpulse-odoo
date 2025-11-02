@@ -1,0 +1,50 @@
+# Guardrail: Invoice Numbering Sequence
+id: GR-ACCT-002
+name: Enforce ir.sequence usage for invoice numbering
+severity: high
+module: accounting
+category: sequence_error
+
+trigger:
+  - accounting_module_update
+  - custom_invoice_number_implementation
+
+condition:
+  description: Custom invoice numbering without ir.sequence
+  detection:
+    - scan_for: hardcoded_number_in_compute
+    - check_model: account.move
+    - verify_ir_sequence_usage: true
+
+prevention:
+  enforce:
+    - block hardcoded values in _compute methods
+    - require ir.sequence reference
+    - validate sequence uniqueness
+    - check for gaps in numbering
+
+reason: >
+  Odoo invoice numbering must use ir.sequence for legal compliance,
+  gap detection, and proper sequence management.
+  Hardcoded numbering breaks audit trails and causes duplicate numbers.
+
+autopatch: switch_to_ir_sequence
+
+documentation_url: https://www.odoo.com/forum/help-1/custom-invoice-number-odoo-18
+
+impact:
+  business: Legal compliance risk, audit failures
+  users: Accounting team, auditors
+  fix_complexity: medium
+
+example_code: |
+  # Correct approach
+  def _compute_name(self):
+      for move in self:
+          if move.move_type in ('out_invoice', 'out_refund'):
+              move.name = self.env['ir.sequence'].next_by_code('account.move.invoice')
+          else:
+              super()._compute_name()
+
+  # Wrong approach (DO NOT DO THIS)
+  # move.name = f"INV{self.id:05d}"  # NEVER hardcode
