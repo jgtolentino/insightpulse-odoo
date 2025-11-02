@@ -1,0 +1,62 @@
+# Guardrail: Module Manifest Validation
+id: GR-INSTALL-004
+name: Validate module manifest before installation
+severity: critical
+module: base
+category: manifest_error
+
+trigger:
+  - module_install
+  - module_upgrade
+  - manifest_edit
+
+condition:
+  description: Invalid manifest metadata causing "module not installable, skipped"
+  detection:
+    - validate_manifest_syntax: true
+    - check_version_format: true
+    - verify_dependencies_exist: true
+    - validate_required_fields: [name, version, depends, data]
+
+prevention:
+  enforce:
+    - version must match server version (e.g., '18.0.1.0.0')
+    - all dependencies must exist and be installable
+    - data files must exist in specified paths
+    - manifest must be valid Python dict
+
+reason: >
+  Invalid manifest is the #1 cause of "module not installable" errors.
+  Version mismatch, missing dependencies, or invalid syntax
+  will cause Odoo to skip the module entirely.
+
+autopatch: fix_manifest_validation
+
+documentation_url: https://www.odoo.com/forum/help-1/custom-modules-not-installable
+
+impact:
+  business: Module deployment failures, blocked releases
+  users: Developers, DevOps team
+  fix_complexity: low
+
+example_code: |
+  # Correct __manifest__.py
+  {
+      'name': 'Your Module Name',
+      'version': '18.0.1.0.0',  # Match server version!
+      'category': 'Sales',
+      'summary': 'Short description',
+      'depends': ['base', 'sale'],  # All must exist
+      'data': [
+          'security/ir.model.access.csv',
+          'views/sale_order_views.xml',
+      ],
+      'installable': True,
+      'application': False,
+      'auto_install': False,
+  }
+
+  # Common errors:
+  # - version: '1.0' (wrong format)
+  # - depends: ['nonexistent_module'] (doesn't exist)
+  # - data files listed but not created yet
