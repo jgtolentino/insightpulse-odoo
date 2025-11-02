@@ -1,0 +1,64 @@
+{
+  "version": "1.0.0",
+  "generated_at": "2025-11-02T09:00:00Z",
+  "total_issues": 10,
+  "source": "Manual curation from Odoo forum top issues",
+  "categories": {
+    "modules": {
+      "pos": 1,
+      "accounting": 1,
+      "portal": 1,
+      "installation": 2,
+      "product": 1,
+      "studio": 1,
+      "website": 1,
+      "reporting": 1,
+      "security": 1
+    },
+    "error_types": {
+      "sync_error": 2,
+      "manifest_error": 1,
+      "sequence_error": 1,
+      "view_error": 2,
+      "configuration_error": 1,
+      "custom_field_error": 1,
+      "migration_error": 1,
+      "security_error": 1
+    },
+    "severity": {
+      "critical": 3,
+      "high": 4,
+      "medium": 3
+    }
+  },
+  "guardrails_available": 5,
+  "autopatches_available": 3,
+  "coverage": {
+    "with_guardrail": 5,
+    "with_autopatch": 3,
+    "with_code_example": 10
+  },
+  "top_modules": [
+    "installation",
+    "pos",
+    "accounting",
+    "portal",
+    "security"
+  ],
+  "files": {
+    "knowledge_base": "solved_issues_initial.json",
+    "guardrails": "../guardrails/*.yaml",
+    "autopatches": "../autopatches/*.py"
+  },
+  "stats": {
+    "avg_fix_complexity": "medium",
+    "auto_fixable_percent": 30,
+    "prevention_coverage": 50
+  },
+  "next_steps": [
+    "Run scrapers in unrestricted environment to expand to 1000+ issues",
+    "Add more auto-patches for top error types",
+    "Integrate with CI/CD pipelines",
+    "Build vector search for similarity matching"
+  ]
+}

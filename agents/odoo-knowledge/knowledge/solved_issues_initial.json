@@ -1,0 +1,212 @@
+[
+  {
+    "id": "KB-001",
+    "title": "POS order line custom field not synced to backend",
+    "url": "https://www.odoo.com/forum/help-1/pos-custom-field-sync",
+    "module": "pos",
+    "error_type": "sync_error",
+    "severity": "critical",
+    "tags": ["pos", "custom", "sync", "backend"],
+    "problem": "Custom fields added to pos.order.line model not syncing to backend after POS session close",
+    "root_cause": "Custom fields not included in export_json/import_json methods",
+    "solution": "Override export_json() and import_json() methods in pos.order.line to include custom fields",
+    "guardrail_id": "GR-POS-001",
+    "autopatch": "apply_pos_export_import_fix.py",
+    "code_example": "def export_json(self):\n    res = super().export_json()\n    res['custom_field'] = self.custom_field\n    return res",
+    "prevention": "Always extend JSON export/import when adding POS custom fields",
+    "impact": {
+      "business": "Data loss in POS transactions",
+      "users": "POS operators, accounting team",
+      "fix_complexity": "medium"
+    }
+  },
+  {
+    "id": "KB-002",
+    "title": "Custom module not installable - skipped during installation",
+    "url": "https://www.odoo.com/forum/help-1/module-not-installable",
+    "module": "installation",
+    "error_type": "manifest_error",
+    "severity": "critical",
+    "tags": ["manifest", "install", "version", "depends"],
+    "problem": "Custom module appears as 'not installable, skipped' in logs",
+    "root_cause": "Invalid manifest metadata - wrong version format, missing dependencies, or invalid syntax",
+    "solution": "Validate manifest structure, fix version to match Odoo version (e.g., 18.0.1.0.0), ensure all dependencies exist",
+    "guardrail_id": "GR-INSTALL-004",
+    "autopatch": "fix_manifest_validation.py",
+    "code_example": "{\n  'name': 'My Module',\n  'version': '18.0.1.0.0',\n  'depends': ['base', 'sale'],\n  'installable': True\n}",
+    "prevention": "Use manifest validator before deployment, enforce version format in CI",
+    "impact": {
+      "business": "Module deployment failures, blocked releases",
+      "users": "Developers, DevOps team",
+      "fix_complexity": "low"
+    }
+  },
+  {
+    "id": "KB-003",
+    "title": "Custom invoice numbering not working in Odoo 18",
+    "url": "https://www.odoo.com/forum/help-1/custom-invoice-number",
+    "module": "accounting",
+    "error_type": "sequence_error",
+    "severity": "high",
+    "tags": ["accounting", "invoice", "sequence", "numbering"],
+    "problem": "Custom invoice numbering logic not applied, default numbering still used",
+    "root_cause": "Hardcoded numbering in compute methods instead of using ir.sequence",
+    "solution": "Use ir.sequence for all invoice numbering, never hardcode numbers",
+    "guardrail_id": "GR-ACCT-002",
+    "autopatch": "switch_to_ir_sequence.py",
+    "code_example": "def _compute_name(self):\n    for move in self:\n        if not move.name:\n            move.name = self.env['ir.sequence'].next_by_code('account.move.invoice')",
+    "prevention": "Always use ir.sequence for numbering, block hardcoded values in code review",
+    "impact": {
+      "business": "Legal compliance risk, audit failures",
+      "users": "Accounting team, auditors",
+      "fix_complexity": "medium"
+    }
+  },
+  {
+    "id": "KB-004",
+    "title": "Portal ticket view not found - cannot customize helpdesk portal",
+    "url": "https://www.odoo.com/forum/help-1/portal-view-not-found",
+    "module": "portal",
+    "error_type": "view_error",
+    "severity": "medium",
+    "tags": ["portal", "helpdesk", "views", "inherit"],
+    "problem": "Cannot find portal ticket view to customize, inherit_id fails",
+    "root_cause": "View exists in helpdesk/portal module, not in the expected location",
+    "solution": "Search for view in correct base module (helpdesk/portal), use correct XML ID reference",
+    "guardrail_id": "GR-PORTAL-003",
+    "autopatch": "correct_inherit_view",
+    "code_example": "<field name=\"inherit_id\" ref=\"helpdesk.portal_ticket_view\"/>",
+    "prevention": "Always verify base module ownership of views before inheriting",
+    "impact": {
+      "business": "Broken customer portal, support tickets inaccessible",
+      "users": "Customers, support team",
+      "fix_complexity": "low"
+    }
+  },
+  {
+    "id": "KB-005",
+    "title": "Customer specific product names and codes not working",
+    "url": "https://www.odoo.com/forum/help-1/customer-product-codes",
+    "module": "product",
+    "error_type": "configuration_error",
+    "severity": "medium",
+    "tags": ["product", "customer", "pricelist", "customerinfo"],
+    "problem": "Cannot set different product names/codes per customer",
+    "root_cause": "Misunderstanding of product.customerinfo usage",
+    "solution": "Use product.customerinfo model to define customer-specific product codes and names",
+    "guardrail_id": null,
+    "autopatch": null,
+    "code_example": "# Configure via Product → Variants → Customer → Add line\nself.env['product.customerinfo'].create({\n    'partner_id': customer.id,\n    'product_tmpl_id': product.id,\n    'product_code': 'CUST-SKU-001',\n    'product_name': 'Customer Product Name'\n})",
+    "prevention": "Document proper usage of product.customerinfo in product customization guide",
+    "impact": {
+      "business": "Customer-specific ordering errors",
+      "users": "Sales team, customers",
+      "fix_complexity": "low"
+    }
+  },
+  {
+    "id": "KB-006",
+    "title": "Custom fields not showing in forms after Studio customization",
+    "url": "https://www.odoo.com/forum/help-1/custom-field-not-showing",
+    "module": "studio",
+    "error_type": "custom_field_error",
+    "severity": "medium",
+    "tags": ["studio", "custom fields", "views", "security"],
+    "problem": "Custom field created in Studio not appearing in form view",
+    "root_cause": "Field added to model but not to views, or security access not granted",
+    "solution": "Add field to relevant views, update security access rights, propagate to related models if needed",
+    "guardrail_id": "GR-CUSTOM-005",
+    "autopatch": "propagate_custom_field",
+    "code_example": "<field name=\"partner_id\" position=\"after\">\n    <field name=\"custom_field\"/>\n</field>",
+    "prevention": "Always add custom fields to views and verify security access after creation",
+    "impact": {
+      "business": "Missing data in reports and forms",
+      "users": "All users of the customized module",
+      "fix_complexity": "low"
+    }
+  },
+  {
+    "id": "KB-007",
+    "title": "Shopify Odoo sync failing for custom products",
+    "url": "https://www.odoo.com/forum/help-1/shopify-sync-custom",
+    "module": "website",
+    "error_type": "sync_error",
+    "severity": "high",
+    "tags": ["shopify", "ecommerce", "sync", "product"],
+    "problem": "Custom product attributes not syncing between Shopify and Odoo",
+    "root_cause": "Custom fields not mapped in connector configuration",
+    "solution": "Extend Shopify connector to map custom fields, update sync payload",
+    "guardrail_id": null,
+    "autopatch": null,
+    "code_example": "# In shopify connector\ndef _prepare_product_vals(self, shopify_product):\n    vals = super()._prepare_product_vals(shopify_product)\n    vals['custom_field'] = shopify_product.get('metafields', {}).get('custom_field')\n    return vals",
+    "prevention": "Document field mapping requirements for all e-commerce connectors",
+    "impact": {
+      "business": "Inventory discrepancies, pricing errors",
+      "users": "E-commerce team, warehouse",
+      "fix_complexity": "high"
+    }
+  },
+  {
+    "id": "KB-008",
+    "title": "QWeb report template not rendering custom fields",
+    "url": "https://www.odoo.com/forum/help-1/qweb-custom-fields",
+    "module": "reporting",
+    "error_type": "view_error",
+    "severity": "medium",
+    "tags": ["qweb", "reports", "custom fields", "pdf"],
+    "problem": "Custom fields not appearing in PDF reports",
+    "root_cause": "Field not accessible in QWeb context or not added to report template",
+    "solution": "Add field to report template, ensure model has correct access rights in report context",
+    "guardrail_id": null,
+    "autopatch": null,
+    "code_example": "<span t-field=\"o.custom_field\"/>\n<!-- Or with fallback -->\n<span t-esc=\"o.custom_field or 'N/A'\"/>",
+    "prevention": "Test reports in print preview after adding custom fields",
+    "impact": {
+      "business": "Incomplete invoices/reports sent to customers",
+      "users": "Accounting, sales team",
+      "fix_complexity": "low"
+    }
+  },
+  {
+    "id": "KB-009",
+    "title": "Module upgrade fails with foreign key constraint error",
+    "url": "https://www.odoo.com/forum/help-1/upgrade-constraint-error",
+    "module": "installation",
+    "error_type": "migration_error",
+    "severity": "high",
+    "tags": ["upgrade", "migration", "database", "constraint"],
+    "problem": "Module upgrade fails with SQL constraint violation",
+    "root_cause": "New required fields or constraints added without migration script",
+    "solution": "Create pre-migration script to handle existing data before applying new constraints",
+    "guardrail_id": null,
+    "autopatch": null,
+    "code_example": "# migrations/18.0.1.1.0/pre-migrate.py\ndef migrate(cr, version):\n    cr.execute(\"\"\"\n        UPDATE res_partner \n        SET new_required_field = 'default_value'\n        WHERE new_required_field IS NULL\n    \"\"\")",
+    "prevention": "Always create migration scripts when adding required fields or constraints",
+    "impact": {
+      "business": "Failed upgrades, system downtime",
+      "users": "All users",
+      "fix_complexity": "high"
+    }
+  },
+  {
+    "id": "KB-010",
+    "title": "Access denied error after installing custom module",
+    "url": "https://www.odoo.com/forum/help-1/access-denied-custom",
+    "module": "security",
+    "error_type": "security_error",
+    "severity": "high",
+    "tags": ["security", "access rights", "groups", "rules"],
+    "problem": "Users cannot access new features after module installation",
+    "root_cause": "Missing access rights configuration in ir.model.access.csv",
+    "solution": "Create proper access rights for all new models and groups",
+    "guardrail_id": null,
+    "autopatch": null,
+    "code_example": "# security/ir.model.access.csv\nid,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink\naccess_custom_model_user,custom.model.user,model_custom_model,base.group_user,1,1,1,0",
+    "prevention": "Include security/ir.model.access.csv for all new models before deployment",
+    "impact": {
+      "business": "Features unusable by end users",
+      "users": "All non-admin users",
+      "fix_complexity": "medium"
+    }
+  }
+]
