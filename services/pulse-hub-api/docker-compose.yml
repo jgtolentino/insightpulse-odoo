@@ -1,0 +1,58 @@
+version: "3.9"
+
+# Example Docker Compose for pulse-hub-api
+# Secrets are read from files in ./secrets/ directory (YOU create these locally)
+
+services:
+  pulse-hub-api:
+    image: node:20-alpine
+    container_name: pulse-hub-api
+    working_dir: /app
+    command: sh -c "npm ci && npm start"
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      # Non-secret values (safe to commit)
+      PORT: "3000"
+      GITHUB_APP_ID: "2191216"
+      ALLOWED_ORIGINS: "https://pulse-hub-web-an645.ondigitalocean.app"
+      SUPABASE_URL: "https://spdtwktxdalcfigzeqrz.supabase.co"
+      NODE_ENV: "production"
+
+      # Point to Docker secrets (mounted as files in /run/secrets/)
+      GITHUB_PRIVATE_KEY_FILE: /run/secrets/github_private_key
+      GITHUB_WEBHOOK_SECRET_FILE: /run/secrets/github_webhook_secret
+      GITHUB_CLIENT_SECRET_FILE: /run/secrets/github_client_secret
+      SUPABASE_SERVICE_ROLE_KEY_FILE: /run/secrets/supabase_service_role_key
+
+    secrets:
+      - github_private_key
+      - github_webhook_secret
+      - github_client_secret
+      - supabase_service_role_key
+
+    volumes:
+      - ./:/app
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); }).on('error', () => process.exit(1));"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Docker secrets - files are read from ./secrets/ directory
+# YOU create these files locally (see SECURE_SECRET_MANAGEMENT.md)
+secrets:
+  github_private_key:
+    file: ./secrets/github_private_key.pem
+  github_webhook_secret:
+    file: ./secrets/github_webhook_secret.txt
+  github_client_secret:
+    file: ./secrets/github_client_secret.txt
+  supabase_service_role_key:
+    file: ./secrets/supabase_service_role_key.txt
