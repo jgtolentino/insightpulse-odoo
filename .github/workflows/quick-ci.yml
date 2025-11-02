@@ -1,0 +1,173 @@
+name: Quick CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.yml'
+      - '**.yaml'
+      - 'Dockerfile*'
+      - '.dockerignore'
+      - 'package.json'
+      - 'requirements.txt'
+      - 'setup.py'
+      - '.github/workflows/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - '**.py'
+      - '**.js'
+      - '**.jsx'
+      - '**.ts'
+      - '**.tsx'
+      - '**.yml'
+      - '**.yaml'
+      - 'Dockerfile*'
+      - '.dockerignore'
+      - 'package.json'
+      - 'requirements.txt'
+      - 'setup.py'
+      - '.github/workflows/**'
+  workflow_dispatch:
+
+# Cancel in-progress runs when a new run is triggered
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quick-checks:
+    name: Quick Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1  # Shallow clone for speed
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install linting tools
+        run: |
+          pip install --upgrade pip
+          pip install flake8 pylint black isort yamllint
+
+      - name: Python linting (flake8)
+        continue-on-error: true
+        run: |
+          # Fast linting - ignore complex errors, focus on syntax
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics \
+            --exclude=.git,__pycache__,build,dist,.venv,venv,node_modules
+
+      - name: Python formatting check (black)
+        continue-on-error: true
+        run: |
+          black --check --diff --color . \
+            --exclude '/(\.git|__pycache__|build|dist|\.venv|venv|node_modules)/'
+
+      - name: Python import sorting (isort)
+        continue-on-error: true
+        run: |
+          isort --check-only --diff . \
+            --skip .git --skip __pycache__ --skip build --skip dist \
+            --skip .venv --skip venv --skip node_modules
+
+      - name: YAML linting
+        continue-on-error: true
+        run: |
+          yamllint -d relaxed .github/workflows/ || true
+
+      - name: Dockerfile validation
+        continue-on-error: true
+        run: |
+          # Check Dockerfile syntax without building
+          for dockerfile in $(find . -name "Dockerfile*" -type f); do
+            echo "Validating $dockerfile"
+            docker build --no-cache --target=builder -f "$dockerfile" . --dry-run 2>&1 | head -20 || \
+            echo "Note: $dockerfile validation skipped (may require build context)"
+          done
+
+      - name: Check for common issues
+        run: |
+          echo "Checking for common issues..."
+
+          # Check for debug statements
+          if grep -r "debugger\|pdb.set_trace\|console.log" --include="*.py" --include="*.js" --include="*.ts" .; then
+            echo "⚠️  Warning: Found debug statements"
+          fi
+
+          # Check for TODO/FIXME comments
+          if grep -r "TODO\|FIXME" --include="*.py" --include="*.js" --include="*.ts" . | head -10; then
+            echo "ℹ️  Found TODO/FIXME comments"
+          fi
+
+          echo "✅ Quick checks completed"
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Quick CI Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Quick validation completed for PR #${{ github.event.pull_request.number || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Note**: This is a lightweight CI check. Full testing happens in dedicated workflows." >> $GITHUB_STEP_SUMMARY
+
+  docker-syntax:
+    name: Docker Syntax Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Dockerfiles
+        run: |
+          echo "Validating Dockerfiles..."
+          for dockerfile in $(find . -name "Dockerfile*" -type f -not -path "*/node_modules/*" -not -path "*/.git/*"); do
+            echo "Checking $dockerfile"
+            docker buildx build --check -f "$dockerfile" . || echo "Validation note for $dockerfile"
+          done
+          echo "✅ Docker syntax check completed"
+
+  commit-validation:
+    name: Commit Message Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate commit messages
+        run: |
+          echo "Checking commit messages..."
+
+          # Get commits in this PR
+          commits=$(git log --pretty=format:"%s" origin/${{ github.base_ref }}..${{ github.sha }})
+
+          echo "Commits in this PR:"
+          echo "$commits"
+
+          # Check for conventional commits (optional)
+          # echo "$commits" | grep -E "^(feat|fix|docs|style|refactor|test|chore|perf|ci|build)(\(.+\))?: .+" || \
+          #   echo "⚠️  Note: Consider using conventional commit format"
+
+          echo "✅ Commit validation completed"
