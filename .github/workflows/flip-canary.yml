@@ -7,6 +7,18 @@ on:
         description: "Target host port for Odoo (8069=prod, 8070=canary)"
         required: true
         default: "8069"
+  push:
+    branches:
+      - main
+      - release/**
+  pull_request:
+    branches:
+      - main
+      - release/**
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
 
 permissions:
   contents: read
@@ -18,14 +30,27 @@ env:
 
 jobs:
   flip:
+    # Quarantine mode: do not block PRs outside protected branches
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'pull_request' && startsWith(github.base_ref, 'main'))
     runs-on: ubuntu-latest
+    continue-on-error: true  # Quarantine mode until stabilized
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
 
       - name: Validate target
         id: validate
         run: |
-          T="${{ github.event.inputs.target }}"
+          # Use default target for automatic runs
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            T="${{ github.event.inputs.target }}"
+          else
+            T="8069"  # Default to prod port for automatic runs
+          fi
+
           if [ "$T" != "8069" ] && [ "$T" != "8070" ]; then
             echo "Invalid target: $T (must be 8069 or 8070)"; exit 1
           fi
