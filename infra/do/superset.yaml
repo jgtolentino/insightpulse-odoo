@@ -1,0 +1,38 @@
+name: superset
+region: sgp
+services:
+  - name: superset
+    http_port: 8088
+    instance_count: 1
+    instance_size_slug: professional-xs
+    image:
+      registry_type: DOCKER_HUB
+      registry: apache
+      repository: superset
+      tag: "3.1.0"
+    envs:
+      - key: SUPERSET_SECRET_KEY
+        value: 1eRsQ4+93UP6OIP2xPLoOKfFCs89kLJMcJ/2cWyMSeJ0gqqRr87Q1jeA
+        scope: RUN_TIME
+      - key: SQLALCHEMY_DATABASE_URI
+        value: postgresql://postgres.spdtwktxdalcfigzeqrz:SHWYXDMFAwXI1drT@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require
+        scope: RUN_TIME
+      - key: REDIS_URL
+        value: EV[1:aNA4dZhfytKnSv+i1zng1sJN/i2SJcOg:Vpt72xG9Bh/ulZ4sy0sjgg==]
+        type: SECRET
+        scope: RUN_TIME
+      - key: SUPERSET_ENV
+        value: production
+        scope: RUN_TIME
+      - key: ENABLE_PROXY_FIX
+        value: 'True'
+        scope: RUN_TIME
+    health_check:
+      initial_delay_seconds: 180
+      period_seconds: 30
+      timeout_seconds: 10
+      failure_threshold: 3
+      http_path: /health
+domains:
+  - domain: superset.insightpulseai.net
+    type: PRIMARY

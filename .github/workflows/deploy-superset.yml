@@ -1,0 +1,62 @@
+name: Deploy Superset
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/do/superset.yaml'
+      - '.github/workflows/deploy-superset.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SUPERSET_APP_ID: 73af11cb-dab2-4cb1-9770-291c536531e6
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_TOKEN }}
+
+      - name: Validate app spec
+        run: doctl apps spec validate infra/do/superset.yaml
+
+      - name: Deploy to DigitalOcean
+        run: |
+          doctl apps update ${{ env.SUPERSET_APP_ID }} --spec infra/do/superset.yaml
+          doctl apps create-deployment ${{ env.SUPERSET_APP_ID }} --force-rebuild --wait
+
+      - name: Get deployment URL
+        id: url
+        run: |
+          URL=$(doctl apps get ${{ env.SUPERSET_APP_ID }} --format DefaultIngress --no-header)
+          echo "url=https://$URL" >> $GITHUB_OUTPUT
+
+      - name: Health check
+        run: |
+          MAX_ATTEMPTS=10
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            if curl -sf "${{ steps.url.outputs.url }}/health" > /dev/null; then
+              echo "✅ Superset is healthy"
+              exit 0
+            fi
+            echo "⏳ Waiting for Superset... ($i/$MAX_ATTEMPTS)"
+            sleep 30
+          done
+          echo "❌ Health check failed"
+          exit 1
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Superset deployment successful"
+          echo "🌐 URL: ${{ steps.url.outputs.url }}"
