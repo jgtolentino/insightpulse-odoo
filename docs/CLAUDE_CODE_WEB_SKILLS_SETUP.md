@@ -76,16 +76,47 @@ This excludes local-only settings while committing the shared `settings.json`.
 
 ## Skills Enabled
 
-### Total: 20 Skills
+### Total: 43 Skills (20 Original + 23 Community)
 
-#### Custom Odoo Skill (1)
+#### Custom Odoo Skills (6)
 - **odoo19-oca-devops**: Odoo 19 ERP development with OCA modules, DevOps deployment
+- **odoo-agile-scrum-devops**: Agile/Scrum workflows for Odoo development
+- **odoo-app-automator-final**: Automated Odoo app scaffolding
+- **odoo-finance-automation**: Financial process automation
+- **odoo-knowledge-agent**: AI-powered knowledge management
+- **bir-tax-filing**: BIR tax compliance for Philippines
 
 #### Document Processing Skills (4)
 - **pdf**: PDF document processing
 - **docx**: Word document processing
 - **xlsx**: Excel spreadsheet processing
 - **pptx**: PowerPoint presentation processing
+
+#### Superset BI Skills (4)
+- **superset-chart-builder**: Interactive chart creation
+- **superset-dashboard-automation**: Automated dashboard generation
+- **superset-dashboard-designer**: Dashboard design patterns
+- **superset-sql-developer**: SQL dataset development
+
+#### Project Management Skills (3)
+- **pmbok-project-management**: PMBOK-compliant PM practices
+- **procurement-sourcing**: Strategic sourcing workflows
+- **project-portfolio-management**: Multi-project portfolio management
+
+#### Integration & Automation Skills (5)
+- **firecrawl-data-extraction**: Web scraping with Firecrawl
+- **insightpulse_connection_manager**: Connection management for InsightPulse
+- **mcp-complete-guide**: Complete MCP server development guide
+- **multi-agency-orchestrator**: Multi-agent workflow orchestration
+- **supabase-rpc-manager**: Supabase RPC function management
+
+#### Utilities & Tools (6)
+- **drawio-diagrams-enhanced**: Enhanced diagram generation
+- **librarian-indexer**: Code/doc indexing and search
+- **notion-workflow-sync**: Notion workspace synchronization
+- **paddle-ocr-validation**: PaddleOCR receipt validation
+- **reddit-product-viability**: Product validation via Reddit
+- **travel-expense-management**: Travel/expense tracking
 
 #### Notion Integration Skills (4)
 - **notion-meeting-intelligence**: Meeting notes and action item extraction
@@ -194,7 +225,7 @@ ls -la .claude/skills/
 
 # Count skills
 ls .claude/skills/ | wc -l
-# Expected output: 20
+# Expected output: 43
 
 # Verify symlinks are valid
 for skill in .claude/skills/*; do
@@ -306,9 +337,11 @@ The hook in `settings.json` runs when Claude Code web session initializes:
 
 ## Version History
 
-- **2025-11-03**: Initial setup enabling 20 Skills for Claude Code web sessions
+- **2025-11-03**:
+  - Initial setup enabling 20 Skills for Claude Code web sessions (commit `431a54bf`)
+  - Integrated 23 community Skills from odoomation package (commit `385bcb4a`)
+  - **Total**: 43 Skills now available
 - **Branch**: `claude/claude-code-web-skills-011CUkaUKPzzjEb5uyLr1tD9`
-- **Commit**: `431a54bf`
 
 ## Maintainers
 
