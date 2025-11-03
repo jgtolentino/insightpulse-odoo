@@ -1,0 +1,381 @@
+openapi: 3.1.0
+info:
+  title: Skill Hub API
+  description: |
+    Unified API for Claude Skills with Odoo 19 and Apache Superset integration.
+
+    Provides direct access to:
+    - Odoo ERP operations (CRM, sales, projects, HR)
+    - Superset analytics (dashboards, charts, SQL queries)
+    - 43 Claude Skills catalog
+
+    Authentication: Bearer token required
+  version: 1.0.0
+  contact:
+    name: InsightPulse Support
+    url: https://insightpulseai.net
+
+servers:
+  - url: https://mcp.insightpulseai.net
+    description: Production server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Get service health status and integration configuration
+      operationId: getHealth
+      security: []
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: skill-hub
+                  version:
+                    type: string
+                    example: 1.0.0
+                  timestamp:
+                    type: string
+                    format: date-time
+                  integrations:
+                    type: object
+                    properties:
+                      odoo:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                          configured:
+                            type: boolean
+                      superset:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                          configured:
+                            type: boolean
+
+  /skills/catalog:
+    get:
+      summary: Get skills catalog
+      description: Retrieve unified catalog of all 43 available Claude Skills organized by category
+      operationId: getSkillsCatalog
+      tags:
+        - Skills
+      responses:
+        '200':
+          description: Skills catalog retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_skills:
+                    type: integer
+                    example: 43
+                  categories:
+                    type: object
+                    additionalProperties:
+                      type: object
+                  documentation:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /odoo/version:
+    get:
+      summary: Get Odoo version
+      description: Retrieve Odoo server version information
+      operationId: getOdooVersion
+      tags:
+        - Odoo
+      responses:
+        '200':
+          description: Odoo version retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  version:
+                    type: object
+                    properties:
+                      server_version:
+                        type: string
+                        example: "19.0"
+                      protocol_version:
+                        type: integer
+                        example: 1
+                  url:
+                    type: string
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /odoo/execute:
+    post:
+      summary: Execute Odoo operation
+      description: |
+        Execute any Odoo model method via XML-RPC.
+
+        Common models: res.partner, crm.lead, sale.order, project.task, hr.expense
+        Common methods: search, read, search_read, create, write, unlink
+      operationId: executeOdooAction
+      tags:
+        - Odoo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OdooAction'
+            examples:
+              createLead:
+                summary: Create CRM lead
+                value:
+                  model: crm.lead
+                  method: create
+                  args:
+                    - name: "Enterprise Deal"
+                      partner_name: "Acme Corp"
+                      email_from: "sales@acme.com"
+                      expected_revenue: 100000.0
+                      type: opportunity
+              searchPartners:
+                summary: Search for partners
+                value:
+                  model: res.partner
+                  method: search_read
+                  args:
+                    - - ["is_company", "=", true]
+                  kwargs:
+                    fields: ["name", "email", "phone"]
+                    limit: 10
+              createTask:
+                summary: Create project task
+                value:
+                  model: project.task
+                  method: create
+                  args:
+                    - name: "Implement new feature"
+                      project_id: 1
+                      user_id: 2
+                      date_deadline: "2025-12-31"
+      responses:
+        '200':
+          description: Odoo operation executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    description: Result from Odoo method execution
+                  model:
+                    type: string
+                  method:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /superset/query:
+    post:
+      summary: Query Superset
+      description: |
+        Execute Superset queries to retrieve dashboards, charts, or execute SQL.
+
+        Supported actions: dashboards, dashboard, charts, chart_data, execute_sql
+      operationId: executeSuperset Query
+      tags:
+        - Superset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SupersetQuery'
+            examples:
+              listDashboards:
+                summary: List all dashboards
+                value:
+                  action: dashboards
+              getDashboard:
+                summary: Get specific dashboard
+                value:
+                  action: dashboard
+                  dashboard_id: 1
+              executeSQL:
+                summary: Execute SQL query
+                value:
+                  action: execute_sql
+                  database_id: 1
+                  sql: "SELECT partner_name, COUNT(*) as lead_count FROM crm_lead GROUP BY partner_name LIMIT 10"
+      responses:
+        '200':
+          description: Superset query executed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  result:
+                    description: Result from Superset query
+                  action:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Bearer token authentication. Get your token from the Skill Hub administrator.
+
+  schemas:
+    OdooAction:
+      type: object
+      required:
+        - model
+        - method
+      properties:
+        model:
+          type: string
+          description: Odoo model name
+          example: crm.lead
+        method:
+          type: string
+          description: Method to execute
+          example: create
+        args:
+          type: array
+          description: Positional arguments
+          items: {}
+          default: []
+        kwargs:
+          type: object
+          description: Keyword arguments
+          additionalProperties: true
+          default: {}
+
+    SupersetQuery:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum:
+            - dashboards
+            - dashboard
+            - charts
+            - chart_data
+            - execute_sql
+          description: Type of Superset query
+        dashboard_id:
+          type: integer
+          description: Dashboard ID (for dashboard action)
+        chart_id:
+          type: integer
+          description: Chart ID (for chart_data action)
+        database_id:
+          type: integer
+          description: Database ID (for execute_sql action)
+        sql:
+          type: string
+          description: SQL query to execute
+        schema:
+          type: string
+          description: Database schema name
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error message
+        timestamp:
+          type: string
+          format: date-time
+
+  responses:
+    UnauthorizedError:
+      description: Authentication failed - invalid or missing bearer token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Invalid bearer token"
+            timestamp: "2025-11-03T12:00:00Z"
+
+    BadRequestError:
+      description: Bad request - invalid parameters
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Missing required parameter: dashboard_id"
+            timestamp: "2025-11-03T12:00:00Z"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            success: false
+            error: "Odoo connection failed"
+            timestamp: "2025-11-03T12:00:00Z"
+
+tags:
+  - name: Health
+    description: Service health and status
+  - name: Skills
+    description: Claude Skills catalog
+  - name: Odoo
+    description: Odoo ERP integration
+  - name: Superset
+    description: Apache Superset analytics integration
