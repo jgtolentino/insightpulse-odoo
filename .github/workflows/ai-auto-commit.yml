@@ -1,0 +1,333 @@
+name: AI Auto Commit & Deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  ai_ops:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better git operations
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install PyGithub cryptography requests PyJWT
+
+      - name: Generate GitHub App token
+        id: token
+        env:
+          APP_ID: ${{ secrets.APP_ID }}
+          PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+          INSTALLATION_ID: ${{ secrets.INSTALLATION_ID }}
+        run: |
+          python <<'PY'
+          import os, jwt, time, requests
+
+          app_id = int(os.environ["APP_ID"])
+          private_key = os.environ["PRIVATE_KEY"].encode()
+
+          # Create JWT token
+          payload = {
+              "iat": int(time.time()) - 60,
+              "exp": int(time.time()) + 600,
+              "iss": app_id
+          }
+          jwt_token = jwt.encode(payload, private_key, algorithm="RS256")
+
+          # Get installation access token
+          headers = {
+              "Authorization": f"Bearer {jwt_token}",
+              "Accept": "application/vnd.github+json"
+          }
+
+          installation_id = os.environ["INSTALLATION_ID"]
+          url = f"https://api.github.com/app/installations/{installation_id}/access_tokens"
+
+          r = requests.post(url, headers=headers)
+          r.raise_for_status()
+
+          token = r.json()["token"]
+
+          # Mask token in logs
+          print(f"::add-mask::{token}")
+
+          # Set output
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"token={token}\n")
+          PY
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git config user.name "pulser-hub-bot"
+          git config user.email "bot@insightpulseai.net"
+
+          # Check if there are any changes to commit
+          if git diff --quiet && git diff --cached --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to commit"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected"
+          fi
+
+      - name: Commit & Push via pulser-hub
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          git config user.name "pulser-hub-bot"
+          git config user.email "bot@insightpulseai.net"
+
+          # Stage all changes
+          git add .
+
+          # Commit with timestamp
+          TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          git commit -m "AI: sync generated artifacts - ${TIMESTAMP}" || echo "Nothing to commit"
+
+          # Push using GitHub App token
+          git push https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }} HEAD:main
+
+      - name: Create deployment notification issue
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          python <<'PY'
+          from github import Github
+          import os
+          from datetime import datetime
+
+          gh = Github(os.environ["GH_TOKEN"])
+          repo = gh.get_repo(os.environ["GITHUB_REPOSITORY"])
+
+          # Get latest commit info
+          commits = repo.get_commits()
+          latest_commit = commits[0]
+
+          # Create deployment notification issue
+          title = f"🤖 AI Auto Commit - {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}"
+          body = f"""
+          ## Pulser-Hub Automatic Commit
+
+          **Commit**: {latest_commit.sha[:7]}
+          **Author**: {latest_commit.commit.author.name}
+          **Message**: {latest_commit.commit.message}
+          **Time**: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S UTC')}
+
+          ### Changes
+          {latest_commit.stats.total} files changed
+          - {latest_commit.stats.additions} additions
+          - {latest_commit.stats.deletions} deletions
+
+          ### Deployment Status
+          Deployments triggered automatically for:
+          - Odoo ERP
+          - Superset Analytics
+          - PaddleOCR Service
+
+          [View Commit]({latest_commit.html_url})
+          """
+
+          issue = repo.create_issue(
+              title=title,
+              body=body,
+              labels=["auto-commit", "deployment"]
+          )
+
+          print(f"Created issue: {issue.html_url}")
+          PY
+
+      - name: Trigger Odoo Deployment
+        if: steps.changes.outputs.has_changes == 'true' && success()
+        env:
+          DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+          ODOO_APP_ID: ${{ secrets.ODOO_APP_ID }}
+        run: |
+          echo "🚀 Triggering Odoo ERP deployment..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.digitalocean.com/v2/apps/${ODOO_APP_ID}/deployments" \
+            -H "Authorization: Bearer ${DO_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Odoo deployment triggered successfully"
+            echo "$BODY" | jq -r '.deployment.id'
+          else
+            echo "❌ Failed to trigger Odoo deployment (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+
+      - name: Trigger Superset Deployment
+        if: steps.changes.outputs.has_changes == 'true' && success()
+        env:
+          DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+          SUPERSET_APP_ID: ${{ secrets.SUPERSET_APP_ID }}
+        run: |
+          echo "🚀 Triggering Superset deployment..."
+
+          RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            "https://api.digitalocean.com/v2/apps/${SUPERSET_APP_ID}/deployments" \
+            -H "Authorization: Bearer ${DO_API_TOKEN}" \
+            -H "Content-Type: application/json")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+
+          if [ "$HTTP_CODE" -eq 200 ] || [ "$HTTP_CODE" -eq 201 ]; then
+            echo "✅ Superset deployment triggered successfully"
+            echo "$BODY" | jq -r '.deployment.id'
+          else
+            echo "❌ Failed to trigger Superset deployment (HTTP $HTTP_CODE)"
+            echo "$BODY"
+            exit 1
+          fi
+
+      - name: Monitor deployment status
+        if: steps.changes.outputs.has_changes == 'true' && success()
+        env:
+          DO_API_TOKEN: ${{ secrets.DO_API_TOKEN }}
+          ODOO_APP_ID: ${{ secrets.ODOO_APP_ID }}
+          SUPERSET_APP_ID: ${{ secrets.SUPERSET_APP_ID }}
+        run: |
+          python <<'PY'
+          import os
+          import time
+          import requests
+
+          DO_TOKEN = os.environ["DO_API_TOKEN"]
+          ODOO_APP_ID = os.environ["ODOO_APP_ID"]
+          SUPERSET_APP_ID = os.environ["SUPERSET_APP_ID"]
+
+          headers = {
+              "Authorization": f"Bearer {DO_TOKEN}",
+              "Content-Type": "application/json"
+          }
+
+          def get_latest_deployment(app_id):
+              url = f"https://api.digitalocean.com/v2/apps/{app_id}/deployments"
+              response = requests.get(url, headers=headers)
+              response.raise_for_status()
+              deployments = response.json()["deployments"]
+              return deployments[0] if deployments else None
+
+          def check_deployment_status(app_id, app_name):
+              print(f"\n📊 Checking {app_name} deployment status...")
+              deployment = get_latest_deployment(app_id)
+
+              if not deployment:
+                  print(f"❌ No deployments found for {app_name}")
+                  return False
+
+              status = deployment["phase"]
+              created_at = deployment["created_at"]
+
+              print(f"Status: {status}")
+              print(f"Created: {created_at}")
+
+              if status == "ACTIVE":
+                  print(f"✅ {app_name} deployment is active")
+                  return True
+              elif status in ["BUILDING", "DEPLOYING", "PENDING_BUILD"]:
+                  print(f"⏳ {app_name} deployment in progress...")
+                  return None  # Still in progress
+              else:
+                  print(f"❌ {app_name} deployment failed with status: {status}")
+                  return False
+
+          # Monitor for up to 10 minutes
+          max_attempts = 60
+          attempt = 0
+
+          odoo_done = False
+          superset_done = False
+
+          while attempt < max_attempts and not (odoo_done and superset_done):
+              if not odoo_done:
+                  result = check_deployment_status(ODOO_APP_ID, "Odoo")
+                  if result is not None:
+                      odoo_done = True
+
+              if not superset_done:
+                  result = check_deployment_status(SUPERSET_APP_ID, "Superset")
+                  if result is not None:
+                      superset_done = True
+
+              if not (odoo_done and superset_done):
+                  time.sleep(10)
+                  attempt += 1
+
+          if odoo_done and superset_done:
+              print("\n✅ All deployments completed successfully!")
+          else:
+              print("\n⏰ Deployment monitoring timed out. Check DO dashboard for status.")
+          PY
+
+      - name: Send deployment notification
+        if: steps.changes.outputs.has_changes == 'true' && (success() || failure())
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+        run: |
+          python <<'PY'
+          from github import Github
+          import os
+
+          gh = Github(os.environ["GH_TOKEN"])
+          repo = gh.get_repo(os.environ["GITHUB_REPOSITORY"])
+
+          # Get the latest issue (the one we just created)
+          issues = repo.get_issues(state="open", labels=["auto-commit"])
+
+          if issues.totalCount > 0:
+              issue = list(issues)[0]
+
+              # Add deployment status comment
+              status = "✅ **Deployment Complete**" if "${{ job.status }}" == "success" else "❌ **Deployment Failed**"
+
+              comment = f"""
+              {status}
+
+              ### Deployment Summary
+              - **Odoo ERP**: Deployment triggered
+              - **Superset Analytics**: Deployment triggered
+              - **Workflow**: ${{ job.status }}
+
+              Check the [Actions tab](https://github.com/${{ github.repository }}/actions) for detailed logs.
+              """
+
+              issue.create_comment(comment)
+
+              # Close the issue if successful
+              if "${{ job.status }}" == "success":
+                  issue.edit(state="closed")
+          PY
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          echo "❌ Workflow failed. Check logs for details."
+          echo "Common issues:"
+          echo "  - GitHub App authentication failed"
+          echo "  - DigitalOcean API token invalid"
+          echo "  - App IDs incorrect"
+          echo "  - Deployment already in progress"
