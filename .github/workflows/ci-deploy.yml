@@ -4,8 +4,16 @@ on:
   push:
     branches: [main]
     tags: ['v*.*.*']
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
 
 env:
   REGISTRY: ghcr.io
