@@ -1,0 +1,94 @@
+# Traefik Static Configuration
+# Reverse proxy for InsightPulse platform
+# Version: 2.10
+
+# Entry points
+entryPoints:
+  web:
+    address: ":80"
+    http:
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+
+  websecure:
+    address: ":443"
+    http:
+      tls:
+        certResolver: letsencrypt
+        domains:
+          - main: insightpulseai.net
+            sans:
+              - "*.insightpulseai.net"
+
+# Certificate resolvers
+certificatesResolvers:
+  letsencrypt:
+    acme:
+      email: admin@insightpulseai.net
+      storage: /letsencrypt/acme.json
+      httpChallenge:
+        entryPoint: web
+      # Uncomment for DNS challenge (more reliable for wildcards)
+      # dnsChallenge:
+      #   provider: digitalocean
+      #   delayBeforeCheck: 0
+
+# Providers
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+# API and dashboard
+api:
+  dashboard: true
+  insecure: false  # Dashboard accessible only via configured route
+
+# Logging
+log:
+  level: INFO
+  filePath: /var/log/traefik/traefik.log
+  format: json
+
+# Access logs
+accessLog:
+  filePath: /var/log/traefik/access.log
+  format: json
+  bufferingSize: 100
+  filters:
+    statusCodes:
+      - "400-599"  # Log only errors
+    retryAttempts: true
+    minDuration: 500ms
+
+# Metrics
+metrics:
+  prometheus:
+    addEntryPointsLabels: true
+    addRoutersLabels: true
+    addServicesLabels: true
+    entryPoint: metrics
+    buckets:
+      - 0.1
+      - 0.3
+      - 1.0
+      - 3.0
+      - 10.0
+
+# Tracing (optional)
+# tracing:
+#   jaeger:
+#     samplingServerURL: http://localhost:5778/sampling
+#     localAgentHostPort: localhost:6831
+
+# Global HTTP options
+serversTransport:
+  insecureSkipVerify: false
+  maxIdleConnsPerHost: 200
+
+# Pilot (Traefik Cloud, optional)
+# pilot:
+#   token: "your-pilot-token"

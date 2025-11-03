@@ -1,0 +1,88 @@
+version: "3.9"
+
+services:
+  paddleocr:
+    image: paddlepaddle/paddle:2.5.1-gpu-cuda11.7-cudnn8.4-trt8.4  # Use CPU version for budget
+    # For CPU-only (recommended for basic droplet):
+    # image: paddlepaddle/paddle:2.5.1
+    container_name: paddleocr-service
+    restart: unless-stopped
+
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+
+    ports:
+      - "127.0.0.1:8000:8000"  # Bind to localhost only (Nginx will proxy)
+
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OCR_LANGUAGE=en,zh_CN  # English and Chinese
+      - OCR_USE_GPU=false  # Set to true if using GPU droplet
+      - OCR_ENABLE_MKLDNN=true  # CPU optimization
+      - LOG_LEVEL=INFO
+      - MAX_IMAGE_SIZE=10485760  # 10MB
+      - WORKERS=2  # Number of worker processes
+
+    volumes:
+      - ./app:/app
+      - ocr_models:/root/.paddleocr  # Cache models
+      - ocr_logs:/var/log/paddleocr
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    # Resource limits (important for 1GB droplet)
+    deploy:
+      resources:
+        limits:
+          cpus: '0.9'
+          memory: 768M
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  # Redis for caching OCR results
+  redis:
+    image: redis:7-alpine
+    container_name: paddleocr-redis
+    restart: unless-stopped
+
+    command: redis-server --maxmemory 128mb --maxmemory-policy allkeys-lru
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+volumes:
+  ocr_models:
+    driver: local
+  ocr_logs:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: paddleocr_network
