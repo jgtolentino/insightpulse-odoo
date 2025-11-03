@@ -271,9 +271,15 @@ python -m pytest insightpulse_odoo/addons/insightpulse/tests/performance/ -v
 
 ### Quick Start & Deployment
 - **[QUICKSTART.md](QUICKSTART.md)** - 5-minute deployment (local, DigitalOcean, custom Docker)
+- **[docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)** - Complete production deployment guide for Odoo 19
+- **[scripts/deploy/README.md](scripts/deploy/README.md)** - Automated deployment scripts reference
 - **[MODULES.md](MODULES.md)** - Comprehensive module reference and dependency guide
 - **[DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md)** - 13-point pre-deployment validation
 - **[DOCKER_SETUP.md](DOCKER_SETUP.md)** - Docker containerization and CI/CD pipeline
+
+### Infrastructure & Networking
+- **[docs/NETWORK_CONFIGURATION.md](docs/NETWORK_CONFIGURATION.md)** - Network architecture, DNS, SSL/TLS, and firewall configuration
+- **[scripts/deploy/](scripts/deploy/)** - Production deployment automation scripts
 
 ### Security & Architecture
 - **[SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)** - Complete security compliance audit
@@ -357,7 +363,36 @@ docker compose up -d
 open http://localhost:8069
 ```
 
-### 2. DigitalOcean Production (5 minutes)
+### 2. Production Droplet - Automated (10 minutes)
+**NEW**: Complete automated deployment to DigitalOcean droplet with Odoo 19, PostgreSQL 16, Nginx, and SSL/TLS:
+
+```bash
+# SSH into fresh Ubuntu 24.04 droplet
+ssh root@your-droplet-ip
+
+# Clone repository
+git clone https://github.com/jgtolentino/insightpulse-odoo.git
+cd insightpulse-odoo/scripts/deploy
+
+# Make scripts executable
+chmod +x *.sh
+
+# Run automated deployment (prompts for domain/email)
+bash deploy-all.sh
+```
+
+**Infrastructure**:
+- Odoo 19 with systemd service
+- PostgreSQL 16 (local)
+- Nginx reverse proxy with Let's Encrypt SSL
+- Automated backups to S3
+- Health monitoring endpoints
+
+**Cost**: $24/month (4GB/2vCPU droplet)
+
+**Full Guide**: [docs/PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)
+
+### 3. DigitalOcean App Platform (5 minutes)
 ```bash
 # Deploy via doctl
 doctl apps create --spec infra/do/odoo-app.yaml
@@ -368,7 +403,7 @@ doctl apps create --spec infra/do/odoo-app.yaml
 
 **Cost**: $5-10/month (basic-xs instance + Supabase free tier)
 
-### 3. Custom Docker Build
+### 4. Custom Docker Build
 ```bash
 # Build production image
 docker build -t insightpulse-odoo:19.0 .
