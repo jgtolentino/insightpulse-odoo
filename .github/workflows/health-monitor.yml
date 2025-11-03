@@ -1,0 +1,226 @@
+name: Health Monitor (WAF-aware)
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+
+  workflow_dispatch:
+    inputs:
+      check_origins:
+        description: 'Check origin health (bypass WAF)'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  # Droplet origin IPs
+  ERP_ORIGIN_IP: "165.227.10.178"
+  OCR_ORIGIN_IP: "188.166.237.231"
+
+jobs:
+  public-health:
+    name: Public Endpoints (via WAF)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check ERP (public)
+        id: erp_public
+        run: |
+          echo "Checking https://erp.insightpulseai.net/web/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "https://erp.insightpulseai.net/web/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          # Accept 200-399 and 403 (WAF)
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308|403)$ ]]; then
+            echo "✓ ERP public endpoint: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ ERP public endpoint: HTTP $HTTP_CODE (unhealthy)"
+            exit 1
+          fi
+
+      - name: Check MCP (public)
+        id: mcp_public
+        run: |
+          echo "Checking https://mcp.insightpulseai.net/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "https://mcp.insightpulseai.net/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308|403)$ ]]; then
+            echo "✓ MCP public endpoint: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ MCP public endpoint: HTTP $HTTP_CODE (unhealthy)"
+            exit 1
+          fi
+
+      - name: Check Superset (public)
+        id: superset_public
+        run: |
+          echo "Checking https://superset.insightpulseai.net"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "https://superset.insightpulseai.net" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308|403)$ ]]; then
+            echo "✓ Superset public endpoint: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ Superset public endpoint: HTTP $HTTP_CODE (unhealthy)"
+            exit 1
+          fi
+
+      - name: Check OCR (public)
+        id: ocr_public
+        run: |
+          echo "Checking https://ocr.insightpulseai.net/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "https://ocr.insightpulseai.net/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308|403)$ ]]; then
+            echo "✓ OCR public endpoint: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ OCR public endpoint: HTTP $HTTP_CODE (unhealthy)"
+            exit 1
+          fi
+
+      - name: Check LLM (public)
+        id: llm_public
+        continue-on-error: true
+        run: |
+          echo "Checking https://llm.insightpulseai.net/health"
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            "https://llm.insightpulseai.net/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308|403)$ ]]; then
+            echo "✓ LLM public endpoint: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "⚠ LLM public endpoint: HTTP $HTTP_CODE (may not be deployed yet)"
+            exit 0
+          fi
+
+  origin-health:
+    name: Origin Health (bypass WAF)
+    runs-on: ubuntu-latest
+    if: github.event.inputs.check_origins != 'false'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/wait_healthy.sh
+
+      - name: Check ERP Origin
+        id: erp_origin
+        run: |
+          echo "Checking ERP origin at ${{ env.ERP_ORIGIN_IP }}"
+
+          # Direct origin check (bypass Cloudflare)
+          HTTP_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -H "Host: erp.insightpulseai.net" \
+            "https://${{ env.ERP_ORIGIN_IP }}/web/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          # Origin should return 200-3xx (not 403, which indicates WAF)
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308)$ ]]; then
+            echo "✓ ERP origin: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ ERP origin: HTTP $HTTP_CODE (unhealthy - origin not responding correctly)"
+            exit 1
+          fi
+
+      - name: Check OCR Origin
+        id: ocr_origin
+        run: |
+          echo "Checking OCR origin at ${{ env.OCR_ORIGIN_IP }}"
+
+          HTTP_CODE=$(curl -k -s -o /dev/null -w "%{http_code}" \
+            --connect-timeout 10 \
+            --max-time 30 \
+            -H "Host: ocr.insightpulseai.net" \
+            "https://${{ env.OCR_ORIGIN_IP }}/health" || echo "000")
+
+          echo "http_code=$HTTP_CODE" >> $GITHUB_OUTPUT
+
+          if [[ "$HTTP_CODE" =~ ^(200|201|204|301|302|307|308)$ ]]; then
+            echo "✓ OCR origin: HTTP $HTTP_CODE (healthy)"
+            exit 0
+          else
+            echo "✗ OCR origin: HTTP $HTTP_CODE (unhealthy)"
+            exit 1
+          fi
+
+  notify:
+    name: Notify on Failure
+    needs: [public-health, origin-health]
+    runs-on: ubuntu-latest
+    if: failure()
+
+    steps:
+      - name: Send notification
+        run: |
+          echo "::warning::Health check failed for one or more services"
+          echo "Public health status: ${{ needs.public-health.result }}"
+          echo "Origin health status: ${{ needs.origin-health.result }}"
+          # Add Slack/Discord/email notification here if needed
+
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🚨 Health Check Failed - ' + new Date().toISOString();
+            const body = `
+            ## Health Check Failure Report
+
+            **Timestamp**: ${new Date().toISOString()}
+
+            **Public Health**: ${{ needs.public-health.result }}
+            **Origin Health**: ${{ needs.origin-health.result }}
+
+            ### Next Steps
+            1. Check origin health directly: \`ssh root@165.227.10.178\`
+            2. Review Cloudflare WAF logs
+            3. Check service logs: \`docker logs <container>\`
+            4. Verify DNS configuration
+            5. Run manual smoke test: \`./scripts/smoke_test_production.sh\`
+
+            **Contact**: jgtolentino_rn@yahoo.com or support@insightpulseai.com
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['health-check', 'incident', 'priority-high']
+            });

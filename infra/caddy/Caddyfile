@@ -1,0 +1,186 @@
+# Caddyfile with Cloudflare DNS-01 for WAF-proxied domains
+# This configuration allows certificate issuance/renewal even when behind Cloudflare's orange cloud
+
+# Global options
+{
+  # Enable admin API for management
+  admin 0.0.0.0:2019
+
+  # Email for Let's Encrypt notifications
+  email jgtolentino_rn@yahoo.com
+
+  # Prefer Cloudflare DNS for all TLS challenges
+  # This works even when domains are proxied (orange cloud)
+}
+
+# ERP - Odoo on port 8069
+erp.insightpulseai.net {
+  encode zstd gzip
+
+  # TLS with Cloudflare DNS-01 challenge
+  tls {
+    dns cloudflare {env.CLOUDFLARE_DNS_API_TOKEN}
+  }
+
+  # Health check endpoint (unproxied, direct response)
+  handle /web/health {
+    respond "OK" 200
+  }
+
+  # Block database manager
+  @dbm path /web/database/* /database/*
+  respond @dbm 403
+
+  # Reverse proxy to Odoo
+  reverse_proxy odoo:8069 {
+    # Health check for upstream
+    health_uri /web/health
+    health_interval 10s
+    health_timeout 5s
+    health_status 2xx
+
+    # Connection settings
+    transport http {
+      dial_timeout 5s
+      response_header_timeout 30s
+    }
+  }
+
+  # Security headers
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "SAMEORIGIN"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    X-XSS-Protection "1; mode=block"
+    -Server
+  }
+
+  # Access log
+  log {
+    output file /var/log/caddy/erp-access.log
+    format json
+  }
+}
+
+# OCR - PaddleOCR service on port 8000
+ocr.insightpulseai.net {
+  encode zstd gzip
+
+  # TLS with Cloudflare DNS-01 challenge
+  tls {
+    dns cloudflare {env.CLOUDFLARE_DNS_API_TOKEN}
+  }
+
+  # Health check endpoint
+  handle /health {
+    reverse_proxy ocr:8000
+  }
+
+  # OCR processing endpoint
+  handle /ocr {
+    reverse_proxy ocr:8000 {
+      # Longer timeout for OCR processing
+      transport http {
+        dial_timeout 5s
+        response_header_timeout 60s
+      }
+    }
+  }
+
+  # API docs (if using FastAPI)
+  handle /docs {
+    reverse_proxy ocr:8000
+  }
+
+  handle /openapi.json {
+    reverse_proxy ocr:8000
+  }
+
+  # Default handler
+  handle {
+    reverse_proxy ocr:8000
+  }
+
+  # Security headers
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+
+  # Rate limiting (10 requests per second per IP)
+  rate_limit {
+    zone dynamic_ocr {
+      key {remote_host}
+      events 10
+      window 1s
+    }
+  }
+
+  # Access log
+  log {
+    output file /var/log/caddy/ocr-access.log
+    format json
+  }
+}
+
+# LLM Gateway (if hosted on droplet)
+llm.insightpulseai.net {
+  encode zstd gzip
+
+  # TLS with Cloudflare DNS-01 challenge
+  tls {
+    dns cloudflare {env.CLOUDFLARE_DNS_API_TOKEN}
+  }
+
+  # Health check
+  handle /health {
+    reverse_proxy llm-gateway:8001
+  }
+
+  # API endpoints
+  handle /v1/* {
+    reverse_proxy llm-gateway:8001 {
+      # Longer timeout for LLM inference
+      transport http {
+        dial_timeout 5s
+        response_header_timeout 120s
+      }
+    }
+  }
+
+  # Default handler
+  handle {
+    reverse_proxy llm-gateway:8001
+  }
+
+  # Security headers
+  header {
+    Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options "nosniff"
+    X-Frame-Options "DENY"
+    Referrer-Policy "strict-origin-when-cross-origin"
+    -Server
+  }
+
+  # Access log
+  log {
+    output file /var/log/caddy/llm-access.log
+    format json
+  }
+}
+
+# Catch-all for main domain (optional)
+insightpulseai.net, www.insightpulseai.net {
+  encode zstd gzip
+
+  tls {
+    dns cloudflare {env.CLOUDFLARE_DNS_API_TOKEN}
+  }
+
+  # Redirect to primary service or show landing page
+  redir https://erp.insightpulseai.net{uri} permanent
+}

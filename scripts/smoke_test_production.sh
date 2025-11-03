@@ -104,6 +104,42 @@ check_ssl "llm.insightpulseai.net     " "llm.insightpulseai.net"
 
 echo ""
 
+# Origin Health Checks (bypass WAF)
+echo "🔍 Origin Health Checks (Direct to Droplets)"
+echo "────────────────────────────────────────────────────────────"
+
+check_origin() {
+    local name=$1
+    local ip=$2
+    local path=$3
+    local host_header=$4
+    local timeout=10
+
+    echo -n "Checking ${name}... "
+
+    if response=$(curl -k -s -o /dev/null -w "%{http_code}" \
+        --connect-timeout ${timeout} \
+        -H "Host: ${host_header}" \
+        "https://${ip}${path}" 2>/dev/null); then
+        if [[ "$response" =~ ^(200|201|204|301|302|307|308)$ ]]; then
+            echo -e "${GREEN}✓${NC} HTTP ${response} (origin @${ip})"
+            return 0
+        else
+            echo -e "${YELLOW}⚠${NC} HTTP ${response} (origin @${ip})"
+            return 1
+        fi
+    else
+        echo -e "${RED}✗${NC} Connection failed or timeout"
+        return 1
+    fi
+}
+
+# Check droplet origins directly (bypasses Cloudflare WAF)
+check_origin "ERP Origin     " "165.227.10.178" "/web/health" "erp.insightpulseai.net"
+check_origin "OCR Origin     " "188.166.237.231" "/health" "ocr.insightpulseai.net"
+
+echo ""
+
 # Platform Configuration Reminders
 echo "📋 Post-Cutover Checklist"
 echo "────────────────────────────────────────────────────────────"
@@ -111,11 +147,13 @@ echo "App Platform Domains (force HTTPS enabled):"
 echo "  ☐ superset.insightpulseai.net → Superset component"
 echo "  ☐ mcp.insightpulseai.net → MCP component"
 echo ""
-echo "Droplet Services:"
-echo "  ☐ ERP: certbot --nginx -d erp.insightpulseai.net"
-echo "  ☐ ERP: Nginx proxies /web/health endpoint"
-echo "  ☐ OCR: Docker container running on port 80 (188.166.237.231)"
-echo "  ☐ OCR: Health endpoint configured at /health"
+echo "Droplet Services (with Caddy DNS-01):"
+echo "  ☐ ERP: Caddy with Cloudflare DNS-01 (works with orange cloud)"
+echo "  ☐ ERP: CLOUDFLARE_DNS_API_TOKEN env set"
+echo "  ☐ ERP: Health endpoint /web/health responding"
+echo "  ☐ OCR: Caddy with Cloudflare DNS-01 (works with orange cloud)"
+echo "  ☐ OCR: Docker container running on port 8000"
+echo "  ☐ OCR: Health endpoint /health responding"
 echo "  ☐ LLM: Gateway configured and responding"
 echo ""
 echo "Superset Configuration:"
@@ -124,9 +162,11 @@ echo "  ☐ HTTP_PORT=8088"
 echo "  ☐ Run command: db upgrade && init && run -p 8088"
 echo ""
 echo "Cloudflare Configuration:"
-echo "  ☐ All 5 subdomains (erp, mcp, superset, ocr, llm) proxied"
+echo "  ☐ Droplets (erp, ocr, llm): PROXIED (orange) + DNS-01 at origin"
+echo "  ☐ App Platform (mcp, superset): DNS-ONLY (grey) until certs issued"
 echo "  ☐ SSL/TLS mode: Full (strict)"
 echo "  ☐ Always Use HTTPS: Enabled"
+echo "  ☐ Cloudflare DNS API token: Zone.DNS:Edit permission"
 echo ""
 
 echo "════════════════════════════════════════════════════════════"
