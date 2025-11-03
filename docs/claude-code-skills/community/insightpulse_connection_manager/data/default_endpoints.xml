@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Production Supabase Connection -->
+        <record id="endpoint_prod_supabase" model="insightpulse.connection.endpoint">
+            <field name="name">Production Supabase</field>
+            <field name="sequence">10</field>
+            <field name="endpoint_type">supabase</field>
+            <field name="base_url">db.spdtwktxdalcfigzeqrz.supabase.co</field>
+            <field name="port">5432</field>
+            <field name="database_name">postgres</field>
+            <field name="username">postgres</field>
+            <field name="use_ssl" eval="True"/>
+            <field name="description">&lt;p&gt;Production Supabase PostgreSQL database for InsightPulse AI.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Project: spdtwktxdalcfigzeqrz&lt;/li&gt;&lt;li&gt;Region: ap-southeast-1&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="notes">Primary database for production workloads, Finance SSC data, BIR compliance tracking</field>
+        </record>
+        
+        <!-- Apache Superset Connection -->
+        <record id="endpoint_superset" model="insightpulse.connection.endpoint">
+            <field name="name">Apache Superset</field>
+            <field name="sequence">20</field>
+            <field name="endpoint_type">superset</field>
+            <field name="base_url">localhost</field>
+            <field name="port">8088</field>
+            <field name="username">admin</field>
+            <field name="use_ssl" eval="False"/>
+            <field name="description">&lt;p&gt;Self-hosted Apache Superset for BI dashboards.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;BIR compliance dashboards&lt;/li&gt;&lt;li&gt;Month-end closing trackers&lt;/li&gt;&lt;li&gt;Multi-agency analytics&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="notes">Replace Tableau/Power BI - saves $4,728/year</field>
+        </record>
+        
+        <!-- Odoo Production Database -->
+        <record id="endpoint_odoo_prod" model="insightpulse.connection.endpoint">
+            <field name="name">Odoo 19 Production</field>
+            <field name="sequence">30</field>
+            <field name="endpoint_type">odoo</field>
+            <field name="base_url">localhost</field>
+            <field name="port">5432</field>
+            <field name="database_name">odoo19</field>
+            <field name="username">odoo</field>
+            <field name="use_ssl" eval="False"/>
+            <field name="description">&lt;p&gt;Production Odoo 19 ERP database.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Finance SSC operations&lt;/li&gt;&lt;li&gt;Multi-agency (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)&lt;/li&gt;&lt;li&gt;OCA modules&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="notes">Primary ERP instance using OCA community modules</field>
+        </record>
+        
+        <!-- MCP Server - Notion -->
+        <record id="endpoint_mcp_notion" model="insightpulse.connection.endpoint">
+            <field name="name">MCP Server - Notion</field>
+            <field name="sequence">40</field>
+            <field name="endpoint_type">mcp</field>
+            <field name="base_url">localhost</field>
+            <field name="port">3000</field>
+            <field name="use_ssl" eval="False"/>
+            <field name="description">&lt;p&gt;Model Context Protocol server for Notion integration.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Task management&lt;/li&gt;&lt;li&gt;Month-end closing tasks&lt;/li&gt;&lt;li&gt;BIR filing schedules&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="notes">Sync finance tasks between Notion and Odoo</field>
+        </record>
+        
+        <!-- MCP Server - Google Drive -->
+        <record id="endpoint_mcp_gdrive" model="insightpulse.connection.endpoint">
+            <field name="name">MCP Server - Google Drive</field>
+            <field name="sequence">50</field>
+            <field name="endpoint_type">mcp</field>
+            <field name="base_url">localhost</field>
+            <field name="port">3001</field>
+            <field name="use_ssl" eval="False"/>
+            <field name="description">&lt;p&gt;Model Context Protocol server for Google Drive integration.&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Document storage&lt;/li&gt;&lt;li&gt;BIR form templates&lt;/li&gt;&lt;li&gt;Finance reports&lt;/li&gt;&lt;/ul&gt;</field>
+            <field name="notes">Access Google Drive files via MCP</field>
+        </record>
+        
+        <!-- PostgreSQL - Local Development -->
+        <record id="endpoint_postgres_dev" model="insightpulse.connection.endpoint">
+            <field name="name">PostgreSQL Development</field>
+            <field name="sequence">60</field>
+            <field name="endpoint_type">postgres</field>
+            <field name="base_url">localhost</field>
+            <field name="port">5432</field>
+            <field name="database_name">postgres</field>
+            <field name="username">postgres</field>
+            <field name="use_ssl" eval="False"/>
+            <field name="active" eval="False"/>
+            <field name="description">&lt;p&gt;Local PostgreSQL instance for development and testing.&lt;/p&gt;</field>
+            <field name="notes">Use for local development only</field>
+        </record>
+    </data>
+</odoo>

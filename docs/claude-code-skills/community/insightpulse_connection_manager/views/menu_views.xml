@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Root Menu -->
+    <menuitem id="menu_insightpulse_root"
+              name="InsightPulse AI"
+              sequence="10"
+              web_icon="insightpulse_connection_manager,static/description/icon.png"/>
+    
+    <!-- Connection Manager Menu -->
+    <menuitem id="menu_connection_manager"
+              name="Connection Manager"
+              parent="menu_insightpulse_root"
+              action="action_connection_endpoint"
+              sequence="10"/>
+</odoo>
