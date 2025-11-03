@@ -1,0 +1,111 @@
+# DigitalOcean App Platform Configuration for Skill Hub
+# Deploy this to App Platform to run the Skill Hub API
+
+name: skill-hub
+region: sfo
+
+services:
+  - name: skill-hub-api
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    source_dir: /skill-hub
+
+    build_command: pip install -r requirements.txt
+
+    run_command: uvicorn server:app --host 0.0.0.0 --port 8080
+
+    instance_size_slug: basic-xxs  # $5/month
+    instance_count: 1
+
+    http_port: 8080
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 3
+      success_threshold: 1
+      failure_threshold: 3
+
+    routes:
+      - path: /
+
+    envs:
+      - key: PORT
+        value: "8080"
+        scope: RUN_TIME
+
+      # Authentication (set in DO console as encrypted)
+      - key: BEARER_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+
+      # Odoo Integration (set in DO console as encrypted)
+      - key: ODOO_URL
+        value: "https://erp.insightpulseai.net"
+        scope: RUN_TIME
+
+      - key: ODOO_DB
+        value: "odoo"
+        scope: RUN_TIME
+
+      - key: ODOO_USERNAME
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: ODOO_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+
+      # Superset Integration (set in DO console as encrypted)
+      - key: SUPERSET_URL
+        value: "https://insightpulseai.net/superset"
+        scope: RUN_TIME
+
+      - key: SUPERSET_USERNAME
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPERSET_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+
+      # CORS
+      - key: CORS_ORIGIN
+        value: "https://chat.openai.com"
+        scope: RUN_TIME
+
+domains:
+  - domain: mcp.insightpulseai.net
+    type: PRIMARY
+    zone: insightpulseai.net
+
+features:
+  - buildpack-stack=ubuntu-22
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+ingress:
+  rules:
+    - component:
+        name: skill-hub-api
+      cors:
+        allow_origins:
+          - prefix: https://chat.openai.com
+          - prefix: https://assistant.openai.com
+        allow_methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        allow_headers:
+          - Content-Type
+          - Authorization
+        max_age: 86400
