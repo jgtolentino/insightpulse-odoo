@@ -1,0 +1,258 @@
+# Traefik Dynamic Configuration
+# Service routing and middleware configuration
+
+http:
+  # ========================================
+  # ROUTERS
+  # ========================================
+  routers:
+    # Main website
+    main-website:
+      rule: "Host(`insightpulseai.net`) && PathPrefix(`/`)"
+      service: main-website
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      priority: 1
+      middlewares:
+        - secure-headers
+        - rate-limit-general
+
+    # Odoo ERP
+    odoo-erp:
+      rule: "Host(`insightpulseai.net`) && PathPrefix(`/odoo`)"
+      service: odoo-erp
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+      middlewares:
+        - odoo-stripprefix
+        - secure-headers
+        - rate-limit-general
+
+    # Superset Dashboard
+    superset-dashboard:
+      rule: "Host(`insightpulseai.net`) && PathPrefix(`/superset`)"
+      service: superset-dashboard
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      priority: 10
+      middlewares:
+        - superset-headers
+        - secure-headers
+        - rate-limit-general
+
+    # PaddleOCR Service
+    paddleocr-service:
+      rule: "Host(`ocr.insightpulseai.net`)"
+      service: paddleocr-service
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - secure-headers
+        - rate-limit-ocr
+        - ocr-api-auth
+
+    # Traefik Dashboard (protected)
+    traefik-dashboard:
+      rule: "Host(`traefik.insightpulseai.net`)"
+      service: api@internal
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - dashboard-auth
+
+  # ========================================
+  # SERVICES
+  # ========================================
+  services:
+    main-website:
+      loadBalancer:
+        servers:
+          # Replace with your DigitalOcean App Platform URL
+          - url: "https://insightpulse-web-xxxxx.ondigitalocean.app"
+        healthCheck:
+          path: /
+          interval: 30s
+          timeout: 5s
+        sticky:
+          cookie:
+            name: sticky_website
+            secure: true
+            httpOnly: true
+
+    odoo-erp:
+      loadBalancer:
+        servers:
+          # Replace with your Odoo App Platform URL
+          - url: "https://odoo-saas-platform-xxxxx.ondigitalocean.app"
+        healthCheck:
+          path: /web/health
+          interval: 30s
+          timeout: 10s
+        sticky:
+          cookie:
+            name: sticky_odoo
+            secure: true
+            httpOnly: true
+
+    superset-dashboard:
+      loadBalancer:
+        servers:
+          # Replace with your Superset App Platform URL
+          - url: "https://superset-analytics-xxxxx.ondigitalocean.app"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 10s
+        sticky:
+          cookie:
+            name: sticky_superset
+            secure: true
+            httpOnly: true
+
+    paddleocr-service:
+      loadBalancer:
+        servers:
+          - url: "http://<PADDLEOCR_DROPLET_IP>:8000"
+        healthCheck:
+          path: /health
+          interval: 30s
+          timeout: 10s
+
+  # ========================================
+  # MIDDLEWARES
+  # ========================================
+  middlewares:
+    # Strip prefix for Odoo
+    odoo-stripprefix:
+      stripPrefix:
+        prefixes:
+          - "/odoo"
+        forceSlash: false
+
+    # Superset headers
+    superset-headers:
+      headers:
+        customRequestHeaders:
+          X-Script-Name: "/superset"
+        customResponseHeaders:
+          X-Powered-By: "InsightPulse"
+
+    # Security headers
+    secure-headers:
+      headers:
+        sslRedirect: true
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+        forceSTSHeader: true
+        frameDeny: true
+        contentTypeNosniff: true
+        browserXssFilter: true
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Powered-By: "InsightPulse"
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "SAMEORIGIN"
+          X-XSS-Protection: "1; mode=block"
+        contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:;"
+
+    # Rate limiting - General
+    rate-limit-general:
+      rateLimit:
+        average: 100
+        burst: 200
+        period: 1m
+
+    # Rate limiting - OCR (stricter)
+    rate-limit-ocr:
+      rateLimit:
+        average: 10
+        burst: 20
+        period: 1m
+
+    # OCR API authentication
+    ocr-api-auth:
+      headers:
+        customRequestHeaders:
+          X-API-Key: "${OCR_API_KEY}"  # Set via environment variable
+
+    # Dashboard basic auth
+    dashboard-auth:
+      basicAuth:
+        users:
+          # Generate with: echo $(htpasswd -nb admin password) | sed -e s/\\$/\\$\\$/g
+          - "admin:$$apr1$$xyz$$hashed_password"  # Replace with actual hash
+
+    # CORS for API endpoints
+    cors-headers:
+      headers:
+        accessControlAllowMethods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+          - OPTIONS
+        accessControlAllowOriginList:
+          - "https://insightpulseai.net"
+          - "http://localhost:3000"  # For development
+        accessControlAllowHeaders:
+          - "Content-Type"
+          - "Authorization"
+          - "X-API-Key"
+        accessControlExposeHeaders:
+          - "Content-Length"
+          - "Content-Type"
+        accessControlAllowCredentials: true
+        accessControlMaxAge: 3600
+
+    # Compression
+    compress:
+      compress: {}
+
+    # Retry
+    retry:
+      attempts: 3
+      initialInterval: 100ms
+
+# ========================================
+# TCP ROUTERS (for additional services)
+# ========================================
+tcp:
+  routers:
+    # PostgreSQL (if needed for direct access)
+    # postgres:
+    #   rule: "HostSNI(`db.insightpulseai.net`)"
+    #   service: postgres
+    #   tls:
+    #     passthrough: true
+
+  services:
+    # postgres:
+    #   loadBalancer:
+    #     servers:
+    #       - address: "aws-1-us-east-1.pooler.supabase.com:6543"
+
+# ========================================
+# TLS OPTIONS
+# ========================================
+tls:
+  options:
+    default:
+      minVersion: VersionTLS12
+      cipherSuites:
+        - TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      sniStrict: true

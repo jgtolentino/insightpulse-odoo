@@ -1,0 +1,126 @@
+version: "3.9"
+
+services:
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Dashboard (protected)
+
+    environment:
+      - DO_AUTH_TOKEN=${DO_AUTH_TOKEN}  # For DNS challenge (optional)
+
+    volumes:
+      # Configuration files
+      - ./traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./dynamic.yml:/etc/traefik/dynamic.yml:ro
+
+      # Let's Encrypt certificates
+      - letsencrypt:/letsencrypt
+
+      # Logs
+      - traefik_logs:/var/log/traefik
+
+      # Docker socket (if using Docker provider)
+      # - /var/run/docker.sock:/var/run/docker.sock:ro
+
+    networks:
+      - traefik
+
+    labels:
+      - "traefik.enable=true"
+
+      # Dashboard
+      - "traefik.http.routers.dashboard.rule=Host(`traefik.insightpulseai.net`)"
+      - "traefik.http.routers.dashboard.service=api@internal"
+      - "traefik.http.routers.dashboard.entrypoints=websecure"
+      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.dashboard.middlewares=dashboard-auth"
+
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+
+    ports:
+      - "127.0.0.1:9090:9090"
+
+    networks:
+      - traefik
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.prometheus.rule=Host(`metrics.insightpulseai.net`)"
+      - "traefik.http.routers.prometheus.entrypoints=websecure"
+      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+
+  # Grafana for visualization (optional)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
+      - GF_SERVER_ROOT_URL=https://grafana.insightpulseai.net
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+    ports:
+      - "127.0.0.1:3000:3000"
+
+    networks:
+      - traefik
+
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.grafana.rule=Host(`grafana.insightpulseai.net`)"
+      - "traefik.http.routers.grafana.entrypoints=websecure"
+      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+
+volumes:
+  letsencrypt:
+    driver: local
+  traefik_logs:
+    driver: local
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local
+
+networks:
+  traefik:
+    name: traefik_network
+    driver: bridge
