@@ -2,6 +2,7 @@ name: odoo-addon
 on: [push, pull_request, workflow_dispatch]
 jobs:
   validate:
+    name: "Lint $(( matrix.module })"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,24 +17,13 @@ jobs:
         run: python -m pylint_odoo || true
       - name: Run flake8-odoo
         run: python -m flake8 || true
-  package:
-    needs: validate
+    package:
+      needs: validate
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        module:
+        module: &odoo_addons
           - ipai_concur_bridge
           - ipai_ariba_cxml
           - ipai_salesforce_sync
-          - ipai_clarity_ppm_sync
-          - ipai_statement_engine
-          - ipai_consent_manager
-          - ipai_doc_ai
-          - ipai_visual_gate
-    steps:
-      - uses: actions/checkout@v4
-      - run: bash scripts/odoo/package_addon.sh ${{ matrix.module }} dist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ${{ matrix.module }}
-          path: dist/**

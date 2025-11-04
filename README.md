@@ -22,6 +22,8 @@ open http://localhost:8069
 # Default: admin / admin
 ```
 
+> The Docker Compose stack extends the official [Odoo Docker image](https://hub.docker.com/_/odoo/) to mirror upstream runtime behaviour.
+
 **Full deployment guide**: See [QUICKSTART.md](QUICKSTART.md) for local, DigitalOcean, and custom Docker options.
 
 ---
@@ -296,6 +298,14 @@ python -m pytest insightpulse_odoo/addons/insightpulse/tests/performance/ -v
 ## 🤖 Development Agent Capabilities
 
 This repository includes **SuperClaude agent skills** for AI-assisted operations:
+
+### OpenAI Cookbook Automation Stack
+- **`ai_stack/`** reusable Python package that follows the [OpenAI Cookbook](https://cookbook.openai.com/) stack for hybrid automation
+  (Responses API + rule-based fallbacks)
+- **CLI**: `python3 agents/issue-classifier.py --title "..." --body-file path/to/issue.md` generates JSON analysis and `plan.yaml`
+  - Includes a `StackRuntime` helper for environment-aware client reuse and cookbook-style instrumentation hooks
+  - Wraps `client.responses.parse` via a reusable `ResponsesRunner` helper for strongly-typed structured output flows
+  - Validates LLM structured outputs with Pydantic models before converting to implementation plans
 
 ### Odoo Module Development Skills
 - **odoo-vendor-management**: Privacy-first vendor portals with role-based access
