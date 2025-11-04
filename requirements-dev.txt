@@ -35,3 +35,4 @@ ipython>=8.17.0
 ipdb>=0.13.13
 openai>=1.57.0
 PyYAML>=6.0.2
+pydantic>=2.8.2

@@ -2,5 +2,6 @@
 
 from .config import OpenAIConfig
 from .clients import get_openai_client
+from .runtime import StackRuntime
 
-__all__ = ["OpenAIConfig", "get_openai_client"]
+__all__ = ["OpenAIConfig", "get_openai_client", "StackRuntime"]

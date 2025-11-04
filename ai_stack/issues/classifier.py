@@ -2,19 +2,22 @@
 
 from __future__ import annotations
 
-import json
 import logging
 import re
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, TYPE_CHECKING
 
+from pydantic import ValidationError
+
 from ..clients import get_openai_client
 from ..config import OpenAIConfig
+from ..runtime import StackRuntime
 from .prompt import (
     ISSUE_CLASSIFICATION_JSON_SCHEMA,
     ISSUE_CLASSIFICATION_SYSTEM_PROMPT,
     ISSUE_CLASSIFICATION_USER_PROMPT,
 )
+from .schema import IssueClassificationPayload
 from .types import AreaType, DecisionType, IssueAnalysis
 
 if TYPE_CHECKING:  # pragma: no cover - imported for typing only
@@ -160,10 +163,15 @@ class LLMIssueClassifier:
 
     client: Optional["OpenAI"] = None
     config: Optional[OpenAIConfig] = None
+    runtime: Optional[StackRuntime] = None
 
     def __post_init__(self) -> None:
-        self.config = self.config or OpenAIConfig.from_env()
-        self.client = self.client or get_openai_client(self.config)
+        if self.runtime:
+            self.config = self.runtime.config
+            self.client = self.runtime.ensure_client()
+        else:
+            self.config = self.config or OpenAIConfig.from_env()
+            self.client = self.client or get_openai_client(self.config)
 
     def classify(self, issue_number: int, title: str, body: str) -> IssueAnalysis:
         formatted_issue = self._format_issue(title, body)
@@ -187,21 +195,16 @@ class LLMIssueClassifier:
             response_format={"type": "json_schema", "json_schema": ISSUE_CLASSIFICATION_JSON_SCHEMA},
         )
 
-        payload = self._extract_json_payload(response)
+        payload = self._extract_payload(response)
 
-        return IssueAnalysis(
+        return IssueAnalysis.from_payload(
             issue_number=issue_number,
             title=title,
             body=body,
-            domain=payload.get("domain", ""),
-            capabilities=payload.get("capabilities", []),
-            dependencies=payload.get("dependencies", []),
-            decision=DecisionType(payload.get("decision", DecisionType.IPAI.value)),
-            area=AreaType(payload.get("area", AreaType.CONNECTOR.value)),
-            acceptance_criteria=payload.get("acceptance_criteria", []),
+            payload=payload,
         )
 
-    def _extract_json_payload(self, response) -> Dict:
+    def _extract_payload(self, response) -> IssueClassificationPayload:
         try:
             chunks = [
                 content_item.text
@@ -212,7 +215,9 @@ class LLMIssueClassifier:
             document = "".join(chunks).strip()
             if not document:
                 raise ValueError("empty response content")
-            return json.loads(document)
+            return IssueClassificationPayload.model_validate_json(document)
+        except ValidationError as exc:
+            raise IssueClassificationError("LLM response failed validation") from exc
         except Exception as exc:  # noqa: BLE001
             raise IssueClassificationError("Failed to parse LLM response") from exc
 

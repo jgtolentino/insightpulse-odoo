@@ -5,6 +5,7 @@ requests>=2.31.0
 psycopg2-binary>=2.9.9
 openai>=1.57.0
 PyYAML>=6.0.2
+pydantic>=2.8.2
 
 # Optional dependencies for development
 # Uncomment if needed for development/testing

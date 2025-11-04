@@ -301,6 +301,8 @@ This repository includes **SuperClaude agent skills** for AI-assisted operations
 - **`ai_stack/`** reusable Python package that follows the [OpenAI Cookbook](https://cookbook.openai.com/) stack for hybrid automation
   (Responses API + rule-based fallbacks)
 - **CLI**: `python3 agents/issue-classifier.py --title "..." --body-file path/to/issue.md` generates JSON analysis and `plan.yaml`
+  - Includes a `StackRuntime` helper for environment-aware client reuse and cookbook-style instrumentation hooks
+  - Validates LLM structured outputs with Pydantic models before converting to implementation plans
 
 ### Odoo Module Development Skills
 - **odoo-vendor-management**: Privacy-first vendor portals with role-based access

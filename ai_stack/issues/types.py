@@ -4,7 +4,10 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 from enum import Enum
-from typing import Dict, List
+from typing import Dict, List, TYPE_CHECKING
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .schema import IssueClassificationPayload
 
 
 class DecisionType(str, Enum):
@@ -34,6 +37,28 @@ class IssueAnalysis:
     decision: DecisionType = DecisionType.IPAI
     area: AreaType = AreaType.CONNECTOR
     acceptance_criteria: List[str] = field(default_factory=list)
+
+    @classmethod
+    def from_payload(
+        cls,
+        issue_number: int,
+        title: str,
+        body: str,
+        payload: "IssueClassificationPayload",
+    ) -> "IssueAnalysis":
+        """Create an analysis from a structured LLM payload."""
+
+        return cls(
+            issue_number=issue_number,
+            title=title,
+            body=body,
+            domain=payload.domain,
+            capabilities=payload.capabilities,
+            dependencies=payload.dependencies,
+            decision=DecisionType(payload.decision),
+            area=AreaType(payload.area),
+            acceptance_criteria=payload.acceptance_criteria,
+        )
 
     def to_plan(self) -> Dict:
         """Return a plan.yaml style dictionary."""

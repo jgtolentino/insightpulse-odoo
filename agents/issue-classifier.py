@@ -15,7 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 import yaml
 
-from ai_stack import OpenAIConfig
+from ai_stack import StackRuntime
 from ai_stack.issues import HybridIssueClassifier, LLMIssueClassifier, RuleBasedIssueClassifier
 
 
@@ -28,8 +28,8 @@ def build_classifier(disable_llm: bool = False) -> HybridIssueClassifier:
         return HybridIssueClassifier(llm_classifier=None, rule_classifier=rule_classifier)
 
     try:
-        config = OpenAIConfig.from_env()
-        llm_classifier = LLMIssueClassifier(config=config)
+        runtime = StackRuntime.from_env()
+        llm_classifier = LLMIssueClassifier(runtime=runtime)
     except RuntimeError as exc:
         print(f"[issue-classifier] Falling back to rule-based mode: {exc}", file=sys.stderr)
         llm_classifier = None
