@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Agent Log Tree View -->
+    <record id="view_agent_log_tree" model="ir.ui.view">
+        <field name="name">ipai.agent.log.tree</field>
+        <field name="model">ipai.agent.log</field>
+        <field name="arch" type="xml">
+            <tree string="AI Agent Logs">
+                <field name="create_date" string="Date"/>
+                <field name="user_id"/>
+                <field name="query"/>
+                <field name="success" widget="boolean_toggle"/>
+                <field name="execution_time" widget="float_time"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Agent Log Form View -->
+    <record id="view_agent_log_form" model="ir.ui.view">
+        <field name="name">ipai.agent.log.form</field>
+        <field name="model">ipai.agent.log</field>
+        <field name="arch" type="xml">
+            <form string="AI Agent Log">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="user_id"/>
+                            <field name="create_date"/>
+                            <field name="execution_time"/>
+                            <field name="success"/>
+                        </group>
+                        <group>
+                            <field name="message_id"/>
+                        </group>
+                    </group>
+
+                    <group string="Query">
+                        <field name="query" nolabel="1"/>
+                    </group>
+
+                    <group string="Response">
+                        <field name="response" nolabel="1"/>
+                    </group>
+
+                    <group string="Actions" attrs="{'invisible': [('actions', '=', False)]}">
+                        <field name="actions" nolabel="1"/>
+                    </group>
+
+                    <group string="Error" attrs="{'invisible': [('error_message', '=', False)]}">
+                        <field name="error_message" nolabel="1"/>
+                    </group>
+
+                    <group string="Context">
+                        <field name="context" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Agent Log Action -->
+    <record id="action_agent_log" model="ir.actions.act_window">
+        <field name="name">AI Agent Logs</field>
+        <field name="res_model">ipai.agent.log</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_agent_logs"
+              name="Agent Logs"
+              parent="menu_ipai_agent_root"
+              action="action_agent_log"
+              groups="group_agent_user"
+              sequence="10"/>
+</odoo>

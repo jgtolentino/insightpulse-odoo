@@ -87,7 +87,17 @@
       "Bash(docs/CI_CD_AUDIT_2025-11-04.md)",
       "Bash(gh release edit:*)",
       "Bash(for f in .github/workflows/*.yml)",
-      "Bash(head:*)"
+      "Bash(head:*)",
+      "Bash(git -C insightpulse-odoo worktree add ../insightpulse-notion-integration -b notion-integration-layer ipai-bridges-v1)",
+      "Bash(git -C insightpulse-odoo worktree add ../insightpulse-python-scripts -b python-automation-scripts ipai-bridges-v1)",
+      "Bash(git -C insightpulse-odoo worktree add ../insightpulse-github-pages -b github-pages-deployment ipai-bridges-v1)",
+      "Bash(git -C insightpulse-odoo worktree add ../insightpulse-oca-compliance -b oca-compliance-automation ipai-bridges-v1)",
+      "Bash(git -C insightpulse-odoo worktree add ../insightpulse-devops-dashboard -b devops-monitoring-dashboard ipai-bridges-v1)",
+      "Bash(pip install:*)",
+      "Bash(/opt/homebrew/bin/python3.11 -m pip install:*)",
+      "Bash(ipai:*)",
+      "Bash(git merge:*)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": []

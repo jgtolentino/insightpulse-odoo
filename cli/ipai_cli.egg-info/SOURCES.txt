@@ -1,0 +1,16 @@
+README.md
+setup.py
+ipai_cli/__init__.py
+ipai_cli/cli.py
+ipai_cli.egg-info/PKG-INFO
+ipai_cli.egg-info/SOURCES.txt
+ipai_cli.egg-info/dependency_links.txt
+ipai_cli.egg-info/entry_points.txt
+ipai_cli.egg-info/requires.txt
+ipai_cli.egg-info/top_level.txt
+ipai_cli/commands/__init__.py
+ipai_cli/commands/ask.py
+ipai_cli/commands/deploy.py
+ipai_cli/commands/migrate.py
+ipai_cli/commands/task.py
+ipai_cli/commands/test.py
