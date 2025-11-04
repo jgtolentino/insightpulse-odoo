@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Cron Job: Forum Scraper -->
+        <record id="cron_forum_scraper" model="ir.cron">
+            <field name="name">Odoo Forum Scraper</field>
+            <field name="model_id" ref="model_odoo_knowledge_agent"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_scrape_forum()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="doall" eval="False"/>
+            <field name="priority">50</field>
+        </record>
+
+    </data>
+</odoo>
