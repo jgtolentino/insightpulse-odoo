@@ -1,0 +1,172 @@
+# DigitalOcean App Platform Specification
+# MCP (Model Context Protocol) Coordinator Service
+# Architecture: FastAPI coordinator for multi-agent orchestration
+# Budget: $5/month (basic-xxs: 512MB RAM, 1 vCPU)
+# URL: https://mcp.insightpulseai.net
+
+name: mcp-coordinator
+region: sgp  # Singapore for low latency
+
+services:
+  - name: mcp-hub
+    # GitHub source configuration
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    # Source and build configuration
+    source_dir: services/mcp-hub
+    dockerfile_path: services/mcp-hub/Dockerfile
+    build_command: ""
+
+    # Instance configuration (basic-xxs: 512MB RAM, 1 vCPU, $5/month)
+    instance_size_slug: basic-xxs
+    instance_count: 1
+
+    # HTTP configuration
+    http_port: 8001
+
+    # Health check configuration
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 20
+      period_seconds: 15
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    # Environment variables
+    envs:
+      # Service discovery
+      - key: PULSER_HUB_URL
+        scope: RUN_TIME
+        value: "https://pulse-hub-web-an645.ondigitalocean.app"
+
+      # GitHub integration
+      - key: GITHUB_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # Supabase configuration
+      - key: SUPABASE_URL
+        scope: RUN_TIME
+        value: "https://spdtwktxdalcfigzeqrz.supabase.co"
+
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # DigitalOcean API
+      - key: DO_API_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # Superset integration
+      - key: SUPERSET_URL
+        scope: RUN_TIME
+        value: "https://superset.insightpulseai.net"
+
+      - key: SUPERSET_USERNAME
+        scope: RUN_TIME
+        value: "admin"
+
+      - key: SUPERSET_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # Notion integration (optional)
+      - key: NOTION_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard (optional)
+
+      # Odoo integration
+      - key: ODOO_URL
+        scope: RUN_TIME
+        value: "https://odoo-saas-platform-web.ondigitalocean.app"
+
+      - key: ODOO_DB_NAME
+        scope: RUN_TIME
+        value: "postgres"
+
+      - key: ODOO_ADMIN_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # AI configuration
+      - key: AI_PROVIDER
+        scope: RUN_TIME
+        value: "do-gradient"
+
+      - key: DO_AGENT_KEY
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      - key: DO_MODEL_ACCESS_KEY
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard
+
+      # Logging
+      - key: LOG_LEVEL
+        scope: RUN_TIME
+        value: "INFO"
+
+      # FastAPI configuration
+      - key: ENVIRONMENT
+        scope: RUN_TIME
+        value: "production"
+
+    # Routes configuration
+    routes:
+      - path: /
+        preserve_path_prefix: true
+
+# Custom domain configuration
+domains:
+  - domain: mcp.insightpulseai.net
+    type: PRIMARY
+
+# =============================================================================
+# Deployment Notes
+# =============================================================================
+#
+# 1. Set secrets in DigitalOcean dashboard:
+#    - GITHUB_TOKEN (for GitHub integration)
+#    - SUPABASE_SERVICE_ROLE_KEY (for Supabase API access)
+#    - DO_API_TOKEN (for DigitalOcean API calls)
+#    - SUPERSET_PASSWORD (for Superset API access)
+#    - ODOO_ADMIN_PASSWORD (for Odoo API access)
+#    - DO_AGENT_KEY (DigitalOcean Gradient AI agent key)
+#    - DO_MODEL_ACCESS_KEY (DigitalOcean Gradient AI model key)
+#    - NOTION_TOKEN (optional, for Notion integration)
+#
+# 2. Total cost estimate:
+#    - mcp-hub (basic-xxs: 512MB RAM): $5/month
+#
+# 3. Custom domain configuration:
+#    - Domain: mcp.insightpulseai.net
+#    - DNS: CNAME record pointing to DO app URL
+#    - HTTPS: Automatically enabled by DO App Platform
+#
+# 4. Architecture:
+#    - FastAPI coordinator service
+#    - Orchestrates multi-agent workflows
+#    - Integrates with Odoo, Superset, GitHub, Supabase
+#    - Provides unified API for MCP protocol
+#
+# 5. Health checks:
+#    - Endpoint: /health
+#    - Initial delay: 20s (FastAPI starts quickly)
+#    - Interval: 15s
+#
+# 6. Deployment:
+#    doctl apps create --spec infra/do/mcp-coordinator.yaml
+#    doctl apps update <APP_ID> --spec infra/do/mcp-coordinator.yaml

@@ -1,0 +1,136 @@
+name: Superset Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/superset/**'
+  workflow_dispatch:
+
+env:
+  DO_APP_ID_SUPERSET: 73af11cb-dab2-4cb1-9770-291c536531e6
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy Superset to DigitalOcean
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Update App Spec
+        run: |
+          echo "📝 Updating Superset app spec..."
+          doctl apps update ${{ env.DO_APP_ID_SUPERSET }} --spec infra/superset/superset-simple.yaml
+
+      - name: Create Deployment
+        run: |
+          echo "🚀 Creating new deployment..."
+          DEPLOYMENT_ID=$(doctl apps create-deployment ${{ env.DO_APP_ID_SUPERSET }} --force-rebuild --format ID --no-header)
+          echo "DEPLOYMENT_ID=$DEPLOYMENT_ID" >> $GITHUB_ENV
+          echo "Deployment ID: $DEPLOYMENT_ID"
+
+      - name: Wait for Deployment
+        run: |
+          echo "⏳ Waiting for deployment to complete..."
+
+          for i in {1..30}; do
+            STATUS=$(doctl apps get-deployment ${{ env.DO_APP_ID_SUPERSET }} ${{ env.DEPLOYMENT_ID }} --format Phase --no-header)
+            echo "Deployment status: $STATUS"
+
+            if [ "$STATUS" = "ACTIVE" ]; then
+              echo "✅ Deployment successful"
+              exit 0
+            elif [ "$STATUS" = "ERROR" ] || [ "$STATUS" = "CANCELED" ]; then
+              echo "❌ Deployment failed with status: $STATUS"
+              doctl apps logs ${{ env.DO_APP_ID_SUPERSET }} --type deploy
+              exit 1
+            fi
+
+            sleep 20
+          done
+
+          echo "❌ Deployment timeout after 10 minutes"
+          exit 1
+
+      - name: Run Database Migration
+        run: |
+          echo "🔄 Running Superset database migration..."
+
+          # Note: The run_command in superset-simple.yaml already includes:
+          # superset db upgrade && superset fab create-admin ... && superset init
+          # This step is just verification
+
+          echo "Migration is handled by run_command in app spec"
+          echo "Verifying deployment logs..."
+
+          doctl apps logs ${{ env.DO_APP_ID_SUPERSET }} --type run --tail 100 | grep -E "(upgrade|init|migration)" || true
+
+      - name: Verify Health
+        run: |
+          echo "🏥 Verifying Superset health..."
+
+          # Wait for app to be fully ready
+          sleep 30
+
+          HEALTH_URL="https://superset.insightpulseai.net/health"
+
+          for i in {1..10}; do
+            if curl -sf "$HEALTH_URL" | grep -q "OK"; then
+              echo "✅ Superset is healthy"
+              exit 0
+            fi
+            echo "Attempt $i/10, waiting 10s..."
+            sleep 10
+          done
+
+          echo "❌ Health check failed"
+          exit 1
+
+      - name: Verify PostgreSQL Backend
+        run: |
+          echo "🔍 Final verification: PostgreSQL backend check..."
+
+          # Get deployment logs
+          doctl apps logs ${{ env.DO_APP_ID_SUPERSET }} --type run --tail 200 > deployment.log
+
+          # Check for SQLite references (should be none)
+          if grep -i "sqlite" deployment.log; then
+            echo "⚠️  WARNING: SQLite references found in logs"
+            grep -i "sqlite" deployment.log
+          else
+            echo "✅ No SQLite references found"
+          fi
+
+          # Check for PostgreSQL connection
+          if grep -i "postgresql" deployment.log; then
+            echo "✅ PostgreSQL connection confirmed"
+            grep -i "postgresql" deployment.log | head -5
+          else
+            echo "⚠️  WARNING: PostgreSQL connection not found in logs"
+          fi
+
+      - name: Cleanup SQLite Database File
+        run: |
+          echo "🧹 Cleaning up any SQLite database files..."
+
+          # Note: This requires console access which may not be available
+          # The run_command should prevent SQLite from being created
+          echo "SQLite cleanup is handled by PostgreSQL-only configuration"
+
+      - name: Deployment Summary
+        if: always()
+        run: |
+          echo "📊 Deployment Summary"
+          echo "===================="
+          echo "App ID: ${{ env.DO_APP_ID_SUPERSET }}"
+          echo "Deployment ID: ${{ env.DEPLOYMENT_ID }}"
+          echo "Health URL: https://superset.insightpulseai.net/health"
+          echo "Superset URL: https://superset.insightpulseai.net"

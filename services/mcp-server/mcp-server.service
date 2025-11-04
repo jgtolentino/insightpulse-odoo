@@ -1,0 +1,23 @@
+# Systemd service file for Pulser Hub MCP Server
+# Installation: sudo cp mcp-server.service /etc/systemd/system/
+# Enable: sudo systemctl enable mcp-server
+# Start: sudo systemctl start mcp-server
+# Status: sudo systemctl status mcp-server
+
+[Unit]
+Description=Pulser Hub MCP Server (GitHub Operations)
+After=network.target
+
+[Service]
+Type=simple
+User=tbwa
+WorkingDirectory=/Users/tbwa/insightpulse-odoo/services/mcp-server
+Environment="GITHUB_APP_ID=2191216"
+Environment="GITHUB_PRIVATE_KEY=<YOUR_PRIVATE_KEY_HERE>"
+Environment="GITHUB_INSTALLATION_ID=<YOUR_INSTALLATION_ID_HERE>"
+ExecStart=/usr/bin/python3 -m uvicorn server:app --host 127.0.0.1 --port 8000
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

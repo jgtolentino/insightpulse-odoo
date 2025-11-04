@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_mcp_server_user,access_mcp_server_user,model_mcp_server,base.group_user,1,0,0,0
+access_mcp_server_admin,access_mcp_server_admin,model_mcp_server,base.group_system,1,1,1,1
+access_mcp_operation_user,access_mcp_operation_user,model_mcp_operation,base.group_user,1,1,1,0
+access_mcp_operation_admin,access_mcp_operation_admin,model_mcp_operation,base.group_system,1,1,1,1
+access_mcp_credential_admin,access_mcp_credential_admin,model_mcp_credential,base.group_system,1,1,1,1

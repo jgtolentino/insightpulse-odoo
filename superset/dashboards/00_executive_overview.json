@@ -1,0 +1,585 @@
+{
+  "dashboard_title": "Executive Overview",
+  "slug": "executive-overview",
+  "description": "Strategic insights for C-suite executives and senior management. Comprehensive view of revenue, orders, customer growth, and key performance indicators.",
+  "published": true,
+  "css": "",
+  "json_metadata": {
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "refresh_frequency": 300,
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "default_filters": "{}",
+    "filter_scopes": {},
+    "chart_configuration": {},
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER_DATE_RANGE",
+        "name": "Date Range",
+        "filterType": "filter_timerange",
+        "targets": [
+          {
+            "datasetId": 1,
+            "column": {
+              "name": "sale_date"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 90 days"
+          },
+          "filterState": {
+            "value": "Last 90 days"
+          }
+        },
+        "controlValues": {
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPANY",
+        "name": "Company",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 1,
+            "column": {
+              "name": "company_name"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPARISON",
+        "name": "Compare To",
+        "filterType": "filter_select",
+        "targets": [],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": "Previous Period"
+          }
+        },
+        "controlValues": {
+          "multiSelect": false,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        }
+      }
+    ],
+    "cross_filters_enabled": true
+  },
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "HEADER_ROW",
+        "KPI_ROW",
+        "REVENUE_TREND_ROW",
+        "PRODUCTS_SEGMENTS_ROW",
+        "MRR_ACQUISITION_ROW"
+      ]
+    },
+    "HEADER_ROW": {
+      "type": "HEADER",
+      "id": "HEADER_ROW",
+      "meta": {
+        "text": "Executive Overview"
+      }
+    },
+    "KPI_ROW": {
+      "type": "ROW",
+      "id": "KPI_ROW",
+      "children": [
+        "CHART_REVENUE_KPI",
+        "CHART_ORDERS_KPI",
+        "CHART_CUSTOMERS_KPI",
+        "CHART_MARGIN_KPI",
+        "CHART_ARR_KPI"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_REVENUE_KPI": {
+      "type": "CHART",
+      "id": "CHART_REVENUE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 1
+      }
+    },
+    "CHART_ORDERS_KPI": {
+      "type": "CHART",
+      "id": "CHART_ORDERS_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 2
+      }
+    },
+    "CHART_CUSTOMERS_KPI": {
+      "type": "CHART",
+      "id": "CHART_CUSTOMERS_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 3
+      }
+    },
+    "CHART_MARGIN_KPI": {
+      "type": "CHART",
+      "id": "CHART_MARGIN_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 4
+      }
+    },
+    "CHART_ARR_KPI": {
+      "type": "CHART",
+      "id": "CHART_ARR_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 5
+      }
+    },
+    "REVENUE_TREND_ROW": {
+      "type": "ROW",
+      "id": "REVENUE_TREND_ROW",
+      "children": [
+        "CHART_REVENUE_TREND"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_REVENUE_TREND": {
+      "type": "CHART",
+      "id": "CHART_REVENUE_TREND",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 8,
+        "chartId": 6
+      }
+    },
+    "PRODUCTS_SEGMENTS_ROW": {
+      "type": "ROW",
+      "id": "PRODUCTS_SEGMENTS_ROW",
+      "children": [
+        "CHART_TOP_PRODUCTS",
+        "CHART_SEGMENT_REVENUE"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_TOP_PRODUCTS": {
+      "type": "CHART",
+      "id": "CHART_TOP_PRODUCTS",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 7
+      }
+    },
+    "CHART_SEGMENT_REVENUE": {
+      "type": "CHART",
+      "id": "CHART_SEGMENT_REVENUE",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 8
+      }
+    },
+    "MRR_ACQUISITION_ROW": {
+      "type": "ROW",
+      "id": "MRR_ACQUISITION_ROW",
+      "children": [
+        "CHART_MRR_TREND",
+        "CHART_CUSTOMER_ACQUISITION"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_MRR_TREND": {
+      "type": "CHART",
+      "id": "CHART_MRR_TREND",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 9
+      }
+    },
+    "CHART_CUSTOMER_ACQUISITION": {
+      "type": "CHART",
+      "id": "CHART_CUSTOMER_ACQUISITION",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 10
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "Revenue KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(confirmed_revenue)",
+          "label": "Total Revenue"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 300,
+      "description": "Total confirmed revenue with trend indicator"
+    },
+    {
+      "slice_name": "Orders KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(confirmed_orders)",
+          "label": "Total Orders"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ",d",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 300,
+      "description": "Total number of confirmed orders"
+    },
+    {
+      "slice_name": "Customers KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(DISTINCT customer_key)",
+          "label": "Active Customers"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ",d",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 300,
+      "description": "Number of active customers"
+    },
+    {
+      "slice_name": "Margin KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(avg_margin_percent)",
+          "label": "Average Margin %"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1%",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 255,
+          "g": 160,
+          "b": 0,
+          "a": 1
+        }
+      },
+      "cache_timeout": 300,
+      "description": "Average profit margin percentage"
+    },
+    {
+      "slice_name": "ARR KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(confirmed_revenue) * 12",
+          "label": "Annual Recurring Revenue"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 300,
+      "description": "Annualized recurring revenue"
+    },
+    {
+      "slice_name": "Revenue Trend (Last 12 Months)",
+      "viz_type": "echarts_timeseries_line",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "sale_date",
+        "time_grain_sqla": "P1D",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(confirmed_revenue)",
+            "label": "Daily Revenue"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(SUM(confirmed_revenue)) OVER (ORDER BY sale_date ROWS BETWEEN 29 PRECEDING AND CURRENT ROW)",
+            "label": "30-Day Moving Average"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "show_markers": true,
+        "markerSize": 6,
+        "zoomable": true,
+        "x_axis_title_margin": 15,
+        "y_axis_title_margin": 15,
+        "y_axis_format": "$,.0f",
+        "truncate_metric": true,
+        "show_value": false
+      },
+      "cache_timeout": 3600,
+      "description": "Daily revenue trend with 30-day moving average"
+    },
+    {
+      "slice_name": "Top 10 Products by Revenue",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "echarts_timeseries_bar",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(total_revenue)",
+            "label": "Revenue"
+          }
+        ],
+        "groupby": [
+          "product_name"
+        ],
+        "adhoc_filters": [],
+        "row_limit": 10,
+        "order_desc": true,
+        "color_scheme": "supersetColors",
+        "show_legend": false,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "x_axis_title": "Revenue",
+        "y_axis_title": "Product",
+        "orientation": "horizontal",
+        "show_value": true
+      },
+      "cache_timeout": 3600,
+      "description": "Top 10 products ranked by total revenue"
+    },
+    {
+      "slice_name": "Revenue by Customer Segment",
+      "viz_type": "pie",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "pie",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Revenue"
+        },
+        "groupby": [
+          "customer_segment"
+        ],
+        "adhoc_filters": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "show_labels": true,
+        "labels_outside": true,
+        "label_type": "key_percent_value",
+        "donut": true,
+        "innerRadius": 50,
+        "outerRadius": 70
+      },
+      "cache_timeout": 3600,
+      "description": "Revenue distribution across customer segments"
+    },
+    {
+      "slice_name": "MRR/ARR Trend",
+      "viz_type": "echarts_area",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "echarts_area",
+        "x_axis": "sale_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(confirmed_revenue)",
+            "label": "MRR"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(confirmed_revenue) * 12",
+            "label": "ARR"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "stack": false,
+        "area": true,
+        "opacity": 0.7,
+        "markerEnabled": true,
+        "markerSize": 6,
+        "zoomable": true,
+        "y_axis_format": "$,.0f"
+      },
+      "cache_timeout": 3600,
+      "description": "Monthly recurring revenue and annualized recurring revenue trends"
+    },
+    {
+      "slice_name": "Customer Acquisition",
+      "viz_type": "echarts_timeseries_line",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "first_order_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "COUNT(DISTINCT customer_key)",
+            "label": "New Customers"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(lifetime_value)",
+            "label": "Total LTV"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "show_markers": true,
+        "markerSize": 6,
+        "zoomable": true,
+        "yAxisIndex": 0,
+        "y_axis_format": ",d",
+        "y_axis_2_format": "$,.0f"
+      },
+      "cache_timeout": 3600,
+      "description": "Monthly customer acquisition with lifetime value"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_by": "SuperClaude - bi-designer agent",
+    "created_at": "2025-11-03",
+    "target_audience": "CEO, CFO, COO, Board Members, Executive Management",
+    "refresh_schedule": "*/5 * * * *",
+    "permissions": {
+      "role": "Executive",
+      "access_level": "All companies with RLS",
+      "export_enabled": true
+    }
+  }
+}

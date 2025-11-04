@@ -1,0 +1,630 @@
+{
+  "dashboard_title": "Procurement Analytics",
+  "slug": "procurement-analytics",
+  "description": "Procurement performance, vendor management, and cost optimization. Track purchase orders, vendor performance, and procurement cycle times.",
+  "published": true,
+  "css": "",
+  "json_metadata": {
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "refresh_frequency": 1800,
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "default_filters": "{}",
+    "filter_scopes": {},
+    "chart_configuration": {},
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER_DATE_RANGE",
+        "name": "Order Date",
+        "filterType": "filter_timerange",
+        "targets": [
+          {
+            "datasetId": 5,
+            "column": {
+              "name": "order_date"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 6 months"
+          },
+          "filterState": {
+            "value": "Last 6 months"
+          }
+        },
+        "controlValues": {
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPANY",
+        "name": "Company",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 5,
+            "column": {
+              "name": "company_key"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_PO_STATUS",
+        "name": "PO Status",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 5,
+            "column": {
+              "name": "state"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": [
+              "purchase",
+              "done"
+            ]
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_VENDOR",
+        "name": "Vendor",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 5,
+            "column": {
+              "name": "supplier_key"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      }
+    ],
+    "cross_filters_enabled": true
+  },
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "HEADER_ROW",
+        "KPI_ROW",
+        "FUNNEL_VENDORS_ROW",
+        "CYCLE_TIME_ROW",
+        "SCORECARD_CATEGORY_ROW"
+      ]
+    },
+    "HEADER_ROW": {
+      "type": "HEADER",
+      "id": "HEADER_ROW",
+      "meta": {
+        "text": "Procurement Analytics"
+      }
+    },
+    "KPI_ROW": {
+      "type": "ROW",
+      "id": "KPI_ROW",
+      "children": [
+        "CHART_PO_VALUE_KPI",
+        "CHART_PO_COUNT_KPI",
+        "CHART_VENDORS_KPI",
+        "CHART_AVG_LEAD_KPI",
+        "CHART_ON_TIME_KPI"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_PO_VALUE_KPI": {
+      "type": "CHART",
+      "id": "CHART_PO_VALUE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 11
+      }
+    },
+    "CHART_PO_COUNT_KPI": {
+      "type": "CHART",
+      "id": "CHART_PO_COUNT_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 12
+      }
+    },
+    "CHART_VENDORS_KPI": {
+      "type": "CHART",
+      "id": "CHART_VENDORS_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 13
+      }
+    },
+    "CHART_AVG_LEAD_KPI": {
+      "type": "CHART",
+      "id": "CHART_AVG_LEAD_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 14
+      }
+    },
+    "CHART_ON_TIME_KPI": {
+      "type": "CHART",
+      "id": "CHART_ON_TIME_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 15
+      }
+    },
+    "FUNNEL_VENDORS_ROW": {
+      "type": "ROW",
+      "id": "FUNNEL_VENDORS_ROW",
+      "children": [
+        "CHART_PO_FUNNEL",
+        "CHART_TOP_VENDORS"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_PO_FUNNEL": {
+      "type": "CHART",
+      "id": "CHART_PO_FUNNEL",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 16
+      }
+    },
+    "CHART_TOP_VENDORS": {
+      "type": "CHART",
+      "id": "CHART_TOP_VENDORS",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 17
+      }
+    },
+    "CYCLE_TIME_ROW": {
+      "type": "ROW",
+      "id": "CYCLE_TIME_ROW",
+      "children": [
+        "CHART_CYCLE_TIME"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_CYCLE_TIME": {
+      "type": "CHART",
+      "id": "CHART_CYCLE_TIME",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 8,
+        "chartId": 18
+      }
+    },
+    "SCORECARD_CATEGORY_ROW": {
+      "type": "ROW",
+      "id": "SCORECARD_CATEGORY_ROW",
+      "children": [
+        "CHART_VENDOR_SCORECARD",
+        "CHART_PURCHASE_CATEGORY"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_VENDOR_SCORECARD": {
+      "type": "CHART",
+      "id": "CHART_VENDOR_SCORECARD",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 19
+      }
+    },
+    "CHART_PURCHASE_CATEGORY": {
+      "type": "CHART",
+      "id": "CHART_PURCHASE_CATEGORY",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 20
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "PO Value KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Total PO Value"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Total purchase order value"
+    },
+    {
+      "slice_name": "PO Count KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Total POs"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ",d",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Total number of purchase orders"
+    },
+    {
+      "slice_name": "Active Vendors KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(DISTINCT supplier_key)",
+          "label": "Active Vendors"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ",d",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Number of active vendors"
+    },
+    {
+      "slice_name": "Average Lead Time KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(days_to_receive)",
+          "label": "Avg Lead Time (Days)"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 255,
+          "g": 160,
+          "b": 0,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Average days to receive purchase orders"
+    },
+    {
+      "slice_name": "On-Time Delivery KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(CASE WHEN on_time_delivery THEN 1 ELSE 0 END) * 100",
+          "label": "On-Time Delivery %"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Percentage of on-time deliveries"
+    },
+    {
+      "slice_name": "Purchase Orders by Status",
+      "viz_type": "funnel",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "funnel",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "PO Count"
+        },
+        "groupby": [
+          "state"
+        ],
+        "adhoc_filters": [],
+        "color_scheme": "supersetColors",
+        "label_type": "key_value",
+        "show_legend": true
+      },
+      "cache_timeout": 1800,
+      "description": "Purchase order funnel by status"
+    },
+    {
+      "slice_name": "Top 10 Vendors by Spend",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "echarts_timeseries_bar",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_total)",
+            "label": "Total Spend"
+          }
+        ],
+        "groupby": [
+          "supplier_name"
+        ],
+        "adhoc_filters": [],
+        "row_limit": 10,
+        "order_desc": true,
+        "color_scheme": "supersetColors",
+        "show_legend": false,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "x_axis_title": "Total Spend",
+        "y_axis_title": "Vendor",
+        "orientation": "horizontal",
+        "show_value": true
+      },
+      "cache_timeout": 1800,
+      "description": "Top 10 vendors by total spend"
+    },
+    {
+      "slice_name": "Procurement Cycle Time Trend",
+      "viz_type": "echarts_timeseries_line",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "order_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(days_to_approve)",
+            "label": "Days to Approve"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(days_to_receive)",
+            "label": "Days to Receive"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "show_markers": true,
+        "markerSize": 6,
+        "zoomable": true,
+        "y_axis_format": ".1f",
+        "y_axis_title": "Days"
+      },
+      "cache_timeout": 1800,
+      "description": "Monthly procurement cycle time trends"
+    },
+    {
+      "slice_name": "Vendor Performance Scorecard",
+      "viz_type": "table",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "table",
+        "groupby": [
+          "supplier_name"
+        ],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "COUNT(*)",
+            "label": "# POs"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_total)",
+            "label": "Total Spend"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(days_to_receive)",
+            "label": "Avg Days"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(CASE WHEN on_time_delivery THEN 1 ELSE 0 END) * 100",
+            "label": "On-Time %"
+          }
+        ],
+        "adhoc_filters": [],
+        "row_limit": 20,
+        "order_desc": true,
+        "show_cell_bars": true,
+        "table_timestamp_format": "smart_date",
+        "page_length": 10,
+        "include_search": true,
+        "align_pn": false,
+        "color_pn": true,
+        "conditional_formatting": [
+          {
+            "column": "On-Time %",
+            "operator": ">=",
+            "targetValue": 90,
+            "colorScheme": "#43A047"
+          },
+          {
+            "column": "On-Time %",
+            "operator": "<",
+            "targetValue": 70,
+            "colorScheme": "#D32F2F"
+          }
+        ]
+      },
+      "cache_timeout": 1800,
+      "description": "Vendor performance metrics table"
+    },
+    {
+      "slice_name": "Purchase by Category",
+      "viz_type": "treemap",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "treemap",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_total)",
+            "label": "Total Spend"
+          }
+        ],
+        "groupby": [
+          "product_category",
+          "product_name"
+        ],
+        "adhoc_filters": [],
+        "color_scheme": "supersetColors",
+        "treemap_ratio": 1.618,
+        "number_format": "$,.0f"
+      },
+      "cache_timeout": 1800,
+      "description": "Hierarchical view of purchases by category"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_by": "SuperClaude - bi-designer agent",
+    "created_at": "2025-11-03",
+    "target_audience": "Procurement Managers, Purchase Directors, Supply Chain Analysts",
+    "refresh_schedule": "*/30 * * * *",
+    "permissions": {
+      "role": "Procurement Team",
+      "access_level": "Company-specific with RLS",
+      "export_enabled": true
+    }
+  }
+}

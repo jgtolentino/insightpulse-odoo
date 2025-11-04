@@ -1,0 +1,648 @@
+{
+  "dashboard_title": "Operational Efficiency",
+  "slug": "operational-efficiency",
+  "description": "Operational metrics, process efficiency, and resource utilization. Monitor order fulfillment, procurement cycles, expense compliance, and process bottlenecks.",
+  "published": true,
+  "css": "",
+  "json_metadata": {
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "refresh_frequency": 1800,
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "default_filters": "{}",
+    "filter_scopes": {},
+    "chart_configuration": {},
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER_DATE_RANGE",
+        "name": "Date Range",
+        "filterType": "filter_timerange",
+        "targets": [
+          {
+            "datasetId": 9,
+            "column": {
+              "name": "created_date"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 3 months"
+          },
+          "filterState": {
+            "value": "Last 3 months"
+          }
+        },
+        "controlValues": {
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPANY",
+        "name": "Company",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 9,
+            "column": {
+              "name": "company_key"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_DEPARTMENT",
+        "name": "Department",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 10,
+            "column": {
+              "name": "department_name"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_PROCESS_TYPE",
+        "name": "Process Type",
+        "filterType": "filter_select",
+        "targets": [],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      }
+    ],
+    "cross_filters_enabled": true
+  },
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "HEADER_ROW",
+        "KPI_ROW",
+        "CYCLE_TIME_ROW",
+        "COMPLIANCE_ROW",
+        "BOTTLENECKS_PERFORMANCE_ROW"
+      ]
+    },
+    "HEADER_ROW": {
+      "type": "HEADER",
+      "id": "HEADER_ROW",
+      "meta": {
+        "text": "Operational Efficiency"
+      }
+    },
+    "KPI_ROW": {
+      "type": "ROW",
+      "id": "KPI_ROW",
+      "children": [
+        "CHART_ORDER_CYCLE_KPI",
+        "CHART_PROC_CYCLE_KPI",
+        "CHART_EXPENSE_APPR_KPI",
+        "CHART_COMPLIANCE_KPI",
+        "CHART_ISSUES_KPI"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_ORDER_CYCLE_KPI": {
+      "type": "CHART",
+      "id": "CHART_ORDER_CYCLE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 41
+      }
+    },
+    "CHART_PROC_CYCLE_KPI": {
+      "type": "CHART",
+      "id": "CHART_PROC_CYCLE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 42
+      }
+    },
+    "CHART_EXPENSE_APPR_KPI": {
+      "type": "CHART",
+      "id": "CHART_EXPENSE_APPR_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 43
+      }
+    },
+    "CHART_COMPLIANCE_KPI": {
+      "type": "CHART",
+      "id": "CHART_COMPLIANCE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 44
+      }
+    },
+    "CHART_ISSUES_KPI": {
+      "type": "CHART",
+      "id": "CHART_ISSUES_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 45
+      }
+    },
+    "CYCLE_TIME_ROW": {
+      "type": "ROW",
+      "id": "CYCLE_TIME_ROW",
+      "children": [
+        "CHART_ORDER_CYCLE_TIME",
+        "CHART_PROC_CYCLE_TIME"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_ORDER_CYCLE_TIME": {
+      "type": "CHART",
+      "id": "CHART_ORDER_CYCLE_TIME",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 46
+      }
+    },
+    "CHART_PROC_CYCLE_TIME": {
+      "type": "CHART",
+      "id": "CHART_PROC_CYCLE_TIME",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 47
+      }
+    },
+    "COMPLIANCE_ROW": {
+      "type": "ROW",
+      "id": "COMPLIANCE_ROW",
+      "children": [
+        "CHART_EXPENSE_COMPLIANCE"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_EXPENSE_COMPLIANCE": {
+      "type": "CHART",
+      "id": "CHART_EXPENSE_COMPLIANCE",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 8,
+        "chartId": 48
+      }
+    },
+    "BOTTLENECKS_PERFORMANCE_ROW": {
+      "type": "ROW",
+      "id": "BOTTLENECKS_PERFORMANCE_ROW",
+      "children": [
+        "CHART_PROCESS_BOTTLENECKS",
+        "CHART_DEPT_PERFORMANCE"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_PROCESS_BOTTLENECKS": {
+      "type": "CHART",
+      "id": "CHART_PROCESS_BOTTLENECKS",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 49
+      }
+    },
+    "CHART_DEPT_PERFORMANCE": {
+      "type": "CHART",
+      "id": "CHART_DEPT_PERFORMANCE",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 50
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "Order Cycle Time KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(days_to_deliver)",
+          "label": "Avg Order Cycle (Days)"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state = 'done' AND days_to_deliver IS NOT NULL"
+          }
+        ],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Average order fulfillment cycle time"
+    },
+    {
+      "slice_name": "Procurement Cycle Time KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(days_to_receive)",
+          "label": "Avg Proc Cycle (Days)"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state = 'done' AND days_to_receive IS NOT NULL"
+          }
+        ],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Average procurement cycle time"
+    },
+    {
+      "slice_name": "Expense Approval Time KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "9__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(days_to_approve)",
+          "label": "Avg Approval Time (Days)"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('approved', 'done') AND days_to_approve IS NOT NULL"
+          }
+        ],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 255,
+          "g": 160,
+          "b": 0,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Average expense approval time"
+    },
+    {
+      "slice_name": "Compliance Rate KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "11__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(compliance_rate) * 100",
+          "label": "Compliance Rate %"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Overall expense compliance rate"
+    },
+    {
+      "slice_name": "Active Issues KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "9__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(CASE WHEN state = 'refused' OR days_to_approve > 7 THEN 1 END)",
+          "label": "Active Issues"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ",d",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 211,
+          "g": 47,
+          "b": 47,
+          "a": 1
+        }
+      },
+      "cache_timeout": 1800,
+      "description": "Number of active issues requiring attention"
+    },
+    {
+      "slice_name": "Order Fulfillment Cycle Time",
+      "viz_type": "box_plot",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "box_plot",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "days_to_deliver",
+            "label": "Days to Deliver"
+          }
+        ],
+        "groupby": [
+          "order_date"
+        ],
+        "time_grain_sqla": "P1M",
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state = 'done' AND days_to_deliver IS NOT NULL"
+          }
+        ],
+        "color_scheme": "supersetColors",
+        "whisker_options": "Tukey",
+        "x_ticks_layout": "auto"
+      },
+      "cache_timeout": 1800,
+      "description": "Distribution of order fulfillment times"
+    },
+    {
+      "slice_name": "Procurement Cycle Time",
+      "viz_type": "box_plot",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "box_plot",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "days_to_receive",
+            "label": "Days to Receive"
+          }
+        ],
+        "groupby": [
+          "order_date"
+        ],
+        "time_grain_sqla": "P1M",
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state = 'done' AND days_to_receive IS NOT NULL"
+          }
+        ],
+        "color_scheme": "supersetColors",
+        "whisker_options": "Tukey",
+        "x_ticks_layout": "auto"
+      },
+      "cache_timeout": 1800,
+      "description": "Distribution of procurement cycle times"
+    },
+    {
+      "slice_name": "Expense Compliance Trend",
+      "viz_type": "echarts_timeseries_line",
+      "params": {
+        "datasource": "11__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "fiscal_period",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(compliance_rate) * 100",
+            "label": "Compliance Rate %"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(non_compliant_expenses)",
+            "label": "Non-Compliant Count"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "show_markers": true,
+        "markerSize": 6,
+        "zoomable": true,
+        "y_axis_format": ".1f",
+        "yAxisIndex": 0
+      },
+      "cache_timeout": 1800,
+      "description": "Monthly expense compliance trend"
+    },
+    {
+      "slice_name": "Top Process Bottlenecks",
+      "viz_type": "table",
+      "params": {
+        "datasource": "12__table",
+        "viz_type": "table",
+        "groupby": [
+          "process_name",
+          "stage"
+        ],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(avg_days)",
+            "label": "Avg Days"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(std_dev)",
+            "label": "Std Dev"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "MAX(max_days)",
+            "label": "Max Days"
+          }
+        ],
+        "adhoc_filters": [],
+        "row_limit": 20,
+        "order_desc": true,
+        "show_cell_bars": true,
+        "table_timestamp_format": "smart_date",
+        "page_length": 10,
+        "include_search": true,
+        "align_pn": false,
+        "color_pn": true,
+        "conditional_formatting": [
+          {
+            "column": "Avg Days",
+            "operator": ">",
+            "targetValue": 15,
+            "colorScheme": "#D32F2F"
+          },
+          {
+            "column": "Avg Days",
+            "operator": "<=",
+            "targetValue": 10,
+            "colorScheme": "#43A047"
+          }
+        ]
+      },
+      "cache_timeout": 1800,
+      "description": "Process bottlenecks ranked by cycle time"
+    },
+    {
+      "slice_name": "Department Performance Heatmap",
+      "viz_type": "heatmap",
+      "params": {
+        "datasource": "10__table",
+        "viz_type": "heatmap",
+        "all_columns_x": "department_name",
+        "all_columns_y": "metric_name",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(metric_value)",
+          "label": "Performance Score"
+        },
+        "adhoc_filters": [],
+        "linear_color_scheme": "blue_white_yellow",
+        "normalize_across": "heatmap",
+        "left_margin": "auto",
+        "bottom_margin": "auto",
+        "y_axis_bounds": [
+          null,
+          null
+        ],
+        "y_axis_format": ".1f",
+        "show_legend": true,
+        "show_perc": true,
+        "show_values": true,
+        "normalized": false
+      },
+      "cache_timeout": 1800,
+      "description": "Department performance heatmap across metrics"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_by": "SuperClaude - bi-designer agent",
+    "created_at": "2025-11-03",
+    "target_audience": "COO, Operations Managers, Process Analysts, Department Heads",
+    "refresh_schedule": "*/30 * * * *",
+    "permissions": {
+      "role": "Operations Team + Management",
+      "access_level": "Company-specific",
+      "export_enabled": true
+    }
+  }
+}

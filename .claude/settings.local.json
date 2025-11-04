@@ -45,7 +45,22 @@
       "Read(//opt/homebrew/lib/node_modules/cline/bin/**)",
       "Bash(brew uninstall:*)",
       "Bash(sudo rm:*)",
-      "Bash(python3:*)"
+      "Bash(python3:*)",
+      "Bash(for i in {1..3})",
+      "Bash(do echo \"=== Check $i/3 ===\")",
+      "Bash(doctl apps delete:*)",
+      "Bash(doctl registry:*)",
+      "Bash(doctl projects list:*)",
+      "Bash(doctl compute droplet list:*)",
+      "Bash(doctl agent:*)",
+      "Bash(doctl serverless agents:*)",
+      "Bash(doctl apps exec:*)",
+      "Bash(doctl apps console:*)",
+      "Bash(psql:*)",
+      "Bash(env)",
+      "Bash(chmod:*)",
+      "Bash(git fetch:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
