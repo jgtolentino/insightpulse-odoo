@@ -6,6 +6,7 @@ babel
 cryptography
 jinja2
 openpyxl
+playwright
 python-stdnum
 werkzeug>=2.0
 xlsxwriter
