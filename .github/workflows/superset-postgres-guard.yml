@@ -33,46 +33,44 @@ jobs:
           doctl apps get $DO_APP_ID_SUPERSET --format ID,DefaultIngress
           echo "✅ Superset app found"
 
-      - name: Run database migrations
-        run: |
-          echo "🔄 Running Superset database migrations..."
-          doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
-            bash -c 'superset db upgrade && superset init || true'
-
-          echo "✅ Migrations complete"
-
       - name: Guard - Fail if SQLite detected
         run: |
-          echo "🔍 Checking database backend..."
+          echo "🔍 Checking database configuration in app spec..."
 
-          BACKEND=$(doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
-            python3 -c "
-from superset import db
-import sys
-backend = db.engine.url.get_backend_name()
-print(backend)
-sys.exit(1 if backend == 'sqlite' else 0)
-" 2>&1 | tail -1)
+          # Get database URI from app spec
+          DB_URI=$(doctl apps get $DO_APP_ID_SUPERSET -o json | \
+            jq -r '.[0].spec.services[].envs[] | select(.key == "SQLALCHEMY_DATABASE_URI") | .value' 2>/dev/null || echo "")
 
-          echo "Database backend: $BACKEND"
+          echo "Database URI: ${DB_URI:0:30}..." # Show prefix only for security
 
-          if [ "$BACKEND" = "sqlite" ]; then
-            echo "❌ ERROR: Superset is using SQLite (deprecated)"
-            echo "Expected: postgresql"
-            echo "Fix: Update SQLALCHEMY_DATABASE_URI in app spec"
+          if [[ -z "$DB_URI" ]]; then
+            echo "❌ ERROR: SQLALCHEMY_DATABASE_URI not found in app spec"
+            echo "Fix: Add SQLALCHEMY_DATABASE_URI to Superset service environment variables"
             exit 1
           fi
 
-          echo "✅ PostgreSQL confirmed"
+          if [[ "$DB_URI" =~ ^sqlite ]]; then
+            echo "❌ ERROR: Superset is configured with SQLite (deprecated)"
+            echo "Current: $DB_URI"
+            echo "Expected: postgresql+psycopg2://..."
+            echo "Fix: Update SQLALCHEMY_DATABASE_URI in app spec to PostgreSQL connection string"
+            exit 1
+          fi
 
-      - name: Load sample dashboards (optional)
+          if [[ "$DB_URI" =~ ^postgresql ]]; then
+            echo "✅ PostgreSQL configuration confirmed"
+          else
+            echo "⚠️ WARNING: Unexpected database URI format"
+            echo "Expected: postgresql+psycopg2://... but got: ${DB_URI:0:30}..."
+          fi
+
+      - name: Note - Sample dashboard loading
         if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "📊 Loading sample dashboards..."
-          doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
-            bash -c 'superset load_examples || true; superset init'
-
-          echo "✅ Sample dashboards loaded"
+          echo "ℹ️  Manual workflow dispatch detected"
+          echo "Note: To load sample dashboards, use Superset UI or console"
+          echo "Console: doctl apps console $DO_APP_ID_SUPERSET superset"
+          echo "Command: superset load_examples && superset init"
 
       - name: Health check
         run: |
