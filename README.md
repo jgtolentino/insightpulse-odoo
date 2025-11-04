@@ -297,6 +297,11 @@ python -m pytest insightpulse_odoo/addons/insightpulse/tests/performance/ -v
 
 This repository includes **SuperClaude agent skills** for AI-assisted operations:
 
+### OpenAI Cookbook Automation Stack
+- **`ai_stack/`** reusable Python package that follows the [OpenAI Cookbook](https://cookbook.openai.com/) stack for hybrid automation
+  (Responses API + rule-based fallbacks)
+- **CLI**: `python3 agents/issue-classifier.py --title "..." --body-file path/to/issue.md` generates JSON analysis and `plan.yaml`
+
 ### Odoo Module Development Skills
 - **odoo-vendor-management**: Privacy-first vendor portals with role-based access
 - **odoo-expense-automation**: OCR-powered expense workflows with policy validation

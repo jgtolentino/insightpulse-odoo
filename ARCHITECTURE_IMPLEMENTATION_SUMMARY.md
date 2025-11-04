@@ -71,7 +71,8 @@ Successfully implemented a comprehensive enterprise architecture that separates 
 - Prediction pipelines
 
 ### Agent System
-- `agents/issue-classifier.py` - GitHub issue classification
+- `agents/issue-classifier.py` - GitHub issue classification CLI built on the OpenAI cookbook stack
+- `ai_stack/` - reusable automation stack featuring OpenAI client factories and hybrid classifiers
 - `.github/ISSUE_TEMPLATE/feature_request.md` - Standardized templates
 - `.github/workflows/issue-validation.yml` - CI enforcement
 
@@ -150,7 +151,7 @@ docker-compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d $POSTGRES_DB \
   -i ipai_procure,ipai_expense,ipai_subscriptions --stop-after-init
 
 # Test agent classifier
-python3 agents/issue-classifier.py
+python3 agents/issue-classifier.py --title "Sample issue" --body-file ./docs/sample_issue.md
 ```
 
 ## 📊 Current Open Issues Classification

@@ -33,3 +33,5 @@ sqlfluff>=2.3.0
 # Development utilities
 ipython>=8.17.0
 ipdb>=0.13.13
+openai>=1.57.0
+PyYAML>=6.0.2
