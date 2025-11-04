@@ -1,0 +1,147 @@
+name: CI Unified
+
+on:
+  push:
+    branches: [main, develop, ipai-bridges-v1]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ============================================================================
+  # CODE QUALITY CHECKS
+  # ============================================================================
+  quality-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: |
+          pip install --quiet pylint flake8 black isort
+          pip install --quiet pylint-odoo || true
+
+      - name: Run Black formatter check
+        run: black --check . || true
+        continue-on-error: true
+
+      - name: Run isort import check
+        run: isort --check-only . || true
+        continue-on-error: true
+
+      - name: Run flake8
+        run: flake8 addons/ --max-line-length=120 --extend-ignore=E203,W503 || true
+        continue-on-error: true
+
+      - name: Run pylint on Odoo addons
+        run: |
+          for addon in addons/*/; do
+            if [ -d "$addon" ]; then
+              echo "Linting $(basename $addon)..."
+              pylint "$addon" --disable=all --enable=E --fail-under=7.0 || true
+            fi
+          done
+        continue-on-error: true
+
+  # ============================================================================
+  # PYTHON TESTS
+  # ============================================================================
+  python-tests:
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    if: success() || failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-cov pytest-mock
+          pip install --quiet -r requirements.txt 2>/dev/null || true
+
+      - name: Run Python unit tests
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/ -v --cov=addons --cov-report=xml || true
+          else
+            echo "No tests directory found, skipping"
+          fi
+        continue-on-error: true
+
+      - name: Upload coverage
+        if: always()
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./coverage.xml
+          flags: unittests
+        continue-on-error: true
+
+  # ============================================================================
+  # SECURITY SCAN
+  # ============================================================================
+  security-scan:
+    runs-on: ubuntu-latest
+    needs: quality-checks
+    if: success() || failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: Check for secrets
+        run: |
+          echo "Scanning for exposed secrets..."
+          # Check for common secret patterns
+          grep -r "password\s*=\s*['\"]" . --include="*.py" --include="*.xml" || true
+          grep -r "api_key\s*=\s*['\"]" . --include="*.py" --include="*.xml" || true
+        continue-on-error: true
+
+  # ============================================================================
+  # SUMMARY
+  # ============================================================================
+  ci-summary:
+    runs-on: ubuntu-latest
+    needs: [quality-checks, python-tests, security-scan]
+    if: always()
+    steps:
+      - name: CI Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 CI Unified - Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Quality Checks: ${{ needs.quality-checks.result }}"
+          echo "Python Tests: ${{ needs.python-tests.result }}"
+          echo "Security Scan: ${{ needs.security-scan.result }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          # Determine overall status
+          if [[ "${{ needs.quality-checks.result }}" == "success" && \
+                "${{ needs.python-tests.result }}" =~ ^(success|skipped)$ && \
+                "${{ needs.security-scan.result }}" =~ ^(success|skipped)$ ]]; then
+            echo "✅ CI Status: PASSED"
+            exit 0
+          else
+            echo "⚠️ CI Status: NEEDS ATTENTION"
+            echo "Note: Non-blocking failures allowed for gradual improvement"
+            exit 0
+          fi

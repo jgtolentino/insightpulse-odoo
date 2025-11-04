@@ -1,0 +1,193 @@
+name: Field Documentation Sync
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'addons/**/models/*.py'
+      - 'odoo_addons/**/models/*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  extract-field-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need to compare with previous commit
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet ast-grep python-dateutil
+
+      - name: Extract field metadata
+        run: |
+          python3 << 'PYTHON'
+          import os
+          import ast
+          import json
+          from datetime import datetime
+
+          def extract_fields_from_model(filepath):
+              """Extract Odoo field metadata from Python model file."""
+              try:
+                  with open(filepath, 'r') as f:
+                      source = f.read()
+
+                  tree = ast.parse(source)
+                  fields = []
+
+                  for node in ast.walk(tree):
+                      if isinstance(node, ast.ClassDef):
+                          # Check if class inherits from models.Model
+                          is_model = any(
+                              isinstance(base, ast.Attribute) and
+                              getattr(base.value, 'id', None) == 'models'
+                              for base in node.bases
+                          )
+
+                          if is_model:
+                              model_name = node.name
+
+                              for item in node.body:
+                                  if isinstance(item, ast.Assign):
+                                      # Check if assignment is to a field
+                                      for target in item.targets:
+                                          if isinstance(target, ast.Name):
+                                              field_name = target.id
+
+                                              # Check if right side is fields.* call
+                                              if isinstance(item.value, ast.Call):
+                                                  if isinstance(item.value.func, ast.Attribute):
+                                                      if getattr(item.value.func.value, 'id', None) == 'fields':
+                                                          field_type = item.value.func.attr
+
+                                                          # Extract field parameters
+                                                          params = {}
+                                                          for keyword in item.value.keywords:
+                                                              if keyword.arg == 'string':
+                                                                  if isinstance(keyword.value, ast.Constant):
+                                                                      params['label'] = keyword.value.value
+                                                              elif keyword.arg == 'help':
+                                                                  if isinstance(keyword.value, ast.Constant):
+                                                                      params['help'] = keyword.value.value
+                                                              elif keyword.arg == 'required':
+                                                                  if isinstance(keyword.value, ast.Constant):
+                                                                      params['required'] = keyword.value.value
+                                                              elif keyword.arg == 'readonly':
+                                                                  if isinstance(keyword.value, ast.Constant):
+                                                                      params['readonly'] = keyword.value.value
+
+                                                          field_info = {
+                                                              'model': model_name,
+                                                              'field_name': field_name,
+                                                              'field_type': field_type,
+                                                              'params': params,
+                                                              'file': filepath
+                                                          }
+                                                          fields.append(field_info)
+
+                  return fields
+              except Exception as e:
+                  print(f"Error parsing {filepath}: {e}")
+                  return []
+
+          # Scan all model files
+          all_fields = []
+
+          for addon_dir in ['addons', 'odoo_addons']:
+              if os.path.exists(addon_dir):
+                  for root, dirs, files in os.walk(addon_dir):
+                      if 'models' in root:
+                          for file in files:
+                              if file.endswith('.py') and file != '__init__.py':
+                                  filepath = os.path.join(root, file)
+                                  fields = extract_fields_from_model(filepath)
+                                  all_fields.extend(fields)
+
+          print(f"✅ Extracted {len(all_fields)} field definitions")
+
+          # Generate markdown documentation
+          os.makedirs('docs/fields', exist_ok=True)
+
+          # Group by module
+          modules = {}
+          for field in all_fields:
+              # Extract module name from file path
+              path_parts = field['file'].split('/')
+              if len(path_parts) >= 2:
+                  module_name = path_parts[1]  # addons/module_name/...
+                  if module_name not in modules:
+                      modules[module_name] = []
+                  modules[module_name].append(field)
+
+          # Generate documentation for each module
+          for module_name, fields in modules.items():
+              doc_file = f'docs/fields/{module_name}.md'
+
+              with open(doc_file, 'w') as f:
+                  f.write(f"# {module_name} - Field Documentation\n\n")
+                  f.write(f"Auto-generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n")
+
+                  # Group by model
+                  models = {}
+                  for field in fields:
+                      model = field['model']
+                      if model not in models:
+                          models[model] = []
+                      models[model].append(field)
+
+                  for model, model_fields in sorted(models.items()):
+                      f.write(f"## Model: `{model}`\n\n")
+                      f.write("| Field | Type | Label | Required | Help |\n")
+                      f.write("|-------|------|-------|----------|------|\n")
+
+                      for field in sorted(model_fields, key=lambda x: x['field_name']):
+                          name = field['field_name']
+                          ftype = field['field_type']
+                          label = field['params'].get('label', '')
+                          required = '✓' if field['params'].get('required') else ''
+                          help_text = field['params'].get('help', '')
+
+                          f.write(f"| `{name}` | {ftype} | {label} | {required} | {help_text} |\n")
+
+                      f.write("\n")
+
+              print(f"📄 Generated: {doc_file}")
+
+          # Save JSON metadata for programmatic access
+          metadata_file = 'docs/fields/metadata.json'
+          with open(metadata_file, 'w') as f:
+              json.dump({
+                  'generated_at': datetime.now().isoformat(),
+                  'total_fields': len(all_fields),
+                  'modules': list(modules.keys()),
+                  'fields': all_fields
+              }, f, indent=2)
+
+          print(f"📄 Generated: {metadata_file}")
+          print(f"\n✅ Documentation generation complete")
+          PYTHON
+
+      - name: Commit field documentation
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: update field documentation from models'
+          file_pattern: 'docs/fields/*.md docs/fields/metadata.json'
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📚 Field Documentation Sync - Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          ls -lh docs/fields/ || echo "No field docs generated"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
