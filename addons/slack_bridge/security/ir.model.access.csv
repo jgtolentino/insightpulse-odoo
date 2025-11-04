@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_slack_channel_user,slack.channel user,model_slack_channel,base.group_user,1,0,0,0
+access_slack_channel_manager,slack.channel manager,model_slack_channel,base.group_system,1,1,1,1

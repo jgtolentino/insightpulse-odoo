@@ -1,0 +1,214 @@
+{
+  "dashboard_title": "Cash Flow Analysis",
+  "description": "Real-time cash flow monitoring and forecasting",
+  "css": "",
+  "slug": "cash-flow",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for treasury operations",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-waterfall",
+        "ROW-receivables-bank",
+        "ROW-forecast"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 💸 Cash Flow Analysis\n**Real-time cash flow monitoring and forecasting** | Treasury view"
+      }
+    },
+    "ROW-waterfall": {
+      "type": "ROW",
+      "id": "ROW-waterfall",
+      "children": ["CHART-cash-waterfall"]
+    },
+    "CHART-cash-waterfall": {
+      "type": "CHART",
+      "id": "CHART-cash-waterfall",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 1}
+    },
+    "ROW-receivables-bank": {
+      "type": "ROW",
+      "id": "ROW-receivables-bank",
+      "children": ["CHART-receivables-aging", "CHART-bank-balance"]
+    },
+    "CHART-receivables-aging": {
+      "type": "CHART",
+      "id": "CHART-receivables-aging",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 2}
+    },
+    "CHART-bank-balance": {
+      "type": "CHART",
+      "id": "CHART-bank-balance",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 3}
+    },
+    "ROW-forecast": {
+      "type": "ROW",
+      "id": "ROW-forecast",
+      "children": ["CHART-forecast-actual"]
+    },
+    "CHART-forecast-actual": {
+      "type": "CHART",
+      "id": "CHART-forecast-actual",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 4}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-agency",
+        "name": "Agency",
+        "filterType": "filter_select",
+        "targets": [{"datasetId": 1, "column": {"name": "company_name"}}],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {"value": null}
+        },
+        "controlValues": {
+          "enableEmptyFilter": true,
+          "multiSelect": true
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 1800
+  },
+  "slices": [
+    {
+      "slice_name": "Cash Flow Waterfall",
+      "viz_type": "echarts_timeseries_bar",
+      "datasource_type": "table",
+      "datasource_name": "account_payment",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "echarts_timeseries_bar",
+        "x_axis": "date",
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN payment_type='inbound' THEN amount ELSE -amount END)",
+          "label": "Net Flow"
+        }],
+        "time_grain_sqla": "P1M",
+        "show_legend": true,
+        "y_axis_format": "₱,.0f",
+        "color_scheme": "d3Category10"
+      }
+    },
+    {
+      "slice_name": "Receivables Aging",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "account_move",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "dist_bar",
+        "groupby": ["company_name"],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN CURRENT_DATE - invoice_date <= 30 THEN amount_residual ELSE 0 END)",
+            "label": "0-30 Days"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN CURRENT_DATE - invoice_date BETWEEN 31 AND 60 THEN amount_residual ELSE 0 END)",
+            "label": "31-60 Days"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN CURRENT_DATE - invoice_date BETWEEN 61 AND 90 THEN amount_residual ELSE 0 END)",
+            "label": "61-90 Days"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN CURRENT_DATE - invoice_date > 90 THEN amount_residual ELSE 0 END)",
+            "label": "90+ Days"
+          }
+        ],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "move_type='out_invoice' AND state='posted' AND amount_residual > 0"
+        }],
+        "bar_stacked": true,
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Bank Balance Trend",
+      "viz_type": "mixed_timeseries",
+      "datasource_type": "table",
+      "datasource_name": "bank_statement_line",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "mixed_timeseries",
+        "x_axis": "date",
+        "groupby": ["bank_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(balance)",
+          "label": "Balance"
+        }],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "date >= CURRENT_DATE - INTERVAL '90 days'"
+        }],
+        "time_grain_sqla": "P1D",
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Forecast vs Actual Revenue",
+      "viz_type": "echarts_timeseries_line",
+      "datasource_type": "table",
+      "datasource_name": "sale_order",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "date_order",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_total)",
+            "label": "Actual Revenue"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(amount_total) OVER (ORDER BY DATE_TRUNC('month', date_order) ROWS BETWEEN 3 PRECEDING AND 1 PRECEDING)",
+            "label": "Forecast"
+          }
+        ],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "state IN ('sale', 'done') AND date_order >= DATE_TRUNC('year', CURRENT_DATE)"
+        }],
+        "time_grain_sqla": "P1M",
+        "y_axis_format": "₱,.0f",
+        "show_legend": true
+      }
+    }
+  ]
+}

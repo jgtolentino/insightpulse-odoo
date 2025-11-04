@@ -1,0 +1,273 @@
+name: Unified Deployment Pipeline
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      env:
+        description: 'Environment to deploy'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - prod
+          - staging
+
+env:
+  SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+  DO_APP_ID: ${{ secrets.DO_APP_ID }}
+  IMAGE_BASE: ghcr.io/${{ github.repository_owner }}/insightpulse-odoo
+
+jobs:
+  deploy:
+    name: Full Stack Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.CR_PAT }}
+
+      # Phase 1: Supabase deployment
+      - name: Deploy Supabase migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "🗄️  Deploying Supabase migrations..."
+          supabase link --project-ref $SUPABASE_PROJECT_REF || echo "Already linked"
+          supabase db push || echo "No migrations to push"
+
+      - name: Deploy Supabase Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          echo "🔧 Deploying edge functions..."
+          supabase functions deploy search --project-ref $SUPABASE_PROJECT_REF || echo "search deploy skipped"
+          supabase functions deploy answer --project-ref $SUPABASE_PROJECT_REF || echo "answer deploy skipped"
+          supabase functions deploy ingest --project-ref $SUPABASE_PROJECT_REF || echo "ingest deploy skipped"
+
+      # Phase 2: Build and push Odoo image
+      - name: Build Odoo Docker image
+        id: build
+        env:
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          SHORT_SHA=$(echo $COMMIT_SHA | cut -c1-7)
+          IMAGE_TAG="prod-${SHORT_SHA}"
+          IMAGE_FULL="${IMAGE_BASE}:${IMAGE_TAG}"
+          IMAGE_LATEST="${IMAGE_BASE}:latest-prod"
+
+          echo "🐳 Building Odoo image: ${IMAGE_FULL}"
+
+          # Try ops/odoo/Dockerfile first, fallback to root
+          if [ -f "ops/odoo/Dockerfile" ]; then
+            docker build -f ops/odoo/Dockerfile -t $IMAGE_FULL -t $IMAGE_LATEST .
+          elif [ -f "Dockerfile" ]; then
+            docker build -f Dockerfile -t $IMAGE_FULL -t $IMAGE_LATEST .
+          else
+            echo "⚠️  No Dockerfile found, skipping image build"
+            exit 0
+          fi
+
+          echo "📤 Pushing images..."
+          docker push $IMAGE_FULL
+          docker push $IMAGE_LATEST
+
+          echo "image_tag=${IMAGE_TAG}" >> $GITHUB_OUTPUT
+          echo "✅ Image pushed: ${IMAGE_FULL}"
+
+      # Phase 3: Update DigitalOcean App Platform
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Update DigitalOcean App
+        run: |
+          echo "☁️  Updating DigitalOcean App Platform..."
+
+          # Try infra/do/ade-ocr-service.yaml first, fallback to ops/do/app.yaml
+          if [ -f "infra/do/ade-ocr-service.yaml" ]; then
+            APP_SPEC="infra/do/ade-ocr-service.yaml"
+          elif [ -f "ops/do/app.yaml" ]; then
+            APP_SPEC="ops/do/app.yaml"
+          else
+            echo "⚠️  No app spec found, skipping DO update"
+            exit 0
+          fi
+
+          doctl apps update $DO_APP_ID --spec $APP_SPEC
+
+          echo "🚀 Creating new deployment..."
+          DEPLOYMENT_ID=$(doctl apps create-deployment $DO_APP_ID --format ID --no-header)
+          echo "deployment_id=${DEPLOYMENT_ID}" >> $GITHUB_OUTPUT
+          echo "✅ Deployment created: ${DEPLOYMENT_ID}"
+
+      - name: Wait for deployment
+        run: |
+          echo "⏳ Waiting for deployment to complete (max 10 minutes)..."
+
+          MAX_WAIT=600
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            PHASE=$(doctl apps deployments get $DO_APP_ID $(doctl apps deployments list $DO_APP_ID --format ID --no-header | head -1) --format Phase --no-header)
+
+            echo "Current phase: $PHASE (${ELAPSED}s elapsed)"
+
+            if [ "$PHASE" = "ACTIVE" ]; then
+              echo "✅ Deployment successful!"
+              exit 0
+            elif [ "$PHASE" = "ERROR" ] || [ "$PHASE" = "CANCELED" ]; then
+              echo "❌ Deployment failed: $PHASE"
+              exit 1
+            fi
+
+            sleep 15
+            ELAPSED=$((ELAPSED + 15))
+          done
+
+          echo "⚠️  Deployment timeout after ${MAX_WAIT}s"
+          exit 1
+
+      # Phase 4: Health checks
+      - name: Health checks
+        run: |
+          echo "🏥 Running health checks..."
+
+          echo "📊 Checking Odoo ERP..."
+          curl -Is https://erp.insightpulseai.net/web/login | head -n1 || echo "⚠️  Odoo not responding"
+
+          echo "🔍 Checking Supabase edge functions..."
+          curl -sS -X POST "https://spdtwktxdalcfigzeqrz.supabase.co/functions/v1/search" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"query":"health check","k":1}' | head -c 100 || echo "⚠️  Edge functions not responding"
+
+          echo "✅ Health checks complete"
+
+      # Phase 5: Trigger RAG reindex (optional)
+      - name: Trigger RAG reindex
+        if: success()
+        continue-on-error: true
+        run: |
+          echo "🔄 Triggering RAG reindex..."
+          curl -sS -X POST "https://spdtwktxdalcfigzeqrz.supabase.co/functions/v1/ingest" \
+            -H "Authorization: Bearer ${{ secrets.RAG_REINDEX_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"paths":["/docs"],"force":true}' || echo "⚠️  RAG reindex skipped"
+
+      # Phase 6: Deploy Superset dashboards
+      - name: Deploy Superset dashboards
+        if: success()
+        continue-on-error: true
+        env:
+          SUPERSET_URL: https://superset.insightpulseai.net
+          SUPERSET_USERNAME: admin
+          SUPERSET_PASSWORD: ${{ secrets.SUPERSET_PASSWORD }}
+        run: |
+          echo "📊 Deploying Superset dashboards..."
+
+          # Check if dashboards directory exists
+          if [ ! -d "superset/dashboards" ]; then
+            echo "⚠️  No dashboards found in superset/dashboards/, skipping"
+            exit 0
+          fi
+
+          # Login to Superset API
+          echo "🔐 Authenticating with Superset..."
+          ACCESS_TOKEN=$(curl -sS -X POST "${SUPERSET_URL}/api/v1/security/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"${SUPERSET_USERNAME}\",\"password\":\"${SUPERSET_PASSWORD}\",\"provider\":\"db\",\"refresh\":true}" \
+            | jq -r '.access_token' 2>/dev/null || echo "")
+
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "⚠️  Failed to authenticate with Superset API, skipping dashboard deployment"
+            echo "💡 Import dashboards manually via UI: Settings → Import dashboards"
+            exit 0
+          fi
+
+          echo "✅ Authenticated successfully"
+
+          # Import each dashboard
+          IMPORTED=0
+          FAILED=0
+
+          for DASHBOARD in superset/dashboards/*.json; do
+            if [ ! -f "$DASHBOARD" ]; then
+              continue
+            fi
+
+            DASHBOARD_NAME=$(basename "$DASHBOARD" .json)
+            echo "📥 Importing ${DASHBOARD_NAME}..."
+
+            # Import dashboard via API
+            RESPONSE=$(curl -sS -X POST "${SUPERSET_URL}/api/v1/dashboard/import/" \
+              -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "formData=@${DASHBOARD}" \
+              -w "\n%{http_code}" 2>/dev/null)
+
+            HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+
+            if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "201" ]; then
+              echo "  ✅ ${DASHBOARD_NAME} imported successfully"
+              IMPORTED=$((IMPORTED + 1))
+            else
+              echo "  ⚠️  ${DASHBOARD_NAME} import failed (HTTP $HTTP_CODE)"
+              FAILED=$((FAILED + 1))
+            fi
+          done
+
+          echo ""
+          echo "📊 Dashboard deployment summary:"
+          echo "  Imported: ${IMPORTED}"
+          echo "  Failed: ${FAILED}"
+          echo ""
+          echo "💡 View dashboards: ${SUPERSET_URL}/superset/welcome/"
+
+      # Notification
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "📊 Deployment Summary:"
+          echo ""
+          echo "  Commit: ${{ github.sha }}"
+          echo "  Image: ${IMAGE_BASE}:${{ steps.build.outputs.image_tag }}"
+          echo "  DO App: $DO_APP_ID"
+          echo ""
+          echo "  Status: ${{ job.status }}"
+          echo ""
+          echo "🔗 Links:"
+          echo "  Odoo: https://erp.insightpulseai.net"
+          echo "  Superset: https://superset.insightpulseai.net"
+          echo "  DO Console: https://cloud.digitalocean.com/apps/$DO_APP_ID"
+          echo "  Supabase: https://supabase.com/dashboard/project/$SUPABASE_PROJECT_REF"

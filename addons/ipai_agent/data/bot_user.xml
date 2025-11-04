@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AI Agent Bot Partner -->
+        <record id="partner_agent_bot" model="res.partner">
+            <field name="name">InsightPulse AI Agent</field>
+            <field name="email">agent@insightpulseai.net</field>
+            <field name="company_type">person</field>
+            <field name="active">True</field>
+            <field name="comment">AI-powered chatbot for automation and assistance</field>
+        </record>
+
+        <!-- AI Agent Bot User -->
+        <record id="user_agent_bot" model="res.users">
+            <field name="name">InsightPulse AI Agent</field>
+            <field name="login">ipai-bot</field>
+            <field name="partner_id" ref="partner_agent_bot"/>
+            <field name="active">True</field>
+            <field name="groups_id" eval="[(4, ref('base.group_user'))]"/>
+            <field name="notification_type">inbox</field>
+            <field name="signature">--
+🤖 InsightPulse AI Agent
+Your automated assistant for expense management, deployments, and BIR compliance
+Powered by Claude 3.5 Sonnet</field>
+        </record>
+    </data>
+</odoo>

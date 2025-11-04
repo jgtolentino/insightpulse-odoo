@@ -1,0 +1,31 @@
+# Apache Superset Dashboard Configuration
+# CI/CD Metrics Dashboard
+
+dashboard_title: "CI/CD Metrics Dashboard"
+
+slices:
+  - slice_name: "Workflow Success Rate"
+    viz_type: "big_number_total"
+    params:
+      metric: "success_rate"
+      time_range: "Last 7 days"
+
+  - slice_name: "Workflow Execution Times"
+    viz_type: "line"
+    params:
+      metrics: ["avg_duration"]
+      time_range: "Last 30 days"
+      groupby: ["workflow_name"]
+
+  - slice_name: "Workflow Status Distribution"
+    viz_type: "pie"
+    params:
+      metric: "count"
+      groupby: ["status"]
+
+  - slice_name: "Top Failing Workflows"
+    viz_type: "table"
+    params:
+      metrics: ["failure_count"]
+      groupby: ["workflow_name"]
+      row_limit: 10

@@ -1,0 +1,68 @@
+name: insightpulse-automation
+region: sgp
+
+services:
+  # Odoo with ipai_agent pre-installed
+  - name: odoo-automation
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: Dockerfile.automation
+    http_port: 8069
+    instance_count: 1
+    instance_size_slug: basic-s
+    routes:
+      - path: /odoo
+    envs:
+      - key: DB_HOST
+        value: ${db.HOSTNAME}
+      - key: DB_PORT
+        value: ${db.PORT}
+      - key: DB_USER
+        value: ${db.USERNAME}
+      - key: DB_PASSWORD
+        value: ${db.PASSWORD}
+      - key: ODOO_ADDONS_PATH
+        value: /mnt/extra-addons/custom,/mnt/extra-addons/oca
+      - key: IPAI_AGENT_URL
+        value: https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run/chat
+      - key: WEB_BASE_URL
+        value: ${APP_URL}/odoo
+
+  # OCR Service (PaddleOCR + DeepSeek)
+  - name: ocr-service
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: services/ocr/Dockerfile
+    http_port: 8000
+    routes:
+      - path: /ocr
+    envs:
+      - key: PADDLE_OCR_MODEL
+        value: paddleocr-vl-900m
+      - key: DEEPSEEK_MODEL_PATH
+        value: /models/deepseek-ocr-7b
+
+  # Pulse Hub Web UI
+  - name: pulse-hub-web
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: services/web/Dockerfile
+    http_port: 3000
+    routes:
+      - path: /
+
+databases:
+  - name: odoo-db
+    engine: PG
+    version: "15"
+    production: true
+    cluster_name: insightpulse-db
+
+# One-click deployment URL:
+# https://cloud.digitalocean.com/apps/new?repo=https://github.com/jgtolentino/insightpulse-odoo/tree/main&refcode=one-click-automation

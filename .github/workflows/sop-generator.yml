@@ -1,0 +1,206 @@
+name: SOP Generator
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'addons/**/models/*.py'
+      - 'addons/**/controllers/*.py'
+      - 'odoo_addons/**/models/*.py'
+      - 'odoo_addons/**/controllers/*.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate-sops:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract SOPs from docstrings
+        run: |
+          python3 << 'PYTHON'
+          import os
+          import ast
+          import re
+          from datetime import datetime
+
+          def extract_sop_from_docstring(docstring):
+              """
+              Extract SOP steps from docstring.
+
+              Looks for patterns like:
+              - Numbered steps (1. Step, 2. Step)
+              - Procedure markers (Procedure:, Steps:, Process:)
+              - Ordered lists
+              """
+              if not docstring:
+                  return None
+
+              sop_patterns = [
+                  r'(?:Procedure|Process|Steps|How to|Instructions):\s*(.*?)(?=\n\n|\Z)',
+                  r'(\d+\.\s+.+(?:\n\s+.+)*)',  # Numbered lists
+              ]
+
+              for pattern in sop_patterns:
+                  matches = re.findall(pattern, docstring, re.DOTALL | re.IGNORECASE)
+                  if matches:
+                      return matches
+
+              return None
+
+          def scan_python_file(filepath):
+              """Scan Python file for SOP-like docstrings."""
+              try:
+                  with open(filepath, 'r') as f:
+                      source = f.read()
+
+                  tree = ast.parse(source)
+                  sops = []
+
+                  for node in ast.walk(tree):
+                      docstring = ast.get_docstring(node)
+
+                      if docstring:
+                          sop_steps = extract_sop_from_docstring(docstring)
+
+                          if sop_steps:
+                              # Get function/class/method name
+                              name = None
+                              if isinstance(node, ast.FunctionDef):
+                                  name = node.name
+                              elif isinstance(node, ast.ClassDef):
+                                  name = node.name
+                              elif isinstance(node, ast.Module):
+                                  name = os.path.basename(filepath)
+
+                              if name:
+                                  sop = {
+                                      'name': name,
+                                      'type': type(node).__name__,
+                                      'steps': sop_steps,
+                                      'file': filepath,
+                                      'line': node.lineno if hasattr(node, 'lineno') else 0
+                                  }
+                                  sops.append(sop)
+
+                  return sops
+              except Exception as e:
+                  print(f"Error parsing {filepath}: {e}")
+                  return []
+
+          # Scan all Python files
+          all_sops = []
+
+          for addon_dir in ['addons', 'odoo_addons']:
+              if os.path.exists(addon_dir):
+                  for root, dirs, files in os.walk(addon_dir):
+                      for file in files:
+                          if file.endswith('.py') and file != '__init__.py':
+                              filepath = os.path.join(root, file)
+                              sops = scan_python_file(filepath)
+                              all_sops.extend(sops)
+
+          print(f"✅ Found {len(all_sops)} SOPs in docstrings")
+
+          if not all_sops:
+              print("ℹ️  No SOPs found. Add procedure documentation to Python docstrings.")
+              exit(0)
+
+          # Generate SOP documentation
+          os.makedirs('docs/sops', exist_ok=True)
+
+          # Group by module
+          modules = {}
+          for sop in all_sops:
+              # Extract module name from file path
+              path_parts = sop['file'].split('/')
+              if len(path_parts) >= 2:
+                  module_name = path_parts[1]
+                  if module_name not in modules:
+                      modules[module_name] = []
+                  modules[module_name].append(sop)
+
+          # Generate SOP documentation for each module
+          for module_name, sops in modules.items():
+              sop_file = f'docs/sops/{module_name}.md'
+
+              with open(sop_file, 'w') as f:
+                  f.write(f"# {module_name} - Standard Operating Procedures\n\n")
+                  f.write(f"Auto-generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n")
+
+                  for sop in sops:
+                      f.write(f"## {sop['name']}\n\n")
+                      f.write(f"**Type:** {sop['type']}  \n")
+                      f.write(f"**Source:** [`{os.path.basename(sop['file'])}:{sop['line']}`]({sop['file']})\n\n")
+
+                      f.write("### Procedure\n\n")
+                      for step_group in sop['steps']:
+                          if isinstance(step_group, str):
+                              f.write(f"{step_group}\n\n")
+                          elif isinstance(step_group, list):
+                              for step in step_group:
+                                  f.write(f"{step}\n")
+                          f.write("\n")
+
+                      f.write("---\n\n")
+
+              print(f"📄 Generated: {sop_file}")
+
+          # Create index page
+          index_file = 'docs/sops/README.md'
+          with open(index_file, 'w') as f:
+              f.write("# Standard Operating Procedures - Index\n\n")
+              f.write(f"Auto-generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S UTC')}\n\n")
+              f.write(f"Total SOPs: {len(all_sops)}\n\n")
+
+              f.write("## By Module\n\n")
+              for module_name, sops in sorted(modules.items()):
+                  f.write(f"### [{module_name}]({module_name}.md)\n")
+                  f.write(f"- {len(sops)} procedures\n\n")
+
+              f.write("## How to Add SOPs\n\n")
+              f.write("Add procedure documentation to Python docstrings:\n\n")
+              f.write("```python\n")
+              f.write('def month_end_closing(self):\n')
+              f.write('    """\n')
+              f.write('    Month-end closing procedure for Finance SSC.\n\n')
+              f.write('    Procedure:\n')
+              f.write('    1. Run bank reconciliation for all agencies\n')
+              f.write('    2. Review and post adjusting journal entries\n')
+              f.write('    3. Generate trial balance report\n')
+              f.write('    4. Prepare financial statements\n')
+              f.write('    5. Submit to Finance Manager for review\n')
+              f.write('    """\n')
+              f.write('    pass\n')
+              f.write("```\n")
+
+          print(f"📄 Generated: {index_file}")
+          print(f"\n✅ SOP generation complete")
+          PYTHON
+
+      - name: Commit SOP documentation
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: update SOPs from docstrings'
+          file_pattern: 'docs/sops/*.md'
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📖 SOP Generator - Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          if [ -d "docs/sops" ]; then
+            echo "Generated SOPs:"
+            ls -lh docs/sops/
+          else
+            echo "No SOPs generated (no docstrings with procedures found)"
+          fi
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

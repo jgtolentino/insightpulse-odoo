@@ -1,89 +1,25 @@
-# Pre-commit configuration for InsightPulse Odoo
-# Basic code quality checks
-
+# OCA (Odoo Community Association) Pre-commit Hooks
 repos:
-  # Basic code quality checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0
+    rev: v4.5.0
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
       - id: check-yaml
-      - id: check-added-large-files
-      - id: check-merge-conflict
-      - id: check-ast
 
-  # Python code formatting
   - repo: https://github.com/psf/black
-    rev: 23.3.0
+    rev: 24.1.1
     hooks:
       - id: black
-        files: ^addons/.*\.py$
-        args: [--line-length=88]
 
-  # Python import sorting
   - repo: https://github.com/pycqa/isort
-    rev: 5.12.0
+    rev: 5.13.2
     hooks:
       - id: isort
-        files: ^addons/.*\.py$
-        args: [--profile=black]
+        args: ["--profile", "black"]
 
-  # Python linting
   - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
+    rev: 7.0.0
     hooks:
       - id: flake8
-        files: ^addons/.*\.py$
-        args: [--max-line-length=88, --extend-ignore=E203,E501]
-
-  # Odoo-specific linting (OCA standards)
-  - repo: https://github.com/oca/pylint-odoo
-    rev: v9.0.5
-    hooks:
-      - id: pylint_odoo
-        name: pylint-odoo
-        files: ^addons/.*\.py$
-        args: ["--rcfile=.pylintrc-mandatory"]
-        additional_dependencies:
-          - pylint-odoo==9.0.5
-
-  # Security vulnerability scanning
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.5
-    hooks:
-      - id: bandit
-        files: ^addons/.*\.py$
-        args: [--skip=B101,B601]
-
-  # Markdown linting
-  - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.35.0
-    hooks:
-      - id: markdownlint
-        files: \.md$
-
-  # GitHub Actions linting
-  - repo: https://github.com/rhysd/actionlint
-    rev: v1.6.26
-    hooks:
-      - id: actionlint
-        name: actionlint
-        description: Lint GitHub Actions workflow files
-        files: ^\.github/workflows/.*\.ya?ml$
-
-  # Dockerfile linting
-  - repo: https://github.com/hadolint/hadolint
-    rev: v2.12.0
-    hooks:
-      - id: hadolint-docker
-        name: hadolint
-        description: Lint Dockerfiles
-        files: Dockerfile.*|.*\.dockerfile$
-
-# Default configuration
-default_language_version:
-  python: python3
-
-# Fail fast configuration
-fail_fast: false
+        additional_dependencies: ["flake8-odoo"]

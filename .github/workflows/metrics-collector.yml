@@ -1,0 +1,45 @@
+name: CI/CD Metrics Collector
+
+on:
+  workflow_run:
+    workflows: ["*"]
+    types: [completed]
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  collect-metrics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Collect workflow metrics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const workflows = await github.rest.actions.listWorkflowRunsForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100
+            });
+
+            const metrics = workflows.data.workflow_runs.map(run => ({
+              workflow: run.name,
+              status: run.conclusion,
+              duration: Math.round((new Date(run.updated_at) - new Date(run.created_at)) / 1000),
+              created_at: run.created_at
+            }));
+
+            console.log(`📊 Collected ${metrics.length} workflow runs`);
+            console.log(`✅ Success rate: ${(metrics.filter(m => m.status === 'success').length / metrics.length * 100).toFixed(1)}%`);
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 CI/CD Metrics Collection Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

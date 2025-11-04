@@ -1,0 +1,164 @@
+{
+  "dashboard_title": "Slack Integration Metrics",
+  "description": "Track Slack bot usage and notification delivery",
+  "css": "",
+  "slug": "slack-metrics",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for communication monitoring",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-commands-delivery",
+        "ROW-channel-activity"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 💬 Slack Integration Metrics\n**Bot usage and notification tracking** | /odoo, /expense, /bir commands"
+      }
+    },
+    "ROW-commands-delivery": {
+      "type": "ROW",
+      "id": "ROW-commands-delivery",
+      "children": ["CHART-slack-commands", "CHART-delivery-rate"]
+    },
+    "CHART-slack-commands": {
+      "type": "CHART",
+      "id": "CHART-slack-commands",
+      "children": [],
+      "meta": {"width": 8, "height": 8, "chartId": 1}
+    },
+    "CHART-delivery-rate": {
+      "type": "CHART",
+      "id": "CHART-delivery-rate",
+      "children": [],
+      "meta": {"width": 4, "height": 8, "chartId": 2}
+    },
+    "ROW-channel-activity": {
+      "type": "ROW",
+      "id": "ROW-channel-activity",
+      "children": ["CHART-channel-heatmap"]
+    },
+    "CHART-channel-heatmap": {
+      "type": "CHART",
+      "id": "CHART-channel-heatmap",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 3}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-date-range",
+        "name": "Date Range",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "timestamp"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 30 days"
+          },
+          "filterState": {"value": "Last 30 days"}
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 600
+  },
+  "slices": [
+    {
+      "slice_name": "Slack Commands by Type",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "slack_command_log",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "dist_bar",
+        "groupby": ["command"],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "COUNT(*)",
+            "label": "Usage"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(response_time_ms)",
+            "label": "Avg Response"
+          }
+        ],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+        }],
+        "order_bars": true,
+        "y_axis_format": ",.0f"
+      }
+    },
+    {
+      "slice_name": "Notification Delivery Rate",
+      "viz_type": "gauge_chart",
+      "datasource_type": "table",
+      "datasource_name": "slack_notification_log",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "gauge_chart",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND((COUNT(*) FILTER (WHERE status='delivered')::numeric / NULLIF(COUNT(*), 0)) * 100, 1)",
+          "label": "Delivery Rate"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+        }],
+        "min_val": 0,
+        "max_val": 100,
+        "value_formatter": ".1f%"
+      }
+    },
+    {
+      "slice_name": "Channel Activity Heatmap",
+      "viz_type": "heatmap",
+      "datasource_type": "table",
+      "datasource_name": "slack_message_log",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "heatmap",
+        "all_columns_x": "day",
+        "all_columns_y": "channel_name",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Messages"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '90 days'"
+        }],
+        "linear_color_scheme": "blue_white_yellow",
+        "xscale_interval": 1,
+        "yscale_interval": 1,
+        "normalize_across": "x"
+      }
+    }
+  ]
+}
