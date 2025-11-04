@@ -13,6 +13,7 @@
 | Subdomain | Type | Points To | Purpose | Status |
 |-----------|------|-----------|---------|--------|
 | `ocr.insightpulseai.net` | A | 188.166.237.231 | OCR Services (PaddleOCR + DeepSeek) | ✅ WORKING |
+| `llm.insightpulseai.net` | A | (TBD - GPU droplet IP) | DeepSeek-R1 7B LLM | ⏳ PENDING |
 | `mcp.insightpulseai.net` | CNAME | pulse-hub-web-an645.ondigitalocean.app | Pulse Hub Web UI (Mode 2) | ✅ WORKING |
 | `superset.insightpulseai.net` | CNAME | superset-nlavf.ondigitalocean.app | Apache Superset BI | ✅ WORKING |
 | `erp.insightpulseai.net` | A | 165.227.10.178 | Odoo ERP (Mode 1: @ipai-bot) | ✅ WORKING |
@@ -62,8 +63,14 @@ Action: Keep as-is ✓
 Host: ocr
 Type: A
 Data: 188.166.237.231
-Purpose: OCR services (PaddleOCR + DeepSeek)
+Purpose: OCR services (PaddleOCR + DeepSeek-OCR)
 Action: Keep as-is ✓
+
+Host: llm
+Type: A
+Data: (GPU droplet IP - will be set by deploy-deepseek-llm.sh)
+Purpose: DeepSeek-R1 7B LLM API
+Action: Add after GPU droplet creation
 
 Host: superset
 Type: CNAME
@@ -165,7 +172,8 @@ This enables: https://agent.insightpulseai.net → AI Agent API
 | IP Address | Hostname | Services | Provider |
 |------------|----------|----------|----------|
 | **165.227.10.178** | erp.insightpulseai.net | Odoo ERP, @ipai-bot | DigitalOcean Droplet |
-| **188.166.237.231** | ocr.insightpulseai.net | PaddleOCR-VL, DeepSeek-OCR-7B | DigitalOcean Droplet |
+| **188.166.237.231** | ocr.insightpulseai.net | PaddleOCR-VL, DeepSeek-OCR-7B | DigitalOcean Droplet (SGP1) |
+| **(TBD)** | llm.insightpulseai.net | DeepSeek-R1 7B LLM | DigitalOcean GPU Droplet (SGP1) |
 
 ## DigitalOcean App Platform Apps
 
@@ -183,6 +191,7 @@ This enables: https://agent.insightpulseai.net → AI Agent API
 |--------|--------------|--------|---------|
 | erp.insightpulseai.net | Let's Encrypt | ⚠️ NEEDS SETUP | Manual |
 | ocr.insightpulseai.net | Let's Encrypt | ⚠️ NEEDS SETUP | Manual |
+| llm.insightpulseai.net | Let's Encrypt | ⏳ PENDING DEPLOYMENT | Auto |
 | mcp.insightpulseai.net | DigitalOcean | ✅ AUTO | Auto |
 | superset.insightpulseai.net | DigitalOcean | ✅ AUTO | Auto |
 | agent.insightpulseai.net | DigitalOcean | ⚠️ AFTER DNS FIX | Auto |
@@ -198,15 +207,22 @@ This enables: https://agent.insightpulseai.net → AI Agent API
    - Delete both `agent` A records
    - Add `agent` CNAME → wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run
 
-2. **Add SSL for droplets** (10 minutes)
+2. **Deploy DeepSeek infrastructure** (30-45 minutes)
+   - Run `scripts/deploy-deepseek-llm.sh` → Create GPU droplet + configure TLS
+   - Run `scripts/deploy-deepseek-ocr.sh` → Add DeepSeek-OCR to OCR droplet
+   - Add DNS: `llm` A record → GPU droplet IP (automated by script)
+
+3. **Add SSL for existing droplets** (10 minutes)
    - `ssh root@165.227.10.178` → Install certbot for erp.insightpulseai.net
    - `ssh root@188.166.237.231` → Install certbot for ocr.insightpulseai.net
 
-3. **Test all 4 automation modes** (5 minutes)
+4. **Test all services** (10 minutes)
+   - Run `scripts/health-check-all-services.sh` → Comprehensive validation
    - Mode 1: Login to https://erp.insightpulseai.net → Test @ipai-bot
    - Mode 2: Open https://mcp.insightpulseai.net
    - Mode 3: Test https://agent.insightpulseai.net (after DNS fix)
    - Mode 4: Comment @claude in any GitHub PR
+   - LLM: Test https://llm.insightpulseai.net/v1/models
 
 ---
 
