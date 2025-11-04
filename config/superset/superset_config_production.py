@@ -34,6 +34,19 @@ DATA_CACHE_CONFIG = {
 SECRET_KEY = os.getenv('SUPERSET_SECRET_KEY')
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
+# Database Engine Options (for PostgreSQL foreign key support)
+SQLALCHEMY_ENGINE_OPTIONS = {
+    'pool_pre_ping': True,
+    'pool_recycle': 3600,
+    'connect_args': {
+        'connect_timeout': 10,
+        'options': '-c statement_timeout=60000'  # 60 second timeout
+    }
+}
+
+# Ensure foreign keys are enforced
+SQLALCHEMY_ECHO = False
+
 # Webserver Configuration
 SUPERSET_WEBSERVER_PROTOCOL = os.getenv('SUPERSET_WEBSERVER_PROTOCOL', 'https')
 SUPERSET_WEBSERVER_PORT = int(os.getenv('SUPERSET_WEBSERVER_PORT', 8088))
