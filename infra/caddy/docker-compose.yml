@@ -91,6 +91,9 @@ services:
     container_name: paddleocr-service
     restart: unless-stopped
 
+    ports:
+      - "8000:8000"
+
     environment:
       - LANG=en,fil
       - LOG_LEVEL=info

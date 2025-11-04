@@ -42,16 +42,6 @@ fi
 # Build full URL
 FULL_URL="${BASE_URL}${HEALTH_PATH}"
 
-# Build curl command
-CURL_CMD="curl -k -s -o /dev/null -w %{http_code}"
-
-# Add Host header if provided
-if [[ -n "${HOST_HEADER}" ]]; then
-    CURL_CMD="${CURL_CMD} -H \"Host: ${HOST_HEADER}\""
-fi
-
-CURL_CMD="${CURL_CMD} \"${FULL_URL}\""
-
 # Display configuration
 echo -e "${BLUE}════════════════════════════════════════════════════════════${NC}"
 echo -e "${BLUE}  Origin Health Check${NC}"

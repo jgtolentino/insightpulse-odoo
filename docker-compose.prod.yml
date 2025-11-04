@@ -61,12 +61,13 @@ services:
       - max_parallel_workers=4
       - -c
       - max_parallel_maintenance_workers=2
-      - -c
-      - ssl=on
-      - -c
-      - ssl_cert_file=/var/lib/postgresql/server.crt
-      - -c
-      - ssl_key_file=/var/lib/postgresql/server.key
+      # SSL configuration - uncomment and mount certificates if needed
+      # - -c
+      # - ssl=on
+      # - -c
+      # - ssl_cert_file=/var/lib/postgresql/server.crt
+      # - -c
+      # - ssl_key_file=/var/lib/postgresql/server.key
     networks:
       - odoo
 
