@@ -1,0 +1,194 @@
+{
+  "dashboard_title": "AI Agent Performance",
+  "description": "Monitor @ipai-bot usage and Gradient API performance",
+  "css": "",
+  "slug": "ai-agent",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for AI monitoring",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-volume-provider",
+        "ROW-topics-cost"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 🤖 AI Agent Performance\n**@ipai-bot usage tracking** | Gradient API + DO Agent fallback"
+      }
+    },
+    "ROW-volume-provider": {
+      "type": "ROW",
+      "id": "ROW-volume-provider",
+      "children": ["CHART-query-volume", "CHART-provider-usage"]
+    },
+    "CHART-query-volume": {
+      "type": "CHART",
+      "id": "CHART-query-volume",
+      "children": [],
+      "meta": {"width": 8, "height": 8, "chartId": 1}
+    },
+    "CHART-provider-usage": {
+      "type": "CHART",
+      "id": "CHART-provider-usage",
+      "children": [],
+      "meta": {"width": 4, "height": 8, "chartId": 2}
+    },
+    "ROW-topics-cost": {
+      "type": "ROW",
+      "id": "ROW-topics-cost",
+      "children": ["CHART-query-topics", "BIG_NUMBER-monthly-cost"]
+    },
+    "CHART-query-topics": {
+      "type": "CHART",
+      "id": "CHART-query-topics",
+      "children": [],
+      "meta": {"width": 8, "height": 8, "chartId": 3}
+    },
+    "BIG_NUMBER-monthly-cost": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-monthly-cost",
+      "children": [],
+      "meta": {"width": 4, "height": 8, "chartId": 4}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-date-range",
+        "name": "Date Range",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "timestamp"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 7 days"
+          },
+          "filterState": {"value": "Last 7 days"}
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300
+  },
+  "slices": [
+    {
+      "slice_name": "Agent Query Volume",
+      "viz_type": "mixed_timeseries",
+      "datasource_type": "table",
+      "datasource_name": "ipai_agent_log",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "mixed_timeseries",
+        "x_axis": "timestamp",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "COUNT(*)",
+            "label": "Queries"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(response_time_ms)",
+            "label": "Avg Response Time"
+          }
+        ],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '7 days'"
+        }],
+        "time_grain_sqla": "PT1H",
+        "show_legend": true,
+        "yAxisIndex": 1
+      }
+    },
+    {
+      "slice_name": "Provider Usage",
+      "viz_type": "pie",
+      "datasource_type": "table",
+      "datasource_name": "ipai_agent_log",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "pie",
+        "groupby": ["provider"],
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Queries"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+        }],
+        "donut": false,
+        "show_labels": true,
+        "show_legend": true,
+        "labels_outside": true
+      }
+    },
+    {
+      "slice_name": "Top Query Topics",
+      "viz_type": "word_cloud",
+      "datasource_type": "table",
+      "datasource_name": "ipai_agent_log",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "word_cloud",
+        "series": "query_text",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Frequency"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= CURRENT_DATE - INTERVAL '30 days'"
+        }],
+        "row_limit": 100,
+        "size_from": 10,
+        "size_to": 70,
+        "rotation": "square"
+      }
+    },
+    {
+      "slice_name": "Monthly Cost (USD)",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "ipai_agent_log",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN provider='gradient' THEN tokens_used * 0.0000014 ELSE 0 END)",
+          "label": "Total Cost"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "timestamp >= DATE_TRUNC('month', CURRENT_DATE)"
+        }],
+        "subheader": "Gradient API",
+        "y_axis_format": "$,.2f"
+      }
+    }
+  ]
+}

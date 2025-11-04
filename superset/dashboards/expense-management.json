@@ -1,0 +1,237 @@
+{
+  "dashboard_title": "Expense Management",
+  "description": "Real-time expense tracking and approval monitoring",
+  "css": "",
+  "slug": "expense-mgmt",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for expense operations",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-kpis",
+        "ROW-approval-queue",
+        "ROW-trends",
+        "ROW-submissions"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 💰 Expense Management\n**Real-time expense tracking and approval monitoring** | Updated: {{current_datetime}}"
+      }
+    },
+    "ROW-kpis": {
+      "type": "ROW",
+      "id": "ROW-kpis",
+      "children": ["BIG_NUMBER-avg-approval-time"]
+    },
+    "BIG_NUMBER-avg-approval-time": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-avg-approval-time",
+      "children": [],
+      "meta": {"width": 12, "height": 4, "chartId": 1}
+    },
+    "ROW-approval-queue": {
+      "type": "ROW",
+      "id": "ROW-approval-queue",
+      "children": ["TABLE-approval-queue"]
+    },
+    "TABLE-approval-queue": {
+      "type": "CHART",
+      "id": "TABLE-approval-queue",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 2}
+    },
+    "ROW-trends": {
+      "type": "ROW",
+      "id": "ROW-trends",
+      "children": ["CHART-expense-trend", "CHART-expense-categories"]
+    },
+    "CHART-expense-trend": {
+      "type": "CHART",
+      "id": "CHART-expense-trend",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 3}
+    },
+    "CHART-expense-categories": {
+      "type": "CHART",
+      "id": "CHART-expense-categories",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 4}
+    },
+    "ROW-submissions": {
+      "type": "ROW",
+      "id": "ROW-submissions",
+      "children": ["CHART-employee-submissions"]
+    },
+    "CHART-employee-submissions": {
+      "type": "CHART",
+      "id": "CHART-employee-submissions",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 5}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-date-from",
+        "name": "Date From",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "date"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "This month"
+          },
+          "filterState": {"value": "This month"}
+        }
+      },
+      {
+        "id": "NATIVE_FILTER-agency",
+        "name": "Agency",
+        "filterType": "filter_select",
+        "targets": [{"datasetId": 1, "column": {"name": "company_id"}}],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {"value": null}
+        },
+        "controlValues": {
+          "enableEmptyFilter": true,
+          "multiSelect": true
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300
+  },
+  "slices": [
+    {
+      "slice_name": "Average Approval Time",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense_approval",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND(AVG(hours_to_approve), 1)",
+          "label": "Avg Hours"
+        },
+        "subheader": "Time to Approval",
+        "y_axis_format": ".1f hours"
+      }
+    },
+    {
+      "slice_name": "Expense Approval Queue",
+      "viz_type": "table",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "table",
+        "all_columns": ["name", "employee_name", "company_name", "total_amount", "date", "days_pending", "state"],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "state IN ('submit', 'approve')"
+        }],
+        "row_limit": 100,
+        "order_desc": false,
+        "table_timestamp_format": "%Y-%m-%d",
+        "page_length": 25,
+        "include_search": true,
+        "table_filter": true,
+        "conditional_formatting": [
+          {
+            "column": "days_pending",
+            "operator": ">",
+            "targetValue": 7,
+            "colorScheme": "red"
+          },
+          {
+            "column": "days_pending",
+            "operator": ">=",
+            "targetValue": 3,
+            "colorScheme": "yellow"
+          }
+        ]
+      }
+    },
+    {
+      "slice_name": "Expense Trend by Month",
+      "viz_type": "echarts_area",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "echarts_area",
+        "x_axis": "date",
+        "groupby": ["company_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Amount"
+        }],
+        "time_grain_sqla": "P1M",
+        "stack": true,
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Top Expense Categories",
+      "viz_type": "pie",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "pie",
+        "groupby": ["product_name"],
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Amount"
+        },
+        "donut": true,
+        "show_labels": true,
+        "show_legend": true,
+        "labels_outside": true,
+        "number_format": "₱,.0f",
+        "row_limit": 8
+      }
+    },
+    {
+      "slice_name": "Expense Submission by Employee",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "dist_bar",
+        "groupby": ["employee_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Total Amount"
+        }],
+        "row_limit": 20,
+        "order_bars": true,
+        "y_axis_format": "₱,.0f"
+      }
+    }
+  ]
+}

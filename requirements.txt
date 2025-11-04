@@ -3,6 +3,7 @@
 # Core dependencies
 requests>=2.31.0
 psycopg2-binary>=2.9.9
+gradient>=0.1.0  # Gradient AI SDK for LLM fallback
 
 # Optional dependencies for development
 # Uncomment if needed for development/testing

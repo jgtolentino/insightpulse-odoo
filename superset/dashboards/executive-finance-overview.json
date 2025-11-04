@@ -1,0 +1,397 @@
+{
+  "dashboard_title": "Executive Finance Overview",
+  "description": "High-level financial KPIs across all 8 agencies (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)",
+  "css": "",
+  "slug": "executive-finance",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for executive reporting",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-kpis",
+        "ROW-revenue",
+        "ROW-expenses",
+        "ROW-compliance"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 📊 Executive Finance Overview\n**Real-time financial KPIs across 8 agencies** | Updated: {{current_datetime}}"
+      }
+    },
+    "ROW-kpis": {
+      "type": "ROW",
+      "id": "ROW-kpis",
+      "children": ["BIG_NUMBER-revenue", "BIG_NUMBER-expenses", "BIG_NUMBER-receivables", "BIG_NUMBER-payables"]
+    },
+    "BIG_NUMBER-revenue": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-revenue",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 1}
+    },
+    "BIG_NUMBER-expenses": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-expenses",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 2}
+    },
+    "BIG_NUMBER-receivables": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-receivables",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 3}
+    },
+    "BIG_NUMBER-payables": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-payables",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 4}
+    },
+    "ROW-revenue": {
+      "type": "ROW",
+      "id": "ROW-revenue",
+      "children": ["CHART-revenue-by-agency", "CHART-revenue-trend"]
+    },
+    "CHART-revenue-by-agency": {
+      "type": "CHART",
+      "id": "CHART-revenue-by-agency",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 5}
+    },
+    "CHART-revenue-trend": {
+      "type": "CHART",
+      "id": "CHART-revenue-trend",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 6}
+    },
+    "ROW-expenses": {
+      "type": "ROW",
+      "id": "ROW-expenses",
+      "children": ["CHART-expense-status", "CHART-expense-categories"]
+    },
+    "CHART-expense-status": {
+      "type": "CHART",
+      "id": "CHART-expense-status",
+      "children": [],
+      "meta": {"width": 6, "height": 6, "chartId": 7}
+    },
+    "CHART-expense-categories": {
+      "type": "CHART",
+      "id": "CHART-expense-categories",
+      "children": [],
+      "meta": {"width": 6, "height": 6, "chartId": 8}
+    },
+    "ROW-compliance": {
+      "type": "ROW",
+      "id": "ROW-compliance",
+      "children": ["TABLE-bir-compliance"]
+    },
+    "TABLE-bir-compliance": {
+      "type": "CHART",
+      "id": "TABLE-bir-compliance",
+      "children": [],
+      "meta": {"width": 12, "height": 6, "chartId": 9}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-agency",
+        "name": "Agency",
+        "filterType": "filter_select",
+        "targets": [{"datasetId": 1, "column": {"name": "company_name"}}],
+        "defaultDataMask": {"extraFormData": {}, "filterState": {"value": null}},
+        "controlValues": {
+          "enableEmptyFilter": true,
+          "multiSelect": true,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        }
+      },
+      {
+        "id": "NATIVE_FILTER-date-range",
+        "name": "Date Range",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "__time"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "No filter"
+          },
+          "filterState": {"value": "No filter"}
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300
+  },
+  "slices": [
+    {
+      "slice_name": "Total Revenue (YTD)",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "sale_order",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Total Revenue"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('sale', 'done') AND EXTRACT(YEAR FROM date_order) = EXTRACT(YEAR FROM CURRENT_DATE)"
+          }
+        ],
+        "subheader": "Year to Date",
+        "y_axis_format": "₱,.0f"
+      },
+      "query_context": {
+        "datasource": {"id": 1, "type": "table"},
+        "queries": [{
+          "columns": [],
+          "metrics": ["SUM(amount_total)"],
+          "filters": [],
+          "row_limit": 1
+        }]
+      }
+    },
+    {
+      "slice_name": "Total Expenses (MTD)",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Total Expenses"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('approved', 'done') AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
+          }
+        ],
+        "subheader": "Month to Date",
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Outstanding Receivables",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "account_move",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_residual)",
+          "label": "Outstanding"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "move_type = 'out_invoice' AND state = 'posted' AND amount_residual > 0"
+          }
+        ],
+        "subheader": "Unpaid Invoices",
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Outstanding Payables",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "account_move",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_residual)",
+          "label": "Outstanding"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "move_type = 'in_invoice' AND state = 'posted' AND amount_residual > 0"
+          }
+        ],
+        "subheader": "Unpaid Bills",
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Revenue by Agency",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "sale_order",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "dist_bar",
+        "groupby": ["company_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Revenue"
+        }],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('sale', 'done') AND EXTRACT(YEAR FROM date_order) = EXTRACT(YEAR FROM CURRENT_DATE)"
+          }
+        ],
+        "row_limit": 10,
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "show_bar_value": true,
+        "bar_stacked": false,
+        "order_bars": true,
+        "y_axis_format": "₱,.0f",
+        "y_axis_label": "Revenue (PHP)",
+        "bottom_margin": "auto",
+        "x_axis_label": "Agency"
+      }
+    },
+    {
+      "slice_name": "Monthly Revenue Trend",
+      "viz_type": "echarts_timeseries_line",
+      "datasource_type": "table",
+      "datasource_name": "sale_order",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "echarts_timeseries_line",
+        "x_axis": "date_order",
+        "groupby": ["company_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Revenue"
+        }],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('sale', 'done') AND date_order >= DATE_TRUNC('year', CURRENT_DATE) - INTERVAL '1 year'"
+          }
+        ],
+        "time_grain_sqla": "P1M",
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "markerEnabled": true,
+        "y_axis_format": "₱,.0f",
+        "y_axis_title": "Revenue (PHP)"
+      }
+    },
+    {
+      "slice_name": "Expense Approval Status",
+      "viz_type": "pie",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "pie",
+        "groupby": ["state"],
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Count"
+        },
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "DATE_TRUNC('month', create_date) = DATE_TRUNC('month', CURRENT_DATE)"
+          }
+        ],
+        "color_scheme": "supersetColors",
+        "show_labels": true,
+        "show_legend": true,
+        "donut": false,
+        "labels_outside": true,
+        "number_format": ",.0f"
+      }
+    },
+    {
+      "slice_name": "Top Expense Categories",
+      "viz_type": "treemap",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "treemap",
+        "groupby": ["product_id"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Amount"
+        }],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('approved', 'done') AND DATE_TRUNC('month', date) = DATE_TRUNC('month', CURRENT_DATE)"
+          }
+        ],
+        "row_limit": 20,
+        "color_scheme": "supersetColors",
+        "number_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "BIR Compliance Status",
+      "viz_type": "table",
+      "datasource_type": "table",
+      "datasource_name": "bir_form_status",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "table",
+        "groupby": ["company_name", "form_type", "filing_deadline"],
+        "metrics": [],
+        "all_columns": ["company_name", "form_type", "filing_deadline", "status"],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "filing_deadline >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'"
+          }
+        ],
+        "row_limit": 100,
+        "order_desc": false,
+        "table_timestamp_format": "%Y-%m-%d",
+        "page_length": 25,
+        "include_search": true,
+        "table_filter": true,
+        "align_pn": false,
+        "color_pn": true
+      }
+    }
+  ]
+}
