@@ -57,6 +57,8 @@ check_health() {
             echo -e "${GREEN}✓${NC} HTTP ${response}"
             return 0
         elif [[ "$response" == "403" ]]; then
+            # 403 from Cloudflare WAF means service is running and protected
+            # WAF blocks automated health checks but service is accessible to real users
             echo -e "${GREEN}✓${NC} HTTP 403 (WAF protected)"
             return 0
         else
