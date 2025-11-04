@@ -703,6 +703,106 @@ supabase stop                          # Stop local Supabase
 supabase status                        # Show local status
 ```
 
+## Supabase UI Components (shadcn/ui)
+
+Supabase provides official UI components built on shadcn/ui for Next.js and React apps.
+
+### Installation
+
+```bash
+# Install shadcn/ui first
+npx shadcn@latest init
+
+# Add Supabase UI components
+npx shadcn@latest add https://ui.supabase.com/registry/supabase-auth-block.json
+npx shadcn@latest add https://ui.supabase.com/registry/supabase-storage-upload.json
+npx shadcn@latest add https://ui.supabase.com/registry/supabase-realtime-chat.json
+```
+
+### Available Components
+
+#### 1. SupabaseAuthBlock
+Complete authentication UI with sign-up, sign-in, password reset, and OAuth.
+
+```typescript
+import { SupabaseAuthBlock } from '@/components/supabase-ui/auth-block'
+
+export default function LoginPage() {
+  return (
+    <SupabaseAuthBlock
+      providers={['google', 'github']}
+      redirectTo="/dashboard"
+      appearance={{
+        theme: 'default',
+        variables: {
+          default: {
+            colors: {
+              brand: '#3b82f6',
+              brandAccent: '#2563eb'
+            }
+          }
+        }
+      }}
+    />
+  )
+}
+```
+
+#### 2. SupabaseStorageUpload
+File upload component with progress tracking and thumbnail previews.
+
+```typescript
+import { SupabaseStorageUpload } from '@/components/supabase-ui/storage-upload'
+
+export function FileUploader() {
+  return (
+    <SupabaseStorageUpload
+      bucket="avatars"
+      path={`${userId}/`}
+      accept="image/*"
+      maxSize={5242880} // 5MB
+      onUpload={(url) => console.log('Uploaded:', url)}
+    />
+  )
+}
+```
+
+#### 3. SupabaseRealtimeChat
+Real-time chat component with presence and typing indicators.
+
+```typescript
+import { SupabaseRealtimeChat } from '@/components/supabase-ui/realtime-chat'
+
+export function ChatRoom({ roomId }: { roomId: string }) {
+  return (
+    <SupabaseRealtimeChat
+      channel={`room:${roomId}`}
+      onMessage={(message) => console.log(message)}
+    />
+  )
+}
+```
+
+### Hybrid Stack: Next.js + OWL
+
+For InsightPulse, we use **both** Supabase UI (Next.js) and Odoo OWL:
+
+**Use Next.js + Supabase UI for:**
+- Public portals and customer-facing apps
+- Analytics dashboards (read-heavy)
+- Real-time features (chat, notifications)
+- File uploads and storage
+- Authentication and user management
+
+**Use Odoo OWL for:**
+- ERP workflows (accounting, inventory, HR)
+- Complex business logic
+- BIR tax forms and compliance
+- Multi-company/multi-currency
+- Backend admin interfaces
+
+See: `/docs/HYBRID_STACK_ARCHITECTURE.md` for complete integration guide.
+
 ## When to Use This Skill
 
 Use this skill when you need to:
@@ -717,13 +817,19 @@ Use this skill when you need to:
 - ✅ Set up CI/CD for Supabase deployments
 - ✅ Implement vector search with pgvector
 - ✅ Configure production database pooling
+- ✅ Build Next.js apps with Supabase UI components
+- ✅ Create hybrid Next.js + OWL architectures
 
 ## Related Skills
 - `supabase-rpc-manager` - For RPC calls and real-time subscriptions
 - `odoo` - For Odoo ERP integration
 - `superset-dashboard-automation` - For analytics integration
 
+## Related Documentation
+- `/docs/HYBRID_STACK_ARCHITECTURE.md` - Next.js + OWL integration guide
+
 ## Support Resources
 - [Supabase Discord](https://discord.supabase.com)
 - [GitHub Discussions](https://github.com/supabase/supabase/discussions)
 - [Stack Overflow](https://stackoverflow.com/questions/tagged/supabase)
+- [Supabase UI Library](https://ui.supabase.com)
