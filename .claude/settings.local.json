@@ -97,7 +97,8 @@
       "Bash(/opt/homebrew/bin/python3.11 -m pip install:*)",
       "Bash(ipai:*)",
       "Bash(git merge:*)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(git filter-branch:*)"
     ],
     "deny": [],
     "ask": []
