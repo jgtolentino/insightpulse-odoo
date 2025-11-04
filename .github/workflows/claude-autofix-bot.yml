@@ -1,0 +1,273 @@
+name: Claude Auto-Fix Bot
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  claude-autofix:
+    # Only run on PR comments that mention @claude
+    if: |
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, '@claude')
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Add reaction (acknowledge)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            });
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get PR details
+        id: pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number
+            });
+
+            core.setOutput('base', pr.data.base.ref);
+            core.setOutput('head', pr.data.head.ref);
+            core.setOutput('title', pr.data.title);
+            core.setOutput('body', pr.data.body || '');
+            return pr.data;
+
+      - name: Get changed files
+        id: changes
+        run: |
+          git fetch origin ${{ steps.pr.outputs.base }}
+          git fetch origin ${{ steps.pr.outputs.head }}
+
+          # Get changed files with their content
+          CHANGED_FILES=$(git diff --name-only origin/${{ steps.pr.outputs.base }}...origin/${{ steps.pr.outputs.head }})
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+          # Count files
+          FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l)
+          echo "count=$FILE_COUNT" >> $GITHUB_OUTPUT
+
+      - name: Parse Claude command
+        id: parse
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+
+          # Determine command type
+          if echo "$COMMENT" | grep -qi "@claude fix"; then
+            echo "command=fix" >> $GITHUB_OUTPUT
+            echo "task=Analyze the code changes and suggest specific fixes for any bugs or issues." >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qi "@claude debug"; then
+            echo "command=debug" >> $GITHUB_OUTPUT
+            echo "task=Perform root cause analysis to identify why this code might be failing or behaving unexpectedly." >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qi "@claude test"; then
+            echo "command=test" >> $GITHUB_OUTPUT
+            echo "task=Generate comprehensive unit tests and test cases for the changed code." >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qi "@claude review"; then
+            echo "command=review" >> $GITHUB_OUTPUT
+            echo "task=Perform a thorough code review checking for bugs, performance issues, security vulnerabilities, and best practices." >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qi "@claude security"; then
+            echo "command=security" >> $GITHUB_OUTPUT
+            echo "task=Perform a security audit focusing on vulnerabilities, injection risks, authentication issues, and data exposure." >> $GITHUB_OUTPUT
+          elif echo "$COMMENT" | grep -qi "@claude optimize"; then
+            echo "command=optimize" >> $GITHUB_OUTPUT
+            echo "task=Suggest performance optimizations for the code, including database queries, algorithms, and resource usage." >> $GITHUB_OUTPUT
+          else
+            echo "command=help" >> $GITHUB_OUTPUT
+            echo "task=Provide general guidance and suggestions for improving this code." >> $GITHUB_OUTPUT
+          fi
+
+      - name: Collect file contents
+        id: contents
+        run: |
+          git checkout origin/${{ steps.pr.outputs.head }}
+
+          # Collect changed file contents (limit to first 20 files to stay within token limits)
+          FILE_CONTENTS=""
+          COUNT=0
+          MAX_FILES=20
+
+          while IFS= read -r file; do
+            if [ $COUNT -ge $MAX_FILES ]; then
+              break
+            fi
+
+            if [ -f "$file" ]; then
+              # Skip binary files and large files
+              if file "$file" | grep -q text; then
+                SIZE=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+                if [ "$SIZE" -lt 50000 ]; then
+                  FILE_CONTENTS+="### File: $file\n\n\`\`\`\n"
+                  FILE_CONTENTS+="$(cat "$file")\n"
+                  FILE_CONTENTS+="\`\`\`\n\n"
+                  COUNT=$((COUNT + 1))
+                fi
+              fi
+            fi
+          done <<< "${{ steps.changes.outputs.files }}"
+
+          # Save to file for next step
+          echo "$FILE_CONTENTS" > /tmp/file_contents.txt
+          echo "collected=$COUNT files" >> $GITHUB_OUTPUT
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Anthropic SDK
+        run: |
+          pip install anthropic
+
+      - name: Call Claude API
+        id: claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import os
+          import json
+          from anthropic import Anthropic
+
+          client = Anthropic(api_key=os.environ['ANTHROPIC_API_KEY'])
+
+          # Read file contents
+          with open('/tmp/file_contents.txt', 'r') as f:
+              file_contents = f.read()
+
+          # Build prompt
+          system_prompt = """You are Claude, an expert code reviewer and debugging assistant integrated into GitHub.
+
+          Your role:
+          - Analyze code changes in pull requests
+          - Identify bugs, security issues, and performance problems
+          - Suggest specific fixes with code examples
+          - Write clear, actionable recommendations
+          - Use markdown formatting for readability
+
+          Guidelines:
+          - Be concise but thorough
+          - Provide code diffs when suggesting changes
+          - Explain WHY something is an issue
+          - Prioritize critical issues first
+          - Use emojis sparingly (🐛 for bugs, ⚠️ for warnings, ✅ for approvals)
+          """
+
+          user_prompt = f"""
+          ## Pull Request Context
+
+          **Title:** ${{ steps.pr.outputs.title }}
+
+          **Description:**
+          ${{ steps.pr.outputs.body }}
+
+          **User Request:**
+          ${{ github.event.comment.body }}
+
+          **Task:** ${{ steps.parse.outputs.task }}
+
+          ## Changed Files
+
+          {file_contents}
+
+          ## Instructions
+
+          Please analyze the code changes above and respond to the user's request.
+          Format your response in markdown with clear sections and code examples where appropriate.
+          """
+
+          # Call Claude API
+          message = client.messages.create(
+              model="claude-sonnet-4-20250514",
+              max_tokens=4096,
+              temperature=0,
+              system=system_prompt,
+              messages=[
+                  {"role": "user", "content": user_prompt}
+              ]
+          )
+
+          # Extract response
+          response = message.content[0].text
+
+          # Save response to output file
+          with open('/tmp/claude_response.txt', 'w') as f:
+              f.write(response)
+
+          print("Claude analysis completed successfully")
+          PYTHON_SCRIPT
+
+      - name: Post Claude response
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const response = fs.readFileSync('/tmp/claude_response.txt', 'utf8');
+
+            const body = `## 🤖 Claude Analysis
+
+            ${response}
+
+            ---
+
+            *Triggered by @${{ github.event.comment.user.login }} • Command: \`${{ steps.parse.outputs.command }}\`*
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+
+      - name: Add success reaction
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'rocket'
+            });
+
+      - name: Add failure reaction
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'confused'
+            });
+
+            // Post error comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: '❌ Claude Auto-Fix Bot encountered an error. Please check the workflow logs.'
+            });
