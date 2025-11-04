@@ -14,7 +14,7 @@ Ollama has been integrated into the PaddleOCR droplet to provide self-hosted LLM
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │  Nginx Reverse Proxy                                  │  │
 │  │  - ocr.insightpulseai.net → :8000 (PaddleOCR)       │  │
-│  │  - ai.insightpulseai.net → :11434 (Ollama)          │  │
+│  │  - llm.insightpulseai.net → :11434 (Ollama)         │  │
 │  └──────────────────────────────────────────────────────┘  │
 │                                                             │
 │  ┌─────────────────┐  ┌──────────────┐  ┌──────────────┐  │
@@ -72,7 +72,7 @@ bash infra/paddleocr/deploy-droplet.sh
 
 The script will:
 1. Create 4GB droplet in Singapore ($24/month)
-2. Configure DNS for `ocr.insightpulseai.net` and `ai.insightpulseai.net`
+2. Configure DNS for `ocr.insightpulseai.net` and `llm.insightpulseai.net`
 3. Install Docker, Docker Compose, Nginx
 4. Configure firewall (ports 22, 80, 443, 8000, 11434)
 5. Deploy PaddleOCR + Ollama services
@@ -101,7 +101,7 @@ echo "Droplet IP: $DROPLET_IP"
 ssh root@$DROPLET_IP
 
 # Configure SSL for both domains
-certbot --nginx -d ocr.insightpulseai.net -d ai.insightpulseai.net \
+certbot --nginx -d ocr.insightpulseai.net -d llm.insightpulseai.net \
   --email your-email@example.com \
   --agree-tos \
   --non-interactive
@@ -132,10 +132,10 @@ curl -X POST https://ocr.insightpulseai.net/api/v1/ocr/scan \
 
 ```bash
 # List models
-curl https://ai.insightpulseai.net/api/tags
+curl https://llm.insightpulseai.net/api/tags
 
 # Generate completion
-curl -X POST https://ai.insightpulseai.net/api/generate \
+curl -X POST https://llm.insightpulseai.net/api/generate \
   -H "Content-Type: application/json" \
   -d '{
     "model": "llama3.2:3b",
@@ -153,7 +153,7 @@ The Odoo instance is configured to use `https://ai.insightpulseai.net` via envir
 - key: AI_PROVIDER
   value: "ollama"
 - key: OLLAMA_BASE_URL
-  value: "https://ai.insightpulseai.net"
+  value: "https://llm.insightpulseai.net"
 - key: OLLAMA_MODEL
   value: "llama3.2:3b"
 ```
@@ -195,7 +195,7 @@ du -sh /var/lib/docker/volumes/
 curl https://ocr.insightpulseai.net/health
 
 # Ollama health
-curl https://ai.insightpulseai.net/api/tags
+curl https://llm.insightpulseai.net/api/tags
 ```
 
 ## Performance

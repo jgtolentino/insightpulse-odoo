@@ -14,7 +14,7 @@ SIZE="s-2vcpu-4gb"  # $24/month (needed for PaddleOCR + Ollama w/ Llama 3.2 3B)
 IMAGE="ubuntu-22-04-x64"
 SSH_KEY_NAME="insightpulse-deploy"
 DOMAIN="ocr.insightpulseai.net"
-OLLAMA_DOMAIN="ai.insightpulseai.net"
+OLLAMA_DOMAIN="llm.insightpulseai.net"
 
 # Colors for output
 RED='\033[0;31m'
@@ -125,9 +125,9 @@ configure_dns() {
     log_info "DNS configured: $DOMAIN -> $DROPLET_IP"
 
     # Configure DNS for Ollama subdomain
-    if doctl compute domain records list insightpulseai.net --format Name | grep -q "^ai$"; then
+    if doctl compute domain records list insightpulseai.net --format Name | grep -q "^llm$"; then
         log_warn "Ollama DNS record already exists"
-        RECORD_ID=$(doctl compute domain records list insightpulseai.net --format ID,Name --no-header | grep "ai" | awk '{print $1}')
+        RECORD_ID=$(doctl compute domain records list insightpulseai.net --format ID,Name --no-header | grep "llm" | awk '{print $1}')
         doctl compute domain records update insightpulseai.net \
             --record-id $RECORD_ID \
             --record-data $DROPLET_IP
@@ -135,7 +135,7 @@ configure_dns() {
     else
         doctl compute domain records create insightpulseai.net \
             --record-type A \
-            --record-name ai \
+            --record-name llm \
             --record-data $DROPLET_IP \
             --record-ttl 3600
         log_info "Ollama DNS record created"

@@ -210,7 +210,7 @@ log_info "Configuring Nginx for Ollama..."
 cat > /etc/nginx/sites-available/ollama <<'EOF'
 server {
     listen 80;
-    server_name ai.insightpulseai.net;
+    server_name llm.insightpulseai.net;
 
     # Rate limiting
     limit_req_zone $binary_remote_addr zone=ollama_limit:10m rate=5r/s;
@@ -261,5 +261,5 @@ log_info "Next steps:"
 log_info "1. Deploy application files to /opt/paddleocr/"
 log_info "2. Run: cd /opt/paddleocr && docker-compose up -d"
 log_info "3. Pull Ollama model: docker exec ollama-service ollama pull llama3.2:3b"
-log_info "4. Configure SSL: certbot --nginx -d ocr.insightpulseai.net -d ai.insightpulseai.net"
+log_info "4. Configure SSL: certbot --nginx -d ocr.insightpulseai.net -d llm.insightpulseai.net"
 log_info ""

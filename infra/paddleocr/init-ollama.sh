@@ -58,7 +58,7 @@ log_info "================================"
 log_info ""
 log_info "Model: llama3.2:3b"
 log_info "API Endpoint: http://localhost:11434"
-log_info "Public URL: https://ai.insightpulseai.net (after SSL setup)"
+log_info "Public URL: https://llm.insightpulseai.net (after SSL setup)"
 log_info ""
 log_info "Test API:"
 log_info 'curl -X POST http://localhost:11434/api/generate -d'"'"'{"model":"llama3.2:3b","prompt":"Hello","stream":false}'"'"''

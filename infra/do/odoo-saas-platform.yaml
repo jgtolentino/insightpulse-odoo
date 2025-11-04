@@ -103,7 +103,7 @@ services:
 
       - key: OLLAMA_BASE_URL
         scope: RUN_TIME
-        value: "https://ai.insightpulseai.net"  # Ollama on OCR droplet
+        value: "https://llm.insightpulseai.net"  # Ollama LLM gateway
 
       - key: OLLAMA_MODEL
         scope: RUN_TIME
