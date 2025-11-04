@@ -1,0 +1,157 @@
+version: "3.9"
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy-waf-ready
+    restart: unless-stopped
+
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"  # HTTP/3 support
+      - "2019:2019"     # Admin API
+
+    environment:
+      # Cloudflare DNS API token for DNS-01 challenge
+      # This allows certificate issuance even when behind Cloudflare's WAF (orange cloud)
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
+
+      # Optional: Cloudflare account details
+      - CLOUDFLARE_EMAIL=${CLOUDFLARE_EMAIL:-}
+      - CLOUDFLARE_API_KEY=${CLOUDFLARE_API_KEY:-}
+
+    volumes:
+      # Caddyfile configuration
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+
+      # Let's Encrypt certificates (persistent)
+      - caddy_data:/data
+      - caddy_config:/config
+
+      # Logs directory
+      - caddy_logs:/var/log/caddy
+
+    networks:
+      - caddy_network
+      - odoo_network
+      - ocr_network
+      - llm_network
+
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:2019/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+    labels:
+      - "com.insightpulse.service=caddy"
+      - "com.insightpulse.env=production"
+      - "com.insightpulse.waf=cloudflare"
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+        compress: "true"
+
+  # Odoo service (example - adjust to your setup)
+  odoo:
+    image: odoo:19.0
+    container_name: odoo-erp
+    restart: unless-stopped
+
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=${ODOO_DB_PASSWORD}
+
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - odoo_addons:/mnt/extra-addons
+
+    networks:
+      - odoo_network
+
+    depends_on:
+      - postgres
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # OCR service (example - adjust to your setup)
+  ocr:
+    image: paddlepaddle/paddleocr:latest-cpu
+    container_name: paddleocr-service
+    restart: unless-stopped
+
+    environment:
+      - LANG=en,fil
+      - LOG_LEVEL=info
+
+    networks:
+      - ocr_network
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL for Odoo
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres-odoo
+    restart: unless-stopped
+
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=${ODOO_DB_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    networks:
+      - odoo_network
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  caddy_logs:
+    driver: local
+  odoo_data:
+    driver: local
+  odoo_addons:
+    driver: local
+  postgres_data:
+    driver: local
+
+networks:
+  caddy_network:
+    name: caddy_network
+    driver: bridge
+  odoo_network:
+    name: odoo_network
+    driver: bridge
+  ocr_network:
+    name: ocr_network
+    driver: bridge
+  llm_network:
+    name: llm_network
+    driver: bridge
