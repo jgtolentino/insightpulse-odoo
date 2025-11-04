@@ -1,0 +1,613 @@
+{
+  "dashboard_title": "Finance Performance",
+  "slug": "finance-performance",
+  "description": "Financial metrics, cash flow, AR/AP aging, and budget tracking. Comprehensive financial performance monitoring for CFO and finance team.",
+  "published": true,
+  "css": "",
+  "json_metadata": {
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "refresh_frequency": 900,
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "default_filters": "{}",
+    "filter_scopes": {},
+    "chart_configuration": {},
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER_FISCAL_PERIOD",
+        "name": "Fiscal Period",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 6,
+            "column": {
+              "name": "fiscal_period"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": "Current Period"
+          }
+        },
+        "controlValues": {
+          "multiSelect": false,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPANY",
+        "name": "Company",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 6,
+            "column": {
+              "name": "company_key"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_INVOICE_TYPE",
+        "name": "Invoice Type",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 6,
+            "column": {
+              "name": "invoice_type"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": [
+              "out_invoice",
+              "in_invoice"
+            ]
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      }
+    ],
+    "cross_filters_enabled": true
+  },
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "HEADER_ROW",
+        "KPI_ROW",
+        "CASHFLOW_PL_ROW",
+        "AGING_ROW",
+        "INVOICES_ROW"
+      ]
+    },
+    "HEADER_ROW": {
+      "type": "HEADER",
+      "id": "HEADER_ROW",
+      "meta": {
+        "text": "Finance Performance"
+      }
+    },
+    "KPI_ROW": {
+      "type": "ROW",
+      "id": "KPI_ROW",
+      "children": [
+        "CHART_REVENUE_KPI",
+        "CHART_EXPENSES_KPI",
+        "CHART_NET_INCOME_KPI",
+        "CHART_AR_BALANCE_KPI",
+        "CHART_AP_BALANCE_KPI"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_REVENUE_KPI": {
+      "type": "CHART",
+      "id": "CHART_REVENUE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 21
+      }
+    },
+    "CHART_EXPENSES_KPI": {
+      "type": "CHART",
+      "id": "CHART_EXPENSES_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 22
+      }
+    },
+    "CHART_NET_INCOME_KPI": {
+      "type": "CHART",
+      "id": "CHART_NET_INCOME_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 23
+      }
+    },
+    "CHART_AR_BALANCE_KPI": {
+      "type": "CHART",
+      "id": "CHART_AR_BALANCE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 24
+      }
+    },
+    "CHART_AP_BALANCE_KPI": {
+      "type": "CHART",
+      "id": "CHART_AP_BALANCE_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 25
+      }
+    },
+    "CASHFLOW_PL_ROW": {
+      "type": "ROW",
+      "id": "CASHFLOW_PL_ROW",
+      "children": [
+        "CHART_CASH_FLOW",
+        "CHART_PL_SUMMARY"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_CASH_FLOW": {
+      "type": "CHART",
+      "id": "CHART_CASH_FLOW",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 26
+      }
+    },
+    "CHART_PL_SUMMARY": {
+      "type": "CHART",
+      "id": "CHART_PL_SUMMARY",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 27
+      }
+    },
+    "AGING_ROW": {
+      "type": "ROW",
+      "id": "AGING_ROW",
+      "children": [
+        "CHART_AR_AGING",
+        "CHART_AP_AGING"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_AR_AGING": {
+      "type": "CHART",
+      "id": "CHART_AR_AGING",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 28
+      }
+    },
+    "CHART_AP_AGING": {
+      "type": "CHART",
+      "id": "CHART_AP_AGING",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 29
+      }
+    },
+    "INVOICES_ROW": {
+      "type": "ROW",
+      "id": "INVOICES_ROW",
+      "children": [
+        "CHART_OUTSTANDING_INVOICES"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_OUTSTANDING_INVOICES": {
+      "type": "CHART",
+      "id": "CHART_OUTSTANDING_INVOICES",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 10,
+        "chartId": 30
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "Revenue KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' THEN amount_total ELSE 0 END)",
+          "label": "Total Revenue"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 900,
+      "description": "Total revenue from customer invoices"
+    },
+    {
+      "slice_name": "Expenses KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN invoice_type = 'in_invoice' THEN amount_total ELSE 0 END)",
+          "label": "Total Expenses"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 211,
+          "g": 47,
+          "b": 47,
+          "a": 1
+        }
+      },
+      "cache_timeout": 900,
+      "description": "Total expenses from vendor invoices"
+    },
+    {
+      "slice_name": "Net Income KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' THEN amount_total WHEN invoice_type = 'in_invoice' THEN -amount_total ELSE 0 END)",
+          "label": "Net Income"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 900,
+      "description": "Net income (revenue - expenses)"
+    },
+    {
+      "slice_name": "AR Balance KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' AND payment_state != 'paid' THEN amount_residual ELSE 0 END)",
+          "label": "AR Balance"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 255,
+          "g": 160,
+          "b": 0,
+          "a": 1
+        }
+      },
+      "cache_timeout": 900,
+      "description": "Accounts receivable balance"
+    },
+    {
+      "slice_name": "AP Balance KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN invoice_type = 'in_invoice' AND payment_state != 'paid' THEN amount_residual ELSE 0 END)",
+          "label": "AP Balance"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 255,
+          "g": 160,
+          "b": 0,
+          "a": 1
+        }
+      },
+      "cache_timeout": 900,
+      "description": "Accounts payable balance"
+    },
+    {
+      "slice_name": "Cash Flow Trend",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "echarts_timeseries_bar",
+        "x_axis": "invoice_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' THEN amount_total ELSE 0 END)",
+            "label": "Revenue"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN invoice_type = 'in_invoice' THEN amount_total ELSE 0 END)",
+            "label": "Expenses"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "stack": false,
+        "show_value": true
+      },
+      "cache_timeout": 900,
+      "description": "Monthly revenue and expense trends"
+    },
+    {
+      "slice_name": "P&L Summary",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "echarts_timeseries_bar",
+        "x_axis": "invoice_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' THEN amount_total ELSE 0 END)",
+            "label": "Revenue"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "-SUM(CASE WHEN invoice_type = 'in_invoice' THEN amount_total ELSE 0 END)",
+            "label": "Expenses"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN invoice_type = 'out_invoice' THEN amount_total WHEN invoice_type = 'in_invoice' THEN -amount_total ELSE 0 END)",
+            "label": "Net Income"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "stack": true,
+        "show_value": false
+      },
+      "cache_timeout": 900,
+      "description": "Stacked profit and loss summary"
+    },
+    {
+      "slice_name": "Accounts Receivable Aging",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "echarts_timeseries_bar",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_residual)",
+            "label": "Outstanding Amount"
+          }
+        ],
+        "groupby": [
+          "aging_bucket"
+        ],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "invoice_type = 'out_invoice' AND payment_state != 'paid'"
+          }
+        ],
+        "color_scheme": "d3Category20",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "orientation": "horizontal",
+        "show_value": true
+      },
+      "cache_timeout": 900,
+      "description": "Accounts receivable aging buckets"
+    },
+    {
+      "slice_name": "Accounts Payable Aging",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "echarts_timeseries_bar",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_residual)",
+            "label": "Outstanding Amount"
+          }
+        ],
+        "groupby": [
+          "aging_bucket"
+        ],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "invoice_type = 'in_invoice' AND payment_state != 'paid'"
+          }
+        ],
+        "color_scheme": "d3Category20",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "orientation": "horizontal",
+        "show_value": true
+      },
+      "cache_timeout": 900,
+      "description": "Accounts payable aging buckets"
+    },
+    {
+      "slice_name": "Outstanding Invoices (Top 20)",
+      "viz_type": "table",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "table",
+        "groupby": [
+          "invoice_number",
+          "partner_name",
+          "invoice_date",
+          "due_date",
+          "invoice_type"
+        ],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_total)",
+            "label": "Total Amount"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(amount_residual)",
+            "label": "Outstanding"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "MAX(days_overdue)",
+            "label": "Days Overdue"
+          }
+        ],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "payment_state != 'paid'"
+          }
+        ],
+        "row_limit": 20,
+        "order_desc": true,
+        "show_cell_bars": true,
+        "table_timestamp_format": "smart_date",
+        "page_length": 10,
+        "include_search": true,
+        "align_pn": false,
+        "color_pn": true
+      },
+      "cache_timeout": 900,
+      "description": "Top 20 outstanding invoices"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_by": "SuperClaude - bi-designer agent",
+    "created_at": "2025-11-03",
+    "target_audience": "CFO, Finance Managers, Accounting Team, Financial Controllers",
+    "refresh_schedule": "*/15 * * * *",
+    "permissions": {
+      "role": "Finance Team",
+      "access_level": "Company-specific with consolidation view",
+      "export_enabled": true
+    }
+  }
+}

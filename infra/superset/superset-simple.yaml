@@ -1,0 +1,47 @@
+# Superset - Simplified deployment using official image
+name: superset-analytics
+region: sgp
+
+services:
+  - name: superset
+    image:
+      registry_type: DOCKER_HUB
+      repository: apache/superset
+      tag: "latest"
+
+    instance_size_slug: basic-xs
+    instance_count: 1
+    http_port: 8088
+
+    run_command: |
+      /bin/sh -c "superset db upgrade && superset fab create-admin --username admin --password ${SUPERSET_ADMIN_PASSWORD} --firstname Admin --lastname User --email admin@insightpulseai.net || true && superset init && gunicorn -b 0.0.0.0:8088 -w 4 --timeout 120 superset.app:create_app()"
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 120
+      period_seconds: 30
+      timeout_seconds: 10
+
+    envs:
+      - key: SQLALCHEMY_DATABASE_URI
+        value: postgresql+psycopg2://postgres.spdtwktxdalcfigzeqrz:SHWYXDMFAwXI1drT@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require&application_name=superset&options=-csearch_path%3Dsuperset
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPERSET_SECRET_KEY
+        value: 8UToEhL2C0ovd7S4maFPsi7e4mU05pqAH907G5yUaLsr9prnJdHu7+6k
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPERSET_ADMIN_PASSWORD
+        value: SHWYXDMFAwXI1drT
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPERSET_LOAD_EXAMPLES
+        value: "no"
+        scope: RUN_TIME
+
+domains:
+  - domain: superset.insightpulseai.net
+    type: PRIMARY

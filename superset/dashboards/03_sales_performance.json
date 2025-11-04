@@ -1,0 +1,636 @@
+{
+  "dashboard_title": "Sales Performance",
+  "slug": "sales-performance",
+  "description": "Sales pipeline, performance tracking, and revenue forecasting. Monitor sales team performance, pipeline health, and customer lifetime value.",
+  "published": true,
+  "css": "",
+  "json_metadata": {
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "refresh_frequency": 600,
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "default_filters": "{}",
+    "filter_scopes": {},
+    "chart_configuration": {},
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER_DATE_RANGE",
+        "name": "Order Date",
+        "filterType": "filter_timerange",
+        "targets": [
+          {
+            "datasetId": 7,
+            "column": {
+              "name": "order_date"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Current Quarter"
+          },
+          "filterState": {
+            "value": "Current Quarter"
+          }
+        },
+        "controlValues": {
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_COMPANY",
+        "name": "Company",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 7,
+            "column": {
+              "name": "company_key"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": false,
+          "defaultToFirstItem": false,
+          "searchAllOptions": false,
+          "inverseSelection": false
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_SALES_TEAM",
+        "name": "Sales Team",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 7,
+            "column": {
+              "name": "sales_team_name"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": true
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      },
+      {
+        "id": "NATIVE_FILTER_SALESPERSON",
+        "name": "Salesperson",
+        "filterType": "filter_select",
+        "targets": [
+          {
+            "datasetId": 7,
+            "column": {
+              "name": "salesperson_name"
+            }
+          }
+        ],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {
+            "value": null
+          }
+        },
+        "controlValues": {
+          "multiSelect": true,
+          "enableEmptyFilter": true,
+          "parentFilter": "NATIVE_FILTER_SALES_TEAM"
+        },
+        "scope": {
+          "rootPath": [
+            "ROOT_ID"
+          ],
+          "excluded": []
+        },
+        "isInstant": true
+      }
+    ],
+    "cross_filters_enabled": true
+  },
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "ROOT_ID": {
+      "type": "ROOT",
+      "id": "ROOT_ID",
+      "children": [
+        "HEADER_ROW",
+        "KPI_ROW",
+        "FUNNEL_REVENUE_ROW",
+        "TREND_ROW",
+        "CUSTOMERS_CYCLE_ROW"
+      ]
+    },
+    "HEADER_ROW": {
+      "type": "HEADER",
+      "id": "HEADER_ROW",
+      "meta": {
+        "text": "Sales Performance"
+      }
+    },
+    "KPI_ROW": {
+      "type": "ROW",
+      "id": "KPI_ROW",
+      "children": [
+        "CHART_PIPELINE_KPI",
+        "CHART_CLOSED_WON_KPI",
+        "CHART_WIN_RATE_KPI",
+        "CHART_AVG_DEAL_KPI",
+        "CHART_QUOTA_KPI"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_PIPELINE_KPI": {
+      "type": "CHART",
+      "id": "CHART_PIPELINE_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 31
+      }
+    },
+    "CHART_CLOSED_WON_KPI": {
+      "type": "CHART",
+      "id": "CHART_CLOSED_WON_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 32
+      }
+    },
+    "CHART_WIN_RATE_KPI": {
+      "type": "CHART",
+      "id": "CHART_WIN_RATE_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 33
+      }
+    },
+    "CHART_AVG_DEAL_KPI": {
+      "type": "CHART",
+      "id": "CHART_AVG_DEAL_KPI",
+      "children": [],
+      "meta": {
+        "width": 2,
+        "height": 4,
+        "chartId": 34
+      }
+    },
+    "CHART_QUOTA_KPI": {
+      "type": "CHART",
+      "id": "CHART_QUOTA_KPI",
+      "children": [],
+      "meta": {
+        "width": 3,
+        "height": 4,
+        "chartId": 35
+      }
+    },
+    "FUNNEL_REVENUE_ROW": {
+      "type": "ROW",
+      "id": "FUNNEL_REVENUE_ROW",
+      "children": [
+        "CHART_SALES_FUNNEL",
+        "CHART_REVENUE_BY_SALESPERSON"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_SALES_FUNNEL": {
+      "type": "CHART",
+      "id": "CHART_SALES_FUNNEL",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 36
+      }
+    },
+    "CHART_REVENUE_BY_SALESPERSON": {
+      "type": "CHART",
+      "id": "CHART_REVENUE_BY_SALESPERSON",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 8,
+        "chartId": 37
+      }
+    },
+    "TREND_ROW": {
+      "type": "ROW",
+      "id": "TREND_ROW",
+      "children": [
+        "CHART_SALES_TREND"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_SALES_TREND": {
+      "type": "CHART",
+      "id": "CHART_SALES_TREND",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 8,
+        "chartId": 38
+      }
+    },
+    "CUSTOMERS_CYCLE_ROW": {
+      "type": "ROW",
+      "id": "CUSTOMERS_CYCLE_ROW",
+      "children": [
+        "CHART_TOP_CUSTOMERS_LTV",
+        "CHART_SALES_CYCLE"
+      ],
+      "meta": {
+        "background": "BACKGROUND_TRANSPARENT"
+      }
+    },
+    "CHART_TOP_CUSTOMERS_LTV": {
+      "type": "CHART",
+      "id": "CHART_TOP_CUSTOMERS_LTV",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 39
+      }
+    },
+    "CHART_SALES_CYCLE": {
+      "type": "CHART",
+      "id": "CHART_SALES_CYCLE",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 10,
+        "chartId": 40
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "Pipeline Value KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN state IN ('draft', 'sent') THEN amount_total ELSE 0 END)",
+          "label": "Pipeline Value"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 600,
+      "description": "Total value in sales pipeline"
+    },
+    {
+      "slice_name": "Closed Won KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN state IN ('sale', 'done') THEN amount_total ELSE 0 END)",
+          "label": "Closed Won"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 600,
+      "description": "Total value of closed won deals"
+    },
+    {
+      "slice_name": "Win Rate KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(CASE WHEN state IN ('sale', 'done') THEN 1 END)::FLOAT / NULLIF(COUNT(CASE WHEN state != 'cancel' THEN 1 END), 0) * 100",
+          "label": "Win Rate %"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 600,
+      "description": "Percentage of won deals"
+    },
+    {
+      "slice_name": "Average Deal Size KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "AVG(CASE WHEN state IN ('sale', 'done') THEN amount_total END)",
+          "label": "Avg Deal Size"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": "$,.0f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 25,
+          "g": 118,
+          "b": 210,
+          "a": 1
+        }
+      },
+      "cache_timeout": 600,
+      "description": "Average deal size for closed won deals"
+    },
+    {
+      "slice_name": "Quota Attainment KPI",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(CASE WHEN state IN ('sale', 'done') THEN amount_total ELSE 0 END) / NULLIF(SUM(sales_quota), 0) * 100",
+          "label": "Quota Attainment %"
+        },
+        "adhoc_filters": [],
+        "header_font_size": 0.3,
+        "subheader_font_size": 0.15,
+        "y_axis_format": ".1f",
+        "time_format": "smart_date",
+        "color_picker": {
+          "r": 67,
+          "g": 160,
+          "b": 71,
+          "a": 1
+        }
+      },
+      "cache_timeout": 600,
+      "description": "Percentage of quota achieved"
+    },
+    {
+      "slice_name": "Sales Funnel",
+      "viz_type": "funnel",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "funnel",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Total Value"
+        },
+        "groupby": [
+          "state"
+        ],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state != 'cancel'"
+          }
+        ],
+        "color_scheme": "supersetColors",
+        "label_type": "key_percent_value",
+        "show_legend": true
+      },
+      "cache_timeout": 600,
+      "description": "Sales pipeline funnel by stage"
+    },
+    {
+      "slice_name": "Revenue by Salesperson",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "echarts_timeseries_bar",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN state IN ('sale', 'done') THEN amount_total ELSE 0 END)",
+            "label": "Revenue"
+          }
+        ],
+        "groupby": [
+          "salesperson_name"
+        ],
+        "adhoc_filters": [],
+        "row_limit": 10,
+        "order_desc": true,
+        "color_scheme": "supersetColors",
+        "show_legend": false,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "x_axis_title": "Revenue",
+        "y_axis_title": "Salesperson",
+        "orientation": "horizontal",
+        "show_value": true
+      },
+      "cache_timeout": 600,
+      "description": "Top 10 salespeople by revenue"
+    },
+    {
+      "slice_name": "Monthly Sales Trend vs Target",
+      "viz_type": "echarts_timeseries_bar",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "echarts_timeseries_bar",
+        "x_axis": "order_date",
+        "time_grain_sqla": "P1M",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(CASE WHEN state IN ('sale', 'done') THEN amount_total ELSE 0 END)",
+            "label": "Actual Sales"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(sales_quota)",
+            "label": "Target"
+          }
+        ],
+        "adhoc_filters": [],
+        "groupby": [],
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "rich_tooltip": true,
+        "y_axis_format": "$,.0f",
+        "show_value": false,
+        "zoomable": true
+      },
+      "cache_timeout": 600,
+      "description": "Monthly sales performance vs target"
+    },
+    {
+      "slice_name": "Top Customers by LTV",
+      "viz_type": "table",
+      "params": {
+        "datasource": "8__table",
+        "viz_type": "table",
+        "groupby": [
+          "customer_name"
+        ],
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(lifetime_value)",
+            "label": "LTV"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "SUM(total_orders)",
+            "label": "Orders"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "AVG(avg_order_value)",
+            "label": "Avg Value"
+          },
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "MAX(days_since_last_order)",
+            "label": "Days Since Last"
+          }
+        ],
+        "adhoc_filters": [],
+        "row_limit": 20,
+        "order_desc": true,
+        "show_cell_bars": true,
+        "table_timestamp_format": "smart_date",
+        "page_length": 10,
+        "include_search": true,
+        "align_pn": false,
+        "color_pn": true,
+        "conditional_formatting": [
+          {
+            "column": "Days Since Last",
+            "operator": "<=",
+            "targetValue": 30,
+            "colorScheme": "#43A047"
+          },
+          {
+            "column": "Days Since Last",
+            "operator": ">",
+            "targetValue": 90,
+            "colorScheme": "#D32F2F"
+          }
+        ]
+      },
+      "cache_timeout": 3600,
+      "description": "Top 20 customers by lifetime value"
+    },
+    {
+      "slice_name": "Sales Cycle Analysis",
+      "viz_type": "box_plot",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "box_plot",
+        "metrics": [
+          {
+            "expressionType": "SQL",
+            "sqlExpression": "days_to_close",
+            "label": "Days to Close"
+          }
+        ],
+        "groupby": [
+          "sales_team_name"
+        ],
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SQL",
+            "sqlExpression": "state IN ('sale', 'done') AND days_to_close IS NOT NULL"
+          }
+        ],
+        "color_scheme": "supersetColors",
+        "whisker_options": "Min/max (no outliers)",
+        "x_ticks_layout": "auto"
+      },
+      "cache_timeout": 3600,
+      "description": "Sales cycle time distribution by team"
+    }
+  ],
+  "metadata": {
+    "version": "1.0.0",
+    "created_by": "SuperClaude - bi-designer agent",
+    "created_at": "2025-11-03",
+    "target_audience": "Sales Managers, Sales Representatives, Revenue Operations",
+    "refresh_schedule": "*/10 * * * *",
+    "permissions": {
+      "role": "Sales Team",
+      "access_level": "Team-specific (own deals + team deals)",
+      "export_enabled": true
+    }
+  }
+}

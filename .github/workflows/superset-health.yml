@@ -1,0 +1,121 @@
+name: Superset Health & PostgreSQL Guardrails
+
+on:
+  schedule:
+    # Daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'infra/superset/**'
+      - '.github/workflows/superset-health.yml'
+
+env:
+  DO_APP_ID_SUPERSET: 73af11cb-dab2-4cb1-9770-291c536531e6
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    name: Superset Health & Database Validation
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Verify PostgreSQL Backend (Anti-SQLite Guard)
+        run: |
+          echo "🔍 Verifying Superset is using PostgreSQL..."
+
+          # Get app spec to verify SQLALCHEMY_DATABASE_URI
+          doctl apps spec get ${{ env.DO_APP_ID_SUPERSET }} -o json > app_spec.json
+
+          # Check that SQLALCHEMY_DATABASE_URI contains postgresql
+          if ! grep -q "postgresql" app_spec.json; then
+            echo "❌ ERROR: SQLALCHEMY_DATABASE_URI does not contain 'postgresql'"
+            echo "This indicates SQLite may be in use. BLOCKING DEPLOYMENT."
+            exit 1
+          fi
+
+          # Verify it's pointing to Supabase pooler
+          if ! grep -q "aws-1-us-east-1.pooler.supabase.com" app_spec.json; then
+            echo "⚠️  WARNING: Not using Supabase connection pooler"
+          fi
+
+          # Verify search_path includes superset schema
+          if ! grep -q "search_path%3Dsuperset" app_spec.json; then
+            echo "⚠️  WARNING: search_path does not include 'superset' schema"
+          fi
+
+          echo "✅ PostgreSQL backend verified in app spec"
+
+      - name: Health Endpoint Check
+        run: |
+          echo "🏥 Checking Superset health endpoint..."
+
+          HEALTH_URL="https://superset.insightpulseai.net/health"
+
+          # Wait for health endpoint
+          for i in {1..5}; do
+            if curl -sf "$HEALTH_URL" | grep -q "OK"; then
+              echo "✅ Health endpoint responding"
+              exit 0
+            fi
+            echo "Attempt $i/5 failed, waiting 10s..."
+            sleep 10
+          done
+
+          echo "❌ Health endpoint not responding after 5 attempts"
+          exit 1
+
+      - name: Database Connection Test
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        run: |
+          echo "🔌 Testing database connection..."
+
+          # Install psql
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+
+          # Test connection to superset schema
+          if psql "$POSTGRES_URL" -c "SELECT current_database(), current_schema();" > /dev/null 2>&1; then
+            echo "✅ Database connection successful"
+          else
+            echo "❌ Database connection failed"
+            exit 1
+          fi
+
+          # Verify superset schema exists
+          if psql "$POSTGRES_URL" -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name = 'superset';" | grep -q "superset"; then
+            echo "✅ Superset schema exists"
+          else
+            echo "❌ Superset schema not found"
+            exit 1
+          fi
+
+      - name: Verify Superset Metadata Tables
+        env:
+          POSTGRES_URL: ${{ secrets.POSTGRES_URL }}
+        run: |
+          echo "📊 Verifying Superset metadata tables..."
+
+          # Check for key Superset tables in superset schema
+          TABLES="ab_user dashboards slices tables datasources"
+
+          for table in $TABLES; do
+            if psql "$POSTGRES_URL" -c "SELECT to_regclass('superset.$table');" | grep -q "superset.$table"; then
+              echo "✅ Table superset.$table exists"
+            else
+              echo "⚠️  Table superset.$table not found (may not be initialized yet)"
+            fi
+          done
+
+      - name: Notification
+        if: failure()
+        run: |
+          echo "🚨 Superset health check failed!"
+          echo "Check the logs above for details."

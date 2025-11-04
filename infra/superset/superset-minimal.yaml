@@ -1,0 +1,60 @@
+name: superset-analytics
+region: sgp
+
+services:
+  - name: superset
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: false
+
+    dockerfile_path: docker/superset/Dockerfile.simple
+    instance_size_slug: basic-xs
+    instance_count: 1
+    http_port: 8088
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 180
+      period_seconds: 30
+      timeout_seconds: 10
+
+    envs:
+      - key: SUPERSET_SECRET_KEY
+        value: 8UToEhL2C0ovd7S4maFPsi7e4mU05pqAH907G5yUaLsr9prnJdHu7+6k
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPERSET_ADMIN_PASSWORD
+        value: SHWYXDMFAwXI1drT
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: DATABASE_DIALECT
+        value: postgresql
+        scope: RUN_TIME
+
+      - key: DATABASE_HOST
+        value: aws-0-us-east-1.pooler.supabase.com
+        scope: RUN_TIME
+
+      - key: DATABASE_PORT
+        value: "6543"
+        scope: RUN_TIME
+
+      - key: DATABASE_DB
+        value: postgres
+        scope: RUN_TIME
+
+      - key: DATABASE_USER
+        value: postgres.spdtwktxdalcfigzeqrz
+        scope: RUN_TIME
+
+      - key: DATABASE_PASSWORD
+        value: SHWYXDMFAwXI1drT
+        scope: RUN_TIME
+        type: SECRET
+
+domains:
+  - domain: superset.insightpulseai.net
+    type: PRIMARY
