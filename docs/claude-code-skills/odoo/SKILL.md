@@ -119,6 +119,35 @@ Result: Live Odoo 19 instance with SSL
 
 See [examples/digitalocean-deploy.md](examples/digitalocean-deploy.md) for deployment guide.
 
+### Workflow 6: Customize with Odoo Studio
+
+```
+User asks: "Add custom fields to invoices without coding"
+
+Steps:
+1. Identify customization needs (fields, views, automation)
+2. Use Odoo Studio for no-code customization
+3. Add custom fields to models
+4. Customize views (Form, List, Kanban)
+5. Create automation rules for workflows
+6. Export customizations for version control
+
+Result: Customized Odoo without Python code
+```
+
+**What Studio Can Do**:
+- Add custom fields (20+ types: Text, Date, Selection, Many2One, etc.)
+- Customize views (Form, List, Kanban, Calendar, Map, Timeline)
+- Create automation rules (triggers, conditions, actions)
+- Design custom reports
+- Build workflows without coding
+
+**When to Use Studio vs Python**:
+- **Studio**: Simple customizations, prototyping, business user changes
+- **Python**: Complex logic, external APIs, performance-critical code, unit tests
+
+See [reference/odoo-studio.md](reference/odoo-studio.md) for complete Studio guide.
+
 ## Implementation Patterns
 
 ### Module Scaffolding Pattern
@@ -206,7 +235,7 @@ Common Odoo Enterprise features and their OCA alternatives:
 
 | Enterprise Feature | OCA Alternative | Repo | Annual Savings |
 |-------------------|----------------|------|----------------|
-| Studio | web_studio_oca | OCA/web | $432/user |
+| **Odoo Studio** | Manual customization + OCA tools | See [reference/odoo-studio.md](reference/odoo-studio.md) | $432/user |
 | Accounting Reports | account_financial_report | OCA/account-financial-reporting | $432/user |
 | Helpdesk | helpdesk_mgmt | OCA/helpdesk | $432/user |
 | Project Advanced | project_* modules | OCA/project | $432/user |
