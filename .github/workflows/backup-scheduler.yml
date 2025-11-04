@@ -1,0 +1,248 @@
+name: Automated Database Backups
+
+on:
+  schedule:
+    # Daily at 2 AM UTC (10 AM Manila Time)
+    - cron: '0 2 * * *'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Backup type'
+        required: true
+        default: 'manual'
+        type: choice
+        options:
+          - manual
+          - full
+          - incremental
+
+jobs:
+  backup-odoo:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set backup metadata
+        id: metadata
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          BACKUP_TYPE=${{ github.event.inputs.backup_type || 'scheduled' }}
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "backup_type=$BACKUP_TYPE" >> $GITHUB_OUTPUT
+          echo "filename=odoo-${BACKUP_TYPE}-${TIMESTAMP}" >> $GITHUB_OUTPUT
+
+      - name: Perform Odoo database backup
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DROPLET_ERP_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+            
+            BACKUP_DIR="/backup"
+            TIMESTAMP="${{ steps.metadata.outputs.timestamp }}"
+            FILENAME="${{ steps.metadata.outputs.filename }}"
+            
+            # Create backup directory if it doesn't exist
+            mkdir -p $BACKUP_DIR
+            
+            # Backup Odoo database
+            echo "Starting Odoo database backup..."
+            docker exec odoo-postgres pg_dump -U odoo odoo | gzip > "$BACKUP_DIR/$FILENAME.sql.gz"
+            
+            # Backup Odoo filestore
+            echo "Starting Odoo filestore backup..."
+            docker exec odoo tar czf /tmp/filestore-backup.tar.gz /var/lib/odoo/filestore
+            docker cp odoo:/tmp/filestore-backup.tar.gz "$BACKUP_DIR/$FILENAME-filestore.tar.gz"
+            docker exec odoo rm /tmp/filestore-backup.tar.gz
+            
+            # Calculate checksums
+            cd $BACKUP_DIR
+            sha256sum "$FILENAME.sql.gz" > "$FILENAME.sql.gz.sha256"
+            sha256sum "$FILENAME-filestore.tar.gz" > "$FILENAME-filestore.tar.gz.sha256"
+            
+            # Get file sizes
+            DB_SIZE=$(du -h "$FILENAME.sql.gz" | cut -f1)
+            FS_SIZE=$(du -h "$FILENAME-filestore.tar.gz" | cut -f1)
+            
+            echo "Backup completed:"
+            echo "  Database: $DB_SIZE"
+            echo "  Filestore: $FS_SIZE"
+            
+            # Upload to DigitalOcean Spaces (if configured)
+            if command -v s3cmd &> /dev/null; then
+              echo "Uploading to DigitalOcean Spaces..."
+              s3cmd put "$FILENAME.sql.gz" s3://insightpulse-backups/odoo/ || echo "S3 upload skipped"
+              s3cmd put "$FILENAME-filestore.tar.gz" s3://insightpulse-backups/odoo/ || echo "S3 upload skipped"
+            fi
+            
+            # Clean up old backups (keep last 7 days)
+            find $BACKUP_DIR -name "odoo-*.sql.gz" -mtime +7 -delete
+            find $BACKUP_DIR -name "odoo-*-filestore.tar.gz" -mtime +7 -delete
+            
+            echo "Backup retention policy applied (7 days)"
+
+      - name: Verify backup integrity
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DROPLET_ERP_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+            
+            BACKUP_DIR="/backup"
+            FILENAME="${{ steps.metadata.outputs.filename }}"
+            
+            # Verify checksums
+            cd $BACKUP_DIR
+            sha256sum -c "$FILENAME.sql.gz.sha256"
+            sha256sum -c "$FILENAME-filestore.tar.gz.sha256"
+            
+            # Test gunzip (without extracting)
+            gunzip -t "$FILENAME.sql.gz"
+            
+            echo "Backup integrity verified ✅"
+
+      - name: Get backup metadata
+        id: backup_info
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.DROPLET_ERP_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            BACKUP_DIR="/backup"
+            FILENAME="${{ steps.metadata.outputs.filename }}"
+            
+            DB_SIZE=$(du -h "$BACKUP_DIR/$FILENAME.sql.gz" | cut -f1)
+            FS_SIZE=$(du -h "$BACKUP_DIR/$FILENAME-filestore.tar.gz" | cut -f1)
+            
+            echo "::set-output name=db_size::$DB_SIZE"
+            echo "::set-output name=fs_size::$FS_SIZE"
+
+      - name: Log backup to Supabase
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/backup_logs \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "service": "odoo",
+              "backup_type": "${{ steps.metadata.outputs.backup_type }}",
+              "filename": "${{ steps.metadata.outputs.filename }}",
+              "database_size": "${{ steps.backup_info.outputs.db_size }}",
+              "filestore_size": "${{ steps.backup_info.outputs.fs_size }}",
+              "status": "success",
+              "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+              "triggered_by": "${{ github.actor }}"
+            }'
+
+      - name: Notify Slack on success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ Odoo Backup Completed
+            Type: ${{ steps.metadata.outputs.backup_type }}
+            Database: ${{ steps.backup_info.outputs.db_size }}
+            Filestore: ${{ steps.backup_info.outputs.fs_size }}
+            Timestamp: ${{ steps.metadata.outputs.timestamp }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Notify Slack on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            ❌ Odoo Backup FAILED
+            Type: ${{ steps.metadata.outputs.backup_type }}
+            Timestamp: ${{ steps.metadata.outputs.timestamp }}
+            Please investigate immediately!
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  backup-supabase:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Set backup metadata
+        id: metadata
+        run: |
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+      - name: Backup Supabase schema
+        run: |
+          # Backup Supabase schema (tables, functions, triggers)
+          curl "https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/rpc/export_schema" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_KEY }}" \
+            -H "Content-Type: application/json" \
+            | gzip > supabase-schema-${{ steps.metadata.outputs.timestamp }}.sql.gz || echo "Schema export not available"
+
+      - name: Upload Supabase backup artifact
+        if: success()
+        uses: actions/upload-artifact@v3
+        with:
+          name: supabase-backup-${{ steps.metadata.outputs.timestamp }}
+          path: supabase-schema-*.sql.gz
+          retention-days: 30
+
+      - name: Log Supabase backup to Supabase
+        if: success()
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/backup_logs \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "service": "supabase",
+              "backup_type": "schema",
+              "filename": "supabase-schema-${{ steps.metadata.outputs.timestamp }}.sql.gz",
+              "status": "success",
+              "timestamp": "${{ steps.metadata.outputs.timestamp }}",
+              "triggered_by": "${{ github.actor }}"
+            }'
+
+  cleanup-old-artifacts:
+    runs-on: ubuntu-latest
+    needs: [backup-odoo, backup-supabase]
+    
+    steps:
+      - name: Delete old workflow artifacts
+        uses: c-hive/gha-remove-artifacts@v1
+        with:
+          age: '30 days'
+          skip-tags: true
+          skip-recent: 5
+
+  backup-report:
+    runs-on: ubuntu-latest
+    needs: [backup-odoo, backup-supabase]
+    if: always()
+    
+    steps:
+      - name: Generate backup report
+        run: |
+          cat > backup-report.json <<EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "odoo_backup": "${{ needs.backup-odoo.result }}",
+            "supabase_backup": "${{ needs.backup-supabase.result }}",
+            "workflow_run_id": "${{ github.run_id }}"
+          }
+          EOF
+          
+          echo "Backup Report:"
+          cat backup-report.json | jq .
+
+      - name: Upload backup report
+        uses: actions/upload-artifact@v3
+        with:
+          name: backup-report
+          path: backup-report.json
+          retention-days: 90

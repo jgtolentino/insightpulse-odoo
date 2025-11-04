@@ -1,0 +1,186 @@
+# Production Dockerfile for Odoo 19
+# Optimized for Finance Shared Service Center deployment
+
+# Build arguments
+ARG ODOO_VERSION=19.0
+ARG PYTHON_VERSION=3.11
+
+# ============================================================================
+# Stage 1: Base image with system dependencies
+# ============================================================================
+FROM python:${PYTHON_VERSION}-slim-bookworm AS base
+
+# Set environment variables
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    ODOO_RC=/etc/odoo/odoo.conf
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    # Build essentials
+    build-essential \
+    gcc \
+    g++ \
+    # PostgreSQL client
+    postgresql-client \
+    libpq-dev \
+    # XML/XSLT processing
+    libxml2-dev \
+    libxslt1-dev \
+    # LDAP support
+    libldap2-dev \
+    libsasl2-dev \
+    # SSL/TLS
+    libssl-dev \
+    # Image processing
+    libjpeg-dev \
+    libpng-dev \
+    libtiff-dev \
+    libfreetype6-dev \
+    liblcms2-dev \
+    libwebp-dev \
+    # PDF generation
+    wkhtmltopdf \
+    # Fonts (for Asian languages - Finance SSC requirement)
+    fonts-noto-cjk \
+    fonts-liberation \
+    # Utilities
+    git \
+    curl \
+    wget \
+    nano \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create odoo user
+RUN useradd -m -d /opt/odoo -s /bin/bash odoo
+
+# ============================================================================
+# Stage 2: Install Odoo and OCA modules
+# ============================================================================
+FROM base AS builder
+
+ARG ODOO_VERSION
+
+# Install Odoo
+WORKDIR /opt/odoo
+RUN git clone --depth 1 --branch ${ODOO_VERSION} \
+    https://github.com/odoo/odoo.git . && \
+    rm -rf .git
+
+# Install Python dependencies
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Install additional Python packages for Finance SSC
+RUN pip install --no-cache-dir \
+    # Database
+    psycopg2-binary \
+    # Excel/CSV processing
+    xlrd \
+    xlwt \
+    openpyxl \
+    pandas \
+    # PDF processing
+    PyPDF2 \
+    reportlab \
+    # OCR integration (for PaddleOCR)
+    pillow \
+    opencv-python-headless \
+    # Philippines-specific
+    python-dateutil \
+    pytz \
+    # API integration
+    requests \
+    # Utilities
+    python-slugify \
+    num2words
+
+# Install OCA modules
+# Finance SSC required modules
+RUN mkdir -p /opt/odoo/oca-addons && \
+    cd /opt/odoo/oca-addons && \
+    # Account modules
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-financial-tools.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-invoicing.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-reconcile.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-closing.git && \
+    # Server tools
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/server-tools.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/web.git && \
+    # Queue/Background jobs
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/queue.git && \
+    # Reporting
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/reporting-engine.git && \
+    # Remove .git directories to reduce image size
+    find . -name ".git" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# ============================================================================
+# Stage 3: Production image
+# ============================================================================
+FROM base AS production
+
+# Metadata
+ARG BUILD_DATE
+ARG VCS_REF
+ARG ODOO_VERSION
+
+LABEL maintainer="Jake Tolentino <jake@insightpulseai.net>" \
+      org.label-schema.build-date=$BUILD_DATE \
+      org.label-schema.vcs-ref=$VCS_REF \
+      org.label-schema.vcs-url="https://github.com/jgtolentino/insightpulse-odoo" \
+      org.label-schema.schema-version="1.0" \
+      org.label-schema.version=$ODOO_VERSION \
+      org.label-schema.description="InsightPulse AI - Odoo 19 for Finance Shared Service Center"
+
+# Copy Odoo from builder
+COPY --from=builder --chown=odoo:odoo /opt/odoo /opt/odoo
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+
+# Create directory structure
+RUN mkdir -p \
+    /var/lib/odoo \
+    /mnt/extra-addons \
+    /etc/odoo \
+    /var/log/odoo \
+    && chown -R odoo:odoo \
+        /var/lib/odoo \
+        /mnt/extra-addons \
+        /etc/odoo \
+        /var/log/odoo
+
+# Copy custom addons (will be mounted in production)
+COPY --chown=odoo:odoo addons/ /mnt/extra-addons/
+
+# Copy Odoo configuration
+COPY --chown=odoo:odoo odoo.conf /etc/odoo/odoo.conf
+
+# Set working directory
+WORKDIR /opt/odoo
+
+# Switch to odoo user
+USER odoo
+
+# Expose Odoo ports
+EXPOSE 8069 8072
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+    CMD curl -f http://localhost:8069/web/health || exit 1
+
+# Volume for filestore
+VOLUME ["/var/lib/odoo"]
+
+# Entry point
+ENTRYPOINT ["/opt/odoo/odoo-bin"]
+
+# Default command with Finance SSC optimizations
+CMD ["--config=/etc/odoo/odoo.conf", \
+     "--addons-path=/mnt/extra-addons,/opt/odoo/oca-addons/account-financial-tools,/opt/odoo/oca-addons/account-invoicing,/opt/odoo/oca-addons/account-reconcile,/opt/odoo/oca-addons/account-closing,/opt/odoo/oca-addons/server-tools,/opt/odoo/oca-addons/web,/opt/odoo/oca-addons/queue,/opt/odoo/oca-addons/reporting-engine,/opt/odoo/addons", \
+     "--proxy-mode", \
+     "--workers=4", \
+     "--max-cron-threads=2", \
+     "--limit-memory-hard=2684354560", \
+     "--limit-memory-soft=2147483648", \
+     "--limit-time-cpu=600", \
+     "--limit-time-real=1200"]

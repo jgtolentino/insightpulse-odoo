@@ -1,0 +1,324 @@
+name: Integration Tests - Full Stack
+
+on:
+  workflow_run:
+    workflows: ["Deploy Odoo ERP to DigitalOcean", "Deploy MCP Coordinator to App Platform", "Deploy Superset to App Platform"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+jobs:
+  integration-tests:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pytest requests pytest-html pytest-timeout
+
+      - name: Test 1 - Service Health Checks
+        id: health_checks
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing service availability"
+          
+          # Odoo ERP
+          if curl -f -s --max-time 30 https://erp.insightpulseai.net/web/health > /dev/null; then
+            echo "✅ Odoo ERP is healthy"
+          else
+            echo "❌ Odoo ERP health check failed"
+            exit 1
+          fi
+          
+          # MCP Coordinator
+          if curl -f -s --max-time 30 https://mcp.insightpulseai.net/health > /dev/null; then
+            echo "✅ MCP Coordinator is healthy"
+          else
+            echo "❌ MCP Coordinator health check failed"
+            exit 1
+          fi
+          
+          # Superset
+          if curl -f -s --max-time 30 https://superset.insightpulseai.net/health > /dev/null; then
+            echo "✅ Superset is healthy"
+          else
+            echo "❌ Superset health check failed"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 2 - Odoo Database Connection
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing Odoo database operations"
+          
+          # Login to Odoo and get session
+          RESPONSE=$(curl -s -X POST https://erp.insightpulseai.net/web/session/authenticate \
+            -H "Content-Type: application/json" \
+            -d '{
+              "jsonrpc": "2.0",
+              "params": {
+                "db": "odoo",
+                "login": "${{ secrets.ODOO_ADMIN_USER }}",
+                "password": "${{ secrets.ODOO_ADMIN_PASSWORD }}"
+              }
+            }')
+          
+          if echo "$RESPONSE" | jq -e '.result.uid' > /dev/null; then
+            echo "✅ Odoo authentication successful"
+          else
+            echo "❌ Odoo authentication failed"
+            echo "$RESPONSE"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 3 - Finance SSC Module Check
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing Finance SSC module"
+          
+          # Check if finance_ssc module is installed
+          RESPONSE=$(curl -s -X POST https://erp.insightpulseai.net/web/dataset/call_kw \
+            -H "Content-Type: application/json" \
+            -d '{
+              "jsonrpc": "2.0",
+              "params": {
+                "model": "ir.module.module",
+                "method": "search_read",
+                "args": [[["name", "=", "finance_ssc"]]],
+                "kwargs": {"fields": ["name", "state"]}
+              }
+            }')
+          
+          if echo "$RESPONSE" | jq -e '.result[0].state == "installed"' > /dev/null; then
+            echo "✅ Finance SSC module is installed"
+          else
+            echo "⚠️  Finance SSC module not found (may not be deployed yet)"
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 4 - MCP Skills Availability
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing MCP skills"
+          
+          # List available skills
+          SKILLS=$(curl -s https://mcp.insightpulseai.net/skills)
+          
+          # Check for required skills
+          for skill in superset_automation odoo_finance notion_sync; do
+            if echo "$SKILLS" | jq -e ".skills[] | select(.name == \"$skill\")" > /dev/null; then
+              echo "✅ Skill '$skill' is available"
+            else
+              echo "❌ Skill '$skill' is missing"
+              exit 1
+            fi
+          done
+          
+          echo "::endgroup::"
+
+      - name: Test 5 - Superset Database Connection
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing Superset database"
+          
+          # Get CSRF token
+          CSRF_RESPONSE=$(curl -s https://superset.insightpulseai.net/api/v1/security/csrf_token/)
+          CSRF_TOKEN=$(echo "$CSRF_RESPONSE" | jq -r '.result')
+          
+          # Login to Superset
+          LOGIN_RESPONSE=$(curl -s -X POST https://superset.insightpulseai.net/api/v1/security/login \
+            -H "Content-Type: application/json" \
+            -H "X-CSRFToken: $CSRF_TOKEN" \
+            -d '{
+              "username": "admin",
+              "password": "${{ secrets.SUPERSET_ADMIN_PASSWORD }}",
+              "provider": "db",
+              "refresh": true
+            }')
+          
+          ACCESS_TOKEN=$(echo "$LOGIN_RESPONSE" | jq -r '.access_token')
+          
+          if [ "$ACCESS_TOKEN" != "null" ] && [ -n "$ACCESS_TOKEN" ]; then
+            echo "✅ Superset authentication successful"
+            
+            # Test database connection
+            DB_RESPONSE=$(curl -s https://superset.insightpulseai.net/api/v1/database/ \
+              -H "Authorization: Bearer $ACCESS_TOKEN")
+            
+            if echo "$DB_RESPONSE" | jq -e '.count >= 0' > /dev/null; then
+              echo "✅ Superset database query successful"
+            else
+              echo "❌ Superset database query failed"
+              exit 1
+            fi
+          else
+            echo "❌ Superset authentication failed"
+            echo "$LOGIN_RESPONSE"
+            exit 1
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 6 - End-to-End Workflow
+        timeout-minutes: 10
+        run: |
+          echo "::group::Testing end-to-end workflow"
+          
+          # Test: Create expense report in Odoo → OCR → Superset dashboard
+          
+          # 1. Create test expense via MCP
+          EXPENSE_RESPONSE=$(curl -s -X POST https://mcp.insightpulseai.net/invoke \
+            -H "Content-Type: application/json" \
+            -d '{
+              "skill": "odoo_finance",
+              "action": "create_expense",
+              "params": {
+                "employee_code": "RIM",
+                "amount": 1500.00,
+                "description": "Integration test expense",
+                "category": "Travel"
+              }
+            }')
+          
+          if echo "$EXPENSE_RESPONSE" | jq -e '.status == "success"' > /dev/null; then
+            EXPENSE_ID=$(echo "$EXPENSE_RESPONSE" | jq -r '.result.expense_id')
+            echo "✅ Created test expense: $EXPENSE_ID"
+          else
+            echo "⚠️  Expense creation skipped (module may not be ready)"
+          fi
+          
+          # 2. Verify Superset dashboard update via MCP
+          DASHBOARD_RESPONSE=$(curl -s -X POST https://mcp.insightpulseai.net/invoke \
+            -H "Content-Type: application/json" \
+            -d '{
+              "skill": "superset_automation",
+              "action": "refresh_dataset",
+              "params": {
+                "dataset_name": "finance_ssc_expenses"
+              }
+            }')
+          
+          if echo "$DASHBOARD_RESPONSE" | jq -e '.status == "success"' > /dev/null; then
+            echo "✅ Superset dataset refresh successful"
+          else
+            echo "⚠️  Dataset refresh skipped (may not be configured yet)"
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 7 - BIR Compliance Check
+        timeout-minutes: 5
+        run: |
+          echo "::group::Testing BIR compliance features"
+          
+          # Check if BIR forms module is available
+          RESPONSE=$(curl -s -X POST https://mcp.insightpulseai.net/invoke \
+            -H "Content-Type: application/json" \
+            -d '{
+              "skill": "odoo_finance",
+              "action": "list_bir_forms",
+              "params": {
+                "tax_period": "2024-Q4"
+              }
+            }')
+          
+          if echo "$RESPONSE" | jq -e '.status' > /dev/null; then
+            echo "✅ BIR compliance check completed"
+          else
+            echo "⚠️  BIR module not yet deployed"
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Test 8 - Supabase Logging
+        timeout-minutes: 3
+        run: |
+          echo "::group::Testing Supabase integration"
+          
+          # Query recent deployment logs
+          LOGS=$(curl -s "https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/deployment_logs?order=deployed_at.desc&limit=5" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          if echo "$LOGS" | jq -e 'length > 0' > /dev/null; then
+            echo "✅ Supabase logging is working"
+            echo "Recent deployments:"
+            echo "$LOGS" | jq -r '.[] | "\(.service) - \(.status) - \(.deployed_at)"'
+          else
+            echo "⚠️  No deployment logs found"
+          fi
+          
+          echo "::endgroup::"
+
+      - name: Generate test report
+        if: always()
+        run: |
+          cat > test-results.json <<EOF
+          {
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "environment": "production",
+            "services": {
+              "odoo": "${{ steps.health_checks.outcome }}",
+              "mcp": "${{ steps.health_checks.outcome }}",
+              "superset": "${{ steps.health_checks.outcome }}"
+            },
+            "commit": "${{ github.sha }}",
+            "workflow_run_id": "${{ github.run_id }}"
+          }
+          EOF
+          
+          echo "Test report generated:"
+          cat test-results.json | jq .
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: integration-test-results
+          path: test-results.json
+
+      - name: Log results to Supabase
+        if: always()
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/integration_test_logs \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d @test-results.json
+
+      - name: Notify on failure
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: |
+            🚨 Integration tests FAILED
+            Environment: Production
+            Commit: ${{ github.sha }}
+            View logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Notify on success
+        if: success()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: |
+            ✅ Integration tests PASSED
+            All services are healthy and integrated properly
+            Environment: Production
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

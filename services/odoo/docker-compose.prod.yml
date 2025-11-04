@@ -1,0 +1,223 @@
+version: '3.8'
+
+# InsightPulse AI - Production Docker Compose
+# Finance Shared Service Center Deployment
+
+services:
+  odoo-web:
+    image: registry.digitalocean.com/insightpulse/odoo:latest
+    container_name: odoo-web
+    restart: always
+    depends_on:
+      odoo-db:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+      - "8072:8072"  # Longpolling
+    volumes:
+      # Filestore (persistent)
+      - odoo-data:/var/lib/odoo
+      # Custom addons (read-only in production)
+      - ./services/odoo/addons:/mnt/extra-addons:ro
+      # Configuration
+      - ./services/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
+      # Logs
+      - odoo-logs:/var/log/odoo
+    environment:
+      # Database connection
+      - HOST=odoo-db
+      - PORT=5432
+      - USER=odoo
+      - PASSWORD=${POSTGRES_PASSWORD}
+      
+      # Odoo configuration
+      - ODOO_DB_NAME=odoo
+      - ODOO_DB_USER=odoo
+      - ODOO_DB_PASSWORD=${POSTGRES_PASSWORD}
+      - ODOO_DB_HOST=odoo-db
+      - ODOO_DB_PORT=5432
+      
+      # Admin
+      - ODOO_ADMIN_PASSWORD=${ODOO_ADMIN_PASSWORD}
+      
+      # Performance
+      - WORKERS=4
+      - MAX_CRON_THREADS=2
+      - LIMIT_MEMORY_HARD=2684354560
+      - LIMIT_MEMORY_SOFT=2147483648
+      - LIMIT_TIME_CPU=600
+      - LIMIT_TIME_REAL=1200
+      
+      # External services
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - MCP_ENDPOINT=https://mcp.insightpulseai.net
+      - SUPERSET_ENDPOINT=https://superset.insightpulseai.net
+      
+      # Philippines timezone
+      - TZ=Asia/Manila
+      
+      # Logging
+      - LOG_LEVEL=info
+      - LOG_HANDLER=:INFO
+      - LOG_DB=False
+    
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 2G
+    
+    networks:
+      - odoo-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  odoo-db:
+    image: postgres:15-alpine
+    container_name: odoo-db
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - postgres-backups:/backups
+    environment:
+      - POSTGRES_DB=odoo
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+      - TZ=Asia/Manila
+    
+    command: >
+      postgres
+      -c max_connections=200
+      -c shared_buffers=512MB
+      -c effective_cache_size=1536MB
+      -c maintenance_work_mem=128MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=2621kB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c max_worker_processes=4
+      -c max_parallel_workers_per_gather=2
+      -c max_parallel_workers=4
+      -c max_parallel_maintenance_workers=2
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    networks:
+      - odoo-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  nginx:
+    image: nginx:alpine
+    container_name: odoo-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - nginx-cache:/var/cache/nginx
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - odoo-web
+    environment:
+      - TZ=Asia/Manila
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    
+    networks:
+      - odoo-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Backup service (runs daily at 2 AM Manila time)
+  backup:
+    image: postgres:15-alpine
+    container_name: odoo-backup
+    restart: "no"
+    depends_on:
+      - odoo-db
+    volumes:
+      - postgres-backups:/backups
+      - ./scripts/backup-production.sh:/backup.sh:ro
+    environment:
+      - POSTGRES_HOST=odoo-db
+      - POSTGRES_DB=odoo
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - BACKUP_RETENTION_DAYS=7
+      - TZ=Asia/Manila
+    
+    command: sh -c "crond -f -l 2"
+    
+    networks:
+      - odoo-network
+
+volumes:
+  odoo-data:
+    driver: local
+  postgres-data:
+    driver: local
+  postgres-backups:
+    driver: local
+  odoo-logs:
+    driver: local
+  nginx-cache:
+    driver: local
+  nginx-logs:
+    driver: local
+
+networks:
+  odoo-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
