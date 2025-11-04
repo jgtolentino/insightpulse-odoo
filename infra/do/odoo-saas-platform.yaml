@@ -96,14 +96,18 @@ services:
         scope: RUN_TIME
         value: "/mnt/extra-addons/insightpulse,/mnt/extra-addons/custom,/mnt/extra-addons/oca,/usr/lib/python3/dist-packages/odoo/addons"
 
-      # AI configuration (optional - defaults to self-hosted)
+      # AI configuration (self-hosted Ollama on OCR droplet)
       - key: AI_PROVIDER
         scope: RUN_TIME
-        value: "ollama"  # Use self-hosted Llama 3.2
+        value: "ollama"  # Use self-hosted Llama 3.2 3B
 
       - key: OLLAMA_BASE_URL
         scope: RUN_TIME
-        value: "http://localhost:11434"
+        value: "https://ai.insightpulseai.net"  # Ollama on OCR droplet
+
+      - key: OLLAMA_MODEL
+        scope: RUN_TIME
+        value: "llama3.2:3b"
 
       # Optional: OpenAI fallback (disabled by default for cost savings)
       # - key: OPENAI_API_KEY

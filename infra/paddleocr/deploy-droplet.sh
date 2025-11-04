@@ -8,12 +8,13 @@
 set -euo pipefail
 
 # Configuration
-DROPLET_NAME="paddleocr-service"
+DROPLET_NAME="paddleocr-ollama-service"
 REGION="sgp1"  # Singapore
-SIZE="s-1vcpu-1gb"  # $6/month
+SIZE="s-2vcpu-4gb"  # $24/month (needed for PaddleOCR + Ollama w/ Llama 3.2 3B)
 IMAGE="ubuntu-22-04-x64"
 SSH_KEY_NAME="insightpulse-deploy"
 DOMAIN="ocr.insightpulseai.net"
+OLLAMA_DOMAIN="ai.insightpulseai.net"
 
 # Colors for output
 RED='\033[0;31m'
@@ -76,7 +77,7 @@ create_droplet() {
             --size $SIZE \
             --image $IMAGE \
             --ssh-keys $SSH_KEY_ID \
-            --tag-names paddleocr,production \
+            --tag-names paddleocr,ollama,ai,production \
             --enable-monitoring \
             --enable-ipv6 \
             --wait \
@@ -122,6 +123,25 @@ configure_dns() {
     fi
 
     log_info "DNS configured: $DOMAIN -> $DROPLET_IP"
+
+    # Configure DNS for Ollama subdomain
+    if doctl compute domain records list insightpulseai.net --format Name | grep -q "^ai$"; then
+        log_warn "Ollama DNS record already exists"
+        RECORD_ID=$(doctl compute domain records list insightpulseai.net --format ID,Name --no-header | grep "ai" | awk '{print $1}')
+        doctl compute domain records update insightpulseai.net \
+            --record-id $RECORD_ID \
+            --record-data $DROPLET_IP
+        log_info "Ollama DNS record updated"
+    else
+        doctl compute domain records create insightpulseai.net \
+            --record-type A \
+            --record-name ai \
+            --record-data $DROPLET_IP \
+            --record-ttl 3600
+        log_info "Ollama DNS record created"
+    fi
+
+    log_info "Ollama DNS configured: $OLLAMA_DOMAIN -> $DROPLET_IP"
 }
 
 # Setup server
@@ -164,6 +184,11 @@ deploy_application() {
     # Start application
     log_info "Starting application..."
     ssh -o StrictHostKeyChecking=no root@$DROPLET_IP "cd /opt/paddleocr && docker-compose up -d"
+
+    # Copy and execute Ollama initialization script
+    log_info "Initializing Ollama..."
+    scp -o StrictHostKeyChecking=no infra/paddleocr/init-ollama.sh root@$DROPLET_IP:/opt/paddleocr/
+    ssh -o StrictHostKeyChecking=no root@$DROPLET_IP "cd /opt/paddleocr && bash init-ollama.sh"
 
     log_info "Application deployed"
 }
