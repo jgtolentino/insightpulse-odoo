@@ -72,7 +72,7 @@ Successfully implemented a comprehensive enterprise architecture that separates 
 
 ### Agent System
 - `agents/issue-classifier.py` - GitHub issue classification CLI built on the OpenAI cookbook stack
-- `ai_stack/` - reusable automation stack featuring OpenAI client factories and hybrid classifiers
+- `ai_stack/` - reusable automation stack featuring OpenAI client factories, structured response runners, and hybrid classifiers
 - `.github/ISSUE_TEMPLATE/feature_request.md` - Standardized templates
 - `.github/workflows/issue-validation.yml` - CI enforcement
 

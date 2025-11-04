@@ -7,13 +7,11 @@ import re
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, TYPE_CHECKING
 
-from pydantic import ValidationError
-
 from ..clients import get_openai_client
 from ..config import OpenAIConfig
+from ..responses import ResponsesRunner, StructuredResponseError
 from ..runtime import StackRuntime
 from .prompt import (
-    ISSUE_CLASSIFICATION_JSON_SCHEMA,
     ISSUE_CLASSIFICATION_SYSTEM_PROMPT,
     ISSUE_CLASSIFICATION_USER_PROMPT,
 )
@@ -164,38 +162,48 @@ class LLMIssueClassifier:
     client: Optional["OpenAI"] = None
     config: Optional[OpenAIConfig] = None
     runtime: Optional[StackRuntime] = None
+    runner: Optional[ResponsesRunner] = None
 
     def __post_init__(self) -> None:
         if self.runtime:
             self.config = self.runtime.config
             self.client = self.runtime.ensure_client()
+            self.runner = self.runtime.responses_runner()
         else:
             self.config = self.config or OpenAIConfig.from_env()
             self.client = self.client or get_openai_client(self.config)
+            self.runner = ResponsesRunner(client=self.client, model=self.config.model)
 
     def classify(self, issue_number: int, title: str, body: str) -> IssueAnalysis:
         formatted_issue = self._format_issue(title, body)
-        response = self.client.responses.create(
-            model=self.config.model,
-            input=[
-                {
-                    "role": "system",
-                    "content": [{"type": "text", "text": ISSUE_CLASSIFICATION_SYSTEM_PROMPT}],
-                },
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": ISSUE_CLASSIFICATION_USER_PROMPT.format(issue_body=formatted_issue),
-                        }
-                    ],
-                },
-            ],
-            response_format={"type": "json_schema", "json_schema": ISSUE_CLASSIFICATION_JSON_SCHEMA},
-        )
+        if self.runner is None:
+            raise IssueClassificationError("LLM runner not initialised")
 
-        payload = self._extract_payload(response)
+        try:
+            payload = self.runner.structured(
+                input_messages=[
+                    {
+                        "role": "system",
+                        "content": [
+                            {"type": "text", "text": ISSUE_CLASSIFICATION_SYSTEM_PROMPT},
+                        ],
+                    },
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": ISSUE_CLASSIFICATION_USER_PROMPT.format(
+                                    issue_body=formatted_issue
+                                ),
+                            }
+                        ],
+                    },
+                ],
+                response_model=IssueClassificationPayload,
+            )
+        except StructuredResponseError as exc:
+            raise IssueClassificationError("LLM structured response failed") from exc
 
         return IssueAnalysis.from_payload(
             issue_number=issue_number,
@@ -203,23 +211,6 @@ class LLMIssueClassifier:
             body=body,
             payload=payload,
         )
-
-    def _extract_payload(self, response) -> IssueClassificationPayload:
-        try:
-            chunks = [
-                content_item.text
-                for output in response.output
-                for content_item in getattr(output, "content", [])
-                if getattr(content_item, "type", None) == "output_text"
-            ]
-            document = "".join(chunks).strip()
-            if not document:
-                raise ValueError("empty response content")
-            return IssueClassificationPayload.model_validate_json(document)
-        except ValidationError as exc:
-            raise IssueClassificationError("LLM response failed validation") from exc
-        except Exception as exc:  # noqa: BLE001
-            raise IssueClassificationError("Failed to parse LLM response") from exc
 
     @staticmethod
     def _format_issue(title: str, body: str) -> str:

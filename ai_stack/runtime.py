@@ -7,6 +7,7 @@ import logging
 
 from .clients import get_openai_client
 from .config import OpenAIConfig
+from .responses import ResponsesRunner
 
 
 LOGGER = logging.getLogger(__name__)
@@ -36,6 +37,12 @@ class StackRuntime:
         """Return a cached OpenAI client for the configured environment."""
 
         return get_openai_client(self.config)
+
+    def responses_runner(self, *, model: str | None = None) -> ResponsesRunner:
+        """Return a structured Responses runner bound to this runtime."""
+
+        client = self.ensure_client()
+        return ResponsesRunner(client=client, model=model or self.config.model)
 
     def _log_configuration(self) -> None:
         if LOGGER.isEnabledFor(logging.INFO):
