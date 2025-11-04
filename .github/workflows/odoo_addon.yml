@@ -1,27 +1,30 @@
-name: odoo-addon
-on: [push, pull_request, workflow_dispatch]
+name: Odoo Addon CI
+
+on:
+  push:
+    paths:
+      - "odoo_addons/**"
+      - ".github/workflows/odoo_addon.yml"
+  pull_request:
+    paths:
+      - "odoo_addons/**"
+      - ".github/workflows/odoo_addon.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: odoo-addons-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  validate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - name: Install linting dependencies
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install pylint-odoo flake8-odoo
-      - name: Run pylint-odoo
-        run: python -m pylint_odoo || true
-      - name: Run flake8-odoo
-        run: python -m flake8 || true
-  package:
-    needs: validate
+  lint:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        module:
+        module: &addons
           - ipai_concur_bridge
           - ipai_ariba_cxml
           - ipai_salesforce_sync
@@ -32,8 +35,36 @@ jobs:
           - ipai_visual_gate
     steps:
       - uses: actions/checkout@v4
-      - run: bash scripts/odoo/package_addon.sh ${{ matrix.module }} dist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/setup-python@v5
         with:
-          name: ${{ matrix.module }}
-          path: dist/**
+          python-version: "3.11"
+      - name: Install linting deps
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pylint-odoo flake8-odoo
+      - name: pylint-odoo
+        run: |
+          python -m pylint_odoo odoo_addons/${{ matrix.module }} || true
+      - name: flake8-odoo
+        run: |
+          python -m flake8 --select=ODO --statistics odoo_addons/${{ matrix.module }} || true
+
+  package:
+    needs: lint
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: *addons
+    steps:
+      - uses: actions/checkout@v4
+      - name: Zip addon
+        run: |
+          mkdir -p dist
+          cd odoo_addons
+          zip -r ../dist/${{ matrix.module }}.zip ${{ matrix.module }} -x "*/__pycache__/*" "*.pyc"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: addon-${{ matrix.module }}-zip
+          path: dist/${{ matrix.module }}.zip
