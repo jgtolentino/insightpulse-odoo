@@ -62,7 +62,7 @@ jobs:
         run: |
           mkdir -p dist
           cd odoo_addons
-          zip -r ../dist/${{ matrix.module }}.zip ${{ matrix.module }} -x "*/__pycache__/*" "*.pyc"
+          zip -r ../dist/${{ matrix.module }}.zip ${{ matrix.module }} -x "*/__pycache__/*" "*.pyc" ".DS_Store"
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
