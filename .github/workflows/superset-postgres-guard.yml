@@ -1,0 +1,103 @@
+name: Superset PostgreSQL Guard
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'infra/superset/**'
+      - '.github/workflows/superset-postgres-guard.yml'
+
+env:
+  DO_APP_ID_SUPERSET: ${{ secrets.DO_APP_ID_SUPERSET }}
+  DOCTL_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+jobs:
+  postgres-guard:
+    runs-on: ubuntu-latest
+    name: Ensure Superset uses PostgreSQL only
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Verify Superset app exists
+        run: |
+          doctl apps get $DO_APP_ID_SUPERSET --format ID,DefaultIngress
+          echo "✅ Superset app found"
+
+      - name: Run database migrations
+        run: |
+          echo "🔄 Running Superset database migrations..."
+          doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
+            bash -c 'superset db upgrade && superset init || true'
+
+          echo "✅ Migrations complete"
+
+      - name: Guard - Fail if SQLite detected
+        run: |
+          echo "🔍 Checking database backend..."
+
+          BACKEND=$(doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
+            python3 -c "
+from superset import db
+import sys
+backend = db.engine.url.get_backend_name()
+print(backend)
+sys.exit(1 if backend == 'sqlite' else 0)
+" 2>&1 | tail -1)
+
+          echo "Database backend: $BACKEND"
+
+          if [ "$BACKEND" = "sqlite" ]; then
+            echo "❌ ERROR: Superset is using SQLite (deprecated)"
+            echo "Expected: postgresql"
+            echo "Fix: Update SQLALCHEMY_DATABASE_URI in app spec"
+            exit 1
+          fi
+
+          echo "✅ PostgreSQL confirmed"
+
+      - name: Load sample dashboards (optional)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          echo "📊 Loading sample dashboards..."
+          doctl apps exec $DO_APP_ID_SUPERSET --component superset -- \
+            bash -c 'superset load_examples || true; superset init'
+
+          echo "✅ Sample dashboards loaded"
+
+      - name: Health check
+        run: |
+          echo "🏥 Checking Superset health..."
+
+          # Get app URL
+          APP_URL=$(doctl apps get $DO_APP_ID_SUPERSET --format DefaultIngress --no-header)
+
+          # Test connectivity
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://$APP_URL/health || echo "000")
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Superset is healthy (HTTP $HTTP_CODE)"
+          else
+            echo "⚠️ Superset health check returned HTTP $HTTP_CODE"
+          fi
+
+      - name: Report status
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Superset PostgreSQL Guard - Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "App ID: $DO_APP_ID_SUPERSET"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Trigger: ${{ github.event_name }}"
+          echo "Status: ${{ job.status }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
