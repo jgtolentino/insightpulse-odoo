@@ -35,7 +35,7 @@ Thumbs.db
 
 # Archives - keep extracted content, not archives themselves
 *.zip
-!addons/**/*.zip  # Allow test data zips in addon tests
 *.tar.gz
 !odoo19-bundle.tar.gz  # Allow specific deployment bundle
+# Note: Test data zips in addons are already tracked and will remain so
 

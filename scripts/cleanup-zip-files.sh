@@ -92,9 +92,12 @@ case "$sap_action" in
     extract)
         echo "  Extracting to docs/integrations/sap/"
         mkdir -p docs/integrations/sap
-        unzip -q "files (50).zip" -d docs/integrations/sap/
-        rm "files (50).zip"
-        echo -e "  ${GREEN}✓ Extracted and removed${NC}"
+        if unzip -q "files (50).zip" -d docs/integrations/sap/; then
+            rm "files (50).zip"
+            echo -e "  ${GREEN}✓ Extracted and removed${NC}"
+        else
+            echo -e "  ${RED}✗ Extraction failed - file not removed${NC}"
+        fi
         ;;
     remove)
         rm "files (50).zip"
@@ -118,9 +121,12 @@ case "$scaffold_action" in
     extract)
         echo "  Extracting to docs/templates/"
         mkdir -p docs/templates
-        unzip -q "odoomation-saas-parity-scaffold.zip" -d docs/templates/
-        rm "odoomation-saas-parity-scaffold.zip"
-        echo -e "  ${GREEN}✓ Extracted and removed${NC}"
+        if unzip -q "odoomation-saas-parity-scaffold.zip" -d docs/templates/; then
+            rm "odoomation-saas-parity-scaffold.zip"
+            echo -e "  ${GREEN}✓ Extracted and removed${NC}"
+        else
+            echo -e "  ${RED}✗ Extraction failed - file not removed${NC}"
+        fi
         ;;
     remove)
         rm "odoomation-saas-parity-scaffold.zip"
