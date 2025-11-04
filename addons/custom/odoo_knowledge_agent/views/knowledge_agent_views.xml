@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Tree View -->
+        <record id="view_knowledge_agent_tree" model="ir.ui.view">
+            <field name="name">odoo.knowledge.agent.tree</field>
+            <field name="model">odoo.knowledge.agent</field>
+            <field name="arch" type="xml">
+                <tree string="Knowledge Agent Scrapes" decoration-info="state=='running'" decoration-success="state=='done'" decoration-danger="state=='failed'">
+                    <field name="name"/>
+                    <field name="scrape_date"/>
+                    <field name="pages_scraped"/>
+                    <field name="issues_found"/>
+                    <field name="state" widget="badge" decoration-info="state=='running'" decoration-success="state=='done'" decoration-danger="state=='failed'"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Form View -->
+        <record id="view_knowledge_agent_form" model="ir.ui.view">
+            <field name="name">odoo.knowledge.agent.form</field>
+            <field name="model">odoo.knowledge.agent</field>
+            <field name="arch" type="xml">
+                <form string="Knowledge Agent">
+                    <header>
+                        <button name="action_run_scraper" type="object" string="Run Scraper"
+                                class="btn-primary" attrs="{'invisible': [('state', 'in', ['running'])]}"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,running,done"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="name"/>
+                                <field name="scrape_date"/>
+                                <field name="pages_scraped"/>
+                                <field name="issues_found"/>
+                            </group>
+                            <group>
+                                <field name="output_file"/>
+                                <field name="error_message" attrs="{'invisible': [('state', '!=', 'failed')]}"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Logs">
+                                <field name="log_ids">
+                                    <tree>
+                                        <field name="create_date"/>
+                                        <field name="level" widget="badge"/>
+                                        <field name="message"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!-- Action -->
+        <record id="action_knowledge_agent" model="ir.actions.act_window">
+            <field name="name">Odoo Knowledge Agent</field>
+            <field name="res_model">odoo.knowledge.agent</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Create a new scrape session
+                </p>
+                <p>
+                    The Knowledge Agent scrapes solved issues from the Odoo forum
+                    to build error prevention guardrails and auto-fix patches.
+                </p>
+            </field>
+        </record>
+
+        <!-- Menu -->
+        <menuitem id="menu_knowledge_agent_root" name="Knowledge Agent" sequence="100"/>
+        <menuitem id="menu_knowledge_agent" name="Forum Scrapes"
+                  parent="menu_knowledge_agent_root"
+                  action="action_knowledge_agent"
+                  sequence="10"/>
+
+    </data>
+</odoo>

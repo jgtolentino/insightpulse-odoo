@@ -65,10 +65,11 @@ fi
 log_info "Configuring UFW firewall..."
 ufw default deny incoming
 ufw default allow outgoing
-ufw allow 22/tcp   # SSH
-ufw allow 80/tcp   # HTTP
-ufw allow 443/tcp  # HTTPS
-ufw allow 8000/tcp # PaddleOCR API
+ufw allow 22/tcp    # SSH
+ufw allow 80/tcp    # HTTP
+ufw allow 443/tcp   # HTTPS
+ufw allow 8000/tcp  # PaddleOCR API
+ufw allow 11434/tcp # Ollama API
 echo "y" | ufw enable
 
 # Configure fail2ban
@@ -81,15 +82,15 @@ log_info "Creating application directory..."
 mkdir -p /opt/paddleocr
 chown -R root:root /opt/paddleocr
 
-# Configure swap (important for 1GB RAM droplet)
+# Configure swap (helps with Ollama model loading)
 log_info "Configuring swap..."
 if [ ! -f /swapfile ]; then
-    fallocate -l 2G /swapfile
+    fallocate -l 4G /swapfile
     chmod 600 /swapfile
     mkswap /swapfile
     swapon /swapfile
     echo '/swapfile none swap sw 0 0' >> /etc/fstab
-    log_info "Swap configured (2GB)"
+    log_info "Swap configured (4GB)"
 else
     log_info "Swap already configured"
 fi
@@ -203,6 +204,49 @@ server {
 EOF
 
 ln -sf /etc/nginx/sites-available/paddleocr /etc/nginx/sites-enabled/
+
+# Configure Nginx for Ollama
+log_info "Configuring Nginx for Ollama..."
+cat > /etc/nginx/sites-available/ollama <<'EOF'
+server {
+    listen 80;
+    server_name llm.insightpulseai.net;
+
+    # Rate limiting
+    limit_req_zone $binary_remote_addr zone=ollama_limit:10m rate=5r/s;
+    limit_req zone=ollama_limit burst=10 nodelay;
+
+    # Client body size limit
+    client_max_body_size 10M;
+
+    # Proxy to Ollama service
+    location / {
+        proxy_pass http://localhost:11434;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        # Timeouts (LLM inference can take time)
+        proxy_connect_timeout 120s;
+        proxy_send_timeout 120s;
+        proxy_read_timeout 120s;
+
+        # Streaming support
+        proxy_buffering off;
+        proxy_http_version 1.1;
+        chunked_transfer_encoding on;
+    }
+
+    # Health check endpoint
+    location /api/tags {
+        proxy_pass http://localhost:11434/api/tags;
+        access_log off;
+    }
+}
+EOF
+
+ln -sf /etc/nginx/sites-available/ollama /etc/nginx/sites-enabled/
 rm -f /etc/nginx/sites-enabled/default
 nginx -t
 systemctl reload nginx
@@ -216,5 +260,6 @@ log_info ""
 log_info "Next steps:"
 log_info "1. Deploy application files to /opt/paddleocr/"
 log_info "2. Run: cd /opt/paddleocr && docker-compose up -d"
-log_info "3. Configure SSL: certbot --nginx -d ocr.insightpulseai.net"
+log_info "3. Pull Ollama model: docker exec ollama-service ollama pull llama3.2:3b"
+log_info "4. Configure SSL: certbot --nginx -d ocr.insightpulseai.net -d llm.insightpulseai.net"
 log_info ""

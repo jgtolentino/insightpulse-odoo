@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_odoo_knowledge_agent_user,odoo.knowledge.agent.user,model_odoo_knowledge_agent,base.group_user,1,1,1,1
+access_odoo_knowledge_agent_log_user,odoo.knowledge.agent.log.user,model_odoo_knowledge_agent_log,base.group_user,1,1,1,1
+access_odoo_knowledge_agent_system,odoo.knowledge.agent.system,model_odoo_knowledge_agent,base.group_system,1,1,1,1
+access_odoo_knowledge_agent_log_system,odoo.knowledge.agent.log.system,model_odoo_knowledge_agent_log,base.group_system,1,1,1,1

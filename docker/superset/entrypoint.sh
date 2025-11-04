@@ -36,8 +36,41 @@ echo "========================================="
 echo "Database Migration and Initialization"
 echo "========================================="
 
+# Verify database connection configuration
+echo "Database Configuration Check:"
+python3 -c "
+import os
+db_uri = f\"postgresql+psycopg2://{os.getenv('DATABASE_USER')}:***@{os.getenv('DATABASE_HOST')}:{os.getenv('DATABASE_PORT')}/{os.getenv('DATABASE_DB')}\"
+print(f'  SQLALCHEMY_DATABASE_URI: {db_uri}')
+print(f'  Config file: /app/pythonpath/superset_config.py')
+"
+
+# Verify config file exists
+if [ ! -f /app/pythonpath/superset_config.py ]; then
+    echo "❌ ERROR: superset_config.py not found!"
+    exit 1
+fi
+
 # Initialize database (if not already initialized)
-superset db upgrade
+echo "Running database upgrade..."
+if ! superset db upgrade; then
+    echo "❌ Database upgrade failed!"
+    echo "Attempting to reset metadata database..."
+
+    # Drop all tables and recreate (only safe on first deploy)
+    python3 -c "
+from superset import db
+from superset.app import create_app
+
+app = create_app()
+with app.app_context():
+    db.drop_all()
+    db.create_all()
+"
+
+    # Retry upgrade
+    superset db upgrade || exit 1
+fi
 
 # Create default roles and permissions
 superset init
