@@ -1,0 +1,463 @@
+# InsightPulse Odoo ERP - LLM Rules
+# This file provides global context and rules for AI assistants working on this project
+
+version: "1.0"
+project: "InsightPulse Odoo ERP - Finance Shared Service Center"
+
+## Tech Stack
+
+- **ERP**: Odoo 19 (Community)
+- **Database**: Supabase PostgreSQL 15.6 with pgvector
+- **Analytics**: Apache Superset 3.1.0
+- **Portal**: Next.js 14 App Router + React 18
+- **UI Components**: shadcn/ui (Tailwind CSS + Radix UI)
+- **Auth**: Supabase Auth with Next.js integration
+- **Edge Functions**: Deno runtime on Supabase
+- **Deployment**: DigitalOcean App Platform
+- **CI/CD**: GitHub Actions
+
+## Project Structure
+
+```
+insightpulse-odoo/
+├── addons/custom/           # Odoo custom modules
+│   ├── finance_dashboard/   # Finance SSC dashboard
+│   ├── bir_tax_filing/      # BIR compliance module
+│   ├── superset_connector/  # Superset integration
+│   └── multi_agency/        # Multi-agency management
+├── portal/                  # Next.js portal (public-facing)
+├── supabase/               # Supabase config, migrations, functions
+├── infra/                  # Infrastructure configs (DO, Docker)
+├── docs/                   # Documentation
+└── prompts/                # Prompt library (context engineering)
+```
+
+## Coding Standards
+
+### Python (Odoo Modules)
+- **Version**: Python 3.10+
+- **Style**: Black formatter, isort for imports
+- **Linting**: pylint with OCA configuration
+- **Type Hints**: Required for all functions
+- **Docstrings**: Google style docstrings
+- **Testing**: pytest with >80% coverage
+
+### TypeScript (Next.js, Edge Functions)
+- **Version**: TypeScript 5.0+
+- **Style**: Prettier formatter
+- **Linting**: ESLint with Airbnb config
+- **Framework**: Next.js 14 App Router
+- **Testing**: Jest + React Testing Library
+
+### SQL (PostgreSQL)
+- **Dialect**: PostgreSQL 15
+- **Naming**: snake_case for all identifiers
+- **Security**: Always use RLS, parameterized queries
+- **Migrations**: Idempotent (use IF NOT EXISTS)
+
+## Odoo Development Rules
+
+### Module Structure (OCA Standards)
+```
+module_name/
+├── __init__.py
+├── __manifest__.py          # Required: name, version, depends, data
+├── README.rst               # Required: badges, usage, credits
+├── models/                  # Python models
+│   ├── __init__.py
+│   └── model_name.py
+├── views/                   # XML views
+│   └── model_name_views.xml
+├── security/                # Access control
+│   ├── ir.model.access.csv
+│   └── security.xml         # Record rules
+├── data/                    # Demo/seed data
+├── static/src/              # OWL components, CSS, JS
+│   ├── components/
+│   │   └── component_name/
+│   │       ├── component_name.js
+│   │       ├── component_name.xml
+│   │       └── component_name.scss
+└── tests/                   # Unit tests
+    └── test_model_name.py
+```
+
+### Naming Conventions
+
+**Models**: `module.model_name` (snake_case)
+```python
+_name = 'bir.form.1601c'
+```
+
+**Fields**: `snake_case`
+```python
+period_start = fields.Date()
+total_amount = fields.Monetary()
+```
+
+**Methods**: `snake_case` with underscores
+- Public: `compute_trial_balance()`
+- Private: `_validate_bir_form()`
+- API decorators: `@api.depends`, `@api.constrains`, `@api.onchange`
+
+**XML IDs**: `module_name.descriptive_identifier`
+```xml
+<record id="view_bir_1601c_form" model="ir.ui.view">
+```
+
+### Common Patterns
+
+#### Computed Fields
+```python
+total_debit = fields.Monetary(
+    string='Total Debit',
+    compute='_compute_totals',
+    store=True  # Store for performance
+)
+
+@api.depends('line_ids.debit')
+def _compute_totals(self):
+    for record in self:
+        record.total_debit = sum(record.line_ids.mapped('debit'))
+```
+
+#### Constraints
+```python
+@api.constrains('period_start', 'period_end')
+def _check_period_dates(self):
+    for record in self:
+        if record.period_end < record.period_start:
+            raise ValidationError('End date must be after start date')
+```
+
+#### Wizard Pattern (for reports, multi-step processes)
+```python
+class TrialBalanceWizard(models.TransientModel):
+    _name = 'account.trial.balance.wizard'
+    _description = 'Trial Balance Wizard'
+
+    def action_generate_report(self):
+        self.ensure_one()
+        return self.env.ref('module.action_report').report_action(self)
+```
+
+## Supabase Development Rules
+
+### Row Level Security (RLS)
+**Always enable RLS on all public tables**
+
+```sql
+-- Enable RLS
+ALTER TABLE account_move_line ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only see their company's data
+CREATE POLICY "company_isolation"
+  ON account_move_line
+  FOR ALL
+  USING (
+    company_id IN (
+      SELECT company_id
+      FROM user_companies
+      WHERE user_id = auth.uid()
+    )
+  );
+```
+
+### Edge Functions (Deno)
+```typescript
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+serve(async (req) => {
+  // Always handle CORS
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_ANON_KEY')!
+    )
+
+    // Your logic here
+    const { data, error } = await supabase
+      .from('table')
+      .select('*')
+
+    return new Response(
+      JSON.stringify({ data, error }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      { status: 500, headers: corsHeaders }
+    )
+  }
+})
+```
+
+### Database Migrations
+```sql
+-- Always use IF NOT EXISTS for idempotent migrations
+CREATE TABLE IF NOT EXISTS account_trial_balance (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  company_id INTEGER NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Always add indexes for foreign keys
+CREATE INDEX IF NOT EXISTS idx_trial_balance_company
+  ON account_trial_balance(company_id);
+
+-- Enable RLS
+ALTER TABLE account_trial_balance ENABLE ROW LEVEL SECURITY;
+```
+
+## BIR Compliance Rules (Philippines)
+
+### General Requirements
+- All monetary amounts in **Philippine Peso (PHP)**
+- TIN validation: 9 digits + 3 digit branch code (XXX-XXX-XXX-XXX)
+- Retain records for **3+ years** (BIR requirement)
+- Generate audit trail for all tax forms
+- Follow exact BIR form field requirements
+
+### Form-Specific Rules
+
+**1601C - Monthly Remittance Return**
+- Filed by 10th day of following month
+- Separate forms per company/branch
+- Validation: Total tax withheld = Sum of employee withholdings
+
+**2550Q - Quarterly VAT Return**
+- Filed within 25 days after quarter end
+- Validation: Output VAT - Input VAT = VAT payable
+
+**1702-RT - Annual Income Tax (Regular)**
+- Filed on/before April 15
+- Requires audited financial statements
+
+### Validation Rules
+```python
+def validate_tin(self, tin):
+    """Validate Philippine TIN format."""
+    if not re.match(r'^\d{3}-\d{3}-\d{3}-\d{3}$', tin):
+        raise ValidationError('Invalid TIN format. Use XXX-XXX-XXX-XXX')
+
+def validate_bir_amount(self, amount):
+    """BIR amounts rounded to 2 decimal places."""
+    return round(amount, 2)
+```
+
+## Security Requirements
+
+### General Security
+- ✅ **Never log sensitive data** (passwords, TINs, credit cards)
+- ✅ **Always use parameterized queries** (prevent SQL injection)
+- ✅ **Validate all user inputs** (prevent XSS)
+- ✅ **Use environment variables** for secrets
+- ✅ **Implement proper error handling** (no stack traces to users)
+- ✅ **HTTPS only** for all endpoints
+
+### Odoo Security
+- ✅ Define access rights in `ir.model.access.csv`
+- ✅ Implement record rules for multi-company
+- ✅ Use security groups for feature access
+- ✅ Implement field-level security when needed
+
+### Supabase Security
+- ✅ Enable RLS on all public tables
+- ✅ Use `auth.uid()` for user isolation
+- ✅ Use `auth.jwt() ->> 'company_id'` for company isolation
+- ✅ Never expose service role key in client code
+- ✅ Use edge functions for privileged operations
+
+## Performance Best Practices
+
+### Odoo
+- ✅ Use `store=True` for frequently accessed computed fields
+- ✅ Avoid N+1 queries (use `with_context(prefetch_fields=[])`)
+- ✅ Use `read()` for bulk operations
+- ✅ Add database indexes for filtered/sorted fields
+- ✅ Use server actions for background tasks
+
+### PostgreSQL
+- ✅ Create indexes on foreign keys
+- ✅ Use materialized views for complex reports
+- ✅ Use `EXPLAIN ANALYZE` for query optimization
+- ✅ Limit result sets (use LIMIT/OFFSET)
+
+### Next.js
+- ✅ Use Server Components by default
+- ✅ Implement route-level caching
+- ✅ Use dynamic imports for code splitting
+- ✅ Optimize images with next/image
+
+## Testing Requirements
+
+### Coverage Target: >80%
+
+### Test Types
+1. **Unit Tests** - All business logic functions
+2. **Integration Tests** - API endpoints, database interactions
+3. **E2E Tests** - Critical user workflows
+
+### Example (Odoo)
+```python
+# tests/test_trial_balance.py
+from odoo.tests.common import TransactionCase
+
+class TestTrialBalance(TransactionCase):
+    def setUp(self):
+        super().setUp()
+        self.TrialBalance = self.env['account.trial.balance']
+
+    def test_compute_totals(self):
+        """Test total debit/credit calculation."""
+        trial_balance = self.TrialBalance.create({
+            'period_start': '2025-01-01',
+            'period_end': '2025-01-31',
+        })
+        self.assertEqual(trial_balance.total_debit, 0.0)
+```
+
+## Documentation Requirements
+
+### All Modules Must Include
+- ✅ **README.rst** - Overview, features, usage, credits
+- ✅ **Inline comments** - For complex logic
+- ✅ **Docstrings** - For all public methods
+- ✅ **User guides** - For new features (in `docs/`)
+- ✅ **API docs** - For external integrations
+
+### README Template
+```rst
+==============
+Module Name
+==============
+
+.. image:: https://img.shields.io/badge/licence-LGPL--3-blue.svg
+   :alt: License: LGPL-3
+
+Description of what this module does.
+
+**Features**
+
+* Feature 1
+* Feature 2
+
+Configuration
+=============
+
+1. Go to Settings > Module Name
+2. Configure options
+
+Usage
+=====
+
+To use this module:
+
+1. Navigate to Menu > Submenu
+2. Create new record
+3. Fill in required fields
+
+Credits
+=======
+
+Contributors
+------------
+
+* Your Name <email@example.com>
+
+Maintainer
+----------
+
+This module is maintained by InsightPulse AI.
+```
+
+## Anti-Patterns to Avoid
+
+### ❌ Avoid
+```python
+# Hardcoded values
+company_id = 1
+
+# SQL injection vulnerable
+self.env.cr.execute(f"SELECT * FROM table WHERE name = '{name}'")
+
+# No validation
+def submit_form(self):
+    # Submit without checking required fields
+    pass
+
+# N+1 queries
+for invoice in invoices:
+    partner = invoice.partner_id  # Database query per iteration!
+```
+
+### ✅ Do Instead
+```python
+# Use context or current user
+company_id = self.env.company.id
+
+# Parameterized query or ORM
+self.env['table'].search([('name', '=', name)])
+
+# Proper validation
+def submit_form(self):
+    self.ensure_one()
+    if not self.required_field:
+        raise UserError('Required field is missing')
+    self._validate_business_rules()
+
+# Prefetch relationships
+invoices = self.env['account.move'].search([]).with_context(
+    prefetch_fields=['partner_id']
+)
+```
+
+## Multi-Agency Support
+
+InsightPulse supports 8 agencies:
+- RIM (Research Institute Manila)
+- CKVC (Cristo Rey Vocational Center)
+- BOM (Bureau of Management)
+- JPAL (Justice and Peace Advocacy)
+- JLI (Jesuit Leadership Institute)
+- JAP (Jesuit Asia Pacific)
+- LAS (Loyola Academy Scholars)
+- RMQB (Regional Management QB)
+
+### Implementation
+```python
+# models/res_company.py
+class ResCompany(models.Model):
+    _inherit = 'res.company'
+
+    agency_code = fields.Selection([
+        ('RIM', 'Research Institute Manila'),
+        ('CKVC', 'Cristo Rey Vocational Center'),
+        ('BOM', 'Bureau of Management'),
+        ('JPAL', 'Justice and Peace Advocacy'),
+        ('JLI', 'Jesuit Leadership Institute'),
+        ('JAP', 'Jesuit Asia Pacific'),
+        ('LAS', 'Loyola Academy Scholars'),
+        ('RMQB', 'Regional Management QB'),
+    ], string='Agency Code', required=True)
+```
+
+## Related Documentation
+
+- `/docs/HYBRID_STACK_ARCHITECTURE.md` - Next.js + OWL integration
+- `/docs/PROMPT_LIBRARY_SYSTEM.md` - Prompt engineering guide
+- `/docs/SUPERSET_DASHBOARDS.md` - Analytics documentation
+- `/docs/BIR_COMPLIANCE.md` - Tax compliance guide
+- `/docs/claude-code-skills/` - Claude Code skills library
+
+---
+
+**Remember**: These rules ensure code quality, security, and compliance. Always follow them unless there's a documented exception.
