@@ -2,7 +2,6 @@
   "name": "notion-bir-automations",
   "version": "1.0.0",
   "description": "BIR Task Management Automations for Notion",
-  "type": "module",
   "main": "index.js",
   "scripts": {
     "completion-log": "node 01-completion-logging.js",
@@ -13,7 +12,8 @@
     "deploy": "node deploy-to-supabase.js"
   },
   "dependencies": {
-    "@notionhq/client": "^2.2.15"
+    "@notionhq/client": "^2.2.15",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "@types/node": "^20.10.0"
