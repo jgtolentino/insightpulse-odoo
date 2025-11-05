@@ -438,6 +438,55 @@ custom_addons/ip_expense_mvp/
 
 ---
 
+## Analytics with Superset (Available Now!)
+
+A complete **Apache Superset** integration is available at `services/superset/` with:
+
+- **Pre-loaded Examples**: Official datasets and dashboards ready to explore
+- **Demo Dashboard**: "T&E MVP — Examples Seed" published and tagged
+- **One-Command Start**: `docker compose -f services/superset/docker-compose.superset.yml up -d`
+- **Access**: http://localhost:8088 (admin/admin)
+
+### Quick Start
+
+```bash
+# Start Superset with examples pre-loaded
+docker compose -f services/superset/docker-compose.superset.yml up -d
+
+# Wait ~30 seconds for initialization
+# Open http://localhost:8088 and login (admin/admin)
+```
+
+### What You Get
+
+1. **Official Example Dashboards**: World Bank data, flight stats, birth names, etc.
+2. **Ready-to-Use Visualizations**: Charts, maps, tables, filters, drill-downs
+3. **T&E Dashboard Templates**: See `services/superset/README.md` for:
+   - Expense trends (time series)
+   - OCR accuracy tracking (gauge + line chart)
+   - Cash advance utilization (bar chart + table)
+   - Top merchants (bar chart)
+   - Pending approvals (KPI big number)
+
+### Connect to Odoo
+
+Once Odoo is running, connect Superset to your T&E data:
+
+1. **Settings → Database Connections → + Database**
+2. Select **PostgreSQL**
+3. Connection:
+   ```
+   Host: db (or localhost:5432)
+   Database: odoo
+   Username: odoo
+   Password: (your password)
+   ```
+4. Test connection → Save
+
+See **`services/superset/README.md`** for detailed SQL queries, chart configurations, and dashboard examples.
+
+---
+
 ## Next Steps
 
 ### Phase 2 Enhancements (Future)
@@ -457,12 +506,7 @@ custom_addons/ip_expense_mvp/
    - VAT computation
    - 1601-C / 2550Q integration
 
-4. **Analytics**
-   - Superset dashboards
-   - Spending by category/employee/department
-   - OCR accuracy tracking
-
-5. **AI Features**
+4. **AI Features**
    - Duplicate receipt detection
    - Policy violation detection
    - Merchant categorization
@@ -484,6 +528,12 @@ custom_addons/ip_expense_mvp/
 ---
 
 ## Changelog
+
+### v0.1.1 (2025-11-05)
+- Added Apache Superset integration with pre-loaded examples
+- Demo dashboard "T&E MVP — Examples Seed" auto-published
+- Comprehensive Superset README with T&E dashboard templates
+- SQL queries for expense trends, OCR accuracy, cash advance utilization
 
 ### v0.1.0 (2025-11-05)
 - Initial release
