@@ -13,6 +13,7 @@ class IpOcrReceipt(models.Model):
     ocr_json = fields.Text(string="OCR Result (JSON)")
     line_count = fields.Integer(compute="_compute_line_count", store=False)
     expense_id = fields.Many2one("hr.expense", string="Linked Expense")
+    expense_count = fields.Integer(compute="_compute_expense_count", store=False)
 
     @api.depends("ocr_json")
     def _compute_line_count(self):
@@ -22,6 +23,69 @@ class IpOcrReceipt(models.Model):
                 rec.line_count = len(data.get("lines", []))
             except Exception:
                 rec.line_count = 0
+
+    @api.depends("expense_id")
+    def _compute_expense_count(self):
+        for rec in self:
+            rec.expense_count = 1 if rec.expense_id else 0
+
+    def action_create_expense(self):
+        """Create hr.expense from OCR receipt with prefilled fields"""
+        self.ensure_one()
+
+        # Parse OCR JSON for amount and date
+        payload = json.loads(self.ocr_json or "{}")
+
+        def gx(path, default=None):
+            try:
+                cur = payload
+                for p in path:
+                    cur = cur[p]
+                return cur
+            except Exception:
+                return default
+
+        # Extract fields
+        total_amount = gx(["totals","total_amount","value"]) or gx(["total_amount","value"]) or 0.0
+        receipt_date = gx(["date","value"]) or fields.Date.today()
+        merchant = gx(["merchant","value"]) or self.name
+
+        # Create expense
+        expense = self.env["hr.expense"].create({
+            "name": f"Receipt: {merchant}",
+            "employee_id": self.env.user.employee_id.id,
+            "product_id": self.env.ref("hr_expense.expense_product_mileage").id,  # default product
+            "unit_amount": float(total_amount),
+            "date": receipt_date,
+            "description": f"OCR Receipt: {self.name}",
+        })
+
+        # Link back
+        self.expense_id = expense.id
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Expense",
+            "res_model": "hr.expense",
+            "res_id": expense.id,
+            "view_mode": "form",
+            "target": "current",
+        }
+
+    def action_view_expense(self):
+        """View linked expense"""
+        self.ensure_one()
+        if not self.expense_id:
+            return
+
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Expense",
+            "res_model": "hr.expense",
+            "res_id": self.expense_id.id,
+            "view_mode": "form",
+            "target": "current",
+        }
 
     @api.model
     def create(self, vals):

@@ -18,15 +18,29 @@
     <field name="model">ip.ocr.receipt</field>
     <field name="arch" type="xml">
       <form>
-        <group>
-          <field name="name"/>
-          <field name="uploader_id"/>
-          <field name="line_count"/>
-          <field name="expense_id"/>
-        </group>
-        <group string="OCR JSON">
-          <field name="ocr_json" widget="ace" options="{'mode':'json'}"/>
-        </group>
+        <header>
+          <button name="action_create_expense" type="object" string="Create Expense"
+                  class="oe_highlight" invisible="expense_id"/>
+          <button name="action_view_expense" type="object" string="View Expense"
+                  invisible="not expense_id"/>
+        </header>
+        <sheet>
+          <div class="oe_button_box" name="button_box">
+            <button name="action_view_expense" type="object" class="oe_stat_button"
+                    icon="fa-money" invisible="not expense_id">
+              <field name="expense_count" widget="statinfo" string="Expense"/>
+            </button>
+          </div>
+          <group>
+            <field name="name"/>
+            <field name="uploader_id"/>
+            <field name="line_count"/>
+            <field name="expense_id" invisible="1"/>
+          </group>
+          <group string="OCR JSON">
+            <field name="ocr_json" widget="ace" options="{'mode':'json'}"/>
+          </group>
+        </sheet>
       </form>
     </field>
   </record>
