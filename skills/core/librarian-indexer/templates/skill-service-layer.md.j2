@@ -1,0 +1,436 @@
+# {{ name }} - Service Layer Specialist
+
+**Skill ID:** `{{ skill_id }}`
+**Version:** {{ version }}
+**Category:** {{ category }}
+**Expertise Level:** {{ expertise_level }}
+**Last Updated:** {{ last_updated }}
+**Source Module:** {{ source_module }}
+
+---
+
+## 🎯 Purpose
+
+This skill provides expertise in implementing service layer architecture for {{ business_domain or "business operations" }}.
+
+{{ description }}
+
+This skill covers service design patterns, business logic encapsulation, API design, transaction management, and integration orchestration.
+
+---
+
+## 📚 Core Competencies
+
+### 1. Service Layer Architecture
+
+**Key Capabilities:**
+{% if capabilities %}
+{% for capability in capabilities %}
+{{ loop.index }}. {{ capability }}
+{% endfor %}
+{% else %}
+1. Design service layer following separation of concerns
+2. Implement business logic independent of presentation layer
+3. Orchestrate complex multi-step workflows
+4. Manage transactions and ensure data consistency
+5. Handle errors and implement retry logic
+6. Implement caching strategies
+7. Design RESTful and RPC APIs
+8. Ensure service scalability and performance
+{% endif %}
+
+### 2. Service Classes & Methods
+
+{% if classes %}
+**Service Classes:**
+{% for cls in classes %}
+- `{{ cls.name }}` - {{ cls.docstring or "Service implementation class" }}
+{% if cls.methods %}
+  **Methods:**
+{% for method in cls.methods %}
+  - `{{ method.name }}({{ method.args }})` - {{ method.docstring or "Service method" }}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+
+### 3. Business Operations
+
+{% if functions %}
+**Service Functions:**
+{% for func in functions %}
+- `{{ func.name }}({{ func.args }})` - {{ func.docstring or "Business operation" }}
+{% endfor %}
+{% endif %}
+
+---
+
+## 🛠️ Tools & Technologies
+
+### Service Layer Stack
+- **Language:** Python {{ python_version or "3.9+" }}
+- **Framework:** {% if 'odoo' in skill_id %}Odoo 19.0{% elif 'fastapi' in imports %}FastAPI{% elif 'flask' in imports %}Flask{% else %}General Purpose{% endif %}
+
+- **Dependency Injection:** Custom DI container
+- **Transaction Management:** Database-aware transactions
+- **API Protocol:** {% if 'fastapi' in imports %}REST (FastAPI){% elif 'xmlrpc' in skill_id %}XML-RPC{% else %}RPC{% endif %}
+
+### Integration Libraries
+{% if imports %}
+{% for imp in imports %}
+- `{{ imp }}` - {{ import_descriptions.get(imp, "Service dependency") }}
+{% endfor %}
+{% endif %}
+
+### Testing & Quality
+- **Unit Testing:** pytest with mocks
+- **Integration Testing:** pytest-integration
+- **Contract Testing:** Pact or custom contracts
+- **Performance Testing:** locust, pytest-benchmark
+
+---
+
+## 🎓 Competency Validation
+
+### Service Layer Development Checklist
+
+#### Service Design (25 points)
+- [ ] Services follow Single Responsibility Principle
+- [ ] Clear separation between service and data access layers
+- [ ] Services are framework-agnostic (no UI coupling)
+- [ ] Proper dependency injection implementation
+- [ ] Service interfaces clearly defined
+
+#### Business Logic (25 points)
+{% if functions %}
+{% for func in functions[:5] %}
+- [ ] Can implement `{{ func.name }}()` business logic
+{% endfor %}
+{% else %}
+- [ ] Complex business rules encapsulated in services
+- [ ] Validation logic separate from data access
+- [ ] Business workflows properly orchestrated
+- [ ] Domain events properly emitted
+- [ ] Proper error handling with business exceptions
+{% endif %}
+
+#### Transaction Management (15 points)
+- [ ] Transactions properly scoped
+- [ ] Rollback on business rule violations
+- [ ] Proper use of transaction isolation levels
+- [ ] Distributed transaction handling (if applicable)
+- [ ] Idempotency for critical operations
+
+#### API Design (15 points)
+- [ ] Clear and consistent API contracts
+- [ ] Proper request/response DTOs
+- [ ] API versioning strategy
+- [ ] Rate limiting implementation
+- [ ] API documentation (OpenAPI/Swagger)
+
+#### Error Handling (10 points)
+- [ ] Custom exception hierarchy
+- [ ] Proper error propagation
+- [ ] Error logging and monitoring
+- [ ] Graceful degradation
+- [ ] Retry logic for transient failures
+
+#### Testing (10 points)
+- [ ] Unit tests with >90% coverage
+- [ ] Integration tests for workflows
+- [ ] Mock external dependencies
+- [ ] Performance tests for critical paths
+- [ ] Contract tests for APIs
+
+---
+
+## 💼 Usage Examples
+
+### Example 1: Service Class Definition
+
+```python
+{% if 'odoo' in skill_id %}
+from odoo import models, fields, api, _
+from odoo.exceptions import ValidationError, UserError
+{% else %}
+from typing import Optional, List, Dict
+from dataclasses import dataclass
+{% endif %}
+
+class {{ service_class_name or "BusinessService" }}:
+    """
+    Service class for {{ business_domain or "business operations" }}.
+
+    This service encapsulates business logic and orchestrates
+    operations across multiple data models.
+    """
+
+    def __init__(self{% if 'odoo' in skill_id %}, env{% else %}, repository, logger{% endif %}):
+        """Initialize service with dependencies."""
+{% if 'odoo' in skill_id %}
+        self.env = env
+{% else %}
+        self.repository = repository
+        self.logger = logger
+{% endif %}
+
+{% if functions and functions[0] %}
+    def {{ functions[0].name }}(self, {{ functions[0].args or "params" }}):
+        """
+        {{ functions[0].docstring or "Execute business operation." }}
+
+        Args:
+            {{ functions[0].args or "params" }}: Operation parameters
+
+        Returns:
+            Result of the operation
+
+        Raises:
+            ValidationError: If validation fails
+            UserError: If business rule violation occurs
+        """
+        # Step 1: Validate input
+        self._validate_input({{ functions[0].args or "params" }})
+
+        # Step 2: Execute business logic
+        result = self._execute_logic({{ functions[0].args or "params" }})
+
+        # Step 3: Persist changes
+        self._persist_changes(result)
+
+        return result
+{% endif %}
+```
+
+### Example 2: Transaction Management
+
+```python
+{% if 'odoo' in skill_id %}
+    @api.model
+    def process_complex_workflow(self, data):
+        """Process multi-step workflow with transaction management."""
+        # Odoo manages transactions automatically
+        try:
+            # Step 1: Validate
+            self._validate_workflow_data(data)
+
+            # Step 2: Process
+            intermediate_result = self._process_step_one(data)
+
+            # Step 3: Finalize
+            final_result = self._process_step_two(intermediate_result)
+
+            return final_result
+
+        except Exception as e:
+            # Transaction will automatically rollback on exception
+            raise UserError(f"Workflow failed: {str(e)}")
+{% else %}
+    def process_complex_workflow(self, data: Dict) -> Dict:
+        """Process multi-step workflow with explicit transaction."""
+        with self.repository.transaction() as tx:
+            try:
+                # Step 1: Validate
+                self._validate_workflow_data(data)
+
+                # Step 2: Process
+                intermediate_result = self._process_step_one(data)
+
+                # Step 3: Finalize
+                final_result = self._process_step_two(intermediate_result)
+
+                tx.commit()
+                return final_result
+
+            except Exception as e:
+                tx.rollback()
+                self.logger.error(f"Workflow failed: {str(e)}")
+                raise BusinessException(f"Workflow processing failed") from e
+{% endif %}
+```
+
+### Example 3: Error Handling & Retry Logic
+
+```python
+from functools import wraps
+from time import sleep
+
+def retry_on_failure(max_retries=3, delay=1):
+    """Decorator for retry logic."""
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            last_exception = None
+            for attempt in range(max_retries):
+                try:
+                    return func(*args, **kwargs)
+                except TransientError as e:
+                    last_exception = e
+                    if attempt < max_retries - 1:
+                        sleep(delay * (attempt + 1))
+                    continue
+                except Exception as e:
+                    # Don't retry on non-transient errors
+                    raise
+            raise last_exception
+        return wrapper
+    return decorator
+
+class {{ service_class_name or "BusinessService" }}:
+
+    @retry_on_failure(max_retries=3, delay=2)
+    def call_external_api(self, endpoint, data):
+        """Call external API with retry logic."""
+        response = self.http_client.post(endpoint, json=data)
+        response.raise_for_status()
+        return response.json()
+```
+
+### Example 4: Service Orchestration
+
+```python
+class WorkflowOrchestrator:
+    """Orchestrate complex multi-service workflows."""
+
+    def __init__(self, service_a, service_b, service_c):
+        self.service_a = service_a
+        self.service_b = service_b
+        self.service_c = service_c
+
+    def execute_workflow(self, input_data):
+        """Execute multi-step workflow across services."""
+        # Step 1: Process with Service A
+        result_a = self.service_a.process(input_data)
+
+        # Step 2: Process with Service B (parallel if possible)
+        result_b = self.service_b.transform(result_a)
+
+        # Step 3: Finalize with Service C
+        final_result = self.service_c.finalize(result_b)
+
+        # Step 4: Emit domain event
+        self._emit_event('workflow.completed', final_result)
+
+        return final_result
+```
+
+---
+
+## 📖 Learning Resources
+
+### Architecture & Design Patterns
+- *Domain-Driven Design* by Eric Evans
+- *Patterns of Enterprise Application Architecture* by Martin Fowler
+- *Clean Architecture* by Robert C. Martin
+- *Microservices Patterns* by Chris Richardson
+
+### Online Resources
+- [Martin Fowler's Blog](https://martinfowler.com/) - Service layer patterns
+- [Microsoft Architecture Patterns](https://docs.microsoft.com/en-us/azure/architecture/patterns/)
+- [AWS Well-Architected Framework](https://aws.amazon.com/architecture/well-architected/)
+
+### Courses
+- Domain-Driven Design Fundamentals (Pluralsight)
+- Microservices Architecture (Udemy)
+- Enterprise Integration Patterns (LinkedIn Learning)
+
+{% if 'odoo' in skill_id %}
+### Odoo-Specific Resources
+- [Odoo Service Architecture](https://www.odoo.com/documentation/19.0/developer/reference/backend/services.html)
+- [Odoo Business Logic Best Practices](https://www.odoo.com/documentation/19.0/developer/howtos/)
+{% endif %}
+
+---
+
+## 📊 Success Metrics
+
+### Code Quality Targets
+- **Service Complexity:** < {{ target_complexity or 8 }} per method
+- **Test Coverage:** > {{ target_coverage or 90 }}%
+- **Cyclomatic Complexity:** < 10 per function
+- **Code Duplication:** < 3%
+
+### Performance Targets
+- **Response Time (P95):** < 500ms
+- **Response Time (P99):** < 1000ms
+- **Throughput:** > 100 req/sec
+- **Error Rate:** < 0.1%
+
+### Reliability Targets
+- **Uptime:** > 99.9%
+- **Transaction Success Rate:** > 99.5%
+- **Retry Success Rate:** > 95%
+- **Data Consistency:** 100%
+
+### Functional Requirements
+{% if requirements %}
+{% for req in requirements %}
+- {{ req }}
+{% endfor %}
+{% else %}
+- All business rules properly enforced
+- Transactions properly isolated
+- Error handling comprehensive
+- Integration points properly tested
+- API contracts documented
+- Performance SLAs met
+{% endif %}
+
+---
+
+## 🔗 Related Skills
+
+### Prerequisites
+- `python-advanced` - Advanced Python programming
+- `design-patterns` - Software design patterns
+- `database-transactions` - Transaction management
+- `api-design` - API design principles
+
+### Related Service Skills
+- `domain-driven-design` - DDD principles and patterns
+- `microservices-architecture` - Microservices patterns
+- `event-driven-architecture` - Event-driven design
+- `api-gateway-patterns` - API gateway implementation
+- `saga-pattern` - Distributed transaction management
+
+{% if 'odoo' in skill_id %}
+### Odoo Skills
+- `odoo-model-development` - Data layer
+- `odoo-api-development` - External API
+- `odoo-workflow-management` - Workflow engine
+{% endif %}
+
+### Business Domain Skills
+{% if business_domain %}
+- `{{ business_domain|lower|replace(' ', '-') }}-specialist` - Domain expertise
+{% endif %}
+
+---
+
+## 📝 Auto-Generation Metadata
+
+**Generated:** {{ generation_date }}
+**Source File:** `{{ source_file }}`
+**Analysis Tool:** librarian-indexer v{{ tool_version }}
+
+**Service Layer Metrics:**
+- Service Classes: {{ classes|length if classes else 0 }}
+- Service Methods: {{ methods|length if methods else 0 }}
+- Business Operations: {{ functions|length if functions else 0 }}
+- External Dependencies: {{ imports|length if imports else 0 }}
+
+{% if patterns_detected %}
+**Patterns Detected:**
+{% for pattern in patterns_detected %}
+- {{ pattern }}
+{% endfor %}
+{% endif %}
+
+**Architecture Style:** {{ architecture_style or "Layered Architecture" }}
+**Integration Pattern:** {{ integration_pattern or "Request-Response" }}
+**Transaction Strategy:** {{ transaction_strategy or "Database Transaction" }}
+
+---
+
+**Note:** This skill was auto-generated from service layer analysis. Review and enhance with specific business domain knowledge, comprehensive error scenarios, and production-ready patterns.

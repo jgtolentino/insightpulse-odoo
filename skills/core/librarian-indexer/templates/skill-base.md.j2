@@ -1,0 +1,235 @@
+# {{ name }}
+
+**Skill ID:** `{{ skill_id }}`
+**Version:** {{ version }}
+**Category:** {{ category }}
+**Expertise Level:** {{ expertise_level }}
+**Last Updated:** {{ last_updated }}
+{% if source_module %}**Source Module:** {{ source_module }}{% endif %}
+
+---
+
+## 🎯 Purpose
+
+This skill was auto-generated from code analysis and provides expertise in {{ name|lower }}.
+
+{{ description }}
+
+---
+
+## 📚 Core Competencies
+
+{% if capabilities %}
+### Key Capabilities
+
+{% for capability in capabilities %}
+{{ loop.index }}. {{ capability }}
+{% endfor %}
+{% endif %}
+
+### Technical Skills
+
+{% if functions %}
+**Functions & Methods:**
+{% for func in functions %}
+- `{{ func.name }}({{ func.args }})` - {{ func.docstring or "Implementation function" }}
+{% endfor %}
+{% endif %}
+
+{% if classes %}
+**Classes & Components:**
+{% for cls in classes %}
+- `{{ cls.name }}` - {{ cls.docstring or "Core class implementation" }}
+{% if cls.methods %}
+  Methods:
+{% for method in cls.methods %}
+  - `{{ method.name }}({{ method.args }})`
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+
+---
+
+## 🛠️ Tools & Technologies
+
+{% if imports %}
+### Required Libraries
+
+{% for imp in imports %}
+- `{{ imp }}` - {{ import_descriptions.get(imp, "Core dependency") }}
+{% endfor %}
+{% endif %}
+
+### Development Environment
+
+- **Language:** Python {{ python_version or "3.9+" }}
+- **Framework:** {% if 'odoo' in skill_id %}Odoo 19.0{% else %}General Purpose{% endif %}
+
+- **Testing:** pytest, unittest
+- **Code Quality:** pylint, flake8, black
+
+---
+
+## 🎓 Competency Validation
+
+### Self-Assessment Checklist
+
+{% if complexity_score %}
+**Module Complexity:** {{ complexity_score|round(1) }} ({{ complexity_rating }})
+{% endif %}
+
+{% if functions %}
+#### Function Implementation ({{ functions|length }} functions)
+{% for func in functions[:5] %}
+- [ ] Can implement `{{ func.name }}()` with complexity {{ func.complexity }}
+{% endfor %}
+{% endif %}
+
+{% if classes %}
+#### Class Design ({{ classes|length }} classes)
+{% for cls in classes[:5] %}
+- [ ] Can design and implement `{{ cls.name }}` class
+{% endfor %}
+{% endif %}
+
+#### Code Quality Standards
+- [ ] Can maintain cyclomatic complexity < 10
+- [ ] Can write comprehensive docstrings
+- [ ] Can implement error handling
+- [ ] Can write unit tests with >80% coverage
+- [ ] Can follow PEP 8 style guidelines
+
+---
+
+## 💼 Usage Examples
+
+{% if usage_examples %}
+{% for example in usage_examples %}
+### Example {{ loop.index }}: {{ example.title }}
+
+```python
+{{ example.code }}
+```
+
+{{ example.description }}
+{% endfor %}
+{% endif %}
+
+{% if not usage_examples and functions %}
+### Example: Using {{ functions[0].name }}
+
+```python
+{% if classes %}
+from {{ module_path }} import {{ classes[0].name }}
+
+# Initialize
+instance = {{ classes[0].name }}()
+{% endif %}
+
+# Call function
+result = {{ functions[0].name }}({{ functions[0].example_args or "params" }})
+print(result)
+```
+{% endif %}
+
+---
+
+## 📖 Learning Resources
+
+### Documentation
+- [Python Official Docs](https://docs.python.org/3/)
+{% if 'odoo' in skill_id %}
+- [Odoo 19 Documentation](https://www.odoo.com/documentation/19.0/)
+- [OCA Guidelines](https://odoo-community.org/)
+{% endif %}
+
+### Recommended Reading
+- Clean Code by Robert C. Martin
+- The Pragmatic Programmer by Hunt & Thomas
+{% if 'odoo' in skill_id %}
+- Odoo Development Essentials
+{% endif %}
+
+### Online Courses
+- Python Best Practices on Pluralsight
+- Software Architecture Patterns on Udemy
+{% if 'odoo' in skill_id %}
+- Odoo Development Course on Udemy
+{% endif %}
+
+---
+
+## 📊 Success Metrics
+
+### Code Quality Targets
+- **Cyclomatic Complexity:** < {{ target_complexity or 10 }}
+- **Maintainability Index:** > {{ target_maintainability or 65 }}
+- **Test Coverage:** > {{ target_coverage or 80 }}%
+- **Documentation Coverage:** 100%
+
+### Performance Targets
+{% if performance_metrics %}
+{% for metric, target in performance_metrics.items() %}
+- **{{ metric }}:** {{ target }}
+{% endfor %}
+{% endif %}
+
+### Functional Requirements
+{% if requirements %}
+{% for req in requirements %}
+- {{ req }}
+{% endfor %}
+{% else %}
+- Implements all functions with proper error handling
+- Maintains backward compatibility
+- Follows coding standards
+- Passes all unit tests
+{% endif %}
+
+---
+
+## 🔗 Related Skills
+
+{% if dependencies %}
+### Prerequisites
+{% for dep in dependencies %}
+- `{{ dep }}` - Required foundational knowledge
+{% endfor %}
+{% endif %}
+
+### Related Skills
+- `python-best-practices` - Python coding standards
+- `testing-strategies` - Unit testing and TDD
+- `code-review` - Code quality and review practices
+{% if 'odoo' in skill_id %}
+- `odoo-module-development` - Odoo module structure
+- `oca-compliance` - OCA guidelines adherence
+{% endif %}
+
+---
+
+## 📝 Auto-Generation Metadata
+
+**Generated:** {{ generation_date }}
+**Source File:** `{{ source_file }}`
+**Analysis Tool:** librarian-indexer v{{ tool_version }}
+
+{% if patterns_detected %}
+**Patterns Detected:**
+{% for pattern in patterns_detected %}
+- {{ pattern }}
+{% endfor %}
+{% endif %}
+
+**Metrics:**
+- Lines of Code: {{ lines_of_code }}
+- Functions: {{ functions|length }}
+- Classes: {{ classes|length }}
+{% if complexity_score %}
+- Average Complexity: {{ complexity_score|round(1) }}
+{% endif %}
+
+---
+
+**Note:** This skill was auto-generated from code analysis. Please review and enhance with domain-specific knowledge and best practices.

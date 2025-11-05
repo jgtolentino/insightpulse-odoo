@@ -1,0 +1,329 @@
+# {{ name }} - Odoo Model Specialist
+
+**Skill ID:** `{{ skill_id }}`
+**Version:** {{ version }}
+**Category:** {{ category }}
+**Expertise Level:** {{ expertise_level }}
+**Last Updated:** {{ last_updated }}
+**Source Module:** {{ source_module }}
+
+---
+
+## 🎯 Purpose
+
+This skill provides expertise in developing and maintaining Odoo models for {{ business_domain or "business operations" }}.
+
+{{ description }}
+
+This skill covers model design, field definitions, computed fields, constraints, and business logic implementation following OCA best practices.
+
+---
+
+## 📚 Core Competencies
+
+### 1. Odoo Model Design
+
+**Key Capabilities:**
+{% if capabilities %}
+{% for capability in capabilities %}
+{{ loop.index }}. {{ capability }}
+{% endfor %}
+{% else %}
+1. Design normalized database schemas
+2. Implement proper model inheritance (delegation, prototype, extension)
+3. Define fields with appropriate types and attributes
+4. Implement computed fields with proper dependencies
+5. Set up model constraints and validations
+6. Manage record lifecycle and state transitions
+7. Implement security rules (record rules, field access)
+8. Optimize queries with proper indexes and relationships
+{% endif %}
+
+### 2. Field Types & Configuration
+
+{% if fields %}
+**Model Fields:**
+{% for field in fields %}
+- `{{ field.name }}` ({{ field.field_type }}) - {{ field.description or "Business field" }}{% if field.required %} [Required]{% endif %}{% if field.readonly %} [Readonly]{% endif %}
+
+{% endfor %}
+{% endif %}
+
+### 3. Business Logic
+
+{% if methods %}
+**Model Methods:**
+{% for method in methods %}
+- `{{ method.name }}({{ method.args }})` - {{ method.docstring or "Business logic method" }}
+{% endfor %}
+{% endif %}
+
+---
+
+## 🛠️ Tools & Technologies
+
+### Odoo Framework
+- **Version:** Odoo 19.0 Community Edition
+- **ORM:** Odoo ORM with PostgreSQL backend
+- **API:** Odoo RPC, XML-RPC, JSON-RPC
+
+### Required OCA Modules
+{% if oca_dependencies %}
+{% for dep in oca_dependencies %}
+- `{{ dep }}` - OCA certified dependency
+{% endfor %}
+{% else %}
+- `base` - Core Odoo functionality
+- `web` - Web interface components
+{% endif %}
+
+### Development Tools
+- **IDE:** VSCode with Odoo extensions
+- **Linting:** pylint-odoo, flake8-odoo
+- **Testing:** Odoo test framework, pytest-odoo
+- **Database:** PostgreSQL 15+
+
+---
+
+## 🎓 Competency Validation
+
+### Odoo Model Development Checklist
+
+#### Model Structure (20 points)
+- [ ] Proper model name following Odoo conventions (`model.name.format`)
+- [ ] Correct inheritance pattern (AbstractModel, Model, TransientModel)
+- [ ] Proper `_name`, `_description`, and `_order` attributes
+- [ ] Implements `_sql_constraints` for data integrity
+- [ ] Uses appropriate `_rec_name` or `_rec_names_search`
+
+#### Field Definitions (20 points)
+- [ ] Fields have proper types (Char, Integer, Many2one, etc.)
+- [ ] Required fields marked with `required=True`
+- [ ] Default values implemented properly
+- [ ] Help text provided for complex fields
+- [ ] Proper use of `related`, `computed`, `store` attributes
+
+#### Computed Fields (15 points)
+- [ ] `@api.depends()` decorator lists all dependencies
+- [ ] Computed method handles empty recordsets
+- [ ] Inverse methods implemented for writable computed fields
+- [ ] Search methods implemented for searchable computed fields
+- [ ] Proper use of `store=True` for performance optimization
+
+#### Constraints & Validations (15 points)
+- [ ] SQL constraints for database-level validation
+- [ ] `@api.constrains()` for business logic validation
+- [ ] Clear error messages in multiple languages
+- [ ] Proper exception handling
+
+#### Business Logic (20 points)
+{% if methods %}
+{% for method in methods[:5] %}
+- [ ] Can implement `{{ method.name }}()` method
+{% endfor %}
+{% else %}
+- [ ] CRUD operations with proper security
+- [ ] State management and workflow
+- [ ] Business rule implementation
+- [ ] Integration with other models
+- [ ] Proper use of `@api.model`, `@api.multi` decorators
+{% endif %}
+
+#### Security (10 points)
+- [ ] Record rules defined in `security/ir.model.access.csv`
+- [ ] Field-level security configured
+- [ ] Proper user group assignments
+- [ ] XSS and SQL injection prevention
+
+---
+
+## 💼 Usage Examples
+
+### Example 1: Basic Model Definition
+
+```python
+from odoo import models, fields, api
+from odoo.exceptions import ValidationError
+
+class {{ model_name or "CustomModel" }}(models.Model):
+    _name = '{{ model_technical_name or "custom.model" }}'
+    _description = '{{ description or "Custom Model" }}'
+    _order = 'create_date desc'
+
+    # Basic fields
+    name = fields.Char(
+        string='Name',
+        required=True,
+        help='Primary identifier'
+    )
+
+    active = fields.Boolean(
+        string='Active',
+        default=True
+    )
+
+    state = fields.Selection(
+        selection=[
+            ('draft', 'Draft'),
+            ('confirmed', 'Confirmed'),
+            ('done', 'Done'),
+            ('cancelled', 'Cancelled')
+        ],
+        string='Status',
+        default='draft',
+        required=True
+    )
+```
+
+### Example 2: Computed Field with Dependencies
+
+```python
+    # Computed field
+    total_amount = fields.Float(
+        string='Total Amount',
+        compute='_compute_total_amount',
+        store=True,
+        readonly=True
+    )
+
+    @api.depends('line_ids.amount')
+    def _compute_total_amount(self):
+        for record in self:
+            record.total_amount = sum(record.line_ids.mapped('amount'))
+```
+
+### Example 3: Constraints and Validation
+
+```python
+    _sql_constraints = [
+        ('name_unique', 'UNIQUE(name)', 'Name must be unique!')
+    ]
+
+    @api.constrains('total_amount')
+    def _check_total_amount(self):
+        for record in self:
+            if record.total_amount < 0:
+                raise ValidationError('Total amount cannot be negative!')
+```
+
+### Example 4: Business Logic Method
+
+```python
+    def action_confirm(self):
+        """Confirm the record."""
+        self.ensure_one()
+        if self.state != 'draft':
+            raise ValidationError('Only draft records can be confirmed!')
+
+        self.write({'state': 'confirmed'})
+
+        # Trigger workflow actions
+        self._notify_confirmation()
+
+        return True
+```
+
+---
+
+## 📖 Learning Resources
+
+### Official Documentation
+- [Odoo 19 ORM Documentation](https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html)
+- [Odoo Model Reference](https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#model-reference)
+- [Odoo Field Types](https://www.odoo.com/documentation/19.0/developer/reference/backend/orm.html#fields)
+
+### OCA Guidelines
+- [OCA Development Guidelines](https://github.com/OCA/odoo-community.org/blob/master/website/Contribution/CONTRIBUTING.rst)
+- [OCA Module Structure](https://github.com/OCA/maintainer-tools/blob/master/CONTRIBUTING.md)
+- [OCA Code Review Checklist](https://github.com/OCA/maintainer-tools/wiki/Code-review-checklist)
+
+### Community Resources
+- [Odoo Community Forums](https://www.odoo.com/forum)
+- [OCA GitHub Repositories](https://github.com/OCA)
+- [Odoo Apps Store](https://apps.odoo.com/)
+
+### Recommended Books
+- *Odoo Development Essentials* by Daniel Reis
+- *Odoo Development Cookbook* by Holger Brunn
+- *Working with Odoo 19* (Official guide)
+
+---
+
+## 📊 Success Metrics
+
+### Code Quality Targets
+- **OCA Compliance Score:** 100%
+- **pylint-odoo Score:** > 9.0/10
+- **Test Coverage:** > 90%
+- **Documentation Coverage:** 100%
+
+### Performance Targets
+- **Query Optimization:** < 100ms for single record operations
+- **Bulk Operations:** Handle 1000+ records efficiently
+- **Memory Usage:** < 50MB for typical operations
+- **Database Indexes:** Properly indexed foreign keys and search fields
+
+### Functional Requirements
+- All CRUD operations working correctly
+- State transitions validated properly
+- Security rules preventing unauthorized access
+- Computed fields updating correctly
+- Constraints enforcing data integrity
+- Integration tests passing
+- Migration scripts tested
+
+---
+
+## 🔗 Related Skills
+
+### Prerequisites
+- `python-odoo-basics` - Python and Odoo fundamentals
+- `postgresql-basics` - Database design and SQL
+- `odoo-framework-overview` - Odoo architecture understanding
+
+### Related Odoo Skills
+- `odoo-view-development` - XML views and UI
+- `odoo-security-rules` - Access rights and record rules
+- `odoo-workflow-management` - State machines and workflows
+- `odoo-report-development` - QWeb reports
+- `odoo-api-integration` - External API integration
+
+### Business Domain Skills
+{% if business_domain %}
+- `{{ business_domain|lower|replace(' ', '-') }}-specialist` - Domain expertise
+{% endif %}
+- `oca-compliance` - OCA standards and guidelines
+- `database-optimization` - Query optimization and indexing
+
+---
+
+## 📝 Auto-Generation Metadata
+
+**Generated:** {{ generation_date }}
+**Source File:** `{{ source_file }}`
+**Analysis Tool:** librarian-indexer v{{ tool_version }}
+
+**Model Details:**
+- Model Name: `{{ model_technical_name }}`
+- Inherits From: {% if inherits %}{{ inherits|join(', ') }}{% else %}models.Model{% endif %}
+
+- Fields Count: {{ fields|length if fields else 0 }}
+- Methods Count: {{ methods|length if methods else 0 }}
+- Computed Fields: {{ computed_fields_count or 0 }}
+- Constraints: {{ constraints_count or 0 }}
+
+{% if patterns_detected %}
+**Patterns Detected:**
+{% for pattern in patterns_detected %}
+- {{ pattern }}
+{% endfor %}
+{% endif %}
+
+**Odoo-Specific Metrics:**
+- OCA Compliance: {{ oca_compliance_score or "Pending" }}
+- Model Complexity: {{ model_complexity or "Medium" }}
+- Dependencies: {{ dependencies|length if dependencies else 0 }} modules
+
+---
+
+**Note:** This skill was auto-generated from Odoo model analysis. Review and enhance with business domain knowledge, additional validation rules, and comprehensive test cases.

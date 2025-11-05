@@ -1,0 +1,276 @@
+name: 🤖 Auto-Update Skills
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'claude/**'
+    paths:
+      - 'custom/**/*.py'
+      - 'addons/**/*.py'
+      - 'services/**/*.py'
+
+  workflow_dispatch:
+    inputs:
+      full_regeneration:
+        description: 'Regenerate all skills (not just changed files)'
+        required: false
+        default: 'false'
+
+jobs:
+  update-skills:
+    name: Update Skills from Code Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # Need previous commit for diff
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r skills/core/librarian-indexer/requirements.txt
+
+      - name: 🔍 Detect Changed Python Files
+        id: changed-files
+        run: |
+          if [ "${{ github.event.inputs.full_regeneration }}" == "true" ]; then
+            echo "Full regeneration requested"
+            CHANGED_FILES=$(find custom addons services -name "*.py" -type f 2>/dev/null | head -50)
+          else
+            echo "Detecting changed files from git diff"
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD | grep '\.py$' | grep -E '^(custom|addons|services)/' || echo "")
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No Python files changed"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "changed_count=$(echo "$CHANGED_FILES" | wc -l)" >> $GITHUB_OUTPUT
+            echo "$CHANGED_FILES" > changed_files.txt
+            echo "Changed files:"
+            cat changed_files.txt
+          fi
+
+      - name: 🏗️ Generate Skills for Changed Files
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "Generating skills for changed Python files..."
+
+          mkdir -p skills/generated
+
+          while IFS= read -r file; do
+            if [ -f "$file" ]; then
+              echo "Processing: $file"
+
+              # Generate skill
+              python skills/core/librarian-indexer/auto-generate-skill.py \
+                --file "$file" \
+                --output-dir skills/generated/ \
+                --quiet || echo "⚠️  Failed to generate skill for $file"
+            fi
+          done < changed_files.txt
+
+          echo "✅ Skill generation complete"
+
+      - name: 📚 Index All Skills
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "Creating searchable index of all skills..."
+
+          python skills/core/librarian-indexer/index-all-skills.py \
+            --skills-dir skills/ \
+            --output skills/INDEX.json \
+            --readme skills/SKILLS_INDEX.md
+
+          echo "✅ Skill indexing complete"
+
+      - name: 💡 Suggest New Skills
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "Analyzing codebase for skill suggestions..."
+
+          python skills/core/librarian-indexer/suggest-skills.py \
+            --repo . \
+            --output skills/suggestions.json \
+            --min-complexity 8 \
+            --min-changes 3 \
+            --days-back 90
+
+          echo "✅ Skill suggestions generated"
+
+          # Display top 5 suggestions
+          echo ""
+          echo "📊 Top 5 Skill Suggestions:"
+          python -c "
+import json
+with open('skills/suggestions.json') as f:
+    data = json.load(f)
+    for i, s in enumerate(data['suggestions'][:5], 1):
+        print(f\"{i}. {s['skill_name']} (Priority: {s['priority_score']:.1f})\")
+        print(f\"   Reasons: {', '.join(s['reasons'])}\")
+" || echo "No suggestions available"
+
+      - name: 📊 Generate Skill Statistics
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "Generating skill statistics..."
+
+          TOTAL_SKILLS=$(find skills -name "SKILL.md" -o -name "*-SKILL.md" | wc -l)
+          GENERATED_SKILLS=$(find skills/generated -name "*-SKILL.md" 2>/dev/null | wc -l || echo "0")
+          CORE_SKILLS=$(find skills/core -name "SKILL.md" 2>/dev/null | wc -l || echo "0")
+          DOMAIN_SKILLS=$(find skills/domain -name "SKILL.md" 2>/dev/null | wc -l || echo "0")
+
+          echo "📈 Skill Library Statistics:"
+          echo "  Total Skills: $TOTAL_SKILLS"
+          echo "  Core Skills: $CORE_SKILLS"
+          echo "  Domain Skills: $DOMAIN_SKILLS"
+          echo "  Auto-Generated: $GENERATED_SKILLS"
+          echo "  Changed Files: ${{ steps.changed-files.outputs.changed_count }}"
+
+          # Save to summary
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## 📚 Skill Library Update
+
+          ### Statistics
+          - **Total Skills:** $TOTAL_SKILLS
+          - **Core Skills:** $CORE_SKILLS
+          - **Domain Skills:** $DOMAIN_SKILLS
+          - **Auto-Generated:** $GENERATED_SKILLS
+          - **Files Processed:** ${{ steps.changed-files.outputs.changed_count }}
+
+          ### Changes
+          \`\`\`
+          $(git diff --stat skills/)
+          \`\`\`
+          EOF
+
+      - name: 🔍 Check for Skill Changes
+        id: check-changes
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          if [ -n "$(git status --porcelain skills/)" ]; then
+            echo "skills_changed=true" >> $GITHUB_OUTPUT
+            echo "Skills have been updated"
+          else
+            echo "skills_changed=false" >> $GITHUB_OUTPUT
+            echo "No skill changes detected"
+          fi
+
+      - name: 💾 Commit Updated Skills
+        if: steps.check-changes.outputs.skills_changed == 'true'
+        run: |
+          git config user.name "Librarian Bot"
+          git config user.email "bot@insightpulseai.net"
+
+          # Stage all skill changes
+          git add skills/
+
+          # Create commit message
+          CHANGED_COUNT="${{ steps.changed-files.outputs.changed_count }}"
+          COMMIT_MSG="chore: auto-update skills from code changes
+
+- Processed $CHANGED_COUNT Python file(s)
+- Generated/updated skills in skills/generated/
+- Updated skills index (INDEX.json, SKILLS_INDEX.md)
+- Updated skill suggestions (suggestions.json)
+
+Generated by: librarian-indexer v1.0.0
+Workflow: ${{ github.workflow }}
+Run: ${{ github.run_number }}
+[skip ci]"
+
+          git commit -m "$COMMIT_MSG"
+
+          echo "✅ Skills committed"
+
+      - name: 🚀 Push Changes
+        if: steps.check-changes.outputs.skills_changed == 'true'
+        run: |
+          # Retry logic for network issues
+          for i in {1..3}; do
+            if git push; then
+              echo "✅ Successfully pushed skill updates"
+              break
+            else
+              if [ $i -lt 3 ]; then
+                echo "⚠️  Push failed, retrying in $((2**i)) seconds..."
+                sleep $((2**i))
+              else
+                echo "❌ Failed to push after 3 attempts"
+                exit 1
+              fi
+            fi
+          done
+
+      - name: 📊 Post Summary
+        if: steps.changed-files.outputs.has_changes == 'true'
+        run: |
+          echo "### ✅ Skill Update Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.check-changes.outputs.skills_changed }}" == "true" ]; then
+            echo "Skills were successfully updated and committed." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**Next Steps:**" >> $GITHUB_STEP_SUMMARY
+            echo "1. Review generated skills in \`skills/generated/\`" >> $GITHUB_STEP_SUMMARY
+            echo "2. Check \`skills/suggestions.json\` for high-priority skill recommendations" >> $GITHUB_STEP_SUMMARY
+            echo "3. Enhance auto-generated skills with domain-specific knowledge" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "No skill changes were necessary." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 📝 Create Issue for High-Priority Suggestions (Optional)
+        if: steps.changed-files.outputs.has_changes == 'true'
+        continue-on-error: true
+        run: |
+          # Check if there are high-priority suggestions (score > 50)
+          HIGH_PRIORITY=$(python -c "
+import json
+try:
+    with open('skills/suggestions.json') as f:
+        data = json.load(f)
+        high = [s for s in data['suggestions'] if s['priority_score'] > 50]
+        if high:
+            print(f'{len(high)} high-priority skill(s) recommended')
+        else:
+            print('0')
+except:
+    print('0')
+" || echo "0")
+
+          if [ "$HIGH_PRIORITY" != "0" ] && [ "$HIGH_PRIORITY" != "" ]; then
+            echo "Found high-priority skill suggestions: $HIGH_PRIORITY"
+            echo "Consider creating a GitHub issue to track these suggestions"
+            # Uncomment below to auto-create issues:
+            # gh issue create --title "Review High-Priority Skill Suggestions" \
+            #   --body "$(cat skills/suggestions.json)" \
+            #   --label "skills,enhancement"
+          fi
+
+  notify-on-failure:
+    name: Notify on Failure
+    runs-on: ubuntu-latest
+    needs: update-skills
+    if: failure()
+    steps:
+      - name: 📧 Send Failure Notification
+        run: |
+          echo "⚠️ Skill auto-update workflow failed"
+          echo "Please review the workflow logs and fix any issues"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Run: ${{ github.run_number }}"
+          echo "Commit: ${{ github.sha }}"
