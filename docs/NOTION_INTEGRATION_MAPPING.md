@@ -2,12 +2,33 @@
 
 Complete mapping guide for syncing Notion workspace databases with the InsightPulse SaaS Core Schema.
 
+## 🎯 Multi-Tenant Architecture
+
+**IMPORTANT:** This integration uses a **single Notion workspace** for the entire TBWA Finance SSC tenant:
+
+```
+TBWA Finance SSC (1 Tenant)
+  └── 1 Notion Integration (tenant-level)
+      └── 5 Shared Notion Databases
+          ├── Month-End Tasks (all 8 agencies)
+          ├── BIR Filing Schedule (all 8 agencies)
+          ├── Compliance Checklist (all 8 agencies)
+          ├── Team Directory (TBWA-wide)
+          └── Agency Calendar (TBWA-wide)
+```
+
+**Architecture:**
+- ✅ 1 Tenant = TBWA Finance SSC (the customer)
+- ✅ 8 Projects = Agencies (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)
+- ✅ 1 Notion Integration = Single workspace for all agencies
+- ✅ Shared databases with "Agency" property to filter data
+
 ## 📋 Overview
 
 ### Integration Architecture
 
 ```
-Notion Workspace (Source of Truth)
+Notion Workspace (TBWA Finance SSC)
   ↓ [Webhooks / API Polling]
 integration_events (Queue)
   ↓ [Event Processor]
@@ -32,10 +53,13 @@ Notion Database (Two-way Sync)
 
 ### Notion Database Structure
 
+**Note:** ONE database for ALL agencies (not per-agency databases)
+
 ```yaml
-Database Name: "[AGENCY] Month-End Tasks"
+Database Name: "TBWA Finance SSC - Month-End Tasks"
 Properties:
   - Task Name (Title)
+  - Agency (Select: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB) ← Filter by agency
   - Status (Select: Not Started, In Progress, Blocked, Completed)
   - Owner (Person)
   - Due Date (Date)
@@ -50,13 +74,13 @@ Properties:
 
 ### Mapping to Schema
 
-#### Workflow Definition (Created Once per Agency)
+#### Workflow Definition (Created Once per Project, All Under TBWA Tenant)
 
 ```sql
-INSERT INTO workflows (tenant_id, name, definition, metadata)
+INSERT INTO workflows (tenant_id, name, definition)
 VALUES (
-  '<rim_tenant_id>',
-  'RIM Month-End Closing - November 2025',
+  '<tbwa_tenant_id>',  -- ✅ All workflows belong to TBWA tenant
+  'RIM Agency - Month-End Closing',
   jsonb_build_object(
     'trigger_type', 'scheduled',
     'schedule', 'monthly',
@@ -261,8 +285,9 @@ CREATE TRIGGER workflow_run_sync_to_notion
 ### Notion Database Structure
 
 ```yaml
-Database Name: "[AGENCY] BIR Filing Schedule"
+Database Name: "TBWA Finance SSC - BIR Filing Schedule"
 Properties:
+  - Agency (Select: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB) ← Filter by agency
   - Form Type (Select: 1601-C, 1702-RT, 2550Q, 2550M, ATP)
   - Period (Formula: "2025-Q3" or "2025-11")
   - Filing Deadline (Date)
@@ -380,8 +405,9 @@ VALUES (
 ### Notion Database Structure
 
 ```yaml
-Database Name: "[AGENCY] Compliance Checklist"
+Database Name: "TBWA Finance SSC - Compliance Checklist"
 Properties:
+  - Agency (Select: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB) ← Filter by agency
   - Item (Title - e.g., "ATP Validation", "Bank Reconciliation")
   - Type (Select: BIR, Audit, Internal Control, Documentation)
   - Frequency (Select: Daily, Weekly, Monthly, Quarterly, Annual)
@@ -627,9 +653,9 @@ WHERE t.slug = ANY(ARRAY['rim', 'ckvc', 'bom', 'jpal', 'jli', 'jap', 'las', 'rmq
 ### Step 2: Store Integration Credentials
 
 ```sql
--- Create Notion integration secret
+-- ✅ Create ONE Notion integration secret for TBWA tenant (not per-agency!)
 INSERT INTO secrets (tenant_id, name, latest_version)
-VALUES ('<rim_tenant_id>', 'notion-integration-token', 1);
+VALUES ('<tbwa_tenant_id>', 'notion-integration-token', 1);
 
 INSERT INTO secret_versions (secret_id, version, format, ciphertext)
 SELECT
@@ -639,7 +665,7 @@ SELECT
   pgp_sym_encrypt('secret_YOUR_NOTION_INTEGRATION_TOKEN', current_setting('app.settings.encryption_key'))
 FROM secrets s
 WHERE s.name = 'notion-integration-token'
-  AND s.tenant_id = '<rim_tenant_id>';
+  AND s.tenant_id = '<tbwa_tenant_id>';
 ```
 
 ### Step 3: Create Notion Database Sync Function
