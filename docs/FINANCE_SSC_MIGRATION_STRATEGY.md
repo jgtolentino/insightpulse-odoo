@@ -51,48 +51,65 @@ psql $POSTGRES_URL -c "\dt public.*" | grep -E "tenants|projects|workflows"
 
 #### Step 2: Seed TBWA Finance SSC Data
 ```bash
-# Seed agencies, users, integrations
+# Seed tenant, projects (agencies), users, integrations
 psql $POSTGRES_URL -f scripts/seed_agencies.sql
 ```
 
 **Expected Output:**
 ```
-✅ Tenants created: 8 (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)
-✅ Integrations created: 8 (Notion per agency)
-✅ Projects created: 8 (Month-End Closing per agency)
-✅ Dashboards created: 1 (Finance SSC Consolidated)
+✅ 1 Tenant: TBWA Finance SSC
+✅ 8 Projects: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB (under TBWA tenant)
+✅ 2 Admin Users: jgtolentino_rn@yahoo.com, support@insightpulseai.com
+✅ 1 Notion Integration: TBWA-wide workspace (not per-agency!)
+✅ 1 Billing Account: Single subscription for TBWA
+✅ 1 Finance Team: Cross-agency operations
+✅ 8 Month-End Workflows: One per project
+✅ 1 Consolidated Dashboard: All agencies visible
 ```
 
-#### Step 3: Create Finance SSC Admin User
+#### Step 3: Create Finance SSC Admin Users
 ```sql
 -- Run this in psql or Supabase SQL Editor
+
+-- Admin User 1: Jake Tolentino
 INSERT INTO users (email, full_name, metadata) VALUES
   (
-    'finance.ssc@insightpulseai.net',
-    'Finance SSC Administrator',
+    'jgtolentino_rn@yahoo.com',
+    'Jake Tolentino',
     jsonb_build_object(
       'department', 'Finance Shared Service Center',
-      'role', 'SSC Admin',
-      'certifications', jsonb_build_array('CPA', 'BIR Accredited')
+      'role', 'SSC Admin'
     )
   )
 RETURNING id;
 
--- Note the returned user ID
--- Add to all 8 agency tenants
+-- Admin User 2: InsightPulse Support
+INSERT INTO users (email, full_name, metadata) VALUES
+  (
+    'support@insightpulseai.com',
+    'InsightPulse Support',
+    jsonb_build_object(
+      'department', 'Finance Shared Service Center',
+      'role', 'Technical Support'
+    )
+  )
+RETURNING id;
+
+-- Note the returned user IDs
+-- ✅ Add both to TBWA tenant (not per-agency!)
 INSERT INTO org_memberships (tenant_id, user_id, is_owner, status)
 SELECT t.id, '<user_id_from_above>', true, 'active'
 FROM tenants t
-WHERE t.slug IN ('rim', 'ckvc', 'bom', 'jpal', 'jli', 'jap', 'las', 'rmqb');
+WHERE t.slug = 'tbwa-finance-ssc';
 
--- Assign Admin role
+-- Assign Admin role (single tenant, not 8!)
 INSERT INTO user_roles (user_id, tenant_id, role_id)
 SELECT
   '<user_id>',
   t.id,
   (SELECT id FROM roles WHERE name = 'Admin' AND scope = 'org')
 FROM tenants t
-WHERE t.slug IN ('rim', 'ckvc', 'bom', 'jpal', 'jli', 'jap', 'las', 'rmqb');
+WHERE t.slug = 'tbwa-finance-ssc';
 ```
 
 ### Day 3-4: Configure Integrations
@@ -107,12 +124,15 @@ WHERE t.slug IN ('rim', 'ckvc', 'bom', 'jpal', 'jli', 'jap', 'las', 'rmqb');
 
 #### Step 2: Share Notion Databases with Integration
 ```
-Share these databases with your Notion integration:
-- [RIM] Month-End Tasks
-- [RIM] BIR Filing Schedule
-- [CKVC] Month-End Tasks
-- [CKVC] BIR Filing Schedule
-- ... (repeat for all 8 agencies)
+✅ Share these TBWA-wide databases with your Notion integration:
+- TBWA Finance SSC - Month-End Tasks (includes all 8 agencies)
+- TBWA Finance SSC - BIR Filing Schedule (includes all 8 agencies)
+- TBWA Finance SSC - Compliance Checklist (includes all 8 agencies)
+- TBWA Finance SSC - Team Directory (TBWA-wide)
+- TBWA Finance SSC - Agency Calendar (TBWA-wide)
+
+Note: These are SHARED databases, not per-agency databases!
+Each database has an "Agency" property to filter data by agency.
 ```
 
 #### Step 3: Get Notion Database IDs
@@ -124,46 +144,59 @@ Share these databases with your Notion integration:
 
 #### Step 4: Store Integration Secrets
 ```sql
--- For each agency, store Notion integration token
+-- ✅ Store ONE Notion integration token for TBWA tenant (not 8!)
 DO $$
 DECLARE
-  agency_tenant_id UUID;
-  agency_code TEXT;
+  tbwa_tenant_id UUID;
 BEGIN
-  FOR agency_code IN SELECT unnest(ARRAY['rim', 'ckvc', 'bom', 'jpal', 'jli', 'jap', 'las', 'rmqb'])
-  LOOP
-    SELECT id INTO agency_tenant_id FROM tenants WHERE slug = agency_code;
+  -- Get TBWA tenant ID
+  SELECT id INTO tbwa_tenant_id FROM tenants WHERE slug = 'tbwa-finance-ssc';
 
-    -- Create secret
-    INSERT INTO secrets (tenant_id, name, latest_version)
-    VALUES (agency_tenant_id, 'notion-integration-token', 1);
+  -- Create secret
+  INSERT INTO secrets (tenant_id, name, latest_version)
+  VALUES (tbwa_tenant_id, 'notion-integration-token', 1);
 
-    -- Store encrypted token
-    INSERT INTO secret_versions (secret_id, version, format, ciphertext)
-    SELECT
-      s.id,
-      1,
-      'opaque',
-      pgp_sym_encrypt('secret_YOUR_NOTION_TOKEN', 'encryption_key_here') -- Replace with actual token
-    FROM secrets s
-    WHERE s.name = 'notion-integration-token' AND s.tenant_id = agency_tenant_id;
-  END LOOP;
+  -- Store encrypted token
+  INSERT INTO secret_versions (secret_id, version, format, ciphertext)
+  SELECT
+    s.id,
+    1,
+    'opaque',
+    pgp_sym_encrypt('secret_YOUR_NOTION_TOKEN', 'encryption_key_here') -- Replace with actual token
+  FROM secrets s
+  WHERE s.name = 'notion-integration-token' AND s.tenant_id = tbwa_tenant_id;
+
+  RAISE NOTICE 'Stored Notion integration token for TBWA tenant';
 END $$;
 ```
 
-#### Step 5: Update Integration Configs
+#### Step 5: Update Integration Config
 ```sql
--- Update each integration with actual Notion database IDs
+-- ✅ Update THE integration (singular!) with actual Notion database IDs
 UPDATE integrations
 SET config = jsonb_set(
-  config,
-  '{database_ids}',
-  jsonb_build_object(
-    'month_end_tasks', 'YOUR_NOTION_DB_ID_HERE',
-    'bir_filing_schedule', 'YOUR_NOTION_DB_ID_HERE'
-  )
+  jsonb_set(
+    jsonb_set(
+      jsonb_set(
+        jsonb_set(
+          config,
+          '{databases,month_end_tasks}',
+          '"YOUR_MONTH_END_DB_ID"'::jsonb
+        ),
+        '{databases,bir_filing_schedule}',
+        '"YOUR_BIR_FILING_DB_ID"'::jsonb
+      ),
+      '{databases,compliance_checklist}',
+      '"YOUR_COMPLIANCE_DB_ID"'::jsonb
+    ),
+    '{databases,team_directory}',
+    '"YOUR_TEAM_DB_ID"'::jsonb
+  ),
+  '{databases,agency_calendar}',
+  '"YOUR_CALENDAR_DB_ID"'::jsonb
 )
-WHERE type_id = (SELECT id FROM integration_types WHERE provider = 'notion');
+WHERE tenant_id = (SELECT id FROM tenants WHERE slug = 'tbwa-finance-ssc')
+  AND type_id = (SELECT id FROM integration_types WHERE provider = 'notion');
 ```
 
 ### Day 5-7: Deploy Edge Functions
