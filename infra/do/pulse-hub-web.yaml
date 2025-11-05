@@ -81,10 +81,10 @@ static_sites:
     value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZHR3a3R4ZGFsY2ZpZ3plcXJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA2NDQwMzUsImV4cCI6MjA3NjIyMDAzNX0.IHBJ0cNTMKJvRozljqaEqWph_gC0zlW2Td5Xl_GENs4
   - key: VITE_NEXTAUTH_URL
     scope: BUILD_TIME
-    value: https://pulse-hub-web-an645.ondigitalocean.app
+    value: https://mcp.insightpulseai.net
   - key: VITE_OAUTH_REDIRECT_URI
     scope: BUILD_TIME
-    value: https://pulse-hub-web-an645.ondigitalocean.app/callback
+    value: https://mcp.insightpulseai.net/callback
   - key: NEXTAUTH_SECRET
     scope: BUILD_TIME
     type: SECRET
