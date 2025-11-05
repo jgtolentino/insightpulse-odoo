@@ -33,7 +33,7 @@ export interface GitHubConnection {
   isConnected: boolean;
   accessToken: string | null;
   user: GitHubUser | null;
-  selectedScopes: GitHubScope[];
+  installationId: string | null;
 }
 
 export interface AIIntegrationConfig {

@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@octokit/app": "^16.1.2",
+    "@octokit/auth-app": "^8.1.2",
+    "@octokit/request": "^10.0.6",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^6.20.0"
@@ -20,15 +23,15 @@
     "@types/react": "^19.1.16",
     "@types/react-dom": "^19.1.9",
     "@vitejs/plugin-react": "^5.0.4",
+    "autoprefixer": "^10.4.16",
     "eslint": "^9.36.0",
     "eslint-plugin-react-hooks": "^5.2.0",
     "eslint-plugin-react-refresh": "^0.4.22",
     "globals": "^16.4.0",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.45.0",
-    "vite": "^7.1.7",
-    "tailwindcss": "^3.3.6",
-    "postcss": "^8.4.32",
-    "autoprefixer": "^10.4.16"
+    "vite": "^7.1.7"
   }
 }
