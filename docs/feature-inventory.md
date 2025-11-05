@@ -1,11 +1,12 @@
 # Feature Inventory
-Generated: 2025-11-04T07:58:48.894806+00:00Z
+Generated: 2025-11-05T09:49:23.614229+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
 | apps_admin_enhancements | Custom | 19.0.251026.1 | unknown | Enhanced Apps management with source tracking and accessibility | base | addons/custom/apps_admin_enhancements |
 | github_integration | Custom | 1.0.0 | unknown | GitHub webhook and OAuth integration via pulser-hub app | base,project,web | addons/insightpulse/ops/github_integration |
 | insightpulse_app_sources | Custom | 19.0.1.0.0 | unknown | Display addon sources (OCA, Custom, Community) in Apps list | base | addons/insightpulse/insightpulse_app_sources |
+| ipai_agent | Custom | 1.0.0 | unknown | AI-powered chatbot for Odoo Discuss with automation capabilities | base,mail,hr_expense,account | addons/ipai_agent |
 | ipai_approvals | Custom | 19.0.1.0.0 | unknown | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) | ipai_core,purchase,hr_expense,account,queue_job | addons/custom/ipai_approvals |
 | ipai_ariba_cxml | Custom | 19.0.1.0.0 | unknown | SAP Ariba cXML (PO/Invoice) → purchase/account.move | base,purchase,account | odoo_addons/ipai_ariba_cxml |
 | ipai_clarity_ppm_sync | Custom | 19.0.1.0.0 | unknown | Clarity PPM projects/tasks/timesheets → Odoo | base,project,hr_timesheet | odoo_addons/ipai_clarity_ppm_sync |
@@ -29,6 +30,7 @@ Generated: 2025-11-04T07:58:48.894806+00:00Z
 | pulser_hub_sync | Custom | 19.0.1.0.0 | unknown | GitHub App integration for Pulser Hub webhook and OAuth | base,web,queue_job | addons/custom/pulser_hub_sync |
 | pulser_webhook | Custom | 19.0.1.0.2 | unknown | Triggers GitHub repository_dispatch (git-ops) from Odoo | base,project,sale_management,account,hr_expense,purchase | custom_addons/pulser_webhook |
 | security_hardening | Custom | 19.0.251026.1 | unknown | Security hardening features for Odoo deployment | base,web | addons/custom/security_hardening |
+| slack_bridge | Custom | 19.0.1.0.0 | unknown | Slack integration for InsightPulse AI agencies | base,mail | addons/slack_bridge |
 | superset_connector | Custom | 19.0.251027.1 | unknown | Apache Superset integration for Odoo | base,web | addons/custom/superset_connector |
 | superset_menu | Custom | 19.0.1.0.0 | unknown | Replace native Odoo dashboards with Superset BI analytics | base,web | addons/custom/superset_menu |
 | tableau_connector | Custom | 19.0.251026.1 | unknown | Tableau analytics integration for Odoo | base,web | addons/custom/tableau_connector |

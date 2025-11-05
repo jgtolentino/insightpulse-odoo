@@ -1,0 +1,345 @@
+name: 🤖 Auto-Resolve Merge Conflicts
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+  # Manual trigger for existing PRs
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to resolve'
+        required: true
+        type: number
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  detect-conflicts:
+    name: 🔍 Detect Conflicts
+    runs-on: ubuntu-latest
+    outputs:
+      has_conflicts: ${{ steps.check.outputs.conflicts }}
+      conflicted_files: ${{ steps.check.outputs.files }}
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check for conflicts
+        id: check
+        run: |
+          # Get base branch
+          BASE_BRANCH="${{ github.event.pull_request.base.ref || github.base_ref || 'main' }}"
+          echo "Base branch: $BASE_BRANCH"
+
+          git fetch origin "$BASE_BRANCH"
+
+          # Try to merge and detect conflicts
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          if git merge --no-commit --no-ff "origin/$BASE_BRANCH" 2>&1 | tee merge_output.txt; then
+            echo "conflicts=false" >> $GITHUB_OUTPUT
+            echo "✅ No conflicts detected"
+          else
+            if grep -q "CONFLICT" merge_output.txt || git diff --name-only --diff-filter=U | grep -q .; then
+              echo "conflicts=true" >> $GITHUB_OUTPUT
+
+              # Get conflicted files
+              CONFLICTED=$(git diff --name-only --diff-filter=U | tr '\n' ',' | sed 's/,$//')
+              echo "files=$CONFLICTED" >> $GITHUB_OUTPUT
+
+              echo "⚠️  Conflicts detected in: $CONFLICTED"
+            else
+              echo "conflicts=false" >> $GITHUB_OUTPUT
+              echo "✅ No conflicts detected"
+            fi
+          fi
+
+          # Abort the merge
+          git merge --abort 2>/dev/null || true
+
+  auto-resolve:
+    name: 🤖 Auto-Resolve Conflicts
+    needs: detect-conflicts
+    if: needs.detect-conflicts.outputs.has_conflicts == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install anthropic pyyaml gitpython requests
+
+      - name: Fetch base branch
+        run: |
+          BASE_BRANCH="${{ github.event.pull_request.base.ref || github.base_ref || 'main' }}"
+          git fetch origin "$BASE_BRANCH"
+          echo "BASE_BRANCH=$BASE_BRANCH" >> $GITHUB_ENV
+
+      - name: Try automatic merge strategies
+        id: auto_merge
+        continue-on-error: true
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Attempting merge with different strategies..."
+
+          # Strategy 1: Patience (good for text files)
+          if git merge -X patience "origin/$BASE_BRANCH" --no-commit --no-ff; then
+            echo "strategy=patience" >> $GITHUB_OUTPUT
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ Success with patience strategy"
+            exit 0
+          fi
+          git merge --abort 2>/dev/null || true
+
+          # Strategy 2: Recursive with theirs preference for lock files
+          git merge --no-commit --no-ff "origin/$BASE_BRANCH" || true
+
+          # Auto-accept theirs for lock files
+          for lockfile in package-lock.json yarn.lock Pipfile.lock poetry.lock; do
+            if git diff --name-only --diff-filter=U | grep -q "$lockfile"; then
+              echo "Auto-accepting theirs for $lockfile"
+              git checkout --theirs "$lockfile"
+              git add "$lockfile"
+            fi
+          done
+
+          # Check if only lock files had conflicts
+          if ! git diff --name-only --diff-filter=U | grep -q .; then
+            echo "strategy=lock-files-only" >> $GITHUB_OUTPUT
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "✅ Success - only lock files had conflicts"
+            exit 0
+          fi
+
+          git merge --abort 2>/dev/null || true
+          echo "success=false" >> $GITHUB_OUTPUT
+
+      - name: AI-Powered Resolution
+        if: steps.auto_merge.outputs.success != 'true'
+        id: ai_resolve
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Attempt merge to create conflict markers
+          git merge --no-commit --no-ff "origin/$BASE_BRANCH" || true
+
+          # Run AI resolver
+          python .github/scripts/ai-conflict-resolver.py \
+            --base-ref "origin/$BASE_BRANCH" \
+            --head-ref HEAD \
+            --max-auto-resolve 10
+
+      - name: Validate resolution
+        if: success()
+        run: |
+          echo "🧪 Validating resolved files..."
+
+          VALIDATION_FAILED=false
+
+          # YAML validation
+          for file in $(git diff --name-only HEAD | grep -E '\.(yml|yaml)$' || true); do
+            if [ -f "$file" ]; then
+              echo "Validating YAML: $file"
+              python -c "import yaml; yaml.safe_load(open('$file'))" || {
+                echo "❌ YAML validation failed: $file"
+                VALIDATION_FAILED=true
+              }
+            fi
+          done
+
+          # Python syntax check
+          for file in $(git diff --name-only HEAD | grep '\.py$' || true); do
+            if [ -f "$file" ]; then
+              echo "Validating Python: $file"
+              python -m py_compile "$file" || {
+                echo "❌ Python validation failed: $file"
+                VALIDATION_FAILED=true
+              }
+            fi
+          done
+
+          # JSON validation
+          for file in $(git diff --name-only HEAD | grep '\.json$' || true); do
+            if [ -f "$file" ]; then
+              echo "Validating JSON: $file"
+              python -c "import json; json.load(open('$file'))" || {
+                echo "❌ JSON validation failed: $file"
+                VALIDATION_FAILED=true
+              }
+            fi
+          done
+
+          if [ "$VALIDATION_FAILED" = true ]; then
+            echo "❌ Validation failed"
+            exit 1
+          fi
+
+          echo "✅ All validations passed"
+
+      - name: Commit resolution
+        if: success()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Check if there are changes to commit
+          if git diff --cached --quiet && git diff --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+
+          git add -A
+
+          STRATEGY="${{ steps.auto_merge.outputs.strategy || 'ai-powered' }}"
+
+          # Create commit message
+          {
+            echo "Auto-resolved merge conflicts"
+            echo ""
+            echo "Strategy: $STRATEGY"
+            echo "Base: $BASE_BRANCH"
+            echo "Resolved by: GitHub Actions"
+          } > /tmp/commit-msg.txt
+
+          git commit -F /tmp/commit-msg.txt
+
+          git push origin "${{ github.event.pull_request.head.ref || github.ref_name }}"
+
+      - name: Comment on PR (Success)
+        if: success() && github.event.pull_request.number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const conflictedFiles = '${{ needs.detect-conflicts.outputs.conflicted_files }}'.split(',');
+            const strategy = '${{ steps.auto_merge.outputs.strategy }}' || 'ai-powered';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ✅ Merge conflicts automatically resolved!\n\n' +
+                '**Strategy used:** `' + strategy + '`\n\n' +
+                '**Conflicted files:**\n' +
+                conflictedFiles.map(f => '- `' + f + '`').join('\n') + '\n\n' +
+                '**Validation:**\n' +
+                '- ✅ YAML syntax check passed\n' +
+                '- ✅ Python syntax check passed\n' +
+                '- ✅ JSON syntax check passed\n\n' +
+                '**Next steps:**\n' +
+                '1. Review the auto-resolution changes\n' +
+                '2. Run any additional tests if needed\n' +
+                '3. Approve and merge when ready\n\n' +
+                '<details>\n' +
+                '<summary>🤖 Auto-resolution details</summary>\n\n' +
+                '- **Base branch:** `${{ env.BASE_BRANCH }}`\n' +
+                '- **Head branch:** `${{ github.event.pull_request.head.ref }}`\n' +
+                '- **Strategy:** ' + (strategy === 'ai-powered' ? 'AI-powered conflict resolution using Claude' : 'Automatic merge strategy') + '\n' +
+                '- **Timestamp:** ' + new Date().toISOString() + '\n\n' +
+                '</details>'
+            });
+
+            // Add success label
+            try {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['auto-resolved', 'conflicts-resolved']
+              });
+            } catch (error) {
+              console.log('Could not add labels:', error.message);
+            }
+
+      - name: Comment on PR (Failure)
+        if: failure() && github.event.pull_request.number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const conflictedFiles = '${{ needs.detect-conflicts.outputs.conflicted_files }}'.split(',');
+            const headRef = '${{ github.event.pull_request.head.ref }}';
+            const baseBranch = '${{ env.BASE_BRANCH }}';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ⚠️ Unable to automatically resolve conflicts\n\n' +
+                'These conflicts require human review:\n\n' +
+                conflictedFiles.map(f => '- `' + f + '`').join('\n') + '\n\n' +
+                '**Next steps:**\n\n' +
+                '1. **Checkout the branch locally:**\n' +
+                '   ```bash\n' +
+                '   git checkout ' + headRef + '\n' +
+                '   git pull origin ' + headRef + '\n' +
+                '   ```\n\n' +
+                '2. **Merge the base branch:**\n' +
+                '   ```bash\n' +
+                '   git fetch origin ' + baseBranch + '\n' +
+                '   git merge origin/' + baseBranch + '\n' +
+                '   ```\n\n' +
+                '3. **Resolve conflicts manually or use the helper script:**\n' +
+                '   ```bash\n' +
+                '   ./scripts/resolve-conflicts.sh ' + headRef + '\n' +
+                '   ```\n\n' +
+                '4. **Push the resolved changes:**\n' +
+                '   ```bash\n' +
+                '   git push origin ' + headRef + '\n' +
+                '   ```\n\n' +
+                '**Need help?** Check the [conflict resolution guide](./docs/CONFLICT_RESOLUTION.md) or contact the team.'
+            });
+
+            // Add needs-manual-resolution label
+            try {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['needs-manual-resolution', 'conflicts']
+              });
+            } catch (error) {
+              console.log('Could not add labels:', error.message);
+            }
+
+  no-conflicts:
+    name: ✅ No Conflicts
+    needs: detect-conflicts
+    if: needs.detect-conflicts.outputs.has_conflicts == 'false'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment on PR
+        if: github.event.pull_request.number
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const baseBranch = '${{ github.event.pull_request.base.ref }}' || 'main';
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ✅ No merge conflicts detected\n\n' +
+                'This PR can be merged cleanly into the base branch.\n\n' +
+                '**Base branch:** `' + baseBranch + '`\n' +
+                '**Status:** Ready for review'
+            });

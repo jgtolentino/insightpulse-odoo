@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- AI Agent Support Channel (Public) -->
+        <record id="channel_agent_support" model="mail.channel">
+            <field name="name">AI Agent Support</field>
+            <field name="channel_type">channel</field>
+            <field name="description">Get help from the AI agent. Mention @ipai-bot to ask questions.</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- RIM Agency Channel -->
+        <record id="channel_rim_finance" model="mail.channel">
+            <field name="name">RIM - Finance</field>
+            <field name="channel_type">channel</field>
+            <field name="description">Runway Innovation Marketing - Finance Operations</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- CKVC Agency Channel -->
+        <record id="channel_ckvc_finance" model="mail.channel">
+            <field name="name">CKVC - Finance</field>
+            <field name="channel_type">channel</field>
+            <field name="description">CK Venture Capital - Finance Operations</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- BOM Agency Channel -->
+        <record id="channel_bom_finance" model="mail.channel">
+            <field name="name">BOM - Finance</field>
+            <field name="channel_type">channel</field>
+            <field name="description">Business Operations Management - Finance Operations</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- JPAL Agency Channel -->
+        <record id="channel_jpal_finance" model="mail.channel">
+            <field name="name">JPAL - Finance</field>
+            <field name="channel_type">channel</field>
+            <field name="description">J-PAL Southeast Asia - Finance Operations</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- Deployments Channel -->
+        <record id="channel_deployments" model="mail.channel">
+            <field name="name">Deployments</field>
+            <field name="channel_type">channel</field>
+            <field name="description">Deployment notifications and management</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+
+        <!-- BIR Compliance Channel -->
+        <record id="channel_bir_compliance" model="mail.channel">
+            <field name="name">BIR Compliance</field>
+            <field name="channel_type">channel</field>
+            <field name="description">Philippine BIR tax forms and compliance</field>
+            <field name="is_agent_enabled">True</field>
+        </record>
+    </data>
+</odoo>

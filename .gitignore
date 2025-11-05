@@ -39,3 +39,87 @@ Thumbs.db
 !odoo19-bundle.tar.gz  # Allow specific deployment bundle
 # Note: Test data zips in addons are already tracked and will remain so
 
+# ══════════════════════════════════════════════════════════════
+# ENTERPRISE STRUCTURE - Wave 4
+# ══════════════════════════════════════════════════════════════
+
+# Environment files (keep .example files)
+config/.env.dev
+config/.env.staging
+config/.env.production
+*.env
+!.env.example
+
+# Backups directory (keep .gitkeep)
+backups/*
+!backups/.gitkeep
+
+# Logs
+logs/
+*.log
+
+# Data files (keep templates and examples)
+data/demo/*.sql
+data/migration/*.sql
+
+# Docker volumes
+volumes/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+
+# Test artifacts
+.pytest_cache/
+.tox/
+
+# Third-party service data (generated at runtime)
+third_party/*/data/
+third_party/*/logs/
+
+# Infrastructure secrets
+infrastructure/terraform/*.tfstate
+infrastructure/terraform/*.tfstate.backup
+infrastructure/terraform/.terraform/
+infrastructure/ansible/inventory/production.yml
+infrastructure/ansible/inventory/staging.yml
+
+# SSL certificates (keep examples/templates)
+infrastructure/docker/nginx/ssl/*.pem
+infrastructure/docker/nginx/ssl/*.key
+infrastructure/docker/nginx/ssl/*.crt
+
+# Tool output
+tools/gap-analyzer/output/
+tools/saas-feature-tracker/*.json
+
+# Node modules (for any JavaScript tooling)
+node_modules/
+
+# Mac OS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+.nfs*
+

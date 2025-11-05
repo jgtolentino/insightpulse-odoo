@@ -1,0 +1,269 @@
+{
+  "dashboard_title": "OCR Expense Processing",
+  "description": "Monitor OCR accuracy and expense automation pipeline",
+  "css": "",
+  "slug": "ocr-expense",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for automation monitoring",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-kpis",
+        "ROW-distribution-volume",
+        "ROW-failures"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 🤖 OCR Expense Processing\n**PaddleOCR-VL automation monitoring** | Real-time processing stats"
+      }
+    },
+    "ROW-kpis": {
+      "type": "ROW",
+      "id": "ROW-kpis",
+      "children": ["BIG_NUMBER-processed", "BIG_NUMBER-confidence", "BIG_NUMBER-auto-approval", "BIG_NUMBER-processing-time"]
+    },
+    "BIG_NUMBER-processed": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-processed",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 1}
+    },
+    "BIG_NUMBER-confidence": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-confidence",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 2}
+    },
+    "BIG_NUMBER-auto-approval": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-auto-approval",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 3}
+    },
+    "BIG_NUMBER-processing-time": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-processing-time",
+      "children": [],
+      "meta": {"width": 3, "height": 4, "chartId": 4}
+    },
+    "ROW-distribution-volume": {
+      "type": "ROW",
+      "id": "ROW-distribution-volume",
+      "children": ["CHART-confidence-distribution", "CHART-daily-volume"]
+    },
+    "CHART-confidence-distribution": {
+      "type": "CHART",
+      "id": "CHART-confidence-distribution",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 5}
+    },
+    "CHART-daily-volume": {
+      "type": "CHART",
+      "id": "CHART-daily-volume",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 6}
+    },
+    "ROW-failures": {
+      "type": "ROW",
+      "id": "ROW-failures",
+      "children": ["CHART-field-failures"]
+    },
+    "CHART-field-failures": {
+      "type": "CHART",
+      "id": "CHART-field-failures",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 7}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-date-range",
+        "name": "Date Range",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "created_at"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "Last 30 days"
+          },
+          "filterState": {"value": "Last 30 days"}
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300
+  },
+  "slices": [
+    {
+      "slice_name": "Processed Today",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "ocr_task",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Count"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "DATE(created_at) = CURRENT_DATE"
+        }],
+        "subheader": "Documents"
+      }
+    },
+    {
+      "slice_name": "Average Confidence",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "ocr_task",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND(AVG(confidence_score), 2)",
+          "label": "Confidence"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "DATE(created_at) = CURRENT_DATE"
+        }],
+        "subheader": "Score",
+        "y_axis_format": ".0%"
+      }
+    },
+    {
+      "slice_name": "Auto-Approval Rate",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "expense_automation",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND((COUNT(*) FILTER (WHERE status='auto_approved')::numeric / COUNT(*)) * 100, 1)",
+          "label": "Auto-Approval"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "DATE(processed_at) = CURRENT_DATE"
+        }],
+        "subheader": "Percentage",
+        "y_axis_format": ".1f%"
+      }
+    },
+    {
+      "slice_name": "Avg Processing Time",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "ocr_task",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND(AVG(EXTRACT(epoch FROM (completed_at - created_at))), 1)",
+          "label": "Seconds"
+        },
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "DATE(created_at) = CURRENT_DATE"
+        }],
+        "subheader": "Seconds",
+        "y_axis_format": ".1f"
+      }
+    },
+    {
+      "slice_name": "OCR Confidence Distribution",
+      "viz_type": "histogram",
+      "datasource_type": "table",
+      "datasource_name": "ocr_task",
+      "params": {
+        "datasource": "5__table",
+        "viz_type": "histogram",
+        "all_columns_x": "confidence_score",
+        "number_format": ".0%",
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "created_at >= CURRENT_DATE - INTERVAL '30 days'"
+        }],
+        "normalized": false,
+        "cumulative": false
+      }
+    },
+    {
+      "slice_name": "Daily OCR Volume",
+      "viz_type": "echarts_area",
+      "datasource_type": "table",
+      "datasource_name": "ocr_task",
+      "params": {
+        "datasource": "6__table",
+        "viz_type": "echarts_area",
+        "x_axis": "created_at",
+        "groupby": ["status"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Count"
+        }],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "created_at >= CURRENT_DATE - INTERVAL '90 days'"
+        }],
+        "time_grain_sqla": "P1D",
+        "stack": true,
+        "show_legend": true
+      }
+    },
+    {
+      "slice_name": "Top Field Extraction Failures",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "ocr_extraction_error",
+      "params": {
+        "datasource": "7__table",
+        "viz_type": "dist_bar",
+        "groupby": ["field_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Failures"
+        }],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "created_at >= CURRENT_DATE - INTERVAL '30 days'"
+        }],
+        "row_limit": 10,
+        "order_bars": true
+      }
+    }
+  ]
+}

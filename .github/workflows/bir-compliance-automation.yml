@@ -1,0 +1,226 @@
+name: BIR Compliance Automation
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # 1st of each month at midnight UTC
+  workflow_dispatch:
+    inputs:
+      month:
+        description: 'Month (1-12)'
+        required: false
+        type: number
+      year:
+        description: 'Year (YYYY)'
+        required: false
+        type: number
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  generate-bir-calendar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet python-dateutil pytz
+
+      - name: Generate BIR compliance calendar
+        run: |
+          python3 << 'PYTHON'
+          import os
+          import json
+          from datetime import datetime, timedelta
+          from dateutil.relativedelta import relativedelta
+          import calendar
+
+          # Get target month/year
+          if os.getenv('INPUT_MONTH') and os.getenv('INPUT_YEAR'):
+              month = int(os.getenv('INPUT_MONTH'))
+              year = int(os.getenv('INPUT_YEAR'))
+          else:
+              # Default to next month
+              today = datetime.now()
+              next_month = today + relativedelta(months=1)
+              month = next_month.month
+              year = next_month.year
+
+          print(f"Generating BIR compliance calendar for {month}/{year}")
+
+          # BIR Form deadlines (day of month)
+          bir_forms = {
+              '1601-C': {
+                  'name': 'Monthly Withholding Tax',
+                  'deadline_day': 10,
+                  'frequency': 'monthly',
+                  'agencies': ['RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB']
+              },
+              '1702-RT': {
+                  'name': 'Annual Income Tax Return',
+                  'deadline_day': 15,
+                  'deadline_month': 4,  # April 15
+                  'frequency': 'annual',
+                  'agencies': ['RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB']
+              },
+              '2550Q': {
+                  'name': 'Quarterly VAT Return',
+                  'deadline_day': 25,
+                  'frequency': 'quarterly',
+                  'months': [4, 7, 10, 1],  # Last month of quarter + 25 days
+                  'agencies': ['RIM', 'CKVC', 'BOM', 'JPAL']
+              },
+              '2307': {
+                  'name': 'Certificate of Creditable Tax Withheld',
+                  'deadline_day': 20,
+                  'frequency': 'as_needed',
+                  'agencies': ['RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB']
+              }
+          }
+
+          # Generate calendar entries
+          calendar_entries = []
+
+          for form_code, form_info in bir_forms.items():
+              # Check if form is due this month
+              is_due = False
+
+              if form_info['frequency'] == 'monthly':
+                  is_due = True
+                  deadline = datetime(year, month, form_info['deadline_day'])
+
+              elif form_info['frequency'] == 'quarterly':
+                  if month in form_info['months']:
+                      is_due = True
+                      deadline = datetime(year, month, form_info['deadline_day'])
+
+              elif form_info['frequency'] == 'annual':
+                  if month == form_info['deadline_month']:
+                      is_due = True
+                      deadline = datetime(year, month, form_info['deadline_day'])
+
+              if is_due:
+                  for agency in form_info['agencies']:
+                      entry = {
+                          'form': form_code,
+                          'name': form_info['name'],
+                          'agency': agency,
+                          'deadline': deadline.strftime('%Y-%m-%d'),
+                          'reminder_date': (deadline - timedelta(days=3)).strftime('%Y-%m-%d')
+                      }
+                      calendar_entries.append(entry)
+
+          # Save to file
+          output_file = f'docs/bir_calendar_{year}_{month:02d}.json'
+          os.makedirs('docs', exist_ok=True)
+
+          with open(output_file, 'w') as f:
+              json.dump(calendar_entries, f, indent=2)
+
+          print(f"\n✅ Generated {len(calendar_entries)} BIR compliance entries")
+          print(f"📄 Saved to: {output_file}")
+
+          # Print summary
+          print("\n📋 Summary by Agency:")
+          agencies = {}
+          for entry in calendar_entries:
+              agency = entry['agency']
+              if agency not in agencies:
+                  agencies[agency] = []
+              agencies[agency].append(f"{entry['form']} ({entry['deadline']})")
+
+          for agency, forms in sorted(agencies.items()):
+              print(f"  {agency}: {len(forms)} forms")
+              for form in forms:
+                  print(f"    - {form}")
+          PYTHON
+
+      - name: Create GitHub Issues for reminders
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 2).padStart(2, '0'); // Next month
+
+            const calendarFile = `docs/bir_calendar_${year}_${month}.json`;
+
+            if (!fs.existsSync(calendarFile)) {
+              console.log(`No calendar file found: ${calendarFile}`);
+              return;
+            }
+
+            const entries = JSON.parse(fs.readFileSync(calendarFile, 'utf8'));
+
+            console.log(`📅 Creating issues for ${entries.length} BIR compliance tasks`);
+
+            for (const entry of entries) {
+              const title = `[BIR] ${entry.form} - ${entry.agency} - Due ${entry.deadline}`;
+              const body = `
+          ## BIR Compliance Task
+
+          **Form:** ${entry.form} (${entry.name})
+          **Agency:** ${entry.agency}
+          **Deadline:** ${entry.deadline}
+          **Reminder Date:** ${entry.reminder_date}
+
+          ### Checklist
+          - [ ] Gather supporting documents
+          - [ ] Prepare ${entry.form} form
+          - [ ] Review with Finance Officer
+          - [ ] Submit to BIR
+          - [ ] File copy in agency folder
+
+          ---
+          🤖 Auto-generated by BIR Compliance Automation
+          `;
+
+              // Check if issue already exists
+              const existingIssues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'bir-compliance',
+                per_page: 100
+              });
+
+              const exists = existingIssues.data.some(issue => issue.title === title);
+
+              if (!exists) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['bir-compliance', 'finance-ssc', entry.agency.toLowerCase()],
+                  assignees: []
+                });
+                console.log(`✅ Created issue: ${title}`);
+              } else {
+                console.log(`ℹ️  Issue already exists: ${title}`);
+              }
+            }
+
+      - name: Commit calendar file
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: add BIR compliance calendar'
+          file_pattern: 'docs/bir_calendar_*.json'
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 BIR Compliance Automation - Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Calendar generated"
+          echo "✅ GitHub issues created"
+          echo "✅ Calendar committed to repository"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

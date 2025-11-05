@@ -1,0 +1,26 @@
+Metadata-Version: 2.4
+Name: ipai-cli
+Version: 1.0.0
+Summary: InsightPulse automation CLI for deployments, testing, and operations
+Home-page: https://insightpulseai.net
+Author: Jake Tolentino
+Author-email: jgtolentino_rn@yahoo.com
+Classifier: Development Status :: 4 - Beta
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: GNU Affero General Public License v3
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Requires-Python: >=3.11
+Requires-Dist: click>=8.0.0
+Requires-Dist: requests>=2.28.0
+Requires-Dist: python-dotenv>=0.19.0
+Requires-Dist: psycopg2-binary>=2.9.0
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: tabulate>=0.9.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

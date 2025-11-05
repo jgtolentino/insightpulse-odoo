@@ -1,0 +1,203 @@
+{
+  "dashboard_title": "BIR Compliance Tracker",
+  "description": "Philippine BIR form tracking and deadline monitoring",
+  "css": "",
+  "slug": "bir-compliance",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for BIR compliance monitoring",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-kpis",
+        "ROW-deadlines",
+        "ROW-heatmap",
+        "ROW-agency-scores"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 📋 BIR Compliance Tracker\n**Philippine BIR form tracking and deadline monitoring** | 8 agencies"
+      }
+    },
+    "ROW-kpis": {
+      "type": "ROW",
+      "id": "ROW-kpis",
+      "children": ["BIG_NUMBER-filing-rate"]
+    },
+    "BIG_NUMBER-filing-rate": {
+      "type": "CHART",
+      "id": "BIG_NUMBER-filing-rate",
+      "children": [],
+      "meta": {"width": 12, "height": 4, "chartId": 1}
+    },
+    "ROW-deadlines": {
+      "type": "ROW",
+      "id": "ROW-deadlines",
+      "children": ["TABLE-deadlines"]
+    },
+    "TABLE-deadlines": {
+      "type": "CHART",
+      "id": "TABLE-deadlines",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 2}
+    },
+    "ROW-heatmap": {
+      "type": "ROW",
+      "id": "ROW-heatmap",
+      "children": ["CHART-forms-heatmap"]
+    },
+    "CHART-forms-heatmap": {
+      "type": "CHART",
+      "id": "CHART-forms-heatmap",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 3}
+    },
+    "ROW-agency-scores": {
+      "type": "ROW",
+      "id": "ROW-agency-scores",
+      "children": ["CHART-compliance-scores"]
+    },
+    "CHART-compliance-scores": {
+      "type": "CHART",
+      "id": "CHART-compliance-scores",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 4}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-agency",
+        "name": "Agency",
+        "filterType": "filter_select",
+        "targets": [{"datasetId": 1, "column": {"name": "company_name"}}],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {"value": null}
+        },
+        "controlValues": {
+          "enableEmptyFilter": true,
+          "multiSelect": true
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 3600
+  },
+  "slices": [
+    {
+      "slice_name": "BIR Form Filing Rate",
+      "viz_type": "big_number_total",
+      "datasource_type": "table",
+      "datasource_name": "bir_form_status",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "big_number_total",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND((SUM(CASE WHEN status='filed' THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1)",
+          "label": "Filing Rate"
+        },
+        "subheader": "Year to Date",
+        "y_axis_format": ".1f%"
+      }
+    },
+    {
+      "slice_name": "Upcoming BIR Deadlines",
+      "viz_type": "table",
+      "datasource_type": "table",
+      "datasource_name": "bir_form_status",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "table",
+        "all_columns": ["form_type", "filing_deadline", "days_until_due", "company_name", "status"],
+        "adhoc_filters": [{
+          "clause": "WHERE",
+          "expressionType": "SQL",
+          "sqlExpression": "filing_deadline >= CURRENT_DATE - INTERVAL '7 days' AND filing_deadline <= CURRENT_DATE + INTERVAL '30 days'"
+        }],
+        "row_limit": 100,
+        "order_desc": false,
+        "table_timestamp_format": "%Y-%m-%d",
+        "page_length": 25,
+        "include_search": true,
+        "table_filter": true,
+        "conditional_formatting": [
+          {
+            "column": "status",
+            "operator": "=",
+            "targetValue": "✅",
+            "colorScheme": "green"
+          },
+          {
+            "column": "status",
+            "operator": "=",
+            "targetValue": "🚨",
+            "colorScheme": "red"
+          },
+          {
+            "column": "status",
+            "operator": "=",
+            "targetValue": "⚠️",
+            "colorScheme": "yellow"
+          }
+        ]
+      }
+    },
+    {
+      "slice_name": "Monthly BIR Forms Heatmap",
+      "viz_type": "heatmap",
+      "datasource_type": "table",
+      "datasource_name": "bir_form_status",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "heatmap",
+        "all_columns_x": "form_type",
+        "all_columns_y": "month",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "COUNT(*)",
+          "label": "Count"
+        },
+        "linear_color_scheme": "blue_white_yellow",
+        "xscale_interval": 1,
+        "yscale_interval": 1
+      }
+    },
+    {
+      "slice_name": "Agency Compliance Scores",
+      "viz_type": "bullet",
+      "datasource_type": "table",
+      "datasource_name": "bir_form_status",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "bullet",
+        "groupby": ["company_name"],
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "ROUND((SUM(CASE WHEN status='filed' THEN 1 ELSE 0 END)::numeric / COUNT(*)) * 100, 1)",
+          "label": "Compliance Score"
+        },
+        "ranges": "[0,70,90,100]",
+        "range_labels": "[\"Poor\", \"Good\", \"Excellent\"]",
+        "markers": "[100]"
+      }
+    }
+  ]
+}

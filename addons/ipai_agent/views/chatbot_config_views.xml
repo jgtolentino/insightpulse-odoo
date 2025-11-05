@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Configuration Form View -->
+    <record id="view_ipai_agent_config_form" model="ir.ui.view">
+        <field name="name">ipai.agent.config.form</field>
+        <field name="model">ipai.agent.config</field>
+        <field name="arch" type="xml">
+            <form string="AI Agent Configuration">
+                <sheet>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane">
+                                <field name="agent_enabled"/>
+                            </div>
+                            <div class="o_setting_right_pane">
+                                <label for="agent_enabled"/>
+                                <div class="text-muted">
+                                    Enable or disable AI agent globally
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <group string="Agent API Configuration">
+                        <field name="agent_api_url" placeholder="https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run/chat"/>
+                        <field name="agent_api_key" password="True"/>
+                        <field name="agent_timeout"/>
+                        <field name="agent_max_retries"/>
+                    </group>
+
+                    <group string="Information">
+                        <div class="alert alert-info" role="alert">
+                            <strong>How to use:</strong>
+                            <ul>
+                                <li>Mention <strong>@ipai-bot</strong> in any Odoo Discuss channel with AI agent enabled</li>
+                                <li>Ask natural language questions like "Approve all expense sheets under $500"</li>
+                                <li>Agent will execute authorized actions based on your permissions</li>
+                            </ul>
+                        </div>
+                    </group>
+                </sheet>
+                <footer>
+                    <button string="Save" type="object" name="execute" class="btn-primary" data-hotkey="q"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel" data-hotkey="z"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Configuration Action -->
+    <record id="action_ipai_agent_config" model="ir.actions.act_window">
+        <field name="name">AI Agent Configuration</field>
+        <field name="res_model">ipai.agent.config</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_ipai_agent_root"
+              name="AI Agent"
+              sequence="100"
+              web_icon="ipai_agent,static/description/icon.png"/>
+
+    <menuitem id="menu_ipai_agent_config"
+              name="Configuration"
+              parent="menu_ipai_agent_root"
+              action="action_ipai_agent_config"
+              groups="base.group_system"
+              sequence="99"/>
+</odoo>

@@ -1,0 +1,2 @@
+[console_scripts]
+ipai = ipai_cli.cli:main

@@ -1,0 +1,185 @@
+{
+  "dashboard_title": "Agency-Specific Operations",
+  "description": "Detailed operational metrics for individual agencies",
+  "css": "",
+  "slug": "agency-ops",
+  "certified_by": "InsightPulse Finance SSC",
+  "certification_details": "Approved for agency management",
+  "published": true,
+  "position_json": {
+    "DASHBOARD_VERSION_KEY": "v2",
+    "GRID_ID": {
+      "type": "GRID",
+      "id": "GRID_ID",
+      "children": [
+        "ROW-header",
+        "ROW-pipeline",
+        "ROW-customers-expenses",
+        "ROW-collection"
+      ]
+    },
+    "ROW-header": {
+      "type": "ROW",
+      "id": "ROW-header",
+      "children": ["MARKDOWN-header"],
+      "meta": {"background": "BACKGROUND_TRANSPARENT"}
+    },
+    "MARKDOWN-header": {
+      "type": "MARKDOWN",
+      "id": "MARKDOWN-header",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 2,
+        "code": "# 🏢 Agency-Specific Operations\n**Detailed operational metrics** | Agency: {{agency_filter}}"
+      }
+    },
+    "ROW-pipeline": {
+      "type": "ROW",
+      "id": "ROW-pipeline",
+      "children": ["CHART-sales-pipeline"]
+    },
+    "CHART-sales-pipeline": {
+      "type": "CHART",
+      "id": "CHART-sales-pipeline",
+      "children": [],
+      "meta": {"width": 12, "height": 8, "chartId": 1}
+    },
+    "ROW-customers-expenses": {
+      "type": "ROW",
+      "id": "ROW-customers-expenses",
+      "children": ["CHART-top-customers", "CHART-expense-categories"]
+    },
+    "CHART-top-customers": {
+      "type": "CHART",
+      "id": "CHART-top-customers",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 2}
+    },
+    "CHART-expense-categories": {
+      "type": "CHART",
+      "id": "CHART-expense-categories",
+      "children": [],
+      "meta": {"width": 6, "height": 8, "chartId": 3}
+    },
+    "ROW-collection": {
+      "type": "ROW",
+      "id": "ROW-collection",
+      "children": ["CHART-collection-rate"]
+    },
+    "CHART-collection-rate": {
+      "type": "CHART",
+      "id": "CHART-collection-rate",
+      "children": [],
+      "meta": {"width": 12, "height": 6, "chartId": 4}
+    }
+  },
+  "metadata": {
+    "native_filter_configuration": [
+      {
+        "id": "NATIVE_FILTER-agency",
+        "name": "Agency",
+        "filterType": "filter_select",
+        "targets": [{"datasetId": 1, "column": {"name": "company_id"}}],
+        "defaultDataMask": {
+          "extraFormData": {},
+          "filterState": {"value": null}
+        },
+        "controlValues": {
+          "enableEmptyFilter": false,
+          "multiSelect": false,
+          "searchAllOptions": false
+        }
+      },
+      {
+        "id": "NATIVE_FILTER-date-range",
+        "name": "Date Range",
+        "filterType": "filter_time",
+        "targets": [{"datasetId": 1, "column": {"name": "__time"}}],
+        "defaultDataMask": {
+          "extraFormData": {
+            "time_range": "This month"
+          },
+          "filterState": {"value": "This month"}
+        }
+      }
+    ],
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300
+  },
+  "slices": [
+    {
+      "slice_name": "Sales Pipeline",
+      "viz_type": "funnel",
+      "datasource_type": "table",
+      "datasource_name": "sale_order",
+      "params": {
+        "datasource": "1__table",
+        "viz_type": "funnel",
+        "groupby": ["state"],
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(amount_total)",
+          "label": "Value"
+        },
+        "adhoc_filters": [],
+        "order_bars": true,
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Top 10 Customers",
+      "viz_type": "dist_bar",
+      "datasource_type": "table",
+      "datasource_name": "sale_order_customer",
+      "params": {
+        "datasource": "2__table",
+        "viz_type": "dist_bar",
+        "groupby": ["customer_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(revenue)",
+          "label": "Revenue"
+        }],
+        "row_limit": 10,
+        "order_bars": true,
+        "y_axis_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Expense Categories",
+      "viz_type": "treemap",
+      "datasource_type": "table",
+      "datasource_name": "hr_expense",
+      "params": {
+        "datasource": "3__table",
+        "viz_type": "treemap",
+        "groupby": ["category_name"],
+        "metrics": [{
+          "expressionType": "SQL",
+          "sqlExpression": "SUM(total_amount)",
+          "label": "Amount"
+        }],
+        "number_format": "₱,.0f"
+      }
+    },
+    {
+      "slice_name": "Payment Collection Rate",
+      "viz_type": "gauge_chart",
+      "datasource_type": "table",
+      "datasource_name": "payment_collection",
+      "params": {
+        "datasource": "4__table",
+        "viz_type": "gauge_chart",
+        "metric": {
+          "expressionType": "SQL",
+          "sqlExpression": "collection_rate",
+          "label": "Collection Rate"
+        },
+        "min_val": 0,
+        "max_val": 100,
+        "value_formatter": ".1f%"
+      }
+    }
+  ]
+}

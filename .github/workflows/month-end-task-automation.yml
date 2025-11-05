@@ -1,0 +1,282 @@
+name: Month-End Task Automation
+
+on:
+  schedule:
+    - cron: '0 0 25 * *'  # 25th of each month
+  workflow_dispatch:
+    inputs:
+      target_month:
+        description: 'Target month (YYYY-MM)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  generate-month-end-tasks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --quiet python-dateutil pytz
+
+      - name: Generate month-end tasks
+        run: |
+          python3 << 'PYTHON'
+          import os
+          import json
+          from datetime import datetime
+          from dateutil.relativedelta import relativedelta
+          import calendar
+
+          # Get target month
+          if os.getenv('INPUT_TARGET_MONTH'):
+              target_date = datetime.strptime(os.getenv('INPUT_TARGET_MONTH'), '%Y-%m')
+          else:
+              # Default to current month
+              target_date = datetime.now()
+
+          year = target_date.year
+          month = target_date.month
+          month_name = calendar.month_name[month]
+
+          print(f"Generating month-end tasks for {month_name} {year}")
+
+          # Finance SSC agencies
+          agencies = ['RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB']
+
+          # Month-end closing checklist template
+          closing_tasks = [
+              {
+                  'task': 'Bank Reconciliation',
+                  'priority': 'critical',
+                  'deadline_offset': 3,  # Due 3 days after month-end
+                  'subtasks': [
+                      'Download bank statements',
+                      'Match deposits and withdrawals',
+                      'Investigate unreconciled items',
+                      'Prepare reconciliation report',
+                      'Get Finance Officer approval'
+                  ]
+              },
+              {
+                  'task': 'Accounts Payable Review',
+                  'priority': 'high',
+                  'deadline_offset': 4,
+                  'subtasks': [
+                      'Review pending invoices',
+                      'Verify aging report accuracy',
+                      'Schedule payments for next month',
+                      'Update payment tracking sheet'
+                  ]
+              },
+              {
+                  'task': 'Accounts Receivable Review',
+                  'priority': 'high',
+                  'deadline_offset': 4,
+                  'subtasks': [
+                      'Review aging report',
+                      'Follow up on overdue accounts',
+                      'Prepare collection letters',
+                      'Update receivables tracking'
+                  ]
+              },
+              {
+                  'task': 'Expense Report Processing',
+                  'priority': 'high',
+                  'deadline_offset': 5,
+                  'subtasks': [
+                      'Review pending expense reports',
+                      'Verify receipts and documentation',
+                      'Process approved reports',
+                      'Schedule reimbursements'
+                  ]
+              },
+              {
+                  'task': 'General Ledger Review',
+                  'priority': 'critical',
+                  'deadline_offset': 5,
+                  'subtasks': [
+                      'Review all journal entries',
+                      'Verify account balances',
+                      'Post adjusting entries',
+                      'Run trial balance report',
+                      'Review for errors or anomalies'
+                  ]
+              },
+              {
+                  'task': 'Fixed Assets Review',
+                  'priority': 'medium',
+                  'deadline_offset': 6,
+                  'subtasks': [
+                      'Record new asset acquisitions',
+                      'Process disposals',
+                      'Calculate depreciation',
+                      'Update asset register'
+                  ]
+              },
+              {
+                  'task': 'Payroll Reconciliation',
+                  'priority': 'high',
+                  'deadline_offset': 5,
+                  'subtasks': [
+                      'Verify payroll transactions posted',
+                      'Reconcile to payroll reports',
+                      'Review withholding tax accruals',
+                      'Update employee records if needed'
+                  ]
+              },
+              {
+                  'task': 'Financial Reports Generation',
+                  'priority': 'critical',
+                  'deadline_offset': 7,
+                  'subtasks': [
+                      'Generate income statement',
+                      'Generate balance sheet',
+                      'Generate cash flow statement',
+                      'Prepare management reports',
+                      'Submit to Finance Manager for review'
+                  ]
+              }
+          ]
+
+          # Calculate deadline dates
+          last_day = calendar.monthrange(year, month)[1]
+          month_end = datetime(year, month, last_day)
+
+          # Generate tasks for all agencies
+          all_tasks = []
+
+          for agency in agencies:
+              for task_template in closing_tasks:
+                  deadline = month_end + relativedelta(days=task_template['deadline_offset'])
+
+                  task = {
+                      'agency': agency,
+                      'task': task_template['task'],
+                      'priority': task_template['priority'],
+                      'deadline': deadline.strftime('%Y-%m-%d'),
+                      'month': f"{month_name} {year}",
+                      'subtasks': task_template['subtasks']
+                  }
+                  all_tasks.append(task)
+
+          # Save to file
+          output_file = f'docs/month_end_tasks_{year}_{month:02d}.json'
+          os.makedirs('docs', exist_ok=True)
+
+          with open(output_file, 'w') as f:
+              json.dump(all_tasks, f, indent=2)
+
+          print(f"\n✅ Generated {len(all_tasks)} month-end tasks")
+          print(f"📄 Saved to: {output_file}")
+
+          # Print summary
+          print(f"\n📋 Summary by Agency:")
+          for agency in agencies:
+              agency_tasks = [t for t in all_tasks if t['agency'] == agency]
+              critical = len([t for t in agency_tasks if t['priority'] == 'critical'])
+              high = len([t for t in agency_tasks if t['priority'] == 'high'])
+              print(f"  {agency}: {len(agency_tasks)} tasks ({critical} critical, {high} high)")
+          PYTHON
+
+      - name: Create GitHub Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+
+            const taskFile = `docs/month_end_tasks_${year}_${month}.json`;
+
+            if (!fs.existsSync(taskFile)) {
+              console.log(`No task file found: ${taskFile}`);
+              return;
+            }
+
+            const tasks = JSON.parse(fs.readFileSync(taskFile, 'utf8'));
+
+            console.log(`📅 Creating issues for ${tasks.length} month-end tasks`);
+
+            for (const task of tasks) {
+              const priorityEmoji = {
+                'critical': '🔴',
+                'high': '🟠',
+                'medium': '🟡'
+              }[task.priority] || '⚪';
+
+              const title = `[Month-End] ${task.agency} - ${task.task}`;
+              const subtaskList = task.subtasks.map(st => `- [ ] ${st}`).join('\n');
+
+              const body = `
+          ## Month-End Closing Task
+
+          **Agency:** ${task.agency}
+          **Month:** ${task.month}
+          **Priority:** ${priorityEmoji} ${task.priority.toUpperCase()}
+          **Deadline:** ${task.deadline}
+
+          ### Checklist
+          ${subtaskList}
+
+          ### Notes
+          - Complete all subtasks before marking as done
+          - Attach supporting documents in comments
+          - Tag Finance Officer for approval when ready
+
+          ---
+          🤖 Auto-generated by Month-End Task Automation
+          `;
+
+              // Check if issue already exists
+              const existingIssues = await github.rest.issues.listForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                labels: 'month-end-closing',
+                per_page: 100
+              });
+
+              const exists = existingIssues.data.some(issue => issue.title === title);
+
+              if (!exists) {
+                await github.rest.issues.create({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  title: title,
+                  body: body,
+                  labels: ['month-end-closing', 'finance-ssc', task.priority, task.agency.toLowerCase()],
+                  assignees: []
+                });
+                console.log(`✅ Created: ${title}`);
+              } else {
+                console.log(`ℹ️  Exists: ${title}`);
+              }
+            }
+
+      - name: Commit task file
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          commit_message: 'docs: add month-end closing tasks'
+          file_pattern: 'docs/month_end_tasks_*.json'
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Month-End Task Automation - Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Tasks generated for all 8 agencies"
+          echo "✅ GitHub issues created"
+          echo "✅ Task file committed to repository"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

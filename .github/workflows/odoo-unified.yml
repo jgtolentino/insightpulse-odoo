@@ -1,0 +1,234 @@
+name: Odoo Unified Testing
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'addons/**'
+      - 'odoo_addons/**'
+  pull_request:
+    paths:
+      - 'addons/**'
+      - 'odoo_addons/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  # ============================================================================
+  # ODOO MODULE VALIDATION
+  # ============================================================================
+  module-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Odoo dependencies
+        run: |
+          pip install --quiet pylint-odoo flake8-odoo
+          pip install --quiet lxml psycopg2-binary || true
+
+      - name: Validate module structure
+        run: |
+          echo "Validating Odoo module structure..."
+          for addon_dir in addons odoo_addons; do
+            if [ -d "$addon_dir" ]; then
+              for module in $addon_dir/*/; do
+                if [ -f "$module/__manifest__.py" ] || [ -f "$module/__openerp__.py" ]; then
+                  echo "✓ Valid module: $(basename $module)"
+
+                  # Check for required files
+                  [ -f "$module/__init__.py" ] && echo "  ✓ __init__.py" || echo "  ✗ Missing __init__.py"
+                  [ -f "$module/__manifest__.py" ] && echo "  ✓ __manifest__.py" || echo "  ✗ Missing __manifest__.py"
+                  [ -d "$module/models" ] && echo "  ✓ models/" || echo "  ℹ No models/"
+                  [ -d "$module/views" ] && echo "  ✓ views/" || echo "  ℹ No views/"
+                fi
+              done
+            fi
+          done
+
+      - name: Check OCA compliance
+        run: |
+          echo "Checking OCA compliance..."
+          for addon_dir in addons odoo_addons; do
+            if [ -d "$addon_dir" ]; then
+              for module in $addon_dir/*/; do
+                if [ -f "$module/__manifest__.py" ]; then
+                  echo "Checking $(basename $module)..."
+
+                  # Check license
+                  grep -q "license.*AGPL" "$module/__manifest__.py" && echo "  ✓ AGPL license" || echo "  ✗ Non-AGPL license"
+
+                  # Check version format
+                  grep -q "version.*[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+" "$module/__manifest__.py" && echo "  ✓ Version format" || echo "  ℹ Check version format"
+
+                  # Check author
+                  grep -q "author" "$module/__manifest__.py" && echo "  ✓ Author field" || echo "  ✗ Missing author"
+                fi
+              done
+            fi
+          done
+        continue-on-error: true
+
+  # ============================================================================
+  # ODOO LINTING
+  # ============================================================================
+  odoo-lint:
+    runs-on: ubuntu-latest
+    needs: module-validation
+    if: success() || failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: |
+          pip install --quiet pylint-odoo flake8-odoo
+          pip install --quiet pylint flake8
+
+      - name: Run pylint-odoo
+        run: |
+          for addon_dir in addons odoo_addons; do
+            if [ -d "$addon_dir" ]; then
+              for module in $addon_dir/*/; do
+                if [ -d "$module" ]; then
+                  echo "Linting $(basename $module)..."
+                  pylint --load-plugins=pylint_odoo --disable=all --enable=odoolint "$module" || true
+                fi
+              done
+            fi
+          done
+        continue-on-error: true
+
+      - name: Run flake8-odoo
+        run: |
+          flake8 addons/ odoo_addons/ --extend-ignore=E501,W503 --config=.flake8 || true
+        continue-on-error: true
+
+  # ============================================================================
+  # ODOO XML VALIDATION
+  # ============================================================================
+  xml-validation:
+    runs-on: ubuntu-latest
+    needs: module-validation
+    if: success() || failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install XML tools
+        run: pip install lxml
+
+      - name: Validate XML files
+        run: |
+          echo "Validating XML files..."
+          python3 << 'PYTHON'
+          import os
+          from lxml import etree
+
+          xml_files = []
+          for root, dirs, files in os.walk('addons'):
+              for file in files:
+                  if file.endswith('.xml'):
+                      xml_files.append(os.path.join(root, file))
+
+          for root, dirs, files in os.walk('odoo_addons'):
+              for file in files:
+                  if file.endswith('.xml'):
+                      xml_files.append(os.path.join(root, file))
+
+          errors = []
+          for xml_file in xml_files:
+              try:
+                  etree.parse(xml_file)
+                  print(f"✓ {xml_file}")
+              except Exception as e:
+                  print(f"✗ {xml_file}: {e}")
+                  errors.append((xml_file, str(e)))
+
+          if errors:
+              print(f"\n⚠️ Found {len(errors)} XML validation errors")
+              for file, error in errors:
+                  print(f"  - {file}: {error}")
+          else:
+              print(f"\n✅ All {len(xml_files)} XML files are valid")
+          PYTHON
+
+  # ============================================================================
+  # MODULE DEPENDENCY CHECK
+  # ============================================================================
+  dependency-check:
+    runs-on: ubuntu-latest
+    needs: module-validation
+    if: success() || failure()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check module dependencies
+        run: |
+          echo "Checking module dependencies..."
+          python3 << 'PYTHON'
+          import os
+          import ast
+
+          modules = {}
+          for addon_dir in ['addons', 'odoo_addons']:
+              if os.path.exists(addon_dir):
+                  for module in os.listdir(addon_dir):
+                      manifest_path = os.path.join(addon_dir, module, '__manifest__.py')
+                      if os.path.exists(manifest_path):
+                          with open(manifest_path, 'r') as f:
+                              try:
+                                  manifest = ast.literal_eval(f.read())
+                                  modules[module] = manifest.get('depends', [])
+                              except:
+                                  pass
+
+          print(f"\n📦 Found {len(modules)} modules")
+          for module, deps in modules.items():
+              if deps:
+                  print(f"  {module}: {', '.join(deps)}")
+              else:
+                  print(f"  {module}: (no dependencies)")
+          PYTHON
+
+  # ============================================================================
+  # SUMMARY
+  # ============================================================================
+  odoo-summary:
+    runs-on: ubuntu-latest
+    needs: [module-validation, odoo-lint, xml-validation, dependency-check]
+    if: always()
+    steps:
+      - name: Odoo Testing Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📦 Odoo Unified Testing - Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "Module Validation: ${{ needs.module-validation.result }}"
+          echo "Odoo Linting: ${{ needs.odoo-lint.result }}"
+          echo "XML Validation: ${{ needs.xml-validation.result }}"
+          echo "Dependency Check: ${{ needs.dependency-check.result }}"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          if [[ "${{ needs.module-validation.result }}" == "success" && \
+                "${{ needs.xml-validation.result }}" == "success" ]]; then
+            echo "✅ Odoo Status: PASSED"
+          else
+            echo "⚠️ Odoo Status: NEEDS ATTENTION"
+          fi

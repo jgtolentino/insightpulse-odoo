@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Slack Channel Tree View -->
+    <record id="view_slack_channel_tree" model="ir.ui.view">
+        <field name="name">slack.channel.tree</field>
+        <field name="model">slack.channel</field>
+        <field name="arch" type="xml">
+            <tree string="Slack Channels">
+                <field name="channel_name"/>
+                <field name="channel_id"/>
+                <field name="agency_code"/>
+                <field name="channel_type"/>
+                <field name="auto_respond"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Slack Channel Form View -->
+    <record id="view_slack_channel_form" model="ir.ui.view">
+        <field name="name">slack.channel.form</field>
+        <field name="model">slack.channel</field>
+        <field name="arch" type="xml">
+            <form string="Slack Channel">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="channel_name"/>
+                            <field name="channel_id"/>
+                            <field name="agency_code"/>
+                        </group>
+                        <group>
+                            <field name="channel_type"/>
+                            <field name="auto_respond"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Slack Channel Action -->
+    <record id="action_slack_channel" model="ir.actions.act_window">
+        <field name="name">Slack Channels</field>
+        <field name="res_model">slack.channel</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Configure Slack channel mappings
+            </p>
+            <p>
+                Map Slack channels to agencies and workflow types.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_slack_bridge_root"
+              name="Slack Bridge"
+              sequence="100"/>
+
+    <menuitem id="menu_slack_channels"
+              name="Slack Channels"
+              parent="menu_slack_bridge_root"
+              action="action_slack_channel"
+              sequence="10"/>
+</odoo>

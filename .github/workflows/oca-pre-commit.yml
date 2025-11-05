@@ -1,0 +1,38 @@
+name: OCA Pre-commit Checks
+
+on:
+  pull_request:
+    paths:
+      - 'addons/**'
+      - 'odoo_addons/**'
+  push:
+    branches: [main, develop]
+    paths:
+      - 'addons/**'
+      - 'odoo_addons/**'
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pre-commit
+
+      - name: Run pre-commit
+        run: |
+          pre-commit run --all-files --show-diff-on-failure
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ OCA Pre-commit Checks Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

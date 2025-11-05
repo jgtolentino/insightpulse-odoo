@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_agent_log_user,access_agent_log_user,model_ipai_agent_log,group_agent_user,1,0,1,0
+access_agent_log_admin,access_agent_log_admin,model_ipai_agent_log,group_agent_admin,1,1,1,1
+access_agent_config_admin,access_agent_config_admin,model_ipai_agent_config,base.group_system,1,1,1,0
