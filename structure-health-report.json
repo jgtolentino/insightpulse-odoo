@@ -1,76 +1,64 @@
 {
-  "timestamp": "2025-11-05T10:22:06.628196",
+  "timestamp": "2025-11-05T20:48:04.237976",
   "repository": "/home/user/insightpulse-odoo",
   "metrics": {
     "structure_compliance": {
       "directories": {
         "required": 13,
-        "existing": 5,
-        "percentage": 38.46153846153847
+        "existing": 13,
+        "percentage": 100.0
       },
       "files": {
         "required": 5,
-        "existing": 4,
-        "percentage": 80.0
+        "existing": 5,
+        "percentage": 100.0
       },
-      "overall_percentage": 50.0
+      "overall_percentage": 100.0
     },
     "documentation_coverage": {
-      "readme_coverage": 50.0,
-      "code_documentation": 92.5925925925926,
-      "total_md_files": 372,
-      "major_dirs_with_readme": 2,
-      "major_dirs_total": 4
+      "readme_coverage": 87.5,
+      "code_documentation": 93.54838709677419,
+      "total_md_files": 384,
+      "major_dirs_with_readme": 7,
+      "major_dirs_total": 8
     },
     "test_coverage": {
-      "test_files": 2,
+      "test_files": 6,
       "total_files": 25,
-      "test_ratio": 8.0,
+      "test_ratio": 24.0,
       "target": 80,
       "status": "needs_improvement"
     },
     "skill_maturity": {
-      "total_skills": 1,
+      "total_skills": 4,
       "mature_skills": 0,
       "maturity_rate": 0.0
     },
     "automation_level": {
-      "github_workflows": 42,
+      "github_workflows": 43,
       "makefile_targets": 44,
       "automation_scripts": 70,
       "automation_score": 100
     },
     "ci_cd_health": {
-      "total_workflows": 42,
+      "total_workflows": 43,
       "required_workflows": 4,
-      "existing_required": 12,
+      "existing_required": 13,
       "health": "good"
     }
   },
   "scores": {
     "individual": {
-      "structure": 50.0,
-      "documentation": 50.0,
-      "testing": 8.0,
+      "structure": 100.0,
+      "documentation": 87.5,
+      "testing": 24.0,
       "skills": 0.0,
       "automation": 100
     },
-    "overall": 41.6,
-    "grade": "F"
+    "overall": 67.3,
+    "grade": "D"
   },
   "recommendations": [
-    {
-      "priority": "high",
-      "area": "structure",
-      "recommendation": "Complete missing directory structure",
-      "action": "Create missing directories from required structure list"
-    },
-    {
-      "priority": "medium",
-      "area": "documentation",
-      "recommendation": "Add README files to major directories",
-      "action": "Create README.md in directories missing documentation"
-    },
     {
       "priority": "high",
       "area": "testing",

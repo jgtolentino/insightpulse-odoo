@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Main services orchestration
+  # For detailed service configurations, see infrastructure/docker/
+
+  odoo:
+    image: odoo:19.0
+    depends_on:
+      - postgres
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=odoo
+
+  postgres:
+    image: postgres:15
+    environment:
+      - POSTGRES_DB=odoo
+      - POSTGRES_USER=odoo
+      - POSTGRES_PASSWORD=odoo
+    volumes:
+      - postgres_data:/ var/lib/postgresql/data
+
+volumes:
+  postgres_data:
