@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "deepcode": {
+      "command": "python",
+      "args": [
+        "-m",
+        "mcp.deepcode-server.src.server"
+      ],
+      "env": {
+        "PYTHONPATH": "/home/user/insightpulse-odoo",
+        "WORKSPACE_DIR": "/home/user/insightpulse-odoo",
+        "CONFIG_PATH": "/home/user/insightpulse-odoo/mcp/deepcode-server/config"
+      }
+    }
+  }
+}

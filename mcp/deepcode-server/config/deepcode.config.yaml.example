@@ -1,0 +1,42 @@
+# DeepCode Configuration
+# Copy to deepcode.config.yaml and update values
+
+# Model configuration
+model:
+  provider: "anthropic"  # anthropic | openai
+  model_name: "claude-3-5-sonnet-20241022"
+  max_tokens: 4096
+  temperature: 0.7
+
+# DeepCode settings
+deepcode:
+  # Enable/disable features
+  enable_paper2code: true
+  enable_text2web: true
+  enable_text2backend: true
+
+  # Paper2Code settings
+  paper2code:
+    default_framework: "generic"
+    include_tests: true
+    include_docs: true
+
+  # Text2Web settings
+  text2web:
+    default_framework: "react"
+    default_styling: "tailwind"
+
+  # Text2Backend settings
+  text2backend:
+    default_framework: "fastapi"
+    default_database: "postgresql"
+
+# Workspace settings
+workspace:
+  default_output_dir: "./generated"
+  temp_dir: "/tmp/deepcode"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
