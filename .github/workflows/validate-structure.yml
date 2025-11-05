@@ -1,0 +1,153 @@
+name: Validate Repository Structure
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: false  # Don't need submodules for structure validation
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install pyyaml pytest
+
+      - name: Run structure validation
+        id: structure
+        run: |
+          python3 scripts/validate-repo-structure.py
+        continue-on-error: true
+
+      - name: Run Makefile validation
+        run: |
+          bash scripts/validate-makefile.sh
+        continue-on-error: true
+
+      - name: Run integration tests
+        run: |
+          python3 tests/integration/test_repo_structure.py
+        continue-on-error: true
+
+      - name: Generate health report
+        run: |
+          python3 scripts/generate-structure-report.py
+
+      - name: Upload report
+        uses: actions/upload-artifact@v3
+        with:
+          name: structure-health-report
+          path: structure-health-report.json
+
+      - name: Display report summary
+        run: |
+          echo "## Repository Structure Health Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f structure-health-report.json ]; then
+            SCORE=$(cat structure-health-report.json | python3 -c "import json, sys; data=json.load(sys.stdin); print(f\"{data['scores']['overall']:.1f}\")")
+            GRADE=$(cat structure-health-report.json | python3 -c "import json, sys; data=json.load(sys.stdin); print(data['scores']['grade'])")
+            echo "**Overall Score:** ${SCORE}% (Grade: ${GRADE})" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Individual Scores" >> $GITHUB_STEP_SUMMARY
+            cat structure-health-report.json | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+for k, v in data['scores']['individual'].items():
+    print(f'- **{k.capitalize()}:** {v:.1f}%')
+" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Recommendations" >> $GITHUB_STEP_SUMMARY
+            cat structure-health-report.json | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+if data['recommendations']:
+    for rec in data['recommendations']:
+        print(f\"- [{rec['priority']}] **{rec['area']}**: {rec['recommendation']}\")
+else:
+    print('✅ No recommendations - structure is healthy!')
+" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            if (!fs.existsSync('structure-health-report.json')) {
+              console.log('No report file found');
+              return;
+            }
+
+            const report = JSON.parse(fs.readFileSync('structure-health-report.json'));
+
+            const scoreBar = (score) => {
+              const filled = Math.floor(score / 5);
+              return '█'.repeat(filled) + '░'.repeat(20 - filled);
+            };
+
+            const comment = `## 📊 Repository Structure Health Report
+
+**Overall Score:** ${report.scores.overall.toFixed(1)}% (Grade: ${report.scores.grade})
+
+### Individual Scores
+${Object.entries(report.scores.individual).map(([k, v]) =>
+  `- **${k.charAt(0).toUpperCase() + k.slice(1)}**: ${scoreBar(v)} ${v.toFixed(1)}%`
+).join('\n')}
+
+### Detailed Metrics
+- **Structure Compliance**: ${report.metrics.structure_compliance.overall_percentage.toFixed(1)}%
+  - Directories: ${report.metrics.structure_compliance.directories.existing}/${report.metrics.structure_compliance.directories.required}
+  - Files: ${report.metrics.structure_compliance.files.existing}/${report.metrics.structure_compliance.files.required}
+- **Documentation**: ${report.metrics.documentation_coverage.readme_coverage.toFixed(1)}%
+- **Test Coverage**: ${report.metrics.test_coverage.test_ratio.toFixed(1)}%
+- **Skills**: ${report.metrics.skill_maturity.total_skills} total, ${report.metrics.skill_maturity.mature_skills} mature
+- **Automation**: ${report.metrics.automation_level.github_workflows} workflows, ${report.metrics.automation_level.automation_scripts} scripts
+
+${report.recommendations.length > 0 ? `### 🎯 Recommendations
+${report.recommendations.map(r =>
+  `- **[${r.priority.toUpperCase()}]** ${r.area}: ${r.recommendation}\n  → ${r.action}`
+).join('\n')}` : '✅ **No recommendations - structure is healthy!**'}
+
+---
+*Generated on ${new Date(report.timestamp).toLocaleString()}*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Set status check
+        run: |
+          if [ -f structure-health-report.json ]; then
+            SCORE=$(cat structure-health-report.json | python3 -c "import json, sys; data=json.load(sys.stdin); print(data['scores']['overall'])")
+
+            # Pass if score >= 70%
+            if (( $(echo "$SCORE >= 70" | bc -l) )); then
+              echo "✅ Structure health check passed (score: $SCORE)"
+              exit 0
+            else
+              echo "⚠️  Structure health check warning (score: $SCORE)"
+              exit 0  # Don't fail the build, just warn
+            fi
+          else
+            echo "❌ No health report generated"
+            exit 1
+          fi

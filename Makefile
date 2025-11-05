@@ -1,7 +1,7 @@
 # Makefile for InsightPulse Odoo
 # Enterprise SaaS Replacement Suite
 
-.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health
+.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health validate validate-structure validate-makefile health-report
 
 # Default target
 .DEFAULT_GOAL := help
@@ -291,6 +291,37 @@ fix-permissions: ## Fix file permissions
 	@sudo chown -R $(USER):$(USER) . || chown -R $(USER):$(USER) .
 	@chmod -R 755 scripts/
 	@echo "✅ Permissions fixed!"
+
+# ══════════════════════════════════════════════════════════════
+# ✅ VALIDATION & VERIFICATION
+# ══════════════════════════════════════════════════════════════
+
+validate: ## Run all validation checks
+	@echo "🔍 Running validation checks..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@python3 scripts/validate-repo-structure.py
+	@bash scripts/validate-makefile.sh
+	@python3 tests/integration/test_repo_structure.py
+	@python3 scripts/generate-structure-report.py
+	@echo ""
+	@echo "📊 Results saved to structure-health-report.json"
+
+validate-structure: ## Validate repository structure only
+	@echo "🔍 Validating repository structure..."
+	@python3 scripts/validate-repo-structure.py
+
+validate-makefile: ## Validate Makefile only
+	@echo "🔧 Validating Makefile..."
+	@bash scripts/validate-makefile.sh
+
+health-report: ## Generate structure health report
+	@echo "📊 Generating health report..."
+	@python3 scripts/generate-structure-report.py
+	@if [ -f structure-health-report.json ]; then \
+		echo ""; \
+		echo "Report Summary:"; \
+		cat structure-health-report.json | python3 -c "import json, sys; data=json.load(sys.stdin); print(f\"Overall Score: {data['scores']['overall']:.1f}% (Grade: {data['scores']['grade']})\")"; \
+	fi
 
 # ══════════════════════════════════════════════════════════════
 # 📝 INFORMATION
