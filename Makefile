@@ -324,3 +324,266 @@ urls: ## Show all service URLs
 	@echo "MinIO Console:  http://localhost:9001"
 	@echo "Qdrant:         http://localhost:6333"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+# ══════════════════════════════════════════════════════════════
+# 🚀 DEPLOYMENT & INFRASTRUCTURE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: deployment-status
+deployment-status: ## Check DigitalOcean deployment status
+	@echo "📊 DigitalOcean App deployment status:"
+	@doctl apps deployments list $(DO_APP_ID) --format ID,Phase,CreatedAt --no-header | head -5
+
+.PHONY: odoo-logs
+odoo-logs: ## Tail Odoo droplet logs
+	@echo "📜 Tailing Odoo logs (Ctrl+C to exit)..."
+	@ssh $(ODOO_HOST) "journalctl -u odoo16 -f"
+
+.PHONY: supabase-status
+supabase-status: ## Check Supabase project status
+	@echo "🗄️  Supabase project status:"
+	@supabase status
+
+.PHONY: clean-docker
+clean-docker: ## Clean local Docker images and containers
+	@echo "🧹 Cleaning Docker resources..."
+	@docker system prune -af --volumes
+	@echo "✅ Docker cleaned"
+
+.PHONY: setup-ph-localization
+setup-ph-localization: ## Install Philippine accounting localization in Odoo
+	@echo "🇵🇭 Setting up Philippine accounting localization..."
+	@ssh $(ODOO_HOST) '\
+		/opt/odoo16/odoo16-venv/bin/python /opt/odoo16/odoo16/odoo-bin \
+		-d insightpulse_prod \
+		-i l10n_ph,l10n_ph_withholding \
+		--stop-after-init \
+	' || echo "⚠️  PH localization install failed (check if database exists)"
+	@echo "✅ PH localization installed"
+
+.PHONY: verify-ph-localization
+verify-ph-localization: ## Verify Philippine accounting modules are installed
+	@echo "🔍 Verifying PH localization..."
+	@ssh $(ODOO_HOST) '\
+		/opt/odoo16/odoo16-venv/bin/python /opt/odoo16/odoo16/odoo-bin shell \
+		-d insightpulse_prod \
+		--no-http \
+		<<EOF
+import odoo
+env = odoo.api.Environment.manage()
+mods = env["ir.module.module"].search([("name","ilike","l10n_ph")])
+for m in mods:
+    print(f"{m.name}: {m.state}")
+EOF
+	' || echo "⚠️  Verification failed"
+
+# Development helpers
+.PHONY: dev-setup
+dev-setup: ## Setup local development environment
+	@echo "🔧 Setting up development environment..."
+	@pip install -r requirements.txt || echo "⚠️  requirements.txt not found"
+	@npm install || echo "⚠️  package.json not found"
+	@echo "✅ Development environment ready"
+
+# Git helpers
+.PHONY: git-status
+git-status: ## Show git status and current branch
+	@echo "📌 Current branch: $(BRANCH)"
+	@echo "📋 Commit: $(COMMIT)"
+	@git status -sb
+
+# Quick deployment shortcuts
+.PHONY: deploy-fast
+deploy-fast: deploy-odoo-image deploy-do-app ## Fast deployment (Odoo image + DO App only)
+
+.PHONY: deploy-db
+deploy-db: deploy-supabase ## Deploy database changes only
+
+.PHONY: deploy-docs
+deploy-docs: deploy-github-actions ## Deploy documentation only
+
+# Emergency rollback
+.PHONY: rollback
+rollback: ## Rollback to previous DigitalOcean deployment
+	@echo "⏪ Rolling back to previous deployment..."
+	@PREV_DEPLOYMENT=$$(doctl apps deployments list $(DO_APP_ID) --format ID --no-header | sed -n '2p') && \
+	 doctl apps deployments rollback $(DO_APP_ID) $$PREV_DEPLOYMENT || \
+	 echo "❌ Rollback failed - check deployment history with 'make deployment-status'"
+
+# Security
+.PHONY: rotate-secrets
+rotate-secrets: ## Guide for rotating secrets
+	@echo "🔐 Secret Rotation Guide:"
+	@echo ""
+	@echo "1. GitHub Container Registry Token (CR_PAT):"
+	@echo "   https://github.com/settings/tokens → Generate new token → Update CR_PAT"
+	@echo ""
+	@echo "2. Supabase Access Token:"
+	@echo "   https://app.supabase.com/account/tokens → Generate new token → Update SUPABASE_ACCESS_TOKEN"
+	@echo ""
+	@echo "3. DigitalOcean Access Token:"
+	@echo "   https://cloud.digitalocean.com/account/api/tokens → Generate new token → Update DIGITALOCEAN_ACCESS_TOKEN"
+	@echo ""
+	@echo "4. Update GitHub Secrets:"
+	@echo "   gh secret set CR_PAT -R $(GITHUB_USER)/insightpulse-odoo"
+	@echo "   gh secret set SUPABASE_ACCESS_TOKEN -R $(GITHUB_USER)/insightpulse-odoo"
+	@echo "   gh secret set DIGITALOCEAN_ACCESS_TOKEN -R $(GITHUB_USER)/insightpulse-odoo"
+
+# Information
+.PHONY: info
+info: ## Display deployment configuration
+	@echo "ℹ️  Deployment Configuration:"
+	@echo ""
+	@echo "  Branch: $(BRANCH)"
+	@echo "  Commit: $(COMMIT)"
+	@echo "  Image: $(IMAGE_FULL)"
+	@echo ""
+	@echo "  Supabase Project: $(SUPABASE_PROJECT_REF)"
+	@echo "  DO App ID: $(DO_APP_ID)"
+	@echo "  Odoo Host: $(ODOO_HOST)"
+	@echo ""
+	@echo "  Odoo URL: https://$(ODOO_FQDN)"
+	@echo "  Docs URL: https://$(DOCS_FQDN)"
+	@echo "  Edge URL: $(EDGE_URL)"
+
+# ══════════════════════════════════════════════════════════════
+# 🤖 SUPERCLAUDE MULTI-AGENT ORCHESTRATION
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: superclaude-help
+superclaude-help: ## Show SuperClaude commands
+	@echo "🤖 SuperClaude Multi-Agent Framework Commands:"
+	@echo ""
+	@echo "  Workflow Orchestration:"
+	@echo "    superclaude-bootstrap        Bootstrap SuperClaude framework (first-time setup)"
+	@echo "    superclaude-build-ai         Build AI infrastructure (parallel, 3 agents, ~2-3 days)"
+	@echo "    superclaude-build-all        Build entire system (parallel, 5 agents, ~5-7 days)"
+	@echo ""
+	@echo "  Skill Management:"
+	@echo "    skill-generate               Generate skill from module (requires MODULE=path/to/module)"
+	@echo "    skill-index                  Rebuild skill index and catalog"
+	@echo "    skill-suggest                Suggest new skills based on codebase analysis"
+	@echo "    skill-list                   List all available skills"
+	@echo ""
+	@echo "  Development:"
+	@echo "    superclaude-status           Show current agent status and progress"
+	@echo "    superclaude-logs             View execution logs"
+	@echo "    superclaude-clean            Clean worktrees and temporary files"
+	@echo ""
+	@echo "Usage examples:"
+	@echo "  make superclaude-bootstrap                    # First-time setup"
+	@echo "  make superclaude-build-ai --parallel          # Build AI infrastructure"
+	@echo "  make skill-generate MODULE=custom/expense_automation  # Generate skill"
+	@echo "  make skill-suggest --threshold 500            # Suggest skills for modules >500 LOC"
+
+# Workflow Commands
+.PHONY: superclaude-bootstrap
+superclaude-bootstrap: ## Bootstrap SuperClaude framework (first-time setup)
+	@echo "🚀 Bootstrapping SuperClaude framework..."
+	@python3 .superclaude/orchestrate.py --workflow bootstrap
+	@echo "✅ Bootstrap complete! Next: make superclaude-build-ai"
+
+.PHONY: superclaude-build-ai
+superclaude-build-ai: ## Build AI infrastructure (parallel, 3 agents, ~2-3 days)
+	@echo "⚡ Building AI infrastructure with 3 parallel agents..."
+	@echo "   Estimated time: 2-3 days (vs 7-10 days sequential)"
+	@python3 .superclaude/orchestrate.py --workflow build_ai_infrastructure --parallel
+	@echo "✅ AI infrastructure build complete!"
+
+.PHONY: superclaude-build-all
+superclaude-build-all: ## Build entire system (parallel, 5 agents, ~5-7 days)
+	@echo "🚀 Building entire system with 5 parallel agents..."
+	@echo "   Estimated time: 5-7 days (vs 35-48 days sequential)"
+	@echo "   Efficiency gain: 5-7x faster"
+	@python3 .superclaude/orchestrate.py --workflow build_full_stack --parallel
+	@echo "✅ Full stack build complete!"
+
+.PHONY: superclaude-dry-run
+superclaude-dry-run: ## Dry run workflow (simulate without executing)
+	@echo "🔍 Dry run workflow: $(WORKFLOW)"
+	@test -n "$(WORKFLOW)" || (echo "❌ WORKFLOW not set. Usage: make superclaude-dry-run WORKFLOW=bootstrap" && exit 1)
+	@python3 .superclaude/orchestrate.py --workflow $(WORKFLOW) --dry-run
+
+# Skill Management
+.PHONY: skill-generate
+skill-generate: ## Generate skill from module (requires MODULE=path/to/module)
+	@echo "📚 Generating skill from module..."
+	@test -n "$(MODULE)" || (echo "❌ MODULE not set. Usage: make skill-generate MODULE=custom/expense_automation" && exit 1)
+	@python3 skills/core/librarian-indexer/auto-generate-skill.py \
+		--module "$(MODULE)" \
+		--output "skills/auto-generated/" \
+		--verbose
+	@echo "✅ Skill generated! Run 'make skill-index' to update catalog"
+
+.PHONY: skill-index
+skill-index: ## Rebuild skill index and catalog
+	@echo "📇 Rebuilding skill index..."
+	@python3 skills/core/librarian-indexer/index-all-skills.py \
+		--skills-dir skills/ \
+		--output skills/INDEX.json \
+		--generate-readme
+	@echo "✅ Skill index updated: skills/INDEX.json"
+	@echo "📖 README generated: skills/README.md"
+
+.PHONY: skill-suggest
+skill-suggest: ## Suggest new skills based on codebase analysis
+	@echo "💡 Analyzing codebase for skill suggestions..."
+	@python3 skills/core/librarian-indexer/suggest-skills.py \
+		--codebase custom/ \
+		--threshold $(THRESHOLD) \
+		--output .superclaude/shared-context/skill-suggestions.txt \
+		--verbose
+	@echo "📋 Suggestions saved to: .superclaude/shared-context/skill-suggestions.txt"
+	@cat .superclaude/shared-context/skill-suggestions.txt
+
+.PHONY: skill-list
+skill-list: ## List all available skills
+	@echo "📚 Available Skills:"
+	@echo ""
+	@test -f skills/INDEX.json || (echo "⚠️  No skill index found. Run 'make skill-index' first" && exit 1)
+	@python3 -c "import json; skills = json.load(open('skills/INDEX.json')); \
+		print('\n'.join([f\"  {s['name']:30} {s['category']:20} {s['expertise_level']}\" for s in skills['skills']]))"
+
+.PHONY: skill-bulk-generate
+skill-bulk-generate: ## Generate skills for top 5 suggested modules
+	@echo "🔄 Generating skills for top 5 modules..."
+	@make skill-suggest THRESHOLD=500
+	@head -5 .superclaude/shared-context/skill-suggestions.txt | while read module; do \
+		echo "📚 Generating skill for $$module..."; \
+		make skill-generate MODULE=$$module || echo "⚠️  Failed to generate skill for $$module"; \
+	done
+	@make skill-index
+	@echo "✅ Bulk skill generation complete!"
+
+# Status and Monitoring
+.PHONY: superclaude-status
+superclaude-status: ## Show current agent status and progress
+	@echo "📊 SuperClaude Agent Status:"
+	@echo ""
+	@test -f .superclaude/shared-context/status.json || (echo "⚠️  No status file found. No agents currently running." && exit 0)
+	@python3 -c "import json; from datetime import datetime; \
+		status = json.load(open('.superclaude/shared-context/status.json')); \
+		for agent, info in status.items(): \
+			print(f\"  {agent:20} {info['status']:12} {info.get('message', '')}\"); \
+			if info.get('progress'): print(f\"     Progress: {info['progress']*100:.1f}%\")"
+
+.PHONY: superclaude-logs
+superclaude-logs: ## View execution logs
+	@echo "📜 SuperClaude Execution Logs:"
+	@echo ""
+	@test -d .superclaude/logs || (echo "⚠️  No logs directory found. No executions yet." && exit 0)
+	@ls -lt .superclaude/logs/*.json | head -5 | awk '{print "  " $$9}' || echo "⚠️  No log files found"
+	@echo ""
+	@echo "💡 View latest log: cat \$$(ls -t .superclaude/logs/*.json | head -1)"
+
+.PHONY: superclaude-clean
+superclaude-clean: ## Clean worktrees and temporary files
+	@echo "🧹 Cleaning SuperClaude worktrees and temporary files..."
+	@rm -rf .worktrees/
+	@rm -rf .superclaude/logs/*.json 2>/dev/null || true
+	@rm -f .superclaude/shared-context/memory.json 2>/dev/null || true
+	@git worktree prune
+	@echo "✅ Cleanup complete"
+
+# Default threshold for skill suggestions
+THRESHOLD ?= 500

@@ -123,3 +123,15 @@ Desktop.ini
 *~
 .nfs*
 
+# Session artifacts (temporary documentation)
+*_STATUS_FINAL.md
+*_DEPLOYMENT_COMPLETE.md
+*_SETUP_COMPLETE.md
+
+# Test scripts (unless in tests/ directory)
+**/test_*.py
+!tests/**/test_*.py
+
+# Claude docs (organized in .claudedocs/ instead)
+.claudedocs/
+

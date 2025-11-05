@@ -1,0 +1,77 @@
+# Skill Suggestions for addons/custom/
+
+Generated: 2025-11-05 18:16:49
+Total Suggestions: 3
+
+
+## 🔥 HIGH PRIORITY (3 suggestions)
+
+
+### 1. microservices_connector-models-microservices-config-specialist
+
+**Module:** `addons/custom/microservices_connector/models/microservices_config.py`
+**Reasons:**
+- Large module (331 lines)
+
+**Generate with:**
+```bash
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/microservices_connector/models/microservices_config.py \
+  --output skills/[{'skill_name': 'microservices_connector-models-microservices-config-specialist', 'priority': 'high', 'reasons': ['Large module (331 lines)'], 'module_path': 'addons/custom/microservices_connector/models/microservices_config.py', 'analysis': {'path': 'microservices_connector/models/microservices_config.py', 'lines': 331, 'cyclomatic_complexity': 12, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'ipai_core-models-approval-flow-specialist', 'priority': 'high', 'reasons': ['Large module (317 lines)'], 'module_path': 'addons/custom/ipai_core/models/approval_flow.py', 'analysis': {'path': 'ipai_core/models/approval_flow.py', 'lines': 317, 'cyclomatic_complexity': 4, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'pulser_hub_sync-controllers-github-webhook-specialist', 'priority': 'high', 'reasons': ['Large module (305 lines)'], 'module_path': 'addons/custom/pulser_hub_sync/controllers/github_webhook.py', 'analysis': {'path': 'pulser_hub_sync/controllers/github_webhook.py', 'lines': 305, 'cyclomatic_complexity': 5, 'cognitive_complexity': 0, 'recent_changes': 0}}]/microservices_connector-models-microservices-config-specialist/
+```
+
+
+### 2. ipai_core-models-approval-flow-specialist
+
+**Module:** `addons/custom/ipai_core/models/approval_flow.py`
+**Reasons:**
+- Large module (317 lines)
+
+**Generate with:**
+```bash
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/ipai_core/models/approval_flow.py \
+  --output skills/[{'skill_name': 'microservices_connector-models-microservices-config-specialist', 'priority': 'high', 'reasons': ['Large module (331 lines)'], 'module_path': 'addons/custom/microservices_connector/models/microservices_config.py', 'analysis': {'path': 'microservices_connector/models/microservices_config.py', 'lines': 331, 'cyclomatic_complexity': 12, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'ipai_core-models-approval-flow-specialist', 'priority': 'high', 'reasons': ['Large module (317 lines)'], 'module_path': 'addons/custom/ipai_core/models/approval_flow.py', 'analysis': {'path': 'ipai_core/models/approval_flow.py', 'lines': 317, 'cyclomatic_complexity': 4, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'pulser_hub_sync-controllers-github-webhook-specialist', 'priority': 'high', 'reasons': ['Large module (305 lines)'], 'module_path': 'addons/custom/pulser_hub_sync/controllers/github_webhook.py', 'analysis': {'path': 'pulser_hub_sync/controllers/github_webhook.py', 'lines': 305, 'cyclomatic_complexity': 5, 'cognitive_complexity': 0, 'recent_changes': 0}}]/ipai_core-models-approval-flow-specialist/
+```
+
+
+### 3. pulser_hub_sync-controllers-github-webhook-specialist
+
+**Module:** `addons/custom/pulser_hub_sync/controllers/github_webhook.py`
+**Reasons:**
+- Large module (305 lines)
+
+**Generate with:**
+```bash
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/pulser_hub_sync/controllers/github_webhook.py \
+  --output skills/[{'skill_name': 'microservices_connector-models-microservices-config-specialist', 'priority': 'high', 'reasons': ['Large module (331 lines)'], 'module_path': 'addons/custom/microservices_connector/models/microservices_config.py', 'analysis': {'path': 'microservices_connector/models/microservices_config.py', 'lines': 331, 'cyclomatic_complexity': 12, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'ipai_core-models-approval-flow-specialist', 'priority': 'high', 'reasons': ['Large module (317 lines)'], 'module_path': 'addons/custom/ipai_core/models/approval_flow.py', 'analysis': {'path': 'ipai_core/models/approval_flow.py', 'lines': 317, 'cyclomatic_complexity': 4, 'cognitive_complexity': 0, 'recent_changes': 0}}, {'skill_name': 'pulser_hub_sync-controllers-github-webhook-specialist', 'priority': 'high', 'reasons': ['Large module (305 lines)'], 'module_path': 'addons/custom/pulser_hub_sync/controllers/github_webhook.py', 'analysis': {'path': 'pulser_hub_sync/controllers/github_webhook.py', 'lines': 305, 'cyclomatic_complexity': 5, 'cognitive_complexity': 0, 'recent_changes': 0}}]/pulser_hub_sync-controllers-github-webhook-specialist/
+```
+
+
+## 📊 Suggestions by Category
+
+
+### General (3 skills)
+
+- microservices_connector-models-microservices-config-specialist (high)
+- ipai_core-models-approval-flow-specialist (high)
+- pulser_hub_sync-controllers-github-webhook-specialist (high)
+
+## 🚀 Bulk Generation Command
+
+```bash
+# Generate all high-priority skills
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/microservices_connector/models/microservices_config.py \
+  --output skills/auto-generated/microservices_connector-models-microservices-config-specialist/
+
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/ipai_core/models/approval_flow.py \
+  --output skills/auto-generated/ipai_core-models-approval-flow-specialist/
+
+python skills/core/librarian-indexer/auto-generate-skill.py \
+  --module addons/custom/pulser_hub_sync/controllers/github_webhook.py \
+  --output skills/auto-generated/pulser_hub_sync-controllers-github-webhook-specialist/
+
+```
