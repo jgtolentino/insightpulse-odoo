@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # AI Inference Hub (main service)
+  ai-hub:
+    build: .
+    container_name: ai-inference-hub
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8100:8000"
+    environment:
+      # Deployment mode
+      MODE: ${MODE:-dev}
+      PROVIDER: ${PROVIDER:-anthropic}
+      PROVIDER_ORDER: ${PROVIDER_ORDER:-anthropic,ollama}
+
+      # API Keys
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+
+      # Model configuration
+      MODEL_NAME: ${MODEL_NAME:-deepseek-ai/DeepSeek-OCR}
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+      TTS_MODEL: ${TTS_MODEL:-tts_models/en/ljspeech/tacotron2-DDC}
+      TORCH_DEVICE: ${TORCH_DEVICE:-cpu}
+      IMAGE_SIZE: ${IMAGE_SIZE:-base}
+
+      # Supabase
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+
+      # Ollama integration
+      OLLAMA_BASE_URL: http://ollama:11434
+
+      # Limits
+      PORT: 8000
+      MAX_REQUEST_SIZE_MB: ${MAX_REQUEST_SIZE_MB:-25}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-60}
+    volumes:
+      - model-cache:/models
+      - ./logs:/app/logs
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      - ollama
+
+  # Ollama (local LLM inference)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    networks:
+      - ai-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-site.conf:/etc/nginx/conf.d/default.conf:ro
+      - letsencrypt-data:/etc/letsencrypt
+      - web-root:/var/www/html
+    networks:
+      - ai-network
+    depends_on:
+      - ai-hub
+
+volumes:
+  model-cache:
+    driver: local
+  ollama-data:
+    driver: local
+  letsencrypt-data:
+    driver: local
+  web-root:
+    driver: local
+
+networks:
+  ai-network:
+    driver: bridge

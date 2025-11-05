@@ -1,10 +1,12 @@
-# DeepSeek-OCR Inference Service
+# DeepSeek Multi-Modal AI Service
 
-FastAPI service for DeepSeek-OCR 3B model with LangChain integration.
+FastAPI service for DeepSeek-OCR 3B model with STT/TTS and LangChain integration.
 
 ## Features
 
 - **DeepSeek-OCR 3B Model**: Multi-modal OCR with document understanding
+- **Whisper STT**: Speech-to-text transcription (tiny, base, small, medium, large models)
+- **Coqui TTS**: Text-to-speech synthesis with voice cloning support
 - **LangChain Integration**: Document chunking and processing
 - **Multiple Image Sizes**: Tiny (512x512), Small (640x640), Base (1024x1024), Large (1280x1280)
 - **Supabase Integration**: Automatic result storage
@@ -18,6 +20,22 @@ FastAPI service for DeepSeek-OCR 3B model with LangChain integration.
 GET /health
 ```
 
+**Response**:
+```json
+{
+  "status": "ok",
+  "models": {
+    "ocr": "deepseek-ai/DeepSeek-OCR",
+    "stt": "whisper-base",
+    "tts": "tts_models/en/ljspeech/tacotron2-DDC"
+  },
+  "device": "cpu",
+  "image_size": "base",
+  "supabase_connected": true,
+  "langchain_enabled": true
+}
+```
+
 ### OCR Extraction
 ```bash
 POST /v1/ocr
@@ -28,12 +46,87 @@ output_format: "markdown" | "plain"
 use_langchain: true | false
 ```
 
+**Example**:
+```bash
+curl -X POST http://ocr.insightpulseai.net:8100/v1/ocr \
+  -F "file=@document.jpg" \
+  -F "use_langchain=true"
+```
+
 ### Document Parsing (with LangChain)
 ```bash
 POST /v1/parse
 Content-Type: multipart/form-data
 
 file: image file
+```
+
+**Example**:
+```bash
+curl -X POST http://ocr.insightpulseai.net:8100/v1/parse \
+  -F "file=@receipt.jpg" | jq
+```
+
+### Speech-to-Text (STT)
+```bash
+POST /v1/stt
+Content-Type: multipart/form-data
+
+file: audio file (MP3, WAV, M4A, etc.)
+language: "en" | "es" | "fr" | etc. (default: "en")
+translate: true | false (translate to English, default: false)
+```
+
+**Example**:
+```bash
+# Transcribe English audio
+curl -X POST http://ocr.insightpulseai.net:8100/v1/stt \
+  -F "file=@recording.mp3" \
+  -F "language=en"
+
+# Transcribe Spanish and translate to English
+curl -X POST http://ocr.insightpulseai.net:8100/v1/stt \
+  -F "file=@spanish_audio.wav" \
+  -F "language=es" \
+  -F "translate=true"
+```
+
+**Response**:
+```json
+{
+  "text": "Transcribed text here",
+  "language": "en",
+  "segments": [
+    {"start": 0.0, "end": 2.5, "text": "First segment"}
+  ],
+  "model": "whisper-base",
+  "file_name": "recording.mp3"
+}
+```
+
+### Text-to-Speech (TTS)
+```bash
+POST /v1/tts
+Content-Type: multipart/form-data
+
+text: Text to synthesize (form field)
+language: "en" | "es" | "fr" | etc. (default: "en")
+speaker_wav: Optional reference audio for voice cloning
+```
+
+**Example**:
+```bash
+# Basic TTS
+curl -X POST http://ocr.insightpulseai.net:8100/v1/tts \
+  -F "text=Hello, this is a test of text to speech synthesis." \
+  -F "language=en" \
+  -o output.wav
+
+# Voice cloning with reference audio
+curl -X POST http://ocr.insightpulseai.net:8100/v1/tts \
+  -F "text=This will sound like the speaker in the reference audio." \
+  -F "speaker_wav=@reference_voice.wav" \
+  -o cloned_voice.wav
 ```
 
 ## Deployment
