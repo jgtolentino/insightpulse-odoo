@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { GitHubConnection, GitHubScope } from './types/github';
-import { GITHUB_SCOPES } from './config/github';
+import type { GitHubConnection } from './types/github';
+import { GITHUB_INSTALL_API } from './config/github';
 import ConnectionStatus from './components/ConnectionStatus';
-import ScopeSelector from './components/ScopeSelector';
+import PermissionSummary from './components/PermissionSummary';
 import IntegrationConfigs from './components/IntegrationConfigs';
 import RepositorySelector from './components/RepositorySelector';
 import ActivityDashboard from './components/ActivityDashboard';
@@ -13,7 +13,7 @@ function App() {
     isConnected: false,
     accessToken: null,
     user: null,
-    selectedScopes: GITHUB_SCOPES,
+    installationId: null,
   });
   const [darkMode, setDarkMode] = useState(true);
 
@@ -25,89 +25,80 @@ function App() {
     }
   }, [darkMode]);
 
-  const handleConnect = useCallback(async (token: string) => {
+  const handleConnect = useCallback(async (token: string, installationId?: string) => {
     try {
       const service = new GitHubService(token);
       const user = await service.getCurrentUser();
 
-      setConnection((prev) => ({
+      setConnection({
         isConnected: true,
         accessToken: token,
         user,
-        selectedScopes: prev.selectedScopes,
-      }));
+        installationId: installationId || null,
+      });
     } catch (error) {
       console.error('Failed to connect:', error);
     }
   }, []);
 
   useEffect(() => {
-    // Check for OAuth callback parameters
+    // Check for GitHub App installation callback
     const searchParams = new URLSearchParams(window.location.search);
 
-    // Check for OAuth errors
-    const error = searchParams.get('error');
-    const errorDescription = searchParams.get('error_description');
-
-    if (error) {
-      console.error('OAuth error:', error, errorDescription);
-      alert(`Authentication failed: ${errorDescription || error}`);
-      window.history.replaceState({}, document.title, '/');
-      return;
-    }
-
-    // Check for authorization code (OAuth App flow)
-    const code = searchParams.get('code');
+    const installationId = searchParams.get('installation_id');
+    const setupAction = searchParams.get('setup_action');
     const state = searchParams.get('state');
 
-    if (code) {
+    if (installationId) {
       // Validate state parameter for CSRF protection
-      const savedState = sessionStorage.getItem('github_oauth_state');
+      const savedState = sessionStorage.getItem('github_app_state');
 
-      if (state !== savedState) {
-        console.error('OAuth state mismatch - possible CSRF attack');
+      if (state && savedState && state !== savedState) {
+        console.error('State mismatch - possible CSRF attack');
         alert('Authentication failed: Invalid state parameter');
         window.history.replaceState({}, document.title, '/');
         return;
       }
 
       // Clean up state
-      sessionStorage.removeItem('github_oauth_state');
+      sessionStorage.removeItem('github_app_state');
 
-      // TODO: Exchange code for access token via backend endpoint
-      // For now, show error that backend callback is needed
-      console.error('OAuth code received but backend callback endpoint not implemented');
-      alert('OAuth callback endpoint not configured. Please set up /api/github/oauth/callback');
+      // Handle the installation callback
+      handleInstallationCallback(installationId, setupAction);
       window.history.replaceState({}, document.title, '/');
       return;
     }
-
-    // Check for access token in hash (legacy flow - not standard OAuth)
-    const hash = window.location.hash;
-    if (hash) {
-      const params = new URLSearchParams(hash.substring(1));
-      const token = params.get('access_token');
-
-      if (token) {
-        handleConnect(token);
-        window.history.replaceState({}, document.title, '/');
-      }
-    }
   }, [handleConnect]);
 
+  const handleInstallationCallback = async (installationId: string, setupAction: string | null) => {
+    try {
+      // Call the callback endpoint to complete installation
+      const response = await fetch(`${GITHUB_INSTALL_API}/callback?installation_id=${installationId}${setupAction ? `&setup_action=${setupAction}` : ''}`);
+
+      if (!response.ok) {
+        throw new Error('Failed to complete installation');
+      }
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert(`GitHub App installed successfully for ${data.account}!`);
+        // Store installation_id for future use
+        sessionStorage.setItem('github_installation_id', installationId);
+      }
+    } catch (error) {
+      console.error('Installation callback error:', error);
+      alert('Failed to complete installation. Please try again.');
+    }
+  };
+
   const handleDisconnect = () => {
+    sessionStorage.removeItem('github_installation_id');
     setConnection({
       isConnected: false,
       accessToken: null,
       user: null,
-      selectedScopes: GITHUB_SCOPES,
-    });
-  };
-
-  const handleScopeChange = (scopes: GitHubScope[]) => {
-    setConnection({
-      ...connection,
-      selectedScopes: scopes,
+      installationId: null,
     });
   };
 
@@ -145,10 +136,7 @@ function App() {
           />
 
           {!connection.isConnected && (
-            <ScopeSelector
-              scopes={connection.selectedScopes}
-              onChange={handleScopeChange}
-            />
+            <PermissionSummary />
           )}
 
           {connection.isConnected && (
@@ -156,7 +144,7 @@ function App() {
               <RepositorySelector accessToken={connection.accessToken!} />
               <IntegrationConfigs
                 accessToken={connection.accessToken!}
-                selectedScopes={connection.selectedScopes}
+                installationId={connection.installationId}
               />
               <ActivityDashboard />
             </>

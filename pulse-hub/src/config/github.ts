@@ -1,57 +1,42 @@
-import type { GitHubScope } from '../types/github';
+// GitHub App Configuration (Installation Flow)
+// Uses GitHub App instead of OAuth for better security and permissions
 
-export const GITHUB_CLIENT_ID = import.meta.env.VITE_GITHUB_CLIENT_ID || '';
-export const GITHUB_REDIRECT_URI = import.meta.env.VITE_OAUTH_REDIRECT_URI || 'http://localhost:3000/callback';
+export const GITHUB_APP_NAME = import.meta.env.VITE_GITHUB_APP_NAME || 'pulser-hub';
+export const GITHUB_APP_ID = import.meta.env.VITE_GITHUB_APP_ID || '2191216';
 export const API_BASE_URL = 'https://api.github.com';
 
-export const GITHUB_SCOPES: GitHubScope[] = [
+// Supabase Edge Function endpoints
+export const GITHUB_INSTALL_API = import.meta.env.VITE_GITHUB_INSTALL_API ||
+  'https://spdtwktxdalcfigzeqrz.supabase.co/functions/v1/github-app-install';
+export const GITHUB_MINT_TOKEN_API = import.meta.env.VITE_GITHUB_MINT_TOKEN_API ||
+  'https://spdtwktxdalcfigzeqrz.supabase.co/functions/v1/github-mint-token';
+
+// GitHub App Permissions (Fixed in App settings, not runtime)
+// These are shown to the user for transparency
+export const GITHUB_APP_PERMISSIONS = [
   {
-    id: 'issues',
+    name: 'Repository Contents',
+    description: 'Read and write access to code, commits, branches, and files',
+    level: 'Read & Write',
+  },
+  {
     name: 'Issues',
     description: 'Create, read, update, and close issues',
-    scopes: ['repo'],
-    enabled: true,
+    level: 'Read & Write',
   },
   {
-    id: 'code',
-    name: 'Code',
-    description: 'Read files and push commits',
-    scopes: ['repo'],
-    enabled: true,
-  },
-  {
-    id: 'pull_requests',
     name: 'Pull Requests',
     description: 'Create, merge, and review pull requests',
-    scopes: ['repo'],
-    enabled: true,
+    level: 'Read & Write',
   },
   {
-    id: 'actions',
-    name: 'Actions',
-    description: 'Trigger workflows and view runs',
-    scopes: ['workflow'],
-    enabled: false,
+    name: 'Workflows',
+    description: 'Trigger GitHub Actions workflows and view runs',
+    level: 'Read & Write',
   },
   {
-    id: 'projects',
-    name: 'Projects',
-    description: 'Update project boards',
-    scopes: ['project'],
-    enabled: false,
-  },
-  {
-    id: 'admin',
-    name: 'Repository Admin',
-    description: 'Manage settings and webhooks',
-    scopes: ['admin:repo_hook'],
-    enabled: false,
+    name: 'Metadata',
+    description: 'Read repository metadata',
+    level: 'Read-only',
   },
 ];
-
-export const getSelectedScopes = (selectedScopes: GitHubScope[]): string => {
-  const scopes = selectedScopes
-    .filter((scope) => scope.enabled)
-    .flatMap((scope) => scope.scopes);
-  return [...new Set(scopes)].join(' ');
-};

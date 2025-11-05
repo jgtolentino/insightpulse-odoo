@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import type { GitHubScope } from '../types/github';
 
 interface Props {
   accessToken: string;
-  selectedScopes: GitHubScope[];
+  installationId: string | null;
 }
 
-export default function IntegrationConfigs({ accessToken }: Props) {
+export default function IntegrationConfigs({ accessToken, installationId }: Props) {
   const [activeTab, setActiveTab] = useState<'chatgpt' | 'claude' | 'api'>('claude');
   const [copied, setCopied] = useState(false);
 
