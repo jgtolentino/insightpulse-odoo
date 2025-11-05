@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <menuitem id="menu_ip_root" name="InsightPulse T&amp;E" sequence="10"/>
+  <menuitem id="menu_ip_dashboard" name="Admin Dashboard" parent="menu_ip_root" action="action_ip_te_dashboard"/>
+  <menuitem id="menu_ip_cash_advance" name="Cash Advances" parent="menu_ip_root" action="action_ip_cash_advance"/>
+  <menuitem id="menu_ip_liquidation" name="Liquidations" parent="menu_ip_root" action="action_ip_liquidation"/>
+  <menuitem id="menu_ip_travel" name="Travel Requests" parent="menu_ip_root" action="action_ip_travel"/>
+</odoo>

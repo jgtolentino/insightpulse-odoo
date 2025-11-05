@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ip_cash_advance,access_ip_cash_advance,model_ip_cash_advance,base.group_user,1,1,1,0
+access_ip_liquidation,access_ip_liquidation,model_ip_liquidation,base.group_user,1,1,1,0
+access_ip_travel_request,access_ip_travel_request,model_ip_travel_request,base.group_user,1,1,1,0
+access_ip_te_dashboard,access_ip_te_dashboard,model_ip_te_dashboard,base.group_user,1,0,0,0
