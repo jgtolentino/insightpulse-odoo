@@ -47,136 +47,286 @@ BEGIN
   RAISE NOTICE '✅ Created tenant: TBWA Finance SSC (id: %)', v_tenant_id;
 
   -- =============================================================================
-  -- 2. Create 8 Agency Projects (Under TBWA Tenant)
+  -- 2. Create Finance Projects (Under TBWA Tenant)
+  -- Projects: Monthly Closing and Tax Filing
+  -- Employee codes (RIM, CKVC, etc.) stored in metadata as project managers
   -- =============================================================================
 
-  -- RIM Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 1 (Managed by Rey Meran - RIM)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'RIM Agency',
-    'RIM Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - RIM',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'RIM',
+      'manager_name', 'Rey Meran',
+      'manager_email', 'rey.meran@tbwa-smp.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: RIM Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - RIM';
 
-  -- CKVC Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 2 (Managed by Khalil Veracruz - CKVC)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'CKVC Agency',
-    'CKVC Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - CKVC',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'CKVC',
+      'manager_name', 'Khalil Veracruz',
+      'manager_email', 'khalil.veracruz@tbwa-smp.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: CKVC Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - CKVC';
 
-  -- BOM Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 3 (Managed by Beng Manalo - BOM)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'BOM Agency',
-    'BOM Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - BOM',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'BOM',
+      'manager_name', 'Beng Manalo',
+      'manager_email', 'beng.manalo@omc.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: BOM Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - BOM';
 
-  -- JPAL Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 4 (Managed by Jinky Paladin - JPAL)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'JPAL Agency',
-    'JPAL Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - JPAL',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'JPAL',
+      'manager_name', 'Jinky Paladin',
+      'manager_email', 'jinky.paladin@omc.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: JPAL Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - JPAL';
 
-  -- JLI Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 5 (Managed by Amor Lasaga - LAS)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'JLI Agency',
-    'JLI Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - LAS',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'LAS',
+      'manager_name', 'Amor Lasaga',
+      'manager_email', 'amor.lasaga@tbwa-smp.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: JLI Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - LAS';
 
-  -- JAP Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Monthly Closing Project 6 (Managed by Sally Brillantes - RMQB)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'JAP Agency',
-    'JAP Corporation - Financial operations and BIR compliance'
+    'Monthly Closing - RMQB',
+    'Monthly financial closing operations',
+    jsonb_build_object(
+      'project_type', 'monthly_closing',
+      'manager_code', 'RMQB',
+      'manager_name', 'Sally Brillantes',
+      'manager_email', 'sally.brillantes@omc.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: JAP Agency';
+  RAISE NOTICE '  ✅ Created project: Monthly Closing - RMQB';
 
-  -- LAS Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Tax Filing Project 1 (Managed by Jerald Loterte - JPL)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'LAS Agency',
-    'LAS Corporation - Financial operations and BIR compliance'
+    'Tax Filing - JPL',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'JPL',
+      'manager_name', 'Jerald Loterte',
+      'manager_email', 'jerald.loterte@omc.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: LAS Agency';
+  RAISE NOTICE '  ✅ Created project: Tax Filing - JPL';
 
-  -- RMQB Agency
-  INSERT INTO projects (tenant_id, name, description)
+  -- Tax Filing Project 2 (Managed by Jasmin Ignacio - JI)
+  INSERT INTO projects (tenant_id, name, description, metadata)
   VALUES (
     v_tenant_id,
-    'RMQB Agency',
-    'RMQB Corporation - Financial operations and BIR compliance'
+    'Tax Filing - JI',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'JI',
+      'manager_name', 'Jasmin Ignacio',
+      'manager_email', 'jasmin.ignacio@omc.com'
+    )
   )
   ON CONFLICT (tenant_id, name) DO UPDATE SET
     description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
     updated_at = now()
   RETURNING id INTO v_project_id;
 
   v_project_ids := array_append(v_project_ids, v_project_id);
 
-  RAISE NOTICE '  ✅ Created project: RMQB Agency';
+  RAISE NOTICE '  ✅ Created project: Tax Filing - JI';
+
+  -- Tax Filing Project 3 (Managed by Jhoee Oliva - JO)
+  INSERT INTO projects (tenant_id, name, description, metadata)
+  VALUES (
+    v_tenant_id,
+    'Tax Filing - JO',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'JO',
+      'manager_name', 'Jhoee Oliva',
+      'manager_email', 'jhoee.oliva@omc.com'
+    )
+  )
+  ON CONFLICT (tenant_id, name) DO UPDATE SET
+    description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
+    updated_at = now()
+  RETURNING id INTO v_project_id;
+
+  v_project_ids := array_append(v_project_ids, v_project_id);
+
+  RAISE NOTICE '  ✅ Created project: Tax Filing - JO';
+
+  -- Tax Filing Project 4 (Managed by Joana Maravillas - JM)
+  INSERT INTO projects (tenant_id, name, description, metadata)
+  VALUES (
+    v_tenant_id,
+    'Tax Filing - JM',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'JM',
+      'manager_name', 'Joana Maravillas',
+      'manager_email', 'joana.maravillas@omc.com'
+    )
+  )
+  ON CONFLICT (tenant_id, name) DO UPDATE SET
+    description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
+    updated_at = now()
+  RETURNING id INTO v_project_id;
+
+  v_project_ids := array_append(v_project_ids, v_project_id);
+
+  RAISE NOTICE '  ✅ Created project: Tax Filing - JM';
+
+  -- Tax Filing Project 5 (Managed by Cliff Dejecacion - CJD)
+  INSERT INTO projects (tenant_id, name, description, metadata)
+  VALUES (
+    v_tenant_id,
+    'Tax Filing - CJD',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'CJD',
+      'manager_name', 'Cliff Dejecacion',
+      'manager_email', 'cliff.dejecacion@omc.com'
+    )
+  )
+  ON CONFLICT (tenant_id, name) DO UPDATE SET
+    description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
+    updated_at = now()
+  RETURNING id INTO v_project_id;
+
+  v_project_ids := array_append(v_project_ids, v_project_id);
+
+  RAISE NOTICE '  ✅ Created project: Tax Filing - CJD';
+
+  -- Tax Filing Project 6 (Managed by Jake Tolentino - JT)
+  INSERT INTO projects (tenant_id, name, description, metadata)
+  VALUES (
+    v_tenant_id,
+    'Tax Filing - JT',
+    'BIR tax filing and compliance operations',
+    jsonb_build_object(
+      'project_type', 'tax_filing',
+      'manager_code', 'JT',
+      'manager_name', 'Jake Tolentino',
+      'manager_email', 'jgtolentino.rn@gmail.com'
+    )
+  )
+  ON CONFLICT (tenant_id, name) DO UPDATE SET
+    description = EXCLUDED.description,
+    metadata = EXCLUDED.metadata,
+    updated_at = now()
+  RETURNING id INTO v_project_id;
+
+  v_project_ids := array_append(v_project_ids, v_project_id);
+
+  RAISE NOTICE '  ✅ Created project: Tax Filing - JT';
 
   -- =============================================================================
   -- 3. Create Production Environments for Each Project
@@ -193,7 +343,7 @@ BEGIN
     ON CONFLICT (project_id, name) DO NOTHING;
   END LOOP;
 
-  RAISE NOTICE '✅ Created production environments for all 8 projects';
+  RAISE NOTICE '✅ Created production environments for all 12 projects';
 
   -- =============================================================================
   -- 4. Create Finance SSC Admin User
@@ -315,7 +465,7 @@ BEGIN
       definition = EXCLUDED.definition;
   END LOOP;
 
-  RAISE NOTICE '✅ Created month-end closing workflows for all 8 projects';
+  RAISE NOTICE '✅ Created month-end closing workflows for all 12 projects';
 
   -- =============================================================================
   -- 8. Create ONE Notion Integration (TBWA-wide)
@@ -337,7 +487,7 @@ BEGIN
       ),
       'sync_frequency', '15m',
       'webhook_enabled', true,
-      'agencies', jsonb_build_array('RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB')
+      'project_managers', jsonb_build_array('RIM', 'CKVC', 'BOM', 'JPAL', 'JPL', 'JI', 'JO', 'JM', 'LAS', 'RMQB', 'CJD', 'JT')
     ),
     true
   )
@@ -513,13 +663,15 @@ BEGIN
   RAISE NOTICE '';
   RAISE NOTICE '📊 Summary:';
   RAISE NOTICE '  • 1 Tenant: TBWA Finance SSC';
-  RAISE NOTICE '  • 8 Projects: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB';
+  RAISE NOTICE '  • 12 Projects:';
+  RAISE NOTICE '    - 6 Monthly Closing (RIM, CKVC, BOM, JPAL, LAS, RMQB)';
+  RAISE NOTICE '    - 6 Tax Filing (JPL, JI, JO, JM, CJD, JT)';
   RAISE NOTICE '  • 1 Admin User: finance.ssc@insightpulseai.net';
   RAISE NOTICE '  • 1 Notion Integration: TBWA-wide workspace';
   RAISE NOTICE '  • 1 Billing Account: Single subscription';
-  RAISE NOTICE '  • 1 Finance Team: Cross-agency operations';
-  RAISE NOTICE '  • 8 Month-End Workflows: One per agency';
-  RAISE NOTICE '  • 1 Consolidated Dashboard: All agencies visible';
+  RAISE NOTICE '  • 1 Finance Team: Cross-project operations';
+  RAISE NOTICE '  • 12 Workflows: One per project';
+  RAISE NOTICE '  • 1 Consolidated Dashboard: All projects visible';
   RAISE NOTICE '';
   RAISE NOTICE '🎯 Next Steps:';
   RAISE NOTICE '  1. Configure Notion integration token in secrets';
