@@ -1,0 +1,145 @@
+# Content Policy Configuration
+# ----------------------------
+# Defines blocked topics, PII rules, and safety guardrails
+
+version: "1.0"
+updated: "2025-01-05"
+
+# Blocked topics (high-level categories)
+blocked_topics:
+  - violence
+  - hate_speech
+  - illegal_activities
+  - personal_attacks
+  - spam
+  - malware
+
+# PII Detection Rules (Philippines-specific)
+pii_rules:
+  - name: "Philippine SSS Number"
+    pattern: '\b\d{2}-\d{7}-\d{1}\b'
+    severity: high
+    action: redact
+    replacement: "[SSS_REDACTED]"
+
+  - name: "Philippine TIN"
+    pattern: '\b\d{3}-\d{3}-\d{3}-\d{3}\b'
+    severity: high
+    action: redact
+    replacement: "[TIN_REDACTED]"
+
+  - name: "Email Address"
+    pattern: '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    severity: medium
+    action: redact
+    replacement: "[EMAIL_REDACTED]"
+
+  - name: "Philippine Mobile Number"
+    pattern: '\b(09|\+639)\d{9}\b'
+    severity: medium
+    action: redact
+    replacement: "[PHONE_REDACTED]"
+
+  - name: "Credit Card Number"
+    pattern: '\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b'
+    severity: high
+    action: block
+    replacement: "[CC_REDACTED]"
+
+# Sensitive keywords
+sensitive_keywords:
+  high_severity:
+    - "confidential"
+    - "internal only"
+    - "do not distribute"
+    - "classified"
+    - "secret"
+
+  medium_severity:
+    - "draft"
+    - "preliminary"
+    - "for review"
+
+# Prompt injection patterns
+prompt_injection_patterns:
+  - pattern: '(?i)ignore\s+(previous|all|above)\s+instructions?'
+    severity: critical
+    action: block
+    description: "Instruction override attempt"
+
+  - pattern: '(?i)system\s*:?\s*you\s+are'
+    severity: critical
+    action: block
+    description: "System prompt override attempt"
+
+  - pattern: '(?i)(disregard|forget)\s+(previous|all|everything)'
+    severity: critical
+    action: block
+    description: "Memory manipulation attempt"
+
+  - pattern: '(?i)jailbreak'
+    severity: high
+    action: block
+    description: "Explicit jailbreak attempt"
+
+  - pattern: '(?i)DAN\s+mode|do\s+anything\s+now'
+    severity: high
+    action: block
+    description: "DAN jailbreak attempt"
+
+# Output validation rules
+output_validation:
+  - name: "No internal URLs"
+    pattern: '(?i)https?://(localhost|127\.0\.0\.1|internal|intranet)'
+    severity: medium
+    action: warn
+
+  - name: "No API keys"
+    pattern: '(?i)(api[_-]?key|token|secret)["\s:=]+[a-zA-Z0-9_-]{20,}'
+    severity: critical
+    action: block
+
+# Rate limiting by risk level
+rate_limits:
+  high_risk_users:
+    requests_per_minute: 10
+    requests_per_hour: 100
+    requests_per_day: 500
+
+  standard_users:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    requests_per_day: 10000
+
+  internal_services:
+    requests_per_minute: 300
+    requests_per_hour: 10000
+    requests_per_day: 100000
+
+# Compliance requirements
+compliance:
+  philippines_data_privacy_act:
+    enabled: true
+    require_consent: true
+    data_retention_days: 365
+    right_to_erasure: true
+
+  gdpr:
+    enabled: false  # Enable if serving EU users
+
+# Monitoring and alerting
+monitoring:
+  alert_on_blocked_requests: true
+  alert_threshold: 10  # Alert if >10 blocks in 5 minutes
+  slack_webhook_env: SECURITY_ALERTS_WEBHOOK
+  pagerduty_integration_key_env: PAGERDUTY_SECURITY_KEY
+
+# Exemptions (for testing/debugging)
+exemptions:
+  - user_id: "system-admin"
+    reason: "Administrative access"
+    exempt_from: [rate_limits]
+
+  - tenant_id: "00000000-0000-0000-0000-000000000001"
+    reason: "Test tenant"
+    exempt_from: [rate_limits]

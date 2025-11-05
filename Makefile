@@ -587,3 +587,177 @@ superclaude-clean: ## Clean worktrees and temporary files
 
 # Default threshold for skill suggestions
 THRESHOLD ?= 500
+
+# ══════════════════════════════════════════════════════════════
+# 🤖 LLM OPERATIONS & AI INFRASTRUCTURE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: llm-help
+llm-help: ## Show LLM operations commands
+	@echo "🤖 LLM Operations Commands:"
+	@echo ""
+	@echo "  Infrastructure:"
+	@echo "    llm-up                Start LLM router + Ollama + Redis + Langfuse"
+	@echo "    llm-down              Stop LLM infrastructure"
+	@echo "    llm-router            Run LLM router locally (dev mode)"
+	@echo "    llm-logs              View LLM infrastructure logs"
+	@echo ""
+	@echo "  Evaluation & Testing:"
+	@echo "    eval-golden           Run golden-set benchmark"
+	@echo "    eval-redteam          Run red-team security tests"
+	@echo "    eval-report           Generate evaluation report"
+	@echo ""
+	@echo "  Prompt Management:"
+	@echo "    prompt-release        Promote canary -> prod (requires ID=prompt-id)"
+	@echo "    prompt-list           List all prompts in registry"
+	@echo "    prompt-validate       Validate prompt registry"
+	@echo ""
+	@echo "  Dataset Management:"
+	@echo "    dvc-init              Initialize DVC with MinIO remote"
+	@echo "    dvc-push              Push datasets/prompts to MinIO"
+	@echo "    dvc-pull              Pull datasets/prompts from MinIO"
+	@echo ""
+	@echo "  Monitoring:"
+	@echo "    llm-metrics           View LLM metrics dashboard"
+	@echo "    llm-budget            Check budget status"
+	@echo ""
+
+# Infrastructure Management
+.PHONY: llm-up
+llm-up: ## Start LLM infrastructure (router, Ollama, Redis, Langfuse)
+	@echo "🚀 Starting LLM infrastructure..."
+	@docker-compose -f infrastructure/docker/docker-compose.ai.yml up -d
+	@echo "✅ LLM infrastructure started!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "🤖 LLM Router:     http://localhost:8010"
+	@echo "🦙 Ollama:         http://localhost:11434"
+	@echo "📊 Langfuse:       http://localhost:3000"
+	@echo "🔴 Redis:          localhost:6379"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+.PHONY: llm-down
+llm-down: ## Stop LLM infrastructure
+	@echo "🛑 Stopping LLM infrastructure..."
+	@docker-compose -f infrastructure/docker/docker-compose.ai.yml down
+	@echo "✅ LLM infrastructure stopped"
+
+.PHONY: llm-router
+llm-router: ## Run LLM router locally (dev mode)
+	@echo "🤖 Starting LLM router in dev mode..."
+	@cd ai-runtime/router && uvicorn main:app --reload --port 8010
+
+.PHONY: llm-logs
+llm-logs: ## View LLM infrastructure logs
+	@docker-compose -f infrastructure/docker/docker-compose.ai.yml logs -f
+
+.PHONY: llm-restart
+llm-restart: ## Restart LLM infrastructure
+	@make llm-down
+	@sleep 2
+	@make llm-up
+
+# Evaluation & Testing
+.PHONY: eval-golden
+eval-golden: ## Run golden-set benchmark
+	@echo "🧪 Running golden-set benchmark..."
+	@python evals/benchmarks/end-to-end-benchmark.py \
+		--dataset evals/datasets/golden/finance-ssc.yaml \
+		--baseline evals/baselines/finance-ssc-v2.0.json \
+		--out evals/results/dev.json
+	@echo "✅ Benchmark complete! Results saved to evals/results/dev.json"
+
+.PHONY: eval-redteam
+eval-redteam: ## Run red-team security tests
+	@echo "🛡️  Running red-team security tests..."
+	@python tests/ai/adversarial/run_jailbreak_tests.py \
+		--test-bank tests/ai/adversarial/test_jailbreak_bank.md \
+		--policy guardrails/policies/content-policy.yml
+	@echo "✅ Red-team tests complete!"
+
+.PHONY: eval-report
+eval-report: ## Generate evaluation report
+	@echo "📊 Generating evaluation report..."
+	@python evals/ci-integration/pr-eval-report.py \
+		--results evals/results/dev.json
+	@echo "✅ Report generated!"
+
+# Prompt Management
+.PHONY: prompt-release
+prompt-release: ## Promote canary -> prod (requires ID=prompt-id)
+	@test -n "$(ID)" || (echo "❌ ID not set. Usage: make prompt-release ID=receipt-parser" && exit 1)
+	@echo "🚀 Promoting prompt '$(ID)' to production..."
+	@python prompt-ops/deployment/promote.py --id $(ID) --to prod
+	@echo "✅ Prompt promoted to production!"
+
+.PHONY: prompt-list
+prompt-list: ## List all prompts in registry
+	@echo "📋 Prompt Registry:"
+	@python -c "import yaml; prompts = yaml.safe_load(open('prompt-ops/registry/catalog.yml'))['prompts']; \
+		print('\\n'.join([f\"{p['id']:25} v{p['version']:6} {p['rollout']:8} {p['owner']}\" for p in prompts]))"
+
+.PHONY: prompt-validate
+prompt-validate: ## Validate prompt registry
+	@echo "✅ Validating prompt registry..."
+	@python -c "import yaml; yaml.safe_load(open('prompt-ops/registry/catalog.yml'))" && \
+		echo "✅ Registry is valid" || echo "❌ Registry has errors"
+
+# Dataset Management (DVC)
+.PHONY: dvc-init
+dvc-init: ## Initialize DVC with MinIO remote
+	@echo "🗄️  Initializing DVC with MinIO..."
+	@dvc init || echo "⚠️  DVC already initialized"
+	@dvc remote add -d minio s3://ai-datasets || echo "⚠️  Remote already exists"
+	@dvc remote modify minio endpointurl ${MINIO_ENDPOINT_URL}
+	@echo "✅ DVC initialized with MinIO remote"
+
+.PHONY: dvc-push
+dvc-push: ## Push datasets/prompts to MinIO
+	@echo "📤 Pushing datasets to MinIO..."
+	@dvc push
+	@echo "✅ Datasets pushed to MinIO"
+
+.PHONY: dvc-pull
+dvc-pull: ## Pull datasets/prompts from MinIO
+	@echo "📥 Pulling datasets from MinIO..."
+	@dvc pull
+	@echo "✅ Datasets pulled from MinIO"
+
+# Monitoring
+.PHONY: llm-metrics
+llm-metrics: ## View LLM metrics dashboard
+	@echo "📊 Opening Superset LLM metrics dashboard..."
+	@open http://localhost:8088/superset/dashboard/llm-metrics/ || \
+		xdg-open http://localhost:8088/superset/dashboard/llm-metrics/ || \
+		echo "🌐 Open http://localhost:8088/superset/dashboard/llm-metrics/ in your browser"
+
+.PHONY: llm-budget
+llm-budget: ## Check budget status
+	@echo "💰 Checking LLM budget status..."
+	@curl -s http://localhost:8010/v1/budget | python -m json.tool || \
+		echo "❌ LLM router not running. Start with 'make llm-up'"
+
+.PHONY: llm-health
+llm-health: ## Check LLM infrastructure health
+	@echo "🏥 Checking LLM infrastructure health..."
+	@echo ""
+	@echo "LLM Router:"
+	@curl -s http://localhost:8010/health | python -m json.tool || echo "❌ LLM router down"
+	@echo ""
+	@echo "Ollama:"
+	@curl -s http://localhost:11434/api/tags | python -m json.tool || echo "❌ Ollama down"
+	@echo ""
+	@echo "Redis:"
+	@redis-cli -h localhost -p 6379 -a ${REDIS_PASSWORD:-insightpulse} ping || echo "❌ Redis down"
+
+# Development Helpers
+.PHONY: llm-shell
+llm-shell: ## Open shell in LLM router container
+	@docker exec -it insightpulse-llm-router bash
+
+.PHONY: llm-test-route
+llm-test-route: ## Test LLM routing (quick test)
+	@echo "🧪 Testing LLM routing..."
+	@curl -X POST http://localhost:8010/v1/route \
+		-H "Content-Type: application/json" \
+		-d '{"task":"cheap_gen","prompt":"Hello, how are you?","max_tokens":50}' \
+		| python -m json.tool

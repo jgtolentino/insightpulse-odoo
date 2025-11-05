@@ -1,0 +1,77 @@
+name: ai-gate
+
+on:
+  pull_request:
+    paths:
+      - 'ai-runtime/**'
+      - 'prompts/**'
+      - 'evals/**'
+      - 'config/llm-providers.yaml'
+
+jobs:
+  eval:
+    name: Golden-Set Evaluation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r evals/requirements.txt
+
+      - name: Run golden-set benchmark
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+        run: |
+          python evals/benchmarks/end-to-end-benchmark.py \
+            --dataset evals/datasets/golden/finance-ssc.yaml \
+            --baseline evals/baselines/finance-ssc-v2.0.json \
+            --out evals/results/pr-${{ github.event.pull_request.number }}.json \
+            --accuracy-threshold 0.02 \
+            --cost-threshold 0.15
+
+      - name: Generate PR report
+        if: always()
+        run: |
+          python evals/ci-integration/pr-eval-report.py \
+            --results evals/results/pr-${{ github.event.pull_request.number }}.json \
+            --fail-on-regression > pr-comment.md
+
+      - name: Post PR comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const comment = fs.readFileSync('pr-comment.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload results artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-results-pr-${{ github.event.pull_request.number }}
+          path: evals/results/pr-${{ github.event.pull_request.number }}.json
+          retention-days: 30
+
+      - name: Fail on regression
+        run: |
+          python evals/ci-integration/pr-eval-report.py \
+            --results evals/results/pr-${{ github.event.pull_request.number }}.json \
+            --fail-on-regression

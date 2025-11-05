@@ -1,0 +1,12 @@
+[core]
+    remote = minio
+    autostage = true
+
+[cache]
+    type = symlink
+
+['remote "minio"']
+    url = s3://ai-datasets
+    endpointurl = ${MINIO_ENDPOINT_URL}
+    access_key_id = ${MINIO_ACCESS_KEY}
+    secret_access_key = ${MINIO_SECRET_KEY}

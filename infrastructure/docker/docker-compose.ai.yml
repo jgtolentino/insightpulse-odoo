@@ -1,0 +1,124 @@
+# AI Infrastructure Stack
+# -----------------------
+# LLM Router, Ollama (local fallback), Langfuse (tracing), Redis (caching)
+
+version: "3.8"
+
+services:
+  # LLM Runtime Router
+  llm-router:
+    build:
+      context: ../../ai-runtime/router
+      dockerfile: Dockerfile
+    container_name: insightpulse-llm-router
+    ports:
+      - "8010:8010"
+    environment:
+      LLM_BUDGET_USD: ${LLM_BUDGET_USD:-200}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      REDIS_URL: redis://redis:6379
+      ENABLE_LANGFUSE: ${ENABLE_LANGFUSE:-true}
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_SECRET_KEY}
+    depends_on:
+      - redis
+      - ollama
+    volumes:
+      - ../../config/llm-providers.yaml:/app/config/llm-providers.yaml:ro
+      - ../../guardrails/policies:/app/guardrails/policies:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8010/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  # Ollama (Local LLM Inference)
+  ollama:
+    image: ollama/ollama:latest
+    container_name: insightpulse-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-data:/root/.ollama
+    environment:
+      OLLAMA_MODELS: llama3.1:8b
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    # Uncomment for GPU support
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+
+  # Redis (Caching & Rate Limiting)
+  redis:
+    image: redis:7-alpine
+    container_name: insightpulse-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-insightpulse}
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # Langfuse (LLM Observability)
+  langfuse-server:
+    image: langfuse/langfuse:latest
+    container_name: insightpulse-langfuse
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: ${LANGFUSE_DATABASE_URL}
+      NEXTAUTH_URL: ${LANGFUSE_URL:-http://localhost:3000}
+      NEXTAUTH_SECRET: ${LANGFUSE_SECRET}
+      SALT: ${LANGFUSE_SALT}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+    depends_on:
+      - langfuse-db
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  langfuse-db:
+    image: postgres:15
+    container_name: insightpulse-langfuse-db
+    environment:
+      POSTGRES_DB: langfuse
+      POSTGRES_USER: langfuse
+      POSTGRES_PASSWORD: ${LANGFUSE_DB_PASSWORD:-langfuse}
+    volumes:
+      - langfuse-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U langfuse"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  ollama-data:
+  redis-data:
+  langfuse-db-data:
+
+networks:
+  default:
+    name: insightpulse-ai
+    driver: bridge

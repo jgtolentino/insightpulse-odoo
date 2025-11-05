@@ -1,0 +1,64 @@
+name: ai-redteam
+
+on:
+  pull_request:
+    paths:
+      - 'ai-runtime/**'
+      - 'guardrails/**'
+      - 'prompts/**'
+  schedule:
+    - cron: '0 0 * * *'  # Daily at midnight
+
+jobs:
+  redteam:
+    name: Red Team Security Testing
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r tests/ai/requirements.txt
+
+      - name: Run jailbreak test bank
+        run: |
+          python tests/ai/adversarial/run_jailbreak_tests.py \
+            --test-bank tests/ai/adversarial/test_jailbreak_bank.md \
+            --policy guardrails/policies/content-policy.yml \
+            --out results/redteam-$(date +%Y%m%d).json
+
+      - name: Validate guardrails
+        run: |
+          python tests/ai/adversarial/validate_guardrails.py \
+            --results results/redteam-$(date +%Y%m%d).json \
+            --min-pass-rate 0.95
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: redteam-results
+          path: results/redteam-*.json
+          retention-days: 90
+
+      - name: Post security report
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 AI Red Team Test Failures',
+              body: 'Red team security tests detected vulnerabilities. Check the workflow run for details.',
+              labels: ['security', 'ai-safety', 'urgent']
+            });

@@ -1,0 +1,104 @@
+# LLM Provider Configuration
+# ---------------------------
+# Keys via environment variables
+# Weights for A/B testing and canary rollouts
+
+budget:
+  monthly_usd: 200
+  per_tenant_default_usd: 50
+  alert_threshold_pct: 80
+
+routing:
+  ocr_extract: [deepseek, openai, local]
+  policy_check: [anthropic, openai]
+  cheap_gen: [openai, local]
+  qa_rag: [openai, anthropic]
+  code_review: [anthropic, openai]
+  document_summary: [deepseek, openai]
+  bir_compliance: [anthropic, openai, deepseek]
+  finance_analysis: [anthropic, openai]
+
+providers:
+  openai:
+    model: gpt-4o-mini
+    key_env: OPENAI_API_KEY
+    endpoint: https://api.openai.com/v1
+    max_tpm: 200000
+    cost_per_1k_tokens: 0.00015
+    weight: 0.5
+    timeout_sec: 30
+    retry_attempts: 3
+
+  anthropic:
+    model: claude-3-5-sonnet-20241022
+    key_env: ANTHROPIC_API_KEY
+    endpoint: https://api.anthropic.com/v1
+    max_tpm: 150000
+    cost_per_1k_tokens: 0.003
+    weight: 0.3
+    timeout_sec: 60
+    retry_attempts: 2
+
+  deepseek:
+    model: deepseek-chat
+    key_env: DEEPSEEK_API_KEY
+    endpoint: https://api.deepseek.com/v1
+    max_tpm: 150000
+    cost_per_1k_tokens: 0.00014
+    weight: 0.2
+    timeout_sec: 30
+    retry_attempts: 3
+
+  local:
+    model: llama3.1:8b
+    endpoint: http://ollama:11434
+    max_tpm: 80000
+    cost_per_1k_tokens: 0.0
+    weight: 1.0
+    timeout_sec: 120
+    retry_attempts: 1
+
+# Feature flags for progressive rollout
+feature_flags:
+  enable_caching: true
+  enable_tracing: true
+  enable_guardrails: true
+  enable_red_team_checks: false
+
+# Observability
+observability:
+  langfuse:
+    enabled: true
+    public_key_env: LANGFUSE_PUBLIC_KEY
+    secret_key_env: LANGFUSE_SECRET_KEY
+    host: https://cloud.langfuse.com
+
+  redis_cache:
+    enabled: true
+    url_env: REDIS_URL
+    ttl_seconds: 3600
+
+  metrics:
+    export_to_superset: true
+    export_interval_minutes: 5
+
+# Guardrails
+guardrails:
+  input_validation:
+    max_prompt_length: 100000
+    blocked_patterns:
+      - "(?i)ignore.*previous.*instructions"
+      - "(?i)system.*prompt"
+      - "(?i)jailbreak"
+
+  output_validation:
+    check_pii: true
+    check_sensitive_data: true
+    blocked_terms:
+      - "confidential"
+      - "internal only"
+
+  rate_limits:
+    requests_per_minute: 60
+    requests_per_hour: 1000
+    requests_per_day: 10000

@@ -1,0 +1,50 @@
+# DVC Pipeline for AI Datasets
+# -----------------------------
+# Track datasets, prompts, and model artifacts with MinIO remote
+
+stages:
+  # Golden dataset versioning
+  prepare-golden-dataset:
+    cmd: python scripts/prepare-golden-dataset.py
+    deps:
+      - evals/datasets/golden/finance-ssc.yaml
+    outs:
+      - evals/datasets/prepared/golden-dataset.json
+
+  # Prompt versioning
+  package-prompts:
+    cmd: python scripts/package-prompts.py
+    deps:
+      - prompt-ops/registry/catalog.yml
+      - prompts/templates/
+    outs:
+      - prompts/versions/v${VERSION}.tar.gz
+
+  # Run evaluations
+  run-evals:
+    cmd: python evals/benchmarks/end-to-end-benchmark.py
+          --dataset evals/datasets/golden/finance-ssc.yaml
+          --baseline evals/baselines/finance-ssc-v2.0.json
+          --out evals/results/latest.json
+    deps:
+      - evals/datasets/prepared/golden-dataset.json
+      - evals/baselines/finance-ssc-v2.0.json
+    outs:
+      - evals/results/latest.json
+    metrics:
+      - evals/results/latest.json:
+          cache: false
+
+# Tracked paths
+# These are versioned in MinIO
+artifacts:
+  datasets:
+    - evals/datasets/**/*.yaml
+    - evals/datasets/**/*.json
+  prompts:
+    - prompts/templates/**/*.md
+    - prompts/versions/**/*.tar.gz
+  baselines:
+    - evals/baselines/**/*.json
+  fixtures:
+    - evals/fixtures/**/*

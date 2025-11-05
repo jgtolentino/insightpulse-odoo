@@ -1,0 +1,183 @@
+# Prompt Registry Catalog
+# -----------------------
+# Single source of truth for prompt IDs, owners, SLAs, budgets, and rollout rings
+
+version: "1.0"
+last_updated: "2025-01-05"
+
+prompts:
+  - id: receipt-parser
+    version: 2.1.0
+    owner: finance-ssc
+    description: "Extract vendor, date, amount, and line items from receipt images"
+    rollout: ring-1   # canary => ring-2 => prod
+    max_cost_usd_per_1k: 0.01
+    sla_accuracy: 0.97
+    sla_latency_p95_ms: 2000
+    file: prompts/templates/document-extraction/receipt-parser.md
+    tags: [ocr, finance, receipts]
+    updated_at: "2024-12-15"
+    updated_by: "finance-team"
+
+  - id: bir-1601c-extractor
+    version: 1.3.0
+    owner: finance-ssc
+    description: "Extract all fields from BIR Form 1601-C withholding tax returns"
+    rollout: prod
+    max_cost_usd_per_1k: 0.02
+    sla_accuracy: 0.99
+    sla_latency_p95_ms: 3000
+    file: prompts/templates/document-extraction/bir-1601c.md
+    tags: [bir, compliance, ocr]
+    updated_at: "2024-11-20"
+    updated_by: "compliance-team"
+
+  - id: expense-policy-checker
+    version: 3.0.0
+    owner: finance-ssc
+    description: "Validate expense against company policies (limits, documentation, approvals)"
+    rollout: prod
+    max_cost_usd_per_1k: 0.005
+    sla_accuracy: 0.98
+    sla_latency_p95_ms: 1500
+    file: prompts/templates/policy/expense-checker.md
+    tags: [policy, finance, compliance]
+    updated_at: "2025-01-01"
+    updated_by: "policy-team"
+
+  - id: finance-consolidator
+    version: 2.0.0
+    owner: finance-ssc
+    description: "Consolidate financial statements across 8 agencies (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)"
+    rollout: ring-2
+    max_cost_usd_per_1k: 0.03
+    sla_accuracy: 0.99
+    sla_latency_p95_ms: 5000
+    file: prompts/templates/finance/consolidation.md
+    tags: [finance, consolidation, reporting]
+    updated_at: "2024-12-30"
+    updated_by: "finance-team"
+
+  - id: kb-qa-rag
+    version: 1.5.0
+    owner: ai-platform
+    description: "Answer questions from Finance SSC knowledge base using RAG"
+    rollout: prod
+    max_cost_usd_per_1k: 0.008
+    sla_accuracy: 0.95
+    sla_latency_p95_ms: 2500
+    file: prompts/templates/rag/kb-qa.md
+    tags: [rag, qa, knowledge-base]
+    updated_at: "2024-12-10"
+    updated_by: "ai-team"
+
+  - id: code-review-odoo
+    version: 1.2.0
+    owner: devops
+    description: "Review Odoo module PRs for security, best practices, and OCA compliance"
+    rollout: ring-1
+    max_cost_usd_per_1k: 0.015
+    sla_accuracy: 0.92
+    sla_latency_p95_ms: 4000
+    file: prompts/templates/code/odoo-review.md
+    tags: [code-review, odoo, security]
+    updated_at: "2025-01-02"
+    updated_by: "devops-team"
+
+  - id: document-summarizer
+    version: 1.1.0
+    owner: finance-ssc
+    description: "Summarize monthly finance reports with key metrics and variances"
+    rollout: prod
+    max_cost_usd_per_1k: 0.01
+    sla_accuracy: 0.93
+    sla_latency_p95_ms: 3000
+    file: prompts/templates/document-extraction/summarizer.md
+    tags: [summarization, finance, reporting]
+    updated_at: "2024-11-25"
+    updated_by: "finance-team"
+
+  - id: bir-2550q-extractor
+    version: 1.1.0
+    owner: finance-ssc
+    description: "Extract BIR Form 2550Q quarterly VAT return data"
+    rollout: prod
+    max_cost_usd_per_1k: 0.02
+    sla_accuracy: 0.99
+    sla_latency_p95_ms: 3000
+    file: prompts/templates/document-extraction/bir-2550q.md
+    tags: [bir, vat, compliance]
+    updated_at: "2024-12-05"
+    updated_by: "compliance-team"
+
+  - id: pii-redactor
+    version: 2.0.0
+    owner: security
+    description: "Detect and redact PII (SSS, TIN, email) from documents"
+    rollout: prod
+    max_cost_usd_per_1k: 0.005
+    sla_accuracy: 0.98
+    sla_latency_p95_ms: 1500
+    file: prompts/templates/security/pii-redactor.md
+    tags: [security, pii, compliance]
+    updated_at: "2024-12-20"
+    updated_by: "security-team"
+
+# Rollout rings configuration
+rollout_rings:
+  ring-1:
+    name: "Canary"
+    description: "Initial testing with 5% traffic"
+    traffic_percentage: 0.05
+    duration_hours: 24
+    auto_promote: false
+
+  ring-2:
+    name: "Staging"
+    description: "Expanded testing with 25% traffic"
+    traffic_percentage: 0.25
+    duration_hours: 48
+    auto_promote: false
+
+  prod:
+    name: "Production"
+    description: "Full production traffic"
+    traffic_percentage: 1.0
+
+# SLA thresholds
+sla_defaults:
+  accuracy_min: 0.90
+  latency_p95_max_ms: 5000
+  cost_per_1k_max_usd: 0.05
+  availability_min: 0.995
+
+# Ownership and notification
+teams:
+  finance-ssc:
+    slack_channel: "#finance-ssc-alerts"
+    email: "finance-ssc@insightpulse.ai"
+    oncall: "finance-oncall@pagerduty.com"
+
+  ai-platform:
+    slack_channel: "#ai-platform-alerts"
+    email: "ai-platform@insightpulse.ai"
+    oncall: "ai-oncall@pagerduty.com"
+
+  devops:
+    slack_channel: "#devops-alerts"
+    email: "devops@insightpulse.ai"
+    oncall: "devops-oncall@pagerduty.com"
+
+  compliance-team:
+    slack_channel: "#compliance-alerts"
+    email: "compliance@insightpulse.ai"
+    oncall: "compliance-oncall@pagerduty.com"
+
+  policy-team:
+    slack_channel: "#policy-alerts"
+    email: "policy@insightpulse.ai"
+
+  security:
+    slack_channel: "#security-alerts"
+    email: "security@insightpulse.ai"
+    oncall: "security-oncall@pagerduty.com"
