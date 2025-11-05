@@ -42,8 +42,10 @@ function App() {
   }, []);
 
   useEffect(() => {
-    // Check for OAuth errors in query parameters
+    // Check for OAuth callback parameters
     const searchParams = new URLSearchParams(window.location.search);
+
+    // Check for OAuth errors
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
 
@@ -54,7 +56,33 @@ function App() {
       return;
     }
 
-    // Check for access token in hash (from OAuth callback)
+    // Check for authorization code (OAuth App flow)
+    const code = searchParams.get('code');
+    const state = searchParams.get('state');
+
+    if (code) {
+      // Validate state parameter for CSRF protection
+      const savedState = sessionStorage.getItem('github_oauth_state');
+
+      if (state !== savedState) {
+        console.error('OAuth state mismatch - possible CSRF attack');
+        alert('Authentication failed: Invalid state parameter');
+        window.history.replaceState({}, document.title, '/');
+        return;
+      }
+
+      // Clean up state
+      sessionStorage.removeItem('github_oauth_state');
+
+      // TODO: Exchange code for access token via backend endpoint
+      // For now, show error that backend callback is needed
+      console.error('OAuth code received but backend callback endpoint not implemented');
+      alert('OAuth callback endpoint not configured. Please set up /api/github/oauth/callback');
+      window.history.replaceState({}, document.title, '/');
+      return;
+    }
+
+    // Check for access token in hash (legacy flow - not standard OAuth)
     const hash = window.location.hash;
     if (hash) {
       const params = new URLSearchParams(hash.substring(1));

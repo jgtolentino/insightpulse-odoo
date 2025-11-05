@@ -40,11 +40,21 @@ export class GitHubService {
   }
 
   static generateAuthUrl(clientId: string, redirectUri: string, scopes: string): string {
+    // Generate random 32-character state nonce for CSRF protection
+    const state = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+
     const params = new URLSearchParams({
       client_id: clientId,
       redirect_uri: redirectUri,
       scope: scopes,
+      state: state,
     });
+
+    // Store state in sessionStorage for validation on callback
+    sessionStorage.setItem('github_oauth_state', state);
+
     return `https://github.com/login/oauth/authorize?${params.toString()}`;
   }
 }
