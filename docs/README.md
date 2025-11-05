@@ -1,57 +1,88 @@
-# InsightPulse Odoo - Finance SSC Automation
+# InsightPulse Odoo Documentation
 
-Complete Finance Shared Services Center automation for 8 agencies in the Philippines.
+Welcome to the InsightPulse Odoo documentation! This directory contains comprehensive guides for users, developers, and administrators.
 
-## Overview
+## 📚 Documentation Index
 
-**Agencies:** RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB
+### Quick Start
+- **[Main README](../README.md)** - Project overview and quick start
+- **[QUICKSTART.md](../QUICKSTART.md)** - 5-minute deployment guide
+- **[CONTRIBUTING.md](../CONTRIBUTING.md)** - Contribution guidelines
 
-**Automation Coverage:**
-- BIR Compliance (4 forms × 8 agencies)
-- Month-End Closing (8 tasks × 8 agencies = 64 tasks/month)
-- Field Documentation (auto-generated from Odoo models)
-- SOPs (extracted from docstrings)
+### Architecture & Design
+- **[architecture/README.md](architecture/)** - System architecture overview
+- **[architecture/tech-stack.md](architecture/tech-stack.md)** - Complete technology stack
+- **[architecture/decisions/](architecture/decisions/)** - Architecture Decision Records (ADRs)
+- **[architecture/integrations/](architecture/integrations/)** - Third-party service guides
 
-**Time Savings:** ~20 hours/month → 20 minutes/month (98.3% reduction)
+### SaaS Parity & Gap Analysis
+- **[saas-parity/README.md](saas-parity/)** - SaaS feature equivalence overview
+- **[saas-parity/notion-enterprise.md](saas-parity/notion-enterprise.md)** - Notion → Odoo Knowledge mapping (87% parity)
+- **[saas-parity/sap-concur.md](saas-parity/sap-concur.md)** - Concur → ipai_expense mapping (85% parity)
+- **[saas-parity/sap-ariba.md](saas-parity/sap-ariba.md)** - Ariba → ipai_procure mapping (90% parity)
+- **[saas-parity/tableau.md](saas-parity/tableau.md)** - Tableau → Superset mapping (110% parity)
+- **[saas-parity/gap-matrix.csv](saas-parity/gap-matrix.csv)** - Automated gap tracking
 
-## Quick Start
+### Deployment
+- **[deployment/local-development.md](deployment/local-development.md)** - Local dev environment setup
+- **[deployment/digitalocean-production.md](deployment/digitalocean-production.md)** - Production deployment to DigitalOcean
+- **[deployment/ssl-setup.md](deployment/ssl-setup.md)** - SSL/TLS configuration
+- **[deployment/backup-restore.md](deployment/backup-restore.md)** - Backup and restore procedures
 
-### BIR Compliance
-```bash
-python scripts/bir_calendar_generator.py --year 2025 --month 1 --output docs/bir_calendar_2025_01.json
-python scripts/bir_notion_sync.py --calendar docs/bir_calendar_2025_01.json
-```
+### User Guides
+- **[user-guides/finance-team/](user-guides/finance-team/)** - Finance team workflows
+  - Month-end closing
+  - BIR compliance
+  - Expense reports
+- **[user-guides/admin/](user-guides/admin/)** - System administration
+  - User management
+  - Security setup
+  - Backup monitoring
+- **[user-guides/developer/](user-guides/developer/)** - Developer guides
+  - Custom module development
+  - OCA contribution
+  - API integration
 
-### Month-End Tasks
-```bash
-python scripts/month_end_generator.py --year 2025 --month 1 --output docs/month_end_tasks_2025_01.json
-python scripts/month_end_notion_sync.py --tasks docs/month_end_tasks_2025_01.json
-```
+### Compliance & Security
+- **[compliance/bir-requirements.md](compliance/bir-requirements.md)** - Philippines BIR compliance
+- **[compliance/gdpr.md](compliance/gdpr.md)** - GDPR compliance checklist
+- **[compliance/soc2.md](compliance/soc2.md)** - SOC 2 controls mapping
+- **[../SECURITY_AUDIT_REPORT.md](../SECURITY_AUDIT_REPORT.md)** - Complete security audit
 
-### Field Documentation
-```bash
-python scripts/extract_odoo_fields.py --addons addons odoo_addons --output docs/fields
-python scripts/notion_field_docs_sync.py --metadata docs/fields/metadata.json
-```
+## 🗺️ Project Status
 
-### SOPs
-```bash
-python scripts/docstring_sop_parser.py --addons addons odoo_addons --output docs/sops
-```
+- **[ROADMAP.md](ROADMAP.md)** - Product roadmap and future plans
+- **[STATUS.md](STATUS.md)** - Current implementation status
+- **[../CHANGELOG.md](../CHANGELOG.md)** - Version history and release notes
 
-## Architecture
+## 📦 Module Documentation
 
-**Stack:**
-- Odoo 19.0 Enterprise
-- Supabase PostgreSQL
-- DigitalOcean App Platform
-- Apache Superset (BI)
-- Notion (knowledge management)
+Each module has its own README with detailed documentation:
 
-**Deployment:**
-- Main: `main` branch → production
-- Feature: `ipai-bridges-v1` → preview
+### Finance Modules
+- [ipai_rate_policy](../addons/insightpulse/finance/ipai_rate_policy/README.md) - Rate policy automation
+- [ipai_ppm](../addons/insightpulse/finance/ipai_ppm/README.md) - Program & project management
+- [ipai_ppm_costsheet](../insightpulse_odoo/addons/insightpulse/finance/ipai_ppm_costsheet/README.md) - Cost sheet analysis
+- [ipai_expense](../insightpulse_odoo/addons/insightpulse/finance/ipai_expense/README.md) - OCR expense automation
+- [ipai_subscriptions](../insightpulse_odoo/addons/insightpulse/finance/ipai_subscriptions/README.md) - Subscription management
+- [ipai_approvals](../insightpulse_odoo/addons/insightpulse/finance/ipai_approvals/README.md) - Multi-stage approvals
 
-## Documentation
+### Operations Modules
+- [ipai_procure](../insightpulse_odoo/addons/insightpulse/ops/ipai_procure/README.md) - Procurement & supplier management
+- [ipai_saas_ops](../addons/insightpulse/ops/ipai_saas_ops/README.md) - SaaS tenant management
+- [superset_connector](../insightpulse_odoo/addons/insightpulse/ops/superset_connector/README.md) - Apache Superset integration
 
-See navigation sidebar for complete documentation.
+### AI & Knowledge Modules
+- [ipai_knowledge_ai](../insightpulse_odoo/addons/insightpulse/knowledge/ipai_knowledge_ai/README.md) - AI knowledge workspace
+
+## 🤝 Getting Help
+
+- **GitHub Issues**: [Report bugs](https://github.com/jgtolentino/insightpulse-odoo/issues)
+- **GitHub Discussions**: [Ask questions](https://github.com/jgtolentino/insightpulse-odoo/discussions)
+- **Email**: support@insightpulseai.net
+
+## 📝 Contributing to Documentation
+
+Found an error or want to improve the docs? See our [Contributing Guide](../CONTRIBUTING.md).
+
+All documentation is written in Markdown and follows the [Google Developer Documentation Style Guide](https://developers.google.com/style).
