@@ -1,0 +1,25 @@
+version: "3.8"
+services:
+  superset:
+    image: apache/superset:latest
+    container_name: superset
+    restart: unless-stopped
+    env_file:
+      - .env.superset
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset_home:/app/superset_home
+    command: ["/bin/sh","-lc","/app/docker/docker-bootstrap.sh && superset run -h 0.0.0.0 -p 8088 --with-threads --reload --debugger"]
+  superset-init:
+    image: apache/superset:latest
+    depends_on: [superset]
+    env_file:
+      - .env.superset
+    entrypoint: ["/bin/sh","-lc","/app/docker/docker-init.sh && ./init.sh"]
+    volumes:
+      - ./init.sh:/app/init.sh:ro
+      - ./publish_examples.py:/app/publish_examples.py:ro
+      - superset_home:/app/superset_home
+volumes:
+  superset_home:
