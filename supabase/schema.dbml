@@ -1,0 +1,746 @@
+Project {
+  database_type: "PostgreSQL"
+  note: "InsightPulse SaaS Core – multi-tenant, RBAC, integrations, billing, AI, BI, tickets"
+}
+
+/* =========================
+   Enums
+   ========================= */
+Enum environment_type { dev; staging; prod }
+Enum plan_interval { monthly; yearly }
+Enum provider_type { github; slack; odoo; supabase; google; azuread; okta; notion; webhook }
+Enum api_key_scope { org; project; environment }
+Enum alert_type { threshold; anomaly; schedule; change }
+Enum channel_type { email; slack; webhook }
+Enum secret_format { opaque; json; pem; jwt }
+Enum invoice_status { draft; open; paid; void; uncollectible }
+Enum payment_status { pending; succeeded; failed; refunded }
+Enum ticket_state { open; in_progress; waiting; resolved; closed }
+Enum severity { low; medium; high; critical }
+Enum webhook_status { queued; delivered; failed }
+Enum role_scope { global; org; project }
+
+/* =========================
+   Tenancy & Identity
+   ========================= */
+Table tenants {
+  id uuid [pk, default: gen_random_uuid()]
+  slug text [not null, unique, note: "URL id, e.g., acme"]
+  name text [not null]
+  timezone text [not null, default: 'Asia/Manila']
+  created_at timestamptz [not null, default: now()]
+  updated_at timestamptz [not null, default: now()]
+}
+
+Table users {
+  id uuid [pk, default: gen_random_uuid()]
+  email text [not null, unique]
+  password_hash text [note: "Only if local auth is enabled"]
+  full_name text
+  picture_url text
+  is_staff bool [not null, default: false]
+  is_active bool [not null, default: true]
+  created_at timestamptz [not null, default: now()]
+  updated_at timestamptz [not null, default: now()]
+}
+
+Table org_memberships {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  user_id uuid [not null]
+  is_owner bool [not null, default: false]
+  invited_by uuid
+  invited_at timestamptz [default: now()]
+  status text [not null, default: 'active', note: "active|invited|disabled"]
+  created_at timestamptz [default: now()]
+  unique (tenant_id, user_id)
+}
+
+Table teams {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  description text
+  created_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table team_members {
+  id uuid [pk, default: gen_random_uuid()]
+  team_id uuid [not null]
+  user_id uuid [not null]
+  created_at timestamptz [default: now()]
+  unique (team_id, user_id)
+}
+
+Table roles {
+  id uuid [pk, default: gen_random_uuid()]
+  name text [not null]
+  scope role_scope [not null, default: 'org']
+  description text
+  unique (name, scope)
+}
+
+Table permissions {
+  id uuid [pk, default: gen_random_uuid()]
+  code text [not null, unique, note: "e.g., repo.write, billing.read, dashboard.manage"]
+  description text
+}
+
+Table role_permissions {
+  role_id uuid [not null]
+  permission_id uuid [not null]
+  unique (role_id, permission_id)
+}
+
+Table user_roles {
+  id uuid [pk, default: gen_random_uuid()]
+  user_id uuid [not null]
+  tenant_id uuid
+  project_id uuid
+  role_id uuid [not null]
+  created_at timestamptz [default: now()]
+  note: "Scope determined by which foreign key is non-null"
+}
+
+Table sso_providers {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  provider provider_type [not null, default: 'google']
+  saml_metadata xml
+  oidc_issuer text
+  client_id text
+  client_secret text
+  settings jsonb
+  enabled bool [default: true]
+  unique (tenant_id, provider)
+}
+
+Table user_identities {
+  id uuid [pk, default: gen_random_uuid()]
+  user_id uuid [not null]
+  tenant_id uuid
+  provider provider_type [not null]
+  subject text [not null] // sub/NameID
+  email text
+  raw jsonb
+  created_at timestamptz [default: now()]
+  unique (provider, subject)
+}
+
+Table api_keys {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid
+  project_id uuid
+  environment_id uuid
+  name text [not null]
+  scope api_key_scope [not null, default: 'org']
+  hash text [not null, note: "store hash, not plaintext"]
+  last_used_at timestamptz
+  created_by uuid
+  created_at timestamptz [default: now()]
+  revoked_at timestamptz
+  unique (hash)
+}
+
+/* =========================
+   Projects & Environments
+   ========================= */
+Table projects {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  description text
+  created_at timestamptz [default: now()]
+  updated_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table environments {
+  id uuid [pk, default: gen_random_uuid()]
+  project_id uuid [not null]
+  name text [not null] // e.g., Production
+  type environment_type [not null, default: 'prod']
+  created_at timestamptz [default: now()]
+  unique (project_id, name)
+}
+
+/* =========================
+   Integrations & Webhooks
+   ========================= */
+Table integration_types {
+  id uuid [pk, default: gen_random_uuid()]
+  provider provider_type [not null, unique]
+  display_name text [not null]
+  docs_url text
+}
+
+Table integrations {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  type_id uuid [not null]
+  name text [not null]
+  config jsonb [not null, note: "host, repo, workspace, instance_url, etc."]
+  enabled bool [default: true]
+  created_at timestamptz [default: now()]
+  updated_at timestamptz [default: now()]
+  unique (tenant_id, type_id, name)
+}
+
+Table integration_secrets {
+  id uuid [pk, default: gen_random_uuid()]
+  integration_id uuid [not null]
+  format secret_format [not null, default: 'opaque']
+  ciphertext bytea [not null]
+  created_at timestamptz [default: now()]
+}
+
+Table integration_events {
+  id uuid [pk, default: gen_random_uuid()]
+  integration_id uuid [not null]
+  event_type text [not null]
+  payload jsonb [not null]
+  received_at timestamptz [default: now()]
+  processed_at timestamptz
+  status text [default: 'queued']
+  error text
+  index (integration_id, received_at)
+}
+
+Table webhooks {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  url text [not null]
+  secret text
+  description text
+  enabled bool [default: true]
+  created_at timestamptz [default: now()]
+  unique (tenant_id, url)
+}
+
+Table webhook_deliveries {
+  id uuid [pk, default: gen_random_uuid()]
+  webhook_id uuid [not null]
+  event text [not null]
+  payload jsonb [not null]
+  status webhook_status [default: 'queued']
+  response_code int
+  response_ms int
+  error text
+  attempted_at timestamptz [default: now()]
+  index (webhook_id, attempted_at)
+}
+
+/* =========================
+   Audit, Policies, Secrets
+   ========================= */
+Table audit_logs {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid
+  user_id uuid
+  actor_type text [not null, default: 'user'] // user|api|system
+  action text [not null] // e.g., 'repo.commit', 'billing.update'
+  target_type text
+  target_id text
+  ip inet
+  user_agent text
+  diff jsonb
+  created_at timestamptz [default: now()]
+  index (tenant_id, created_at)
+}
+
+Table data_policies {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  retention_days int
+  anonymize bool [default: false]
+  config jsonb
+  unique (tenant_id, name)
+}
+
+Table consents {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  user_id uuid [not null]
+  purpose text [not null]
+  granted bool [not null]
+  granted_at timestamptz [default: now()]
+  unique (tenant_id, user_id, purpose)
+}
+
+Table secrets {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  latest_version int [not null, default: 1]
+  created_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table secret_versions {
+  id uuid [pk, default: gen_random_uuid()]
+  secret_id uuid [not null]
+  version int [not null]
+  format secret_format [not null, default: 'opaque']
+  ciphertext bytea [not null]
+  created_at timestamptz [default: now()]
+  unique (secret_id, version)
+}
+
+/* =========================
+   Billing, Plans, Usage
+   ========================= */
+Table billing_accounts {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null, unique]
+  currency char(3) [not null, default: 'USD']
+  billing_email text [not null]
+  tax_id text
+  address jsonb
+  created_at timestamptz [default: now()]
+}
+
+Table plans {
+  id uuid [pk, default: gen_random_uuid()]
+  code text [not null, unique] // e.g., starter, pro, enterprise
+  name text [not null]
+  interval plan_interval [not null, default: 'monthly']
+  price_cents int [not null]
+  meta jsonb
+}
+
+Table subscriptions {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  plan_id uuid [not null]
+  status text [not null, default: 'active'] // active|past_due|canceled
+  current_period_start timestamptz [not null, default: now()]
+  current_period_end timestamptz [not null]
+  cancel_at timestamptz
+  canceled_at timestamptz
+  created_at timestamptz [default: now()]
+  index (tenant_id, status)
+}
+
+Table invoices {
+  id uuid [pk, default: gen_random_uuid()]
+  subscription_id uuid [not null]
+  number text [not null, unique]
+  status invoice_status [not null, default: 'open']
+  amount_due_cents int [not null]
+  amount_paid_cents int [not null, default: 0]
+  issued_at timestamptz [default: now()]
+  due_at timestamptz
+  meta jsonb
+}
+
+Table invoice_lines {
+  id uuid [pk, default: gen_random_uuid()]
+  invoice_id uuid [not null]
+  description text [not null]
+  quantity numeric(18,6) [not null, default: 1]
+  unit_price_cents int [not null]
+  amount_cents int [not null]
+}
+
+Table payments {
+  id uuid [pk, default: gen_random_uuid()]
+  invoice_id uuid [not null]
+  status payment_status [not null, default: 'pending']
+  amount_cents int [not null]
+  processor text [not null] // e.g., stripe, xendit
+  reference text
+  processed_at timestamptz
+  error text
+}
+
+Table usage_counters {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  project_id uuid
+  metric text [not null] // e.g., tokens, jobs, dashboards_rendered
+  period_start date [not null]
+  period_end date [not null]
+  value numeric(20,6) [not null, default: 0]
+  unique (tenant_id, project_id, metric, period_start, period_end)
+}
+
+Table metered_events {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  project_id uuid
+  metric text [not null]
+  value numeric(20,6) [not null, default: 1]
+  occurred_at timestamptz [default: now()]
+  meta jsonb
+  index (tenant_id, metric, occurred_at)
+}
+
+/* =========================
+   Data Sources, BI, Alerts
+   ========================= */
+Table data_sources {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  kind text [not null] // postgres|mysql|bigquery|clickhouse|http|supabase
+  config jsonb [not null] // host, db, user (stored via secret reference)
+  created_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table dashboards {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  project_id uuid
+  name text [not null]
+  layout jsonb [not null]
+  is_public bool [default: false]
+  created_by uuid
+  created_at timestamptz [default: now()]
+  updated_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table widgets {
+  id uuid [pk, default: gen_random_uuid()]
+  dashboard_id uuid [not null]
+  name text [not null]
+  query_id uuid
+  viz_type text [not null] // line, bar, pie, table, kpi, map
+  position jsonb [not null] // x,y,w,h
+  options jsonb
+}
+
+Table saved_queries {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  data_source_id uuid [not null]
+  name text [not null]
+  sql text [not null]
+  created_by uuid
+  created_at timestamptz [default: now()]
+  updated_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table alerts {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  type alert_type [not null]
+  query_id uuid
+  condition jsonb // threshold config, schedule cron, etc.
+  enabled bool [default: true]
+  created_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table alert_channels {
+  id uuid [pk, default: gen_random_uuid()]
+  alert_id uuid [not null]
+  channel channel_type [not null]
+  config jsonb [not null] // email(s), slack webhook, etc.
+}
+
+Table alert_events {
+  id uuid [pk, default: gen_random_uuid()]
+  alert_id uuid [not null]
+  fired_at timestamptz [default: now()]
+  payload jsonb
+  delivered bool [default: false]
+}
+
+/* =========================
+   AI (Models, Prompts, RAG, OCR)
+   ========================= */
+Table model_providers {
+  id uuid [pk, default: gen_random_uuid()]
+  name text [not null, unique] // openai, anthropic, deepseek, llama
+  base_url text
+}
+
+Table llm_models {
+  id uuid [pk, default: gen_random_uuid()]
+  provider_id uuid [not null]
+  name text [not null] // gpt-4.1, claude-3.7, r1-distill-qwen-7b
+  context_tokens int
+  input_cost_per_mtok_usd numeric(10,6)
+  output_cost_per_mtok_usd numeric(10,6)
+  unique (provider_id, name)
+}
+
+Table prompt_templates {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  template text [not null]
+  meta jsonb
+  unique (tenant_id, name)
+}
+
+Table prompt_runs {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  model_id uuid [not null]
+  template_id uuid
+  input_tokens int
+  output_tokens int
+  cost_usd numeric(12,6)
+  latency_ms int
+  request jsonb
+  response jsonb
+  created_at timestamptz [default: now()]
+  index (tenant_id, created_at)
+}
+
+Table rag_documents {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  source text // url|upload|gdrive
+  title text
+  path text
+  meta jsonb
+  created_at timestamptz [default: now()]
+}
+
+Table rag_chunks {
+  id uuid [pk, default: gen_random_uuid()]
+  document_id uuid [not null]
+  seq int [not null]
+  content text [not null]
+  embedding vector(1536) [note: "pgvector"]
+  unique (document_id, seq)
+  index (embedding)
+}
+
+Table ocr_jobs {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  source_url text
+  status text [not null, default: 'queued']
+  engine text [not null, default: 'paddleocr-vl']
+  params jsonb
+  result jsonb
+  created_at timestamptz [default: now()]
+  completed_at timestamptz
+}
+
+/* =========================
+   Support, Tickets, Workflows
+   ========================= */
+Table tickets {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  project_id uuid
+  number text [not null, unique]
+  title text [not null]
+  state ticket_state [not null, default: 'open']
+  severity severity [not null, default: 'medium']
+  assignee_id uuid
+  created_by uuid
+  created_at timestamptz [default: now()]
+  updated_at timestamptz [default: now()]
+  due_at timestamptz
+  meta jsonb
+}
+
+Table ticket_comments {
+  id uuid [pk, default: gen_random_uuid()]
+  ticket_id uuid [not null]
+  author_id uuid [not null]
+  body text [not null]
+  created_at timestamptz [default: now()]
+}
+
+Table attachments {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  owner_type text [not null] // ticket|ocr|dashboard|webhook|audit
+  owner_id uuid [not null]
+  filename text [not null]
+  content_type text
+  byte_size int
+  storage_url text
+  checksum text
+  created_at timestamptz [default: now()]
+  index (tenant_id, owner_type, owner_id)
+}
+
+Table workflows {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  name text [not null]
+  definition jsonb [not null] // DAG or state machine
+  created_at timestamptz [default: now()]
+  unique (tenant_id, name)
+}
+
+Table workflow_runs {
+  id uuid [pk, default: gen_random_uuid()]
+  workflow_id uuid [not null]
+  triggered_by uuid
+  status text [not null, default: 'running']
+  input jsonb
+  output jsonb
+  started_at timestamptz [default: now()]
+  finished_at timestamptz
+}
+
+/* =========================
+   Domains & DNS (for app, agent, mcp, superset)
+   ========================= */
+Table domains {
+  id uuid [pk, default: gen_random_uuid()]
+  tenant_id uuid [not null]
+  host text [not null] // insightpulseai.net, erp.insightpulseai.net
+  verified bool [default: false]
+  created_at timestamptz [default: now()]
+  unique (tenant_id, host)
+}
+
+Table dns_records {
+  id uuid [pk, default: gen_random_uuid()]
+  domain_id uuid [not null]
+  name text [not null] // @, www, erp, mcp, agent, superset, ocr
+  type text [not null] // A, AAAA, CNAME, TXT, CAA
+  ttl int [default: 3600]
+  data text [not null]
+  created_at timestamptz [default: now()]
+  unique (domain_id, name, type)
+}
+
+Table certificates {
+  id uuid [pk, default: gen_random_uuid()]
+  domain_id uuid [not null]
+  issuer text
+  not_before timestamptz
+  not_after timestamptz
+  cert_pem text
+  key_pem text
+  created_at timestamptz [default: now()]
+}
+
+/* =========================
+   GitHub / Slack quick entities (optional caching)
+   ========================= */
+Table github_repos {
+  id uuid [pk, default: gen_random_uuid()]
+  integration_id uuid [not null]
+  repo_full_name text [not null] // owner/name
+  default_branch text
+  visibility text
+  meta jsonb
+  unique (integration_id, repo_full_name)
+}
+
+Table slack_workspaces {
+  id uuid [pk, default: gen_random_uuid()]
+  integration_id uuid [not null]
+  team_id text [not null]
+  team_name text
+  unique (integration_id, team_id)
+}
+
+Table slack_channels {
+  id uuid [pk, default: gen_random_uuid()]
+  workspace_id uuid [not null]
+  channel_id text [not null]
+  name text
+  is_private bool
+  unique (workspace_id, channel_id)
+}
+
+/* =========================
+   References
+   ========================= */
+Ref: org_memberships.tenant_id > tenants.id [delete: cascade]
+Ref: org_memberships.user_id > users.id [delete: cascade]
+Ref: teams.tenant_id > tenants.id [delete: cascade]
+Ref: team_members.team_id > teams.id [delete: cascade]
+Ref: team_members.user_id > users.id [delete: cascade]
+
+Ref: role_permissions.role_id > roles.id [delete: cascade]
+Ref: role_permissions.permission_id > permissions.id [delete: cascade]
+Ref: user_roles.user_id > users.id [delete: cascade]
+Ref: user_roles.role_id > roles.id [delete: cascade]
+Ref: user_roles.tenant_id > tenants.id
+Ref: user_roles.project_id > projects.id
+
+Ref: sso_providers.tenant_id > tenants.id [delete: cascade]
+Ref: user_identities.user_id > users.id [delete: cascade]
+Ref: user_identities.tenant_id > tenants.id
+
+Ref: api_keys.tenant_id > tenants.id
+Ref: api_keys.project_id > projects.id
+Ref: api_keys.environment_id > environments.id
+
+Ref: projects.tenant_id > tenants.id [delete: cascade]
+Ref: environments.project_id > projects.id [delete: cascade]
+
+Ref: integration_types.id < integrations.type_id
+Ref: integrations.tenant_id > tenants.id [delete: cascade]
+Ref: integration_secrets.integration_id > integrations.id [delete: cascade]
+Ref: integration_events.integration_id > integrations.id [delete: cascade]
+
+Ref: webhooks.tenant_id > tenants.id [delete: cascade]
+Ref: webhook_deliveries.webhook_id > webhooks.id [delete: cascade]
+
+Ref: audit_logs.tenant_id > tenants.id
+Ref: audit_logs.user_id > users.id
+
+Ref: data_policies.tenant_id > tenants.id [delete: cascade]
+Ref: consents.tenant_id > tenants.id [delete: cascade]
+Ref: consents.user_id > users.id [delete: cascade]
+Ref: secrets.tenant_id > tenants.id [delete: cascade]
+Ref: secret_versions.secret_id > secrets.id [delete: cascade]
+
+Ref: billing_accounts.tenant_id > tenants.id [delete: cascade]
+Ref: subscriptions.tenant_id > tenants.id [delete: cascade]
+Ref: subscriptions.plan_id > plans.id [delete: restrict]
+Ref: invoices.subscription_id > subscriptions.id [delete: cascade]
+Ref: invoice_lines.invoice_id > invoices.id [delete: cascade]
+Ref: payments.invoice_id > invoices.id [delete: cascade]
+
+Ref: usage_counters.tenant_id > tenants.id [delete: cascade]
+Ref: metered_events.tenant_id > tenants.id [delete: cascade]
+Ref: usage_counters.project_id > projects.id
+Ref: metered_events.project_id > projects.id
+
+Ref: data_sources.tenant_id > tenants.id [delete: cascade]
+Ref: dashboards.tenant_id > tenants.id [delete: cascade]
+Ref: dashboards.project_id > projects.id
+Ref: widgets.dashboard_id > dashboards.id [delete: cascade]
+Ref: saved_queries.tenant_id > tenants.id [delete: cascade]
+Ref: saved_queries.data_source_id > data_sources.id [delete: cascade]
+Ref: alerts.tenant_id > tenants.id [delete: cascade]
+Ref: alerts.query_id > saved_queries.id
+Ref: alert_channels.alert_id > alerts.id [delete: cascade]
+Ref: alert_events.alert_id > alerts.id [delete: cascade]
+
+Ref: model_providers.id < llm_models.provider_id
+Ref: prompt_templates.tenant_id > tenants.id [delete: cascade]
+Ref: prompt_runs.tenant_id > tenants.id [delete: cascade]
+Ref: prompt_runs.model_id > llm_models.id [delete: restrict]
+Ref: prompt_runs.template_id > prompt_templates.id
+Ref: rag_documents.tenant_id > tenants.id [delete: cascade]
+Ref: rag_chunks.document_id > rag_documents.id [delete: cascade]
+Ref: ocr_jobs.tenant_id > tenants.id [delete: cascade]
+
+Ref: tickets.tenant_id > tenants.id [delete: cascade]
+Ref: tickets.project_id > projects.id
+Ref: ticket_comments.ticket_id > tickets.id [delete: cascade]
+Ref: ticket_comments.author_id > users.id [delete: set null]
+Ref: attachments.tenant_id > tenants.id [delete: cascade]
+
+Ref: workflows.tenant_id > tenants.id [delete: cascade]
+Ref: workflow_runs.workflow_id > workflows.id [delete: cascade]
+
+Ref: domains.tenant_id > tenants.id [delete: cascade]
+Ref: dns_records.domain_id > domains.id [delete: cascade]
+Ref: certificates.domain_id > domains.id [delete: cascade]
+
+Ref: github_repos.integration_id > integrations.id [delete: cascade]
+Ref: slack_workspaces.integration_id > integrations.id [delete: cascade]
+Ref: slack_channels.workspace_id > slack_workspaces.id [delete: cascade]
