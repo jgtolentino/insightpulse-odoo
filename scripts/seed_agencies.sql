@@ -346,13 +346,14 @@ BEGIN
   RAISE NOTICE '✅ Created production environments for all 12 projects';
 
   -- =============================================================================
-  -- 4. Create Finance SSC Admin User
+  -- 4. Create Admin Users
   -- =============================================================================
 
+  -- Admin User 1: Jake Tolentino
   INSERT INTO users (email, full_name, is_active)
   VALUES (
-    'finance.ssc@insightpulseai.net',
-    'Finance SSC Administrator',
+    'jgtolentino_rn@yahoo.com',
+    'Jake Tolentino',
     true
   )
   ON CONFLICT (email) DO UPDATE SET
@@ -361,39 +362,83 @@ BEGIN
     updated_at = now()
   RETURNING id INTO v_admin_user_id;
 
-  RAISE NOTICE '✅ Created admin user: finance.ssc@insightpulseai.net (id: %)', v_admin_user_id;
+  RAISE NOTICE '✅ Created admin user: jgtolentino_rn@yahoo.com (id: %)', v_admin_user_id;
 
-  -- =============================================================================
-  -- 5. Add Admin to TBWA Tenant (Org Membership)
-  -- =============================================================================
-
-  INSERT INTO org_memberships (tenant_id, user_id, is_owner, status)
-  VALUES (
-    v_tenant_id,
-    v_admin_user_id,
-    true,
-    'active'
-  )
-  ON CONFLICT (tenant_id, user_id) DO UPDATE SET
-    is_owner = EXCLUDED.is_owner,
-    status = EXCLUDED.status;
-
-  RAISE NOTICE '  ✅ Admin added as owner of TBWA tenant';
-
-  -- Assign Admin role
-  SELECT id INTO v_admin_role_id FROM roles WHERE name = 'Admin' AND scope = 'org' LIMIT 1;
-
-  IF v_admin_role_id IS NOT NULL THEN
-    INSERT INTO user_roles (user_id, tenant_id, role_id)
+  -- Admin User 2: InsightPulse Support
+  DECLARE
+    v_support_user_id UUID;
+  BEGIN
+    INSERT INTO users (email, full_name, is_active)
     VALUES (
-      v_admin_user_id,
-      v_tenant_id,
-      v_admin_role_id
+      'support@insightpulseai.com',
+      'InsightPulse Support',
+      true
     )
-    ON CONFLICT DO NOTHING;
+    ON CONFLICT (email) DO UPDATE SET
+      full_name = EXCLUDED.full_name,
+      is_active = EXCLUDED.is_active,
+      updated_at = now()
+    RETURNING id INTO v_support_user_id;
 
-    RAISE NOTICE '  ✅ Assigned Admin role';
-  END IF;
+    RAISE NOTICE '✅ Created admin user: support@insightpulseai.com (id: %)', v_support_user_id;
+
+    -- =============================================================================
+    -- 5. Add Admins to TBWA Tenant (Org Membership)
+    -- =============================================================================
+
+    -- Add Jake Tolentino as owner
+    INSERT INTO org_memberships (tenant_id, user_id, is_owner, status)
+    VALUES (
+      v_tenant_id,
+      v_admin_user_id,
+      true,
+      'active'
+    )
+    ON CONFLICT (tenant_id, user_id) DO UPDATE SET
+      is_owner = EXCLUDED.is_owner,
+      status = EXCLUDED.status;
+
+    RAISE NOTICE '  ✅ Jake Tolentino added as owner of TBWA tenant';
+
+    -- Add Support as owner
+    INSERT INTO org_memberships (tenant_id, user_id, is_owner, status)
+    VALUES (
+      v_tenant_id,
+      v_support_user_id,
+      true,
+      'active'
+    )
+    ON CONFLICT (tenant_id, user_id) DO UPDATE SET
+      is_owner = EXCLUDED.is_owner,
+      status = EXCLUDED.status;
+
+    RAISE NOTICE '  ✅ InsightPulse Support added as owner of TBWA tenant';
+
+    -- Assign Admin role to both users
+    SELECT id INTO v_admin_role_id FROM roles WHERE name = 'Admin' AND scope = 'org' LIMIT 1;
+
+    IF v_admin_role_id IS NOT NULL THEN
+      -- Assign to Jake Tolentino
+      INSERT INTO user_roles (user_id, tenant_id, role_id)
+      VALUES (
+        v_admin_user_id,
+        v_tenant_id,
+        v_admin_role_id
+      )
+      ON CONFLICT DO NOTHING;
+
+      -- Assign to Support
+      INSERT INTO user_roles (user_id, tenant_id, role_id)
+      VALUES (
+        v_support_user_id,
+        v_tenant_id,
+        v_admin_role_id
+      )
+      ON CONFLICT DO NOTHING;
+
+      RAISE NOTICE '  ✅ Assigned Admin role to both users';
+    END IF;
+  END;
 
   -- =============================================================================
   -- 6. Create Finance Team (TBWA-wide)
@@ -666,7 +711,7 @@ BEGIN
   RAISE NOTICE '  • 12 Projects:';
   RAISE NOTICE '    - 6 Monthly Closing (RIM, CKVC, BOM, JPAL, LAS, RMQB)';
   RAISE NOTICE '    - 6 Tax Filing (JPL, JI, JO, JM, CJD, JT)';
-  RAISE NOTICE '  • 1 Admin User: finance.ssc@insightpulseai.net';
+  RAISE NOTICE '  • 2 Admin Users: jgtolentino_rn@yahoo.com, support@insightpulseai.com';
   RAISE NOTICE '  • 1 Notion Integration: TBWA-wide workspace';
   RAISE NOTICE '  • 1 Billing Account: Single subscription';
   RAISE NOTICE '  • 1 Finance Team: Cross-project operations';

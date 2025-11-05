@@ -170,7 +170,7 @@
           "action": "send",
           "params": {
             "to": "cfo@{{agency_code}}.ph",
-            "cc": ["finance.manager@{{agency_code}}.ph", "finance.ssc@insightpulseai.net"],
+            "cc": ["finance.manager@{{agency_code}}.ph", "jgtolentino_rn@yahoo.com"],
             "subject": "URGENT: Critical Month-End Tasks Overdue - {{agency_code}} {{fiscal_period}}",
             "template": "critical_tasks_overdue",
             "variables": {
@@ -425,7 +425,7 @@
     }
   },
   "metadata": {
-    "owner": "finance.ssc@insightpulseai.net",
+    "owner": "jgtolentino_rn@yahoo.com",
     "tags": ["finance", "month-end", "compliance"],
     "sla_hours": 72,
     "estimated_duration_minutes": 120

@@ -59,7 +59,7 @@ psql $POSTGRES_URL -f scripts/seed_agencies.sql
 ```
 ✅ 1 Tenant: TBWA Finance SSC
 ✅ 8 Projects: RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB (under TBWA tenant)
-✅ 1 Admin User: finance.ssc@insightpulseai.net
+✅ 2 Admin Users: jgtolentino_rn@yahoo.com, support@insightpulseai.com
 ✅ 1 Notion Integration: TBWA-wide workspace (not per-agency!)
 ✅ 1 Billing Account: Single subscription for TBWA
 ✅ 1 Finance Team: Cross-agency operations
@@ -67,23 +67,36 @@ psql $POSTGRES_URL -f scripts/seed_agencies.sql
 ✅ 1 Consolidated Dashboard: All agencies visible
 ```
 
-#### Step 3: Create Finance SSC Admin User
+#### Step 3: Create Finance SSC Admin Users
 ```sql
 -- Run this in psql or Supabase SQL Editor
+
+-- Admin User 1: Jake Tolentino
 INSERT INTO users (email, full_name, metadata) VALUES
   (
-    'finance.ssc@insightpulseai.net',
-    'Finance SSC Administrator',
+    'jgtolentino_rn@yahoo.com',
+    'Jake Tolentino',
     jsonb_build_object(
       'department', 'Finance Shared Service Center',
-      'role', 'SSC Admin',
-      'certifications', jsonb_build_array('CPA', 'BIR Accredited')
+      'role', 'SSC Admin'
     )
   )
 RETURNING id;
 
--- Note the returned user ID
--- ✅ Add to TBWA tenant (not per-agency!)
+-- Admin User 2: InsightPulse Support
+INSERT INTO users (email, full_name, metadata) VALUES
+  (
+    'support@insightpulseai.com',
+    'InsightPulse Support',
+    jsonb_build_object(
+      'department', 'Finance Shared Service Center',
+      'role', 'Technical Support'
+    )
+  )
+RETURNING id;
+
+-- Note the returned user IDs
+-- ✅ Add both to TBWA tenant (not per-agency!)
 INSERT INTO org_memberships (tenant_id, user_id, is_owner, status)
 SELECT t.id, '<user_id_from_above>', true, 'active'
 FROM tenants t
