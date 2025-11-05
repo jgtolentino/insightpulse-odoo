@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_finance_closing_period_user,finance.closing.period.user,model_finance_closing_period,base.group_user,1,0,0,0
+access_finance_closing_period_accountant,finance.closing.period.accountant,model_finance_closing_period,account.group_account_user,1,1,1,0
+access_finance_closing_period_manager,finance.closing.period.manager,model_finance_closing_period,account.group_account_manager,1,1,1,1
+access_finance_closing_task_user,finance.closing.task.user,model_finance_closing_task,base.group_user,1,0,0,0
+access_finance_closing_task_accountant,finance.closing.task.accountant,model_finance_closing_task,account.group_account_user,1,1,1,0
+access_finance_closing_task_manager,finance.closing.task.manager,model_finance_closing_task,account.group_account_manager,1,1,1,1
+access_finance_bir_compliance_user,finance.bir.compliance.task.user,model_finance_bir_compliance_task,base.group_user,1,0,0,0
+access_finance_bir_compliance_accountant,finance.bir.compliance.task.accountant,model_finance_bir_compliance_task,account.group_account_user,1,1,1,0
+access_finance_bir_compliance_manager,finance.bir.compliance.task.manager,model_finance_bir_compliance_task,account.group_account_manager,1,1,1,1
+access_finance_closing_task_template_user,finance.closing.task.template.user,model_finance_closing_task_template,base.group_user,1,0,0,0
+access_finance_closing_task_template_manager,finance.closing.task.template.manager,model_finance_closing_task_template,account.group_account_manager,1,1,1,1

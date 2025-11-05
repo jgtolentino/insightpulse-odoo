@@ -1,0 +1,24 @@
+# DeepCode MCP Server Requirements
+
+# Core MCP
+mcp>=0.1.0
+
+# AI/LLM
+anthropic>=0.18.0
+openai>=1.10.0
+
+# HTTP/Async
+httpx>=0.25.0
+aiohttp>=3.9.0
+aiofiles>=23.2.1
+
+# Data processing
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+
+# Utilities
+python-dateutil>=2.8.2
+tenacity>=8.2.3
+
+# Optional: DeepCode
+# deepcode-hku>=0.1.0  # Uncomment when available

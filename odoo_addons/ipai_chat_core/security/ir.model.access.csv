@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_chat_category_user,ipai.chat.category.user,model_ipai_chat_category,base.group_user,1,0,0,0
+access_chat_category_manager,ipai.chat.category.manager,model_ipai_chat_category,base.group_system,1,1,1,1
+access_channel_policy_user,ipai.channel.policy.user,model_ipai_channel_policy,base.group_user,1,0,0,0
+access_channel_policy_manager,ipai.channel.policy.manager,model_ipai_channel_policy,base.group_system,1,1,1,1
+access_message_reaction_user,ipai.message.reaction.user,model_ipai_message_reaction,base.group_user,1,1,1,1
