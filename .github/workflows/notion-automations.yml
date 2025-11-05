@@ -1,0 +1,111 @@
+name: Notion BIR Task Automations
+
+on:
+  schedule:
+    # 9:00 AM Manila Time (1:00 AM UTC) - Daily Overdue Check
+    - cron: "0 1 * * *"
+    # 3:00 PM Manila Time (7:00 AM UTC) - Daily Escalation
+    - cron: "0 7 * * *"
+  workflow_dispatch:
+    inputs:
+      automation:
+        description: 'Which automation to run'
+        required: true
+        default: 'both'
+        type: choice
+        options:
+          - both
+          - overdue
+          - escalation
+          - test
+
+jobs:
+  run-automations:
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: scripts/notion/package-lock.json
+
+      - name: Install dependencies
+        working-directory: scripts/notion
+        run: npm ci
+
+      - name: Determine which automation to run
+        id: determine-automation
+        run: |
+          CURRENT_HOUR=$(TZ=Asia/Manila date +%H)
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            AUTOMATION="${{ inputs.automation }}"
+          elif [ "$CURRENT_HOUR" = "09" ]; then
+            AUTOMATION="overdue"
+          elif [ "$CURRENT_HOUR" = "15" ]; then
+            AUTOMATION="escalation"
+          else
+            AUTOMATION="both"
+          fi
+
+          echo "automation=$AUTOMATION" >> $GITHUB_OUTPUT
+          echo "📋 Running automation: $AUTOMATION"
+
+      - name: Run overdue check (9 AM Manila)
+        if: steps.determine-automation.outputs.automation == 'overdue' || steps.determine-automation.outputs.automation == 'both'
+        working-directory: scripts/notion
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          TZ: Asia/Manila
+        run: |
+          echo "🔍 Running daily overdue check..."
+          npm run overdue-check
+          echo "✅ Overdue check complete"
+
+      - name: Run escalation (3 PM Manila)
+        if: steps.determine-automation.outputs.automation == 'escalation' || steps.determine-automation.outputs.automation == 'both'
+        working-directory: scripts/notion
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          TZ: Asia/Manila
+        run: |
+          echo "🚨 Running escalation automation..."
+          npm run escalation
+          echo "✅ Escalation complete"
+
+      - name: Test connection
+        if: steps.determine-automation.outputs.automation == 'test'
+        working-directory: scripts/notion
+        env:
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID: ${{ secrets.NOTION_DATABASE_ID }}
+          TZ: Asia/Manila
+        run: |
+          echo "🧪 Testing Notion API connection..."
+          node test-connection.js
+
+      - name: Upload logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: notion-automation-logs-${{ github.run_number }}
+          path: scripts/notion/*.log
+          retention-days: 7
+
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    needs: run-automations
+    if: failure()
+    steps:
+      - name: Report failure
+        run: |
+          echo "❌ Notion automation failed"
+          echo "Check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

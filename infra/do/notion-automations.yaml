@@ -1,0 +1,62 @@
+spec:
+  name: notion-bir-automations
+  region: sgp
+
+  envs:
+    - key: NOTION_API_KEY
+      scope: RUN_TIME
+      type: SECRET
+    - key: NOTION_DATABASE_ID
+      value: 73c27159-544e-414b-846f-edf41e296091
+      scope: RUN_TIME
+      type: GENERAL
+    - key: TZ
+      value: Asia/Manila
+      scope: RUN_TIME
+      type: GENERAL
+
+  workers:
+    - name: notion-automations
+      github:
+        repo: jgtolentino/insightpulse-odoo
+        branch: main
+        deploy_on_push: true
+
+      source_dir: scripts/notion
+
+      environment_slug: node-js
+      instance_count: 1
+      instance_size_slug: basic-xxs
+
+      run_command: "echo 'Notion automations worker ready'"
+
+      jobs:
+        - name: overdue-check-9am
+          kind: CRON
+          schedule: "0 1 * * *"  # 9 AM Manila (1 AM UTC)
+          run_command: "npm run overdue-check"
+
+        - name: escalation-3pm
+          kind: CRON
+          schedule: "0 7 * * *"  # 3 PM Manila (7 AM UTC)
+          run_command: "npm run escalation"
+
+---
+# Deployment Instructions:
+#
+# 1. Set NOTION_API_KEY secret in DigitalOcean dashboard:
+#    doctl apps create --spec infra/do/notion-automations.yaml
+#    doctl apps update <app-id> --spec infra/do/notion-automations.yaml
+#
+# 2. Set environment variable in DO App Platform UI:
+#    Settings → Environment Variables → Add:
+#    - NOTION_API_KEY (Secret) → Your rotated Notion API key
+#
+# 3. Monitor cron jobs:
+#    App Platform → notion-bir-automations → Runtime Logs
+#    Filter by: "overdue-check" or "escalation"
+#
+# 4. Manual trigger (for testing):
+#    App Platform → Jobs → Run Job Now
+#
+# Cost: ~$5/month (basic-xxs instance)

@@ -1,0 +1,33 @@
+{
+  "name": "notion-bir-automations",
+  "version": "1.0.0",
+  "description": "BIR Task Management Automations for Notion",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "completion-log": "node 01-completion-logging.js",
+    "overdue-check": "node 02-daily-overdue-check.js",
+    "escalation": "node 03-escalation-automation.js",
+    "setup-formula": "node 04-add-days-late-formula.js",
+    "run-all": "npm run overdue-check && npm run escalation",
+    "deploy": "node deploy-to-supabase.js"
+  },
+  "dependencies": {
+    "@notionhq/client": "^2.2.15"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "notion",
+    "automation",
+    "bir",
+    "tax-filing",
+    "task-management"
+  ],
+  "author": "Jake Tolentino <jgtolentino_rn@yahoo.com>",
+  "license": "MIT"
+}
