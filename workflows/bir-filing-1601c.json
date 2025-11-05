@@ -1,0 +1,586 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "name": "BIR Form 1601-C Monthly Filing",
+  "version": "1.0.0",
+  "description": "Monthly withholding tax filing workflow (BIR Form 1601-C)",
+  "category": "bir_compliance",
+  "trigger_type": "scheduled",
+  "schedule": {
+    "cron": "0 9 5 * *",
+    "timezone": "Asia/Manila",
+    "description": "9 AM on 5th of every month (5 days before deadline on 10th)"
+  },
+  "variables": {
+    "fiscal_period": {
+      "type": "string",
+      "format": "YYYY-MM",
+      "description": "Tax period for filing",
+      "default": "{{previous_month}}"
+    },
+    "agency_code": {
+      "type": "string",
+      "enum": ["RIM", "CKVC", "BOM", "JPAL", "JLI", "JAP", "LAS", "RMQB"],
+      "description": "Agency identifier"
+    },
+    "project_id": {
+      "type": "uuid",
+      "description": "Project/Agency UUID"
+    },
+    "filing_deadline": {
+      "type": "date",
+      "description": "BIR filing deadline (10th of following month)",
+      "default": "{{month_start(next_month) + 9 days}}"
+    }
+  },
+  "steps": [
+    {
+      "id": "check_previous_month_closed",
+      "name": "Verify Month-End Closing Completed",
+      "type": "query",
+      "query": {
+        "sql": "SELECT CASE WHEN EXISTS (SELECT 1 FROM workflow_runs wr JOIN workflows w ON wr.workflow_id = w.id WHERE w.name LIKE '%Month-End Closing%' AND wr.metadata->>'fiscal_period' = {{fiscal_period}} AND wr.metadata->>'agency_code' = {{agency_code}} AND wr.status = 'success') THEN true ELSE false END as is_closed",
+        "returns": "single_value"
+      },
+      "output": "month_end_closed"
+    },
+    {
+      "id": "gate_check_month_end",
+      "name": "Block if Month-End Not Closed",
+      "type": "conditional",
+      "condition": "{{steps.check_previous_month_closed.output.is_closed}} = false",
+      "then": [
+        {
+          "id": "alert_month_end_not_closed",
+          "name": "Alert: Month-End Not Closed",
+          "type": "integration_call",
+          "integration": "slack",
+          "action": "send_message",
+          "params": {
+            "channel": "#finance-ssc-alerts",
+            "text": ":warning: Cannot proceed with BIR 1601-C filing for {{agency_code}} {{fiscal_period}} - Month-end closing not completed"
+          }
+        },
+        {
+          "id": "fail_workflow",
+          "type": "exit",
+          "status": "failed",
+          "message": "Month-end closing must be completed before BIR filing"
+        }
+      ]
+    },
+    {
+      "id": "extract_withholding_tax_data",
+      "name": "Extract Withholding Tax Data from Odoo",
+      "type": "integration_call",
+      "integration": "odoo",
+      "action": "execute_method",
+      "params": {
+        "model": "account.move.line",
+        "method": "search_read",
+        "domain": [
+          ["move_id.date", ">=", "{{date_start(fiscal_period)}}"],
+          ["move_id.date", "<=", "{{date_end(fiscal_period)}}"],
+          ["account_id.code", "like", "2303%"],
+          ["company_id.name", "=", "{{agency_code}}"]
+        ],
+        "fields": ["move_id", "partner_id", "debit", "credit", "account_id", "tax_ids"]
+      },
+      "output": "withholding_tax_entries"
+    },
+    {
+      "id": "generate_alphalist",
+      "name": "Generate Alphalist of Payees",
+      "type": "transform",
+      "input": "{{steps.extract_withholding_tax_data.output}}",
+      "transform": "group_by_partner",
+      "params": {
+        "group_by": "partner_id",
+        "aggregate": {
+          "tin": "partner_id.vat",
+          "name": "partner_id.name",
+          "address": "partner_id.contact_address",
+          "atc_code": "tax_ids[0].atc_code",
+          "income_payment": "sum(debit - credit)",
+          "tax_rate": "tax_ids[0].amount",
+          "tax_withheld": "sum(credit)"
+        },
+        "sort": "name asc"
+      },
+      "output": "alphalist"
+    },
+    {
+      "id": "calculate_total_tax",
+      "name": "Calculate Total Tax Withheld",
+      "type": "transform",
+      "input": "{{steps.generate_alphalist.output}}",
+      "transform": "aggregate",
+      "params": {
+        "sum": "tax_withheld"
+      },
+      "output": "total_tax_withheld"
+    },
+    {
+      "id": "create_bir_form_draft",
+      "name": "Create BIR Form 1601-C Draft",
+      "type": "transform",
+      "input": {
+        "alphalist": "{{steps.generate_alphalist.output}}",
+        "total": "{{steps.calculate_total_tax.output}}"
+      },
+      "transform": "build_bir_1601c",
+      "params": {
+        "form_version": "2018",
+        "period": "{{fiscal_period}}",
+        "agency_tin": "{{project.metadata.bir_tin}}",
+        "agency_name": "{{project.name}}",
+        "agency_address": "{{project.metadata.bir_address}}",
+        "rdo_code": "{{project.metadata.bir_rdo}}"
+      },
+      "output": "bir_form_data"
+    },
+    {
+      "id": "save_draft_to_notion",
+      "name": "Save Draft to Notion BIR Schedule",
+      "type": "integration_call",
+      "integration": "notion",
+      "action": "create_page",
+      "params": {
+        "parent_database_id": "{{notion_bir_schedule_db_id}}",
+        "properties": {
+          "Form Type": {
+            "select": {
+              "name": "1601-C"
+            }
+          },
+          "Period": {
+            "title": [
+              {
+                "text": {
+                  "content": "{{fiscal_period}}"
+                }
+              }
+            ]
+          },
+          "Filing Deadline": {
+            "date": {
+              "start": "{{filing_deadline}}"
+            }
+          },
+          "Status": {
+            "select": {
+              "name": "In Progress"
+            }
+          },
+          "Amount": {
+            "number": "{{steps.calculate_total_tax.output.sum}}"
+          },
+          "Agency": {
+            "select": {
+              "name": "{{agency_code}}"
+            }
+          }
+        }
+      },
+      "output": "notion_page"
+    },
+    {
+      "id": "create_ticket_for_review",
+      "name": "Create Review Ticket",
+      "type": "create_ticket",
+      "params": {
+        "title": "Review BIR Form 1601-C: {{agency_code}} {{fiscal_period}}",
+        "description": "Please review the auto-generated BIR Form 1601-C before filing.\n\n**Period:** {{fiscal_period}}\n**Total Tax Withheld:** PHP {{steps.calculate_total_tax.output.sum | number_format(2)}}\n**Number of Payees:** {{steps.generate_alphalist.output | length}}\n**Deadline:** {{filing_deadline}}",
+        "severity": "high",
+        "assignee_role": "Tax Compliance Officer",
+        "metadata": {
+          "form_type": "1601-C",
+          "fiscal_period": "{{fiscal_period}}",
+          "agency_code": "{{agency_code}}",
+          "bir_form_data": "{{steps.create_bir_form_draft.output}}",
+          "notion_page_id": "{{steps.save_draft_to_notion.output.id}}",
+          "alphalist": "{{steps.generate_alphalist.output}}"
+        }
+      },
+      "output": "review_ticket"
+    },
+    {
+      "id": "wait_for_approval",
+      "name": "Wait for Manager Approval",
+      "type": "human_approval",
+      "timeout_hours": 96,
+      "approvers": [
+        {
+          "role": "Tax Compliance Officer",
+          "required": true
+        },
+        {
+          "role": "Finance Manager",
+          "required": true
+        }
+      ],
+      "approval_form": {
+        "fields": [
+          {
+            "id": "reviewed_alphalist",
+            "label": "Alphalist reviewed and accurate?",
+            "type": "checkbox",
+            "required": true
+          },
+          {
+            "id": "amounts_verified",
+            "label": "Tax amounts verified against ledger?",
+            "type": "checkbox",
+            "required": true
+          },
+          {
+            "id": "payee_details_correct",
+            "label": "Payee TINs and addresses correct?",
+            "type": "checkbox",
+            "required": true
+          },
+          {
+            "id": "approval_notes",
+            "label": "Notes/Corrections",
+            "type": "textarea",
+            "required": false
+          }
+        ]
+      },
+      "on_timeout": {
+        "action": "send_escalation",
+        "escalate_to": "CFO",
+        "message": "BIR Form 1601-C approval overdue for {{agency_code}} {{fiscal_period}}"
+      },
+      "output": "approval_response"
+    },
+    {
+      "id": "handle_rejection",
+      "name": "Handle Rejection if Needed",
+      "type": "conditional",
+      "condition": "{{steps.wait_for_approval.output.approved}} = false",
+      "then": [
+        {
+          "id": "notify_rejection",
+          "type": "integration_call",
+          "integration": "slack",
+          "action": "send_message",
+          "params": {
+            "channel": "#finance-ssc",
+            "text": ":x: BIR Form 1601-C rejected for {{agency_code}} {{fiscal_period}}. Reason: {{steps.wait_for_approval.output.rejection_reason}}"
+          }
+        },
+        {
+          "id": "update_notion_rejected",
+          "type": "integration_call",
+          "integration": "notion",
+          "action": "update_page",
+          "params": {
+            "page_id": "{{steps.save_draft_to_notion.output.id}}",
+            "properties": {
+              "Status": {
+                "select": {
+                  "name": "Rejected"
+                }
+              },
+              "Notes": {
+                "rich_text": [
+                  {
+                    "text": {
+                      "content": "{{steps.wait_for_approval.output.rejection_reason}}"
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        {
+          "id": "exit_rejected",
+          "type": "exit",
+          "status": "failed",
+          "message": "BIR form rejected: {{steps.wait_for_approval.output.rejection_reason}}"
+        }
+      ]
+    },
+    {
+      "id": "export_bir_form_pdf",
+      "name": "Export BIR Form to PDF",
+      "type": "integration_call",
+      "integration": "pdf_generator",
+      "action": "generate_from_template",
+      "params": {
+        "template": "bir_1601c_v2018",
+        "data": "{{steps.create_bir_form_draft.output}}",
+        "output_filename": "BIR_1601C_{{agency_code}}_{{fiscal_period}}.pdf"
+      },
+      "output": "bir_pdf"
+    },
+    {
+      "id": "export_alphalist_excel",
+      "name": "Export Alphalist to Excel",
+      "type": "integration_call",
+      "integration": "excel_generator",
+      "action": "generate_from_data",
+      "params": {
+        "template": "alphalist_1601c",
+        "data": "{{steps.generate_alphalist.output}}",
+        "output_filename": "Alphalist_1601C_{{agency_code}}_{{fiscal_period}}.xlsx"
+      },
+      "output": "alphalist_excel"
+    },
+    {
+      "id": "upload_attachments",
+      "name": "Upload Attachments to Notion",
+      "type": "integration_call",
+      "integration": "notion",
+      "action": "add_files_to_page",
+      "params": {
+        "page_id": "{{steps.save_draft_to_notion.output.id}}",
+        "files": [
+          "{{steps.export_bir_form_pdf.output.url}}",
+          "{{steps.export_alphalist_excel.output.url}}"
+        ]
+      }
+    },
+    {
+      "id": "create_filing_reminder",
+      "name": "Create Filing Reminder (1 day before deadline)",
+      "type": "schedule_task",
+      "params": {
+        "scheduled_at": "{{filing_deadline - 1 day}}T09:00:00",
+        "task": {
+          "type": "integration_call",
+          "integration": "slack",
+          "action": "send_message",
+          "params": {
+            "channel": "#finance-ssc-bir",
+            "text": ":alarm_clock: REMINDER: BIR Form 1601-C for {{agency_code}} {{fiscal_period}} due TOMORROW ({{filing_deadline}}). Amount: PHP {{steps.calculate_total_tax.output.sum | number_format(2)}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "wait_for_filing_confirmation",
+      "name": "Wait for Filing Confirmation",
+      "type": "human_task",
+      "assignee_role": "Tax Compliance Officer",
+      "task": {
+        "title": "File BIR Form 1601-C via eBIRForms",
+        "description": "Please file the approved BIR Form 1601-C via eBIRForms and enter the confirmation details.",
+        "deadline": "{{filing_deadline}}",
+        "form": {
+          "fields": [
+            {
+              "id": "filed_date",
+              "label": "Date Filed",
+              "type": "date",
+              "required": true
+            },
+            {
+              "id": "reference_number",
+              "label": "BIR Reference Number",
+              "type": "text",
+              "required": true
+            },
+            {
+              "id": "confirmation_screenshot",
+              "label": "Confirmation Screenshot",
+              "type": "file",
+              "accept": "image/*,application/pdf",
+              "required": true
+            },
+            {
+              "id": "filing_notes",
+              "label": "Filing Notes",
+              "type": "textarea",
+              "required": false
+            }
+          ]
+        }
+      },
+      "output": "filing_confirmation"
+    },
+    {
+      "id": "update_notion_filed",
+      "name": "Update Notion: Filed",
+      "type": "integration_call",
+      "integration": "notion",
+      "action": "update_page",
+      "params": {
+        "page_id": "{{steps.save_draft_to_notion.output.id}}",
+        "properties": {
+          "Status": {
+            "select": {
+              "name": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), 'Filed', 'Late')}}"
+            }
+          },
+          "Filed Date": {
+            "date": {
+              "start": "{{steps.filing_confirmation.output.filed_date}}"
+            }
+          },
+          "Reference No": {
+            "rich_text": [
+              {
+                "text": {
+                  "content": "{{steps.filing_confirmation.output.reference_number}}"
+                }
+              }
+            ]
+          },
+          "Filed By": {
+            "people": [
+              {
+                "id": "{{current_user.notion_id}}"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": "log_bir_filing_audit",
+      "name": "Log BIR Filing to Audit Trail",
+      "type": "audit_log",
+      "action": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), 'bir.form_submitted', 'bir.form_submitted_late')}}",
+      "resource_type": "tax_form",
+      "resource_id": "1601C-{{agency_code}}-{{fiscal_period}}",
+      "metadata": {
+        "form_type": "1601-C",
+        "period": "{{fiscal_period}}",
+        "agency_code": "{{agency_code}}",
+        "filing_deadline": "{{filing_deadline}}",
+        "filed_date": "{{steps.filing_confirmation.output.filed_date}}",
+        "amount": "{{steps.calculate_total_tax.output.sum}}",
+        "reference_no": "{{steps.filing_confirmation.output.reference_number}}",
+        "notion_page_id": "{{steps.save_draft_to_notion.output.id}}",
+        "payees_count": "{{steps.generate_alphalist.output | length}}",
+        "approved_by": "{{steps.wait_for_approval.output.approved_by}}",
+        "filed_by": "{{steps.filing_confirmation.output.filed_by}}",
+        "is_late": "{{steps.filing_confirmation.output.filed_date > filing_deadline}}"
+      }
+    },
+    {
+      "id": "send_completion_notification",
+      "name": "Send Completion Notification",
+      "type": "integration_call",
+      "integration": "slack",
+      "action": "send_message",
+      "params": {
+        "channel": "#finance-ssc",
+        "text": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), ':white_check_mark:', ':warning:')}} BIR Form 1601-C filed for {{agency_code}} {{fiscal_period}}",
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), '✅ BIR Form 1601-C Filed', '⚠️ BIR Form 1601-C Filed (Late)')}}"
+            }
+          },
+          {
+            "type": "section",
+            "fields": [
+              {
+                "type": "mrkdwn",
+                "text": "*Agency:*\n{{agency_code}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Period:*\n{{fiscal_period}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Amount:*\nPHP {{steps.calculate_total_tax.output.sum | number_format(2)}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Reference:*\n{{steps.filing_confirmation.output.reference_number}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Deadline:*\n{{filing_deadline}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Filed:*\n{{steps.filing_confirmation.output.filed_date}}"
+              }
+            ]
+          },
+          {
+            "type": "actions",
+            "elements": [
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "View in Notion"
+                },
+                "url": "{{steps.save_draft_to_notion.output.url}}"
+              },
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "View Audit Log"
+                },
+                "url": "https://app.insightpulseai.net/audit?resource=1601C-{{agency_code}}-{{fiscal_period}}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "close_review_ticket",
+      "name": "Close Review Ticket",
+      "type": "update_ticket",
+      "params": {
+        "ticket_id": "{{steps.create_ticket_for_review.output.id}}",
+        "state": "resolved",
+        "resolution": "BIR Form 1601-C successfully filed. Reference: {{steps.filing_confirmation.output.reference_number}}"
+      }
+    }
+  ],
+  "on_error": {
+    "retry_policy": {
+      "max_retries": 2,
+      "backoff": "exponential",
+      "initial_interval_seconds": 300
+    },
+    "notification": {
+      "integration": "slack",
+      "channel": "#finance-ssc-alerts",
+      "message": "❌ BIR 1601-C Filing Workflow Failed for {{agency_code}} {{fiscal_period}}. Error: {{error.message}}. Deadline: {{filing_deadline}}"
+    },
+    "create_ticket": {
+      "title": "URGENT: BIR 1601-C Filing Failed - {{agency_code}} {{fiscal_period}}",
+      "severity": "critical",
+      "assignee_role": "Finance Manager",
+      "description": "Automated BIR filing workflow failed. Manual intervention required.\n\nError: {{error.message}}\nDeadline: {{filing_deadline}}"
+    }
+  },
+  "on_success": {
+    "notification": {
+      "integration": "email",
+      "to": "{{project.metadata.cfo_email}}",
+      "subject": "BIR Form 1601-C Filed: {{agency_code}} {{fiscal_period}}",
+      "template": "bir_filing_confirmation",
+      "attachments": [
+        "{{steps.export_bir_form_pdf.output.url}}",
+        "{{steps.export_alphalist_excel.output.url}}"
+      ]
+    }
+  },
+  "metadata": {
+    "owner": "finance.ssc@insightpulseai.net",
+    "tags": ["bir", "compliance", "1601-C", "withholding_tax"],
+    "sla_hours": 120,
+    "estimated_duration_minutes": 180,
+    "regulatory_compliance": {
+      "regulation": "BIR Revenue Regulations",
+      "form": "1601-C",
+      "frequency": "monthly",
+      "deadline_rule": "10th of following month"
+    }
+  }
+}

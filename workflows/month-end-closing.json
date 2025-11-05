@@ -1,0 +1,433 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "name": "Month-End Closing Workflow",
+  "version": "1.0.0",
+  "description": "Standard month-end financial close process for Finance SSC agencies",
+  "category": "finance_ssc",
+  "trigger_type": "scheduled",
+  "schedule": {
+    "cron": "0 9 1 * *",
+    "timezone": "Asia/Manila",
+    "description": "9 AM on 1st of every month"
+  },
+  "variables": {
+    "fiscal_period": {
+      "type": "string",
+      "format": "YYYY-MM",
+      "description": "Current fiscal period being closed",
+      "default": "{{current_month}}"
+    },
+    "agency_code": {
+      "type": "string",
+      "enum": ["RIM", "CKVC", "BOM", "JPAL", "JLI", "JAP", "LAS", "RMQB"],
+      "description": "Agency identifier"
+    },
+    "cutoff_date": {
+      "type": "date",
+      "description": "Month-end cutoff date",
+      "default": "{{last_day_of_month}}"
+    }
+  },
+  "steps": [
+    {
+      "id": "sync_notion_tasks",
+      "name": "Sync Month-End Tasks from Notion",
+      "type": "integration_call",
+      "integration": "notion",
+      "action": "query_database",
+      "params": {
+        "database_id": "{{notion_database_id}}",
+        "filter": {
+          "and": [
+            {
+              "property": "Period",
+              "formula": {
+                "string": {
+                  "equals": "{{fiscal_period}}"
+                }
+              }
+            },
+            {
+              "property": "Status",
+              "select": {
+                "does_not_equal": "Completed"
+              }
+            }
+          ]
+        },
+        "sorts": [
+          {
+            "property": "Priority",
+            "direction": "descending"
+          },
+          {
+            "property": "Due Date",
+            "direction": "ascending"
+          }
+        ]
+      },
+      "output": "notion_tasks"
+    },
+    {
+      "id": "create_workflow_runs",
+      "name": "Create Workflow Runs for Each Task",
+      "type": "transform",
+      "input": "{{steps.sync_notion_tasks.output}}",
+      "transform": "notion_tasks_to_workflow_runs",
+      "params": {
+        "mapping": {
+          "task_name": "properties['Task Name'].title[0].plain_text",
+          "status": "map_notion_status(properties.Status.select.name)",
+          "owner": "properties.Owner.people[0].email",
+          "due_date": "properties['Due Date'].date.start",
+          "priority": "properties.Priority.select.name",
+          "category": "properties.Category.select.name",
+          "notion_page_id": "id",
+          "notion_url": "url"
+        }
+      },
+      "output": "workflow_runs"
+    },
+    {
+      "id": "check_critical_tasks",
+      "name": "Check for Overdue Critical Tasks",
+      "type": "query",
+      "query": {
+        "sql": "SELECT COUNT(*) as overdue_count FROM workflow_runs WHERE status != 'success' AND input->>'priority' = 'Critical' AND (input->>'due_date')::date < CURRENT_DATE AND workflow_id = {{workflow_id}}",
+        "returns": "single_value"
+      },
+      "output": "overdue_critical_count"
+    },
+    {
+      "id": "alert_if_critical_overdue",
+      "name": "Alert if Critical Tasks Overdue",
+      "type": "conditional",
+      "condition": "{{steps.check_critical_tasks.output.overdue_count}} > 0",
+      "then": [
+        {
+          "id": "send_slack_alert",
+          "name": "Send Slack Alert",
+          "type": "integration_call",
+          "integration": "slack",
+          "action": "send_message",
+          "params": {
+            "channel": "#finance-ssc-alerts",
+            "text": ":rotating_light: *CRITICAL*: {{steps.check_critical_tasks.output.overdue_count}} critical month-end tasks are overdue for {{agency_code}} - {{fiscal_period}}",
+            "blocks": [
+              {
+                "type": "header",
+                "text": {
+                  "type": "plain_text",
+                  "text": "Critical Month-End Tasks Overdue"
+                }
+              },
+              {
+                "type": "section",
+                "fields": [
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Agency:*\n{{agency_code}}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Period:*\n{{fiscal_period}}"
+                  },
+                  {
+                    "type": "mrkdwn",
+                    "text": "*Overdue Tasks:*\n{{steps.check_critical_tasks.output.overdue_count}}"
+                  }
+                ]
+              },
+              {
+                "type": "actions",
+                "elements": [
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View in Dashboard"
+                    },
+                    "url": "https://app.insightpulseai.net/dashboards/month-end-closing"
+                  },
+                  {
+                    "type": "button",
+                    "text": {
+                      "type": "plain_text",
+                      "text": "View in Notion"
+                    },
+                    "url": "{{notion_database_url}}"
+                  }
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "id": "send_email_alert",
+          "name": "Send Email Alert to CFO",
+          "type": "integration_call",
+          "integration": "email",
+          "action": "send",
+          "params": {
+            "to": "cfo@{{agency_code}}.ph",
+            "cc": ["finance.manager@{{agency_code}}.ph", "finance.ssc@insightpulseai.net"],
+            "subject": "URGENT: Critical Month-End Tasks Overdue - {{agency_code}} {{fiscal_period}}",
+            "template": "critical_tasks_overdue",
+            "variables": {
+              "agency_code": "{{agency_code}}",
+              "fiscal_period": "{{fiscal_period}}",
+              "overdue_count": "{{steps.check_critical_tasks.output.overdue_count}}",
+              "dashboard_url": "https://app.insightpulseai.net/dashboards/month-end-closing"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "categorize_tasks",
+      "name": "Categorize Tasks by Status",
+      "type": "transform",
+      "input": "{{steps.create_workflow_runs.output}}",
+      "transform": "group_by",
+      "params": {
+        "group_by": "input.category",
+        "aggregate": {
+          "total": "count(*)",
+          "completed": "count_if(status = 'success')",
+          "in_progress": "count_if(status = 'running')",
+          "pending": "count_if(status = 'pending')",
+          "blocked": "count_if(status = 'failed')"
+        }
+      },
+      "output": "task_summary"
+    },
+    {
+      "id": "journal_entry_tasks",
+      "name": "Process Journal Entry Tasks",
+      "type": "sub_workflow",
+      "workflow": "journal-entry-workflow",
+      "input": {
+        "tasks": "{{filter(steps.create_workflow_runs.output, 'input.category = \"Journal Entry\"')}}"
+      },
+      "output": "journal_entry_results"
+    },
+    {
+      "id": "reconciliation_tasks",
+      "name": "Process Reconciliation Tasks",
+      "type": "sub_workflow",
+      "workflow": "reconciliation-workflow",
+      "input": {
+        "tasks": "{{filter(steps.create_workflow_runs.output, 'input.category = \"Reconciliation\"')}}"
+      },
+      "output": "reconciliation_results"
+    },
+    {
+      "id": "reporting_tasks",
+      "name": "Process Reporting Tasks",
+      "type": "sub_workflow",
+      "workflow": "reporting-workflow",
+      "input": {
+        "tasks": "{{filter(steps.create_workflow_runs.output, 'input.category = \"Reporting\"')}}"
+      },
+      "depends_on": ["journal_entry_tasks", "reconciliation_tasks"],
+      "output": "reporting_results"
+    },
+    {
+      "id": "review_tasks",
+      "name": "Process Review & Approval Tasks",
+      "type": "sub_workflow",
+      "workflow": "review-approval-workflow",
+      "input": {
+        "tasks": "{{filter(steps.create_workflow_runs.output, 'input.category = \"Review\"')}}"
+      },
+      "depends_on": ["reporting_tasks"],
+      "output": "review_results"
+    },
+    {
+      "id": "bir_filing_tasks",
+      "name": "Process BIR Filing Tasks",
+      "type": "sub_workflow",
+      "workflow": "bir-filing-workflow",
+      "input": {
+        "tasks": "{{filter(steps.create_workflow_runs.output, 'input.category = \"BIR Filing\"')}}"
+      },
+      "depends_on": ["review_tasks"],
+      "output": "bir_filing_results"
+    },
+    {
+      "id": "calculate_completion",
+      "name": "Calculate Overall Completion %",
+      "type": "query",
+      "query": {
+        "sql": "SELECT (COUNT(CASE WHEN status = 'success' THEN 1 END)::float / NULLIF(COUNT(*), 0) * 100) as completion_rate FROM workflow_runs WHERE workflow_id = {{workflow_id}} AND created_at >= date_trunc('month', now())",
+        "returns": "single_value"
+      },
+      "output": "completion_rate"
+    },
+    {
+      "id": "generate_dashboard_summary",
+      "name": "Generate Dashboard Summary",
+      "type": "transform",
+      "input": {
+        "task_summary": "{{steps.categorize_tasks.output}}",
+        "completion_rate": "{{steps.calculate_completion.output.completion_rate}}",
+        "journal_entry": "{{steps.journal_entry_tasks.output}}",
+        "reconciliation": "{{steps.reconciliation_tasks.output}}",
+        "reporting": "{{steps.reporting_tasks.output}}",
+        "review": "{{steps.review_tasks.output}}",
+        "bir_filing": "{{steps.bir_filing_tasks.output}}"
+      },
+      "transform": "build_dashboard_payload",
+      "output": "dashboard_summary"
+    },
+    {
+      "id": "update_notion_dashboard",
+      "name": "Update Notion Dashboard Page",
+      "type": "integration_call",
+      "integration": "notion",
+      "action": "update_page",
+      "params": {
+        "page_id": "{{notion_dashboard_page_id}}",
+        "properties": {
+          "Completion %": {
+            "number": "{{steps.calculate_completion.output.completion_rate}}"
+          },
+          "Total Tasks": {
+            "number": "{{sum(steps.task_summary.output[*].total)}}"
+          },
+          "Completed": {
+            "number": "{{sum(steps.task_summary.output[*].completed)}}"
+          },
+          "In Progress": {
+            "number": "{{sum(steps.task_summary.output[*].in_progress)}}"
+          },
+          "Blocked": {
+            "number": "{{sum(steps.task_summary.output[*].blocked)}}"
+          },
+          "Last Updated": {
+            "date": {
+              "start": "{{now()}}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "send_daily_status_update",
+      "name": "Send Daily Status Update",
+      "type": "integration_call",
+      "integration": "slack",
+      "action": "send_message",
+      "params": {
+        "channel": "#finance-ssc",
+        "text": "📊 Month-End Closing Status for {{agency_code}} - {{fiscal_period}}",
+        "blocks": [
+          {
+            "type": "header",
+            "text": {
+              "type": "plain_text",
+              "text": "Month-End Closing Status"
+            }
+          },
+          {
+            "type": "section",
+            "fields": [
+              {
+                "type": "mrkdwn",
+                "text": "*Agency:*\n{{agency_code}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Period:*\n{{fiscal_period}}"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Completion:*\n{{steps.calculate_completion.output.completion_rate | round(2)}}%"
+              },
+              {
+                "type": "mrkdwn",
+                "text": "*Status:*\n{{if(steps.calculate_completion.output.completion_rate >= 80, '✅ On Track', if(steps.calculate_completion.output.completion_rate >= 50, '⚠️ At Risk', '🚨 Behind Schedule'))}}"
+              }
+            ]
+          },
+          {
+            "type": "section",
+            "text": {
+              "type": "mrkdwn",
+              "text": "*Task Breakdown by Category:*"
+            }
+          },
+          {
+            "type": "section",
+            "fields": "{{foreach(steps.task_summary.output, 'category', '{\"type\": \"mrkdwn\", \"text\": \"*' + category.name + ':*\\n' + category.completed + '/' + category.total + ' completed\"}')}}"
+          },
+          {
+            "type": "divider"
+          },
+          {
+            "type": "actions",
+            "elements": [
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "View Dashboard"
+                },
+                "url": "https://app.insightpulseai.net/dashboards/month-end-closing",
+                "style": "primary"
+              },
+              {
+                "type": "button",
+                "text": {
+                  "type": "plain_text",
+                  "text": "View Notion"
+                },
+                "url": "{{notion_database_url}}"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "log_workflow_completion",
+      "name": "Log Workflow Completion to Audit Trail",
+      "type": "audit_log",
+      "action": "month_end.workflow_completed",
+      "metadata": {
+        "fiscal_period": "{{fiscal_period}}",
+        "agency_code": "{{agency_code}}",
+        "completion_rate": "{{steps.calculate_completion.output.completion_rate}}",
+        "total_tasks": "{{sum(steps.task_summary.output[*].total)}}",
+        "completed_tasks": "{{sum(steps.task_summary.output[*].completed)}}",
+        "task_summary": "{{steps.task_summary.output}}",
+        "duration_seconds": "{{workflow.duration}}"
+      }
+    }
+  ],
+  "on_error": {
+    "retry_policy": {
+      "max_retries": 3,
+      "backoff": "exponential",
+      "initial_interval_seconds": 60
+    },
+    "notification": {
+      "integration": "slack",
+      "channel": "#finance-ssc-alerts",
+      "message": "❌ Month-End Closing Workflow Failed for {{agency_code}} - {{fiscal_period}}. Error: {{error.message}}"
+    }
+  },
+  "on_success": {
+    "notification": {
+      "integration": "slack",
+      "channel": "#finance-ssc",
+      "message": "✅ Month-End Closing Workflow Completed for {{agency_code}} - {{fiscal_period}}. Completion: {{steps.calculate_completion.output.completion_rate | round(2)}}%"
+    }
+  },
+  "metadata": {
+    "owner": "finance.ssc@insightpulseai.net",
+    "tags": ["finance", "month-end", "compliance"],
+    "sla_hours": 72,
+    "estimated_duration_minutes": 120
+  }
+}
