@@ -1,0 +1,322 @@
+version: "3.9"
+
+# Enhanced Docker Compose for InsightPulse Odoo with OCA Modules
+# Notion Enterprise Alternative - Finance SSC Edition
+# Supports: SAML SSO, Audit Logging, Document Management, Analytics
+
+services:
+  # PostgreSQL 16 with pgvector for AI search
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: insightpulse-db-oca
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-odoo19}
+      POSTGRES_USER: ${POSTGRES_USER:-odoo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      # Performance tuning
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-512MB}
+      POSTGRES_EFFECTIVE_CACHE_SIZE: ${POSTGRES_EFFECTIVE_CACHE_SIZE:-2GB}
+      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-32MB}
+      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+    volumes:
+      - pgdata_oca:/var/lib/postgresql/data
+      - ./backups:/backups
+      - ./scripts/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/10-extensions.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command:
+      - postgres
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - default_statistics_target=100
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - work_mem=32MB
+      - -c
+      - min_wal_size=2GB
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - max_worker_processes=8
+      - -c
+      - max_parallel_workers_per_gather=4
+      - -c
+      - max_parallel_workers=8
+      - -c
+      - max_parallel_maintenance_workers=4
+      - -c
+      - shared_preload_libraries=pg_stat_statements,vector
+    networks:
+      - odoo_oca
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  # Redis for session management and caching
+  redis:
+    image: redis:7-alpine
+    container_name: insightpulse-redis-oca
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - "512mb"
+      - --maxmemory-policy
+      - allkeys-lru
+      - --requirepass
+      - ${REDIS_PASSWORD:-insightpulse2025}
+    volumes:
+      - redisdata_oca:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "--no-auth-warning", "-a", "${REDIS_PASSWORD:-insightpulse2025}", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - odoo_oca
+
+  # Odoo 19 CE with OCA modules
+  odoo:
+    build:
+      context: .
+      dockerfile: Dockerfile.oca
+      args:
+        ODOO_VERSION: "19.0"
+        PYTHON_VERSION: "3.11"
+    container_name: insightpulse-odoo-oca
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Database connection
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-odoo}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      PGDATABASE: ${POSTGRES_DB:-odoo19}
+
+      # Redis connection
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-insightpulse2025}
+
+      # Odoo configuration
+      ODOO_ADMIN_PASSWORD: ${ODOO_ADMIN_PASSWORD:?ODOO_ADMIN_PASSWORD required}
+      ODOO_WORKERS: ${ODOO_WORKERS:-8}
+      ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-2}
+      ODOO_DB_MAXCONN: ${ODOO_DB_MAXCONN:-128}
+
+      # Memory limits (for 8GB RAM server)
+      ODOO_LIMIT_MEMORY_HARD: ${ODOO_LIMIT_MEMORY_HARD:-4294967296}   # 4GB
+      ODOO_LIMIT_MEMORY_SOFT: ${ODOO_LIMIT_MEMORY_SOFT:-3435973836}   # 3.2GB
+      ODOO_LIMIT_TIME_CPU: ${ODOO_LIMIT_TIME_CPU:-300}
+      ODOO_LIMIT_TIME_REAL: ${ODOO_LIMIT_TIME_REAL:-600}
+      ODOO_LIMIT_TIME_REAL_CRON: ${ODOO_LIMIT_TIME_REAL_CRON:-7200}
+
+      # Security
+      ODOO_DB_FILTER: ${ODOO_DB_FILTER:-^%d$}
+      ODOO_PROXY_MODE: "True"
+      ODOO_LIST_DB: "False"
+
+      # OCA-specific settings
+      ODOO_SERVER_WIDE_MODULES: base,web,auditlog,auth_totp,password_security
+
+      # SAML SSO (if configured)
+      SAML_IDP_METADATA_URL: ${SAML_IDP_METADATA_URL:-}
+      SAML_SP_ENTITY_ID: ${SAML_SP_ENTITY_ID:-}
+
+      # AI Integration
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+
+      # InsightPulse AI Microservices
+      INSIGHTPULSE_OCR_URL: ${INSIGHTPULSE_OCR_URL:-http://paddleocr:8000}
+      INSIGHTPULSE_AI_URL: ${INSIGHTPULSE_AI_URL:-http://insightpulse-ai:8001}
+
+    volumes:
+      - odoo_filestore_oca:/var/lib/odoo
+      - odoo_logs_oca:/var/log/odoo
+      - ./config/odoo/odoo.oca.conf:/etc/odoo/odoo.conf:ro
+      - ./addons/custom:/mnt/extra-addons/custom:ro
+      - ./addons/oca:/mnt/extra-addons/oca:ro
+      - ./addons/insightpulse:/mnt/extra-addons/insightpulse:ro
+
+    ports:
+      - "127.0.0.1:8069:8069"  # HTTP
+      - "127.0.0.1:8072:8072"  # Longpolling
+
+    restart: unless-stopped
+
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 180s
+
+    networks:
+      - odoo_oca
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "5"
+
+  # InsightPulse AI - PaddleOCR Service
+  paddleocr:
+    build:
+      context: ./infra/paddleocr
+      dockerfile: app/Dockerfile
+    container_name: insightpulse-paddleocr
+    environment:
+      PYTHONUNBUFFERED: "1"
+      USE_GPU: "False"
+      MAX_WORKERS: "4"
+    volumes:
+      - paddleocr_cache:/app/cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - odoo_oca
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+  # InsightPulse AI - NLP/LLM Service
+  insightpulse-ai:
+    build:
+      context: ./ai_stack
+      dockerfile: Dockerfile
+    container_name: insightpulse-ai-nlp
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      POSTGRES_URL: postgresql://${POSTGRES_USER:-odoo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-odoo19}
+    volumes:
+      - ai_cache:/app/cache
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - odoo_oca
+    ports:
+      - "127.0.0.1:8001:8001"
+
+  # Apache Superset - BI/Analytics
+  superset:
+    build:
+      context: ./superset
+      dockerfile: Dockerfile
+    container_name: insightpulse-superset
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?SUPERSET_SECRET_KEY required}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      DATABASE_DIALECT: postgresql
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_DB: ${SUPERSET_DB:-superset}
+      DATABASE_USER: ${POSTGRES_USER:-odoo}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-insightpulse2025}
+    volumes:
+      - superset_home:/app/superset_home
+      - ./superset/config:/app/docker/pythonpath_dev:ro
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    networks:
+      - odoo_oca
+    ports:
+      - "127.0.0.1:8088:8088"
+
+  # Nginx Reverse Proxy with SSL
+  nginx:
+    image: nginx:alpine
+    container_name: insightpulse-nginx
+    depends_on:
+      - odoo
+      - superset
+    volumes:
+      - ./infra/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./infra/nginx/ssl:/etc/nginx/ssl:ro
+      - nginx_logs:/var/log/nginx
+    restart: unless-stopped
+    networks:
+      - odoo_oca
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  pgdata_oca:
+    driver: local
+  redisdata_oca:
+    driver: local
+  odoo_filestore_oca:
+    driver: local
+  odoo_logs_oca:
+    driver: local
+  paddleocr_cache:
+    driver: local
+  ai_cache:
+    driver: local
+  superset_home:
+    driver: local
+  nginx_logs:
+    driver: local
+
+networks:
+  odoo_oca:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16

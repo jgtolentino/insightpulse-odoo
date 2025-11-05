@@ -1,0 +1,186 @@
+# Dockerfile for Odoo 19 CE with OCA Modules
+# Notion Enterprise Alternative - Finance SSC Edition
+
+ARG ODOO_VERSION=19.0
+ARG PYTHON_VERSION=3.11
+
+FROM python:${PYTHON_VERSION}-slim-bookworm AS base
+
+# Install system dependencies
+RUN set -x; \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        # Odoo dependencies
+        ca-certificates \
+        curl \
+        dirmngr \
+        fonts-noto-cjk \
+        gnupg \
+        libssl-dev \
+        node-less \
+        npm \
+        python3-num2words \
+        python3-pdfminer \
+        python3-pip \
+        python3-phonenumbers \
+        python3-pyldap \
+        python3-qrcode \
+        python3-renderpm \
+        python3-setuptools \
+        python3-slugify \
+        python3-vobject \
+        python3-watchdog \
+        python3-xlrd \
+        python3-xlwt \
+        xz-utils \
+        # Additional system tools
+        git \
+        build-essential \
+        libxml2-dev \
+        libxslt1-dev \
+        libldap2-dev \
+        libsasl2-dev \
+        libtiff5-dev \
+        libjpeg62-turbo-dev \
+        libopenjp2-7-dev \
+        zlib1g-dev \
+        libfreetype6-dev \
+        liblcms2-dev \
+        libwebp-dev \
+        libharfbuzz-dev \
+        libfribidi-dev \
+        libxcb1-dev \
+        libpq-dev \
+        # For SAML support
+        xmlsec1 \
+        libxmlsec1-dev \
+        libxmlsec1-openssl \
+        pkg-config \
+    && curl -o wkhtmltox.deb -sSL https://github.com/wkhtmltopdf/packaging/releases/download/0.12.6.1-3/wkhtmltox_0.12.6.1-3.bookworm_amd64.deb \
+    && apt-get install -y --no-install-recommends ./wkhtmltox.deb \
+    && rm -rf /var/lib/apt/lists/* wkhtmltox.deb
+
+# Create Odoo user
+RUN useradd -ms /bin/bash -u 1000 odoo
+
+# Install Odoo 19
+ARG ODOO_VERSION
+ENV ODOO_VERSION=${ODOO_VERSION}
+RUN set -x; \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/odoo/odoo.git /opt/odoo
+
+# Install Python dependencies
+WORKDIR /opt/odoo
+RUN pip3 install --no-cache-dir -r requirements.txt
+
+# Install OCA-specific dependencies
+RUN pip3 install --no-cache-dir \
+    # SAML authentication
+    pysaml2==7.4.2 \
+    xmlsec==1.3.13 \
+    # 2FA/TOTP
+    pyotp==2.9.0 \
+    qrcode==7.4.2 \
+    # Excel reports
+    openpyxl==3.1.2 \
+    xlsxwriter==3.1.9 \
+    xlrd==2.0.1 \
+    # LibreOffice reports (py3o)
+    py3o.template==0.10.0 \
+    py3o.formats==0.3 \
+    # Document processing
+    python-docx==1.1.0 \
+    pypdf2==3.0.1 \
+    # REST API framework
+    apispec==6.3.1 \
+    marshmallow==3.20.1 \
+    # AI/ML integrations
+    openai==1.10.0 \
+    anthropic==0.18.0 \
+    langchain==0.1.6 \
+    # Database utilities
+    psycopg2-binary==2.9.9 \
+    # Audit logging enhancements
+    watchdog==3.0.0 \
+    # Other utilities
+    phonenumbers==8.13.27 \
+    num2words==0.5.13 \
+    python-slugify==8.0.1
+
+# Clone OCA repositories
+ARG ODOO_VERSION
+RUN mkdir -p /opt/oca && cd /opt/oca && \
+    # Security & Authentication
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/server-auth.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/server-backend.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/server-tools.git && \
+    # Document Management
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/knowledge.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/dms.git && \
+    # Web & UI
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/web.git && \
+    # Communication
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/social.git && \
+    # Integrations
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/connector.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/rest-framework.git || true && \
+    # Reporting
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/reporting-engine.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/mis-builder.git || true && \
+    # Workflows
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/approval.git || true && \
+    # Finance
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-financial-reporting.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/account-financial-tools.git && \
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/bank-payment.git && \
+    # Data Protection
+    git clone --depth 1 --branch ${ODOO_VERSION} https://github.com/OCA/data-protection.git || true
+
+# Create symbolic links for OCA modules
+RUN mkdir -p /mnt/extra-addons/oca && \
+    cd /opt/oca && \
+    for repo in server-auth server-backend server-tools knowledge dms web social connector rest-framework reporting-engine mis-builder approval account-financial-reporting account-financial-tools bank-payment data-protection; do \
+        if [ -d "$repo" ]; then \
+            for module in $repo/*; do \
+                if [ -d "$module" ] && [ -f "$module/__manifest__.py" ]; then \
+                    ln -sf "/opt/oca/$module" "/mnt/extra-addons/oca/$(basename $module)"; \
+                fi; \
+            done; \
+        fi; \
+    done
+
+# Create directories
+RUN mkdir -p \
+    /var/lib/odoo \
+    /var/log/odoo \
+    /etc/odoo \
+    /mnt/extra-addons/custom \
+    /mnt/extra-addons/insightpulse
+
+# Set ownership
+RUN chown -R odoo:odoo \
+    /opt/odoo \
+    /opt/oca \
+    /var/lib/odoo \
+    /var/log/odoo \
+    /etc/odoo \
+    /mnt/extra-addons
+
+# Copy entrypoint script
+COPY --chown=odoo:odoo ./scripts/entrypoint-oca.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Switch to odoo user
+USER odoo
+
+# Expose Odoo services
+EXPOSE 8069 8072
+
+# Set environment variables
+ENV ODOO_RC=/etc/odoo/odoo.conf \
+    PATH="/opt/odoo:${PATH}" \
+    PYTHONPATH="/opt/odoo:/mnt/extra-addons/oca:/mnt/extra-addons/custom:/mnt/extra-addons/insightpulse"
+
+# Set the entrypoint
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["/opt/odoo/odoo-bin", "-c", "/etc/odoo/odoo.conf"]
