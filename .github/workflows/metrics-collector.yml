@@ -38,6 +38,25 @@ jobs:
             console.log(`📊 Collected ${metrics.length} workflow runs`);
             console.log(`✅ Success rate: ${(metrics.filter(m => m.status === 'success').length / metrics.length * 100).toFixed(1)}%`);
 
+            // Save metrics to file for Supabase upload
+            fs.writeFileSync('metrics.json', JSON.stringify(metrics, null, 2));
+
+      - name: Upload metrics to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          # Upload each metric to Supabase
+          cat metrics.json | jq -c '.[]' | while read -r metric; do
+            curl -X POST "${SUPABASE_URL}/rest/v1/ops.workflow_runs" \
+              -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
+              -H "Content-Type: application/json" \
+              -H "Prefer: return=minimal" \
+              -d "$metric"
+          done
+          echo "✅ Uploaded $(jq length metrics.json) metrics to Supabase"
+
       - name: Summary
         run: |
           echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
