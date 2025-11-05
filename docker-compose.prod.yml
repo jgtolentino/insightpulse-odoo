@@ -122,6 +122,7 @@ services:
       - odoo_logs:/var/log/odoo
       - ./config/odoo/odoo.conf:/etc/odoo/odoo.conf:ro
       - ./addons/custom:/mnt/extra-addons/custom:ro
+      - ./custom_addons:/mnt/custom-addons:ro
     ports:
       - "127.0.0.1:8069:8069"  # Only bind to localhost (Caddy will proxy)
       - "127.0.0.1:8072:8072"  # Longpolling

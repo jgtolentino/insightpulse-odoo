@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="mobile_receipt_form" name="Mobile Receipt Capture" inherit_id="web.layout">
+    <xpath expr="//main" position="inside">
+      <div class="oe_structure" style="max-width:640px;margin:24px auto;padding:12px">
+        <h2>Capture Receipt</h2>
+        <form method="post" enctype="multipart/form-data" action="/ip/mobile/receipt">
+          <div style="margin:12px 0">
+            <label>Title</label>
+            <input type="text" name="title" placeholder="Lunch with client" style="width:100%"/>
+          </div>
+          <div style="margin:12px 0">
+            <label>Amount (optional)</label>
+            <input type="number" step="0.01" name="amount" style="width:100%"/>
+          </div>
+          <div style="margin:12px 0">
+            <label>Receipt Image</label><br/>
+            <input type="file" name="receipt" accept="image/*" capture="environment" required/>
+          </div>
+          <button type="submit" class="btn btn-primary">Upload & Parse</button>
+        </form>
+      </div>
+    </xpath>
+  </template>
+</odoo>

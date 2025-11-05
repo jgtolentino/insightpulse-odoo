@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <!-- Extend hr.expense form with OCR fields -->
+  <record id="view_hr_expense_form_ip" model="ir.ui.view">
+    <field name="name">hr.expense.form.ip.ocr</field>
+    <field name="model">hr.expense</field>
+    <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//sheet/notebook/page[@name='expense']" position="after">
+        <page name="ip_ocr" string="OCR">
+          <group>
+            <field name="ocr_status"/>
+            <field name="ocr_confidence"/>
+            <field name="ocr_merchant"/>
+            <field name="ocr_date"/>
+            <field name="ocr_payload" widget="json"/>
+          </group>
+          <footer>
+            <button name="action_run_ocr" type="object" class="btn-primary" string="Run OCR"/>
+          </footer>
+        </page>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- Simple tree/views for new models -->
+  <record id="view_ip_cash_advance_tree" model="ir.ui.view">
+    <field name="name">ip.cash.advance.tree</field>
+    <field name="model">ip.cash.advance</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="employee_id"/>
+        <field name="amount"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_ip_cash_advance_form" model="ir.ui.view">
+    <field name="name">ip.cash.advance.form</field>
+    <field name="model">ip.cash.advance</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name" readonly="1"/>
+            <field name="employee_id"/>
+            <field name="amount"/>
+            <field name="state"/>
+            <field name="purpose"/>
+            <field name="related_expense_ids"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_ip_cash_advance" model="ir.actions.act_window">
+    <field name="name">Cash Advances</field>
+    <field name="res_model">ip.cash.advance</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="view_ip_liquidation_tree" model="ir.ui.view">
+    <field name="name">ip.liquidation.tree</field>
+    <field name="model">ip.liquidation</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="cash_advance_id"/>
+        <field name="total_spent"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_ip_liquidation_form" model="ir.ui.view">
+    <field name="name">ip.liquidation.form</field>
+    <field name="model">ip.liquidation</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="cash_advance_id"/>
+            <field name="total_spent"/>
+            <field name="submitted_on"/>
+            <field name="state"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_ip_liquidation" model="ir.actions.act_window">
+    <field name="name">Liquidations</field>
+    <field name="res_model">ip.liquidation</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+
+  <record id="view_ip_travel_tree" model="ir.ui.view">
+    <field name="name">ip.travel.request.tree</field>
+    <field name="model">ip.travel.request</field>
+    <field name="arch" type="xml">
+      <tree>
+        <field name="name"/>
+        <field name="employee_id"/>
+        <field name="destination"/>
+        <field name="date_start"/>
+        <field name="date_end"/>
+        <field name="no_car_service"/>
+        <field name="state"/>
+      </tree>
+    </field>
+  </record>
+  <record id="view_ip_travel_form" model="ir.ui.view">
+    <field name="name">ip.travel.request.form</field>
+    <field name="model">ip.travel.request</field>
+    <field name="arch" type="xml">
+      <form>
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="employee_id"/>
+            <field name="destination"/>
+            <field name="date_start"/>
+            <field name="date_end"/>
+            <field name="no_car_service"/>
+            <field name="state"/>
+          </group>
+        </sheet>
+      </form>
+    </field>
+  </record>
+  <record id="action_ip_travel" model="ir.actions.act_window">
+    <field name="name">Travel Requests</field>
+    <field name="res_model">ip.travel.request</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+</odoo>
