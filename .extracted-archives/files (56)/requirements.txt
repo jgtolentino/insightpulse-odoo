@@ -1,0 +1,22 @@
+# Core functionality requires no external dependencies (Python stdlib only)
+
+# Optional dependencies for advanced features:
+
+# MCP SDK for direct Python integration
+mcp>=0.9.0
+
+# Supabase integration for backlog storage
+supabase>=2.0.0
+
+# JSON processing (usually built-in, but just in case)
+# No additional requirements for basic usage
+
+# Development/Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.4.0

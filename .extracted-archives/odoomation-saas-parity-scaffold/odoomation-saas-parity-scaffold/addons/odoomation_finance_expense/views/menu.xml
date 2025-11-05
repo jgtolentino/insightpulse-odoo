@@ -1,0 +1,9 @@
+<odoo>
+  <menuitem id="menu_odoomation_root" name="Odoomation"/>
+  <record id="action_odoomation_expense_atomic" model="ir.actions.act_window">
+    <field name="name">Expense Atomic</field>
+    <field name="res_model">odoomation.expense.atomic</field>
+    <field name="view_mode">tree,form</field>
+  </record>
+  <menuitem id="menu_odoomation_expense" name="Finance Expense" parent="menu_odoomation_root" action="action_odoomation_expense_atomic"/>
+</odoo>

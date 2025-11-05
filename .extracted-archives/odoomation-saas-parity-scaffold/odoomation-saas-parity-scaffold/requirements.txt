@@ -1,0 +1,4 @@
+psycopg2-binary==2.9.9
+pytest==8.3.3
+flake8==7.1.1
+pylint==3.3.1

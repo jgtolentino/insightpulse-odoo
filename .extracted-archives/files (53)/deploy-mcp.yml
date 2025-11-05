@@ -1,0 +1,168 @@
+name: Deploy MCP Coordinator to App Platform
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'services/mcp-coordinator/**'
+      - '.github/workflows/deploy-mcp.yml'
+  workflow_dispatch:
+
+env:
+  APP_NAME: mcp-coordinator
+  APP_ID: ${{ secrets.DO_APP_MCP_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      url: https://mcp.insightpulseai.net
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Update App Platform spec
+        run: |
+          cat > app-spec.yaml <<EOF
+          name: ${{ env.APP_NAME }}
+          region: sgp
+          domains:
+            - domain: mcp.insightpulseai.net
+              type: PRIMARY
+          services:
+            - name: mcp-hub
+              github:
+                repo: jgtolentino/insightpulse-odoo
+                branch: ${{ github.ref_name }}
+                deploy_on_push: true
+              source_dir: /services/mcp-coordinator
+              dockerfile_path: /services/mcp-coordinator/Dockerfile
+              http_port: 8000
+              instance_count: 1
+              instance_size_slug: professional-xs
+              routes:
+                - path: /
+              health_check:
+                http_path: /health
+                initial_delay_seconds: 30
+                period_seconds: 10
+              envs:
+                - key: SUPABASE_URL
+                  value: https://spdtwktxdalcfigzeqrz.supabase.co
+                - key: SUPABASE_KEY
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: ${{ secrets.SUPABASE_ANON_KEY }}
+                - key: ODOO_URL
+                  value: https://erp.insightpulseai.net
+                - key: ODOO_DB
+                  value: odoo
+                - key: ODOO_USERNAME
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: ${{ secrets.ODOO_ADMIN_USER }}
+                - key: ODOO_PASSWORD
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: ${{ secrets.ODOO_ADMIN_PASSWORD }}
+                - key: SUPERSET_URL
+                  value: https://superset.insightpulseai.net
+                - key: NOTION_TOKEN
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: ${{ secrets.NOTION_INTEGRATION_TOKEN }}
+                - key: ENVIRONMENT
+                  value: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+          EOF
+
+      - name: Deploy to App Platform
+        run: |
+          if [ -z "${{ env.APP_ID }}" ]; then
+            # Create new app
+            doctl apps create --spec app-spec.yaml --wait
+          else
+            # Update existing app
+            doctl apps update ${{ env.APP_ID }} --spec app-spec.yaml --wait
+          fi
+
+      - name: Get deployment info
+        run: |
+          doctl apps list-deployments ${{ env.APP_ID }} --format ID,Cause,Progress --no-header | head -1
+
+      - name: Wait for deployment
+        run: |
+          DEPLOYMENT_ID=$(doctl apps list-deployments ${{ env.APP_ID }} --format ID --no-header | head -1)
+          
+          for i in {1..60}; do
+            STATUS=$(doctl apps get-deployment ${{ env.APP_ID }} $DEPLOYMENT_ID --format Phase --no-header)
+            echo "Deployment status: $STATUS"
+            
+            if [ "$STATUS" = "ACTIVE" ]; then
+              echo "Deployment successful!"
+              exit 0
+            elif [ "$STATUS" = "ERROR" ]; then
+              echo "Deployment failed!"
+              doctl apps get-deployment ${{ env.APP_ID }} $DEPLOYMENT_ID
+              exit 1
+            fi
+            
+            sleep 10
+          done
+          
+          echo "Deployment timeout!"
+          exit 1
+
+      - name: Run integration tests
+        run: |
+          # Wait for service to be fully ready
+          sleep 30
+          
+          # Test health endpoint
+          curl -f https://mcp.insightpulseai.net/health
+          
+          # Test OpenAPI docs
+          curl -f https://mcp.insightpulseai.net/docs
+          
+          # Test skill invocation (superset automation)
+          curl -X POST https://mcp.insightpulseai.net/invoke \
+            -H "Content-Type: application/json" \
+            -d '{
+              "skill": "superset_automation",
+              "action": "list_dashboards",
+              "params": {}
+            }' | jq -e '.status == "success"'
+
+      - name: Log to Supabase
+        if: always()
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/deployment_logs \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "service": "mcp-coordinator",
+              "environment": "${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}",
+              "status": "${{ job.status }}",
+              "commit_sha": "${{ github.sha }}",
+              "commit_message": "${{ github.event.head_commit.message }}",
+              "deployed_by": "${{ github.actor }}",
+              "deployed_at": "${{ github.event.head_commit.timestamp }}"
+            }'
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            MCP Coordinator deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+            Result: ${{ job.status }}
+            Commit: ${{ github.event.head_commit.message }}
+            URL: https://mcp.insightpulseai.net
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

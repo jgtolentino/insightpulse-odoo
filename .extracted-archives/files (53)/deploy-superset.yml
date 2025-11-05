@@ -1,0 +1,190 @@
+name: Deploy Superset to App Platform
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'services/superset/**'
+      - '.github/workflows/deploy-superset.yml'
+  workflow_dispatch:
+
+env:
+  APP_NAME: superset
+  APP_ID: ${{ secrets.DO_APP_SUPERSET_ID }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      url: https://superset.insightpulseai.net
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Generate Superset secret key
+        id: secret_key
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            # Use existing production key
+            echo "secret_key=${{ secrets.SUPERSET_SECRET_KEY_PROD }}" >> $GITHUB_OUTPUT
+          else
+            # Generate new key for staging
+            echo "secret_key=$(openssl rand -hex 42)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update App Platform spec
+        run: |
+          cat > app-spec.yaml <<EOF
+          name: ${{ env.APP_NAME }}
+          region: sgp
+          domains:
+            - domain: superset.insightpulseai.net
+              type: PRIMARY
+          services:
+            - name: superset-web
+              github:
+                repo: jgtolentino/insightpulse-odoo
+                branch: ${{ github.ref_name }}
+                deploy_on_push: true
+              source_dir: /services/superset
+              dockerfile_path: /services/superset/Dockerfile
+              http_port: 8088
+              instance_count: 1
+              instance_size_slug: professional-xs
+              routes:
+                - path: /
+              health_check:
+                http_path: /health
+                initial_delay_seconds: 60
+                period_seconds: 30
+              envs:
+                - key: SUPERSET_SECRET_KEY
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: ${{ steps.secret_key.outputs.secret_key }}
+                - key: DATABASE_URL
+                  scope: RUN_TIME
+                  type: SECRET
+                  value: postgresql://postgres:${{ secrets.SUPABASE_DB_PASSWORD }}@db.spdtwktxdalcfigzeqrz.supabase.co:5432/postgres
+                - key: REDIS_URL
+                  value: redis://superset-redis:6379/0
+                - key: SUPERSET_LOAD_EXAMPLES
+                  value: "no"
+                - key: SUPERSET_PORT
+                  value: "8088"
+                - key: PYTHONUNBUFFERED
+                  value: "1"
+                - key: ENVIRONMENT
+                  value: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+              run_command: |
+                superset db upgrade &&
+                superset fab create-admin \
+                  --username admin \
+                  --firstname Admin \
+                  --lastname User \
+                  --email admin@insightpulseai.net \
+                  --password ${{ secrets.SUPERSET_ADMIN_PASSWORD }} || true &&
+                superset init &&
+                superset run -p 8088 --with-threads --reload
+            - name: superset-redis
+              image:
+                registry_type: DOCR
+                registry: insightpulse
+                repository: redis
+                tag: 7-alpine
+              instance_count: 1
+              instance_size_slug: basic-xxs
+          EOF
+
+      - name: Deploy to App Platform
+        run: |
+          if [ -z "${{ env.APP_ID }}" ]; then
+            doctl apps create --spec app-spec.yaml --wait
+          else
+            doctl apps update ${{ env.APP_ID }} --spec app-spec.yaml --wait
+          fi
+
+      - name: Wait for deployment
+        run: |
+          DEPLOYMENT_ID=$(doctl apps list-deployments ${{ env.APP_ID }} --format ID --no-header | head -1)
+          
+          for i in {1..90}; do
+            STATUS=$(doctl apps get-deployment ${{ env.APP_ID }} $DEPLOYMENT_ID --format Phase --no-header)
+            echo "Deployment status: $STATUS"
+            
+            if [ "$STATUS" = "ACTIVE" ]; then
+              echo "Deployment successful!"
+              exit 0
+            elif [ "$STATUS" = "ERROR" ]; then
+              echo "Deployment failed!"
+              doctl apps get-deployment ${{ env.APP_ID }} $DEPLOYMENT_ID
+              exit 1
+            fi
+            
+            sleep 10
+          done
+          
+          echo "Deployment timeout!"
+          exit 1
+
+      - name: Run smoke tests
+        run: |
+          sleep 60  # Wait for Superset init
+          
+          # Test health endpoint
+          curl -f https://superset.insightpulseai.net/health
+          
+          # Test login page
+          curl -f https://superset.insightpulseai.net/login/
+          
+          # Test API endpoint
+          curl -f https://superset.insightpulseai.net/api/v1/security/csrf_token/
+
+      - name: Import Finance SSC dashboards
+        if: github.ref == 'refs/heads/main'
+        run: |
+          # Use MCP to import pre-built dashboards
+          curl -X POST https://mcp.insightpulseai.net/invoke \
+            -H "Content-Type: application/json" \
+            -d '{
+              "skill": "superset_automation",
+              "action": "import_dashboards",
+              "params": {
+                "source": "services/superset/dashboards/finance_ssc.json"
+              }
+            }'
+
+      - name: Log to Supabase
+        if: always()
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/deployment_logs \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "service": "superset",
+              "environment": "${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}",
+              "status": "${{ job.status }}",
+              "commit_sha": "${{ github.sha }}",
+              "commit_message": "${{ github.event.head_commit.message }}",
+              "deployed_by": "${{ github.actor }}",
+              "deployed_at": "${{ github.event.head_commit.timestamp }}"
+            }'
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Superset deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+            Result: ${{ job.status }}
+            Commit: ${{ github.event.head_commit.message }}
+            URL: https://superset.insightpulseai.net
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

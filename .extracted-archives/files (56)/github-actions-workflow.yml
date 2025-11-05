@@ -1,0 +1,319 @@
+name: 🚀 Automated Backlog Sync
+
+on:
+  schedule:
+    # Run daily at 2 AM UTC (10 AM PHT for Jake's timezone)
+    - cron: '0 2 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      force_sync:
+        description: 'Force sync to Notion'
+        required: false
+        default: 'false'
+  
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**/addons/**/__manifest__.py'
+      - '**/odoo_addons/**/__manifest__.py'
+      - 'automation/**'
+
+jobs:
+  discover-features:
+    name: 📦 Discover Features
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for diff analysis
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: 📦 Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f automation/requirements.txt ]; then
+            pip install -r automation/requirements.txt
+          fi
+      
+      - name: 🔍 Run Feature Discovery
+        id: discovery
+        run: |
+          cd automation
+          python3 backlog_automation.py --auto
+          
+          # Export summary for use in next steps
+          echo "FEATURE_COUNT=$(jq '.total_features' backlog_output/backlog_latest.json)" >> $GITHUB_OUTPUT
+          echo "STORY_POINTS=$(jq '.features | map(.story_points) | add' backlog_output/backlog_latest.json)" >> $GITHUB_OUTPUT
+      
+      - name: 📊 Generate Summary
+        run: |
+          echo "## 📊 Backlog Discovery Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Features:** ${{ steps.discovery.outputs.FEATURE_COUNT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Story Points:** ${{ steps.discovery.outputs.STORY_POINTS }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📁 Generated Files" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -lh automation/backlog_output/ >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+      
+      - name: 📤 Upload Backlog Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backlog-${{ github.sha }}
+          path: |
+            automation/backlog_output/backlog_latest.json
+            automation/backlog_output/summary_*.md
+            automation/backlog_output/diff_*.md
+            automation/backlog_output/notion_commands_*.txt
+          retention-days: 30
+      
+      - name: 📝 Commit Backlog to Repo
+        if: github.event_name != 'pull_request'
+        run: |
+          cd automation
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add backlog_output/backlog_latest.json
+          git add backlog_output/summary_*.md
+          git add backlog_output/diff_*.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "📦 Update feature backlog [skip ci]"
+          git push
+  
+  notify-notion:
+    name: 📋 Notion Sync (Manual)
+    needs: discover-features
+    runs-on: ubuntu-latest
+    if: github.event.inputs.force_sync == 'true' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: 📥 Download Backlog
+        uses: actions/download-artifact@v4
+        with:
+          name: backlog-${{ github.sha }}
+      
+      - name: 📋 Notion Sync Instructions
+        run: |
+          echo "## 📋 Notion Sync Required" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "To sync the backlog to Notion:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the 'notion_commands' artifact" >> $GITHUB_STEP_SUMMARY
+          echo "2. Open Claude chat with Notion MCP enabled" >> $GITHUB_STEP_SUMMARY
+          echo "3. Execute the commands in 'notion_commands_*.txt'" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Or setup automated sync using GitHub Actions secrets:" >> $GITHUB_STEP_SUMMARY
+          echo "- NOTION_API_KEY" >> $GITHUB_STEP_SUMMARY
+          echo "- NOTION_DATABASE_ID" >> $GITHUB_STEP_SUMMARY
+  
+  analytics:
+    name: 📈 Generate Analytics
+    needs: discover-features
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+      
+      - name: 📥 Download Backlog
+        uses: actions/download-artifact@v4
+        with:
+          name: backlog-${{ github.sha }}
+          path: automation/backlog_output
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: 📊 Generate Analytics Report
+        run: |
+          cd automation
+          python3 << 'EOF'
+          import json
+          from collections import defaultdict
+          
+          with open('backlog_output/backlog_latest.json', 'r') as f:
+              data = json.load(f)
+          
+          features = data['features']
+          
+          # Analytics
+          by_area = defaultdict(int)
+          by_epic = defaultdict(int)
+          by_status = defaultdict(int)
+          by_priority = defaultdict(int)
+          
+          for f in features:
+              by_area[f['business_area']] += 1
+              by_epic[f['epic']] += 1
+              by_status[f['deployment_status']] += 1
+              by_priority[f['priority']] += 1
+          
+          print("## 📊 Backlog Analytics")
+          print()
+          print("### By Business Area")
+          for area, count in sorted(by_area.items(), key=lambda x: x[1], reverse=True):
+              print(f"- {area}: {count}")
+          print()
+          print("### By Epic")
+          for epic, count in sorted(by_epic.items(), key=lambda x: x[1], reverse=True):
+              print(f"- {epic}: {count}")
+          print()
+          print("### By Status")
+          for status, count in sorted(by_status.items(), key=lambda x: x[1], reverse=True):
+              print(f"- {status}: {count}")
+          print()
+          print("### By Priority")
+          for priority, count in sorted(by_priority.items()):
+              print(f"- {priority}: {count}")
+          EOF
+      
+      - name: 📈 Create Analytics Dashboard
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const data = JSON.parse(fs.readFileSync('automation/backlog_output/backlog_latest.json', 'utf8'));
+            
+            // Create issue with analytics
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📊 Backlog Analytics - ${new Date().toISOString().split('T')[0]}`,
+              body: `
+              ## Backlog Summary
+              
+              - **Total Features:** ${data.total_features}
+              - **Discovery Time:** ${data.discovered_at}
+              - **Repository:** ${data.repository}
+              
+              View detailed reports in the [latest workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              `,
+              labels: ['analytics', 'automated']
+            });
+
+  supabase-sync:
+    name: 🗄️ Sync to Supabase
+    needs: discover-features
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    
+    steps:
+      - name: 📥 Download Backlog
+        uses: actions/download-artifact@v4
+        with:
+          name: backlog-${{ github.sha }}
+          path: automation/backlog_output
+      
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: 📦 Install Supabase Client
+        run: pip install supabase
+      
+      - name: 🗄️ Sync to Supabase
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        run: |
+          python3 << 'EOF'
+          import json
+          import os
+          from supabase import create_client
+          
+          # Load backlog
+          with open('automation/backlog_output/backlog_latest.json', 'r') as f:
+              data = json.load(f)
+          
+          # Connect to Supabase
+          supabase = create_client(
+              os.environ['SUPABASE_URL'],
+              os.environ['SUPABASE_KEY']
+          )
+          
+          # Upsert features (on conflict: external_id)
+          features = data['features']
+          
+          # Batch upsert
+          batch_size = 100
+          for i in range(0, len(features), batch_size):
+              batch = features[i:i+batch_size]
+              supabase.table('feature_backlog').upsert(
+                  batch,
+                  on_conflict='external_id'
+              ).execute()
+              print(f"Synced batch {i//batch_size + 1}: {len(batch)} features")
+          
+          print(f"✅ Synced {len(features)} features to Supabase")
+          EOF
+        continue-on-error: true
+
+  notify:
+    name: 📬 Send Notifications
+    needs: [discover-features, analytics]
+    runs-on: ubuntu-latest
+    if: always()
+    
+    steps:
+      - name: 📬 Slack Notification
+        if: secrets.SLACK_WEBHOOK_URL != ''
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Backlog Discovery Complete",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Feature Backlog Discovery* completed for `${{ github.repository }}`"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Status:*\n${{ job.status }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Run:*\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View>"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      
+      - name: 📧 Email Summary
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: '❌ Backlog Discovery Failed - ${{ github.repository }}'
+          body: |
+            Automated feature discovery failed.
+            
+            Repository: ${{ github.repository }}
+            Workflow: ${{ github.workflow }}
+            Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          to: jake.tolentino@example.com
+          from: GitHub Actions

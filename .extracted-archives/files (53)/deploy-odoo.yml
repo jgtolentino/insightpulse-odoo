@@ -1,0 +1,126 @@
+name: Deploy Odoo ERP to DigitalOcean
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'services/odoo/**'
+      - '.github/workflows/deploy-odoo.yml'
+  workflow_dispatch:
+
+env:
+  REGISTRY: registry.digitalocean.com/insightpulse
+  IMAGE_NAME: odoo-erp
+  DROPLET_IP: 165.227.10.178
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./services/odoo
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      url: https://erp.insightpulseai.net
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+            
+            # Pull latest image
+            docker login -u ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} -p ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }} registry.digitalocean.com
+            docker pull ${{ needs.build.outputs.image_tag }}
+
+            # Backup database
+            docker exec odoo-postgres pg_dump -U odoo odoo > /backup/odoo-$(date +%Y%m%d-%H%M%S).sql
+
+            # Stop old container
+            docker stop odoo || true
+            docker rm odoo || true
+
+            # Start new container
+            docker run -d \
+              --name odoo \
+              --restart unless-stopped \
+              -p 8069:8069 \
+              -v odoo-web-data:/var/lib/odoo \
+              -v /opt/odoo/addons:/mnt/extra-addons \
+              -e POSTGRES_USER=odoo \
+              -e POSTGRES_PASSWORD=${{ secrets.ODOO_DB_PASSWORD }} \
+              -e POSTGRES_DB=odoo \
+              --link odoo-postgres:db \
+              ${{ needs.build.outputs.image_tag }}
+
+            # Health check
+            sleep 10
+            curl -f http://localhost:8069/web/health || exit 1
+
+      - name: Run smoke tests
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            # Test database connection
+            docker exec odoo-postgres psql -U odoo -d odoo -c "SELECT 1;"
+            
+            # Test Odoo web interface
+            curl -f https://erp.insightpulseai.net/web/database/selector
+            
+            # Test Finance SSC module loaded
+            docker exec odoo odoo shell -c "env['ir.module.module'].search([('name','=','finance_ssc'),('state','=','installed')])" | grep -q "finance_ssc"
+
+      - name: Notify Slack
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Odoo ERP deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+            Result: ${{ job.status }}
+            Commit: ${{ github.event.head_commit.message }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}

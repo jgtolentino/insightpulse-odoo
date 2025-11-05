@@ -1,0 +1,248 @@
+name: 24/7 Health Monitor
+
+on:
+  schedule:
+    # Every 5 minutes
+    - cron: '*/5 * * * *'
+  
+  # Manual trigger
+  workflow_dispatch:
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Set check timestamp
+        id: timestamp
+        run: |
+          echo "timestamp=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - name: Check Odoo ERP
+        id: odoo
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 https://erp.insightpulseai.net/web/health)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "response_time=$(echo "$BODY" | jq -r '.response_time // "N/A"')" >> $GITHUB_OUTPUT
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "error=HTTP $HTTP_CODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check MCP Coordinator
+        id: mcp
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 https://mcp.insightpulseai.net/health)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "skills_count=$(echo "$BODY" | jq '.skills_count // 0')" >> $GITHUB_OUTPUT
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "error=HTTP $HTTP_CODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Superset
+        id: superset
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 https://superset.insightpulseai.net/health)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "error=HTTP $HTTP_CODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check OCR Service
+        id: ocr
+        continue-on-error: true
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" --max-time 30 https://ocr.insightpulseai.net/health)
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "error=HTTP $HTTP_CODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Landing Page
+        id: landing
+        continue-on-error: true
+        run: |
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 30 https://insightpulseai.net)
+          
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "status=healthy" >> $GITHUB_OUTPUT
+          else
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            echo "error=HTTP $HTTP_CODE" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Calculate overall health
+        id: overall
+        run: |
+          ODOO_STATUS="${{ steps.odoo.outputs.status }}"
+          MCP_STATUS="${{ steps.mcp.outputs.status }}"
+          SUPERSET_STATUS="${{ steps.superset.outputs.status }}"
+          OCR_STATUS="${{ steps.ocr.outputs.status }}"
+          LANDING_STATUS="${{ steps.landing.outputs.status }}"
+          
+          # Count healthy services
+          HEALTHY=0
+          TOTAL=5
+          
+          [ "$ODOO_STATUS" = "healthy" ] && ((HEALTHY++))
+          [ "$MCP_STATUS" = "healthy" ] && ((HEALTHY++))
+          [ "$SUPERSET_STATUS" = "healthy" ] && ((HEALTHY++))
+          [ "$OCR_STATUS" = "healthy" ] && ((HEALTHY++))
+          [ "$LANDING_STATUS" = "healthy" ] && ((HEALTHY++))
+          
+          HEALTH_PERCENTAGE=$((HEALTHY * 100 / TOTAL))
+          
+          echo "healthy_count=$HEALTHY" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL" >> $GITHUB_OUTPUT
+          echo "health_percentage=$HEALTH_PERCENTAGE" >> $GITHUB_OUTPUT
+          
+          if [ $HEALTHY -eq $TOTAL ]; then
+            echo "overall_status=healthy" >> $GITHUB_OUTPUT
+            echo "severity=info" >> $GITHUB_OUTPUT
+          elif [ $HEALTHY -ge 3 ]; then
+            echo "overall_status=degraded" >> $GITHUB_OUTPUT
+            echo "severity=warning" >> $GITHUB_OUTPUT
+          else
+            echo "overall_status=critical" >> $GITHUB_OUTPUT
+            echo "severity=error" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Log health check to Supabase
+        if: always()
+        run: |
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/health_checks \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "timestamp": "${{ steps.timestamp.outputs.timestamp }}",
+              "odoo_status": "${{ steps.odoo.outputs.status }}",
+              "odoo_response_time": "${{ steps.odoo.outputs.response_time }}",
+              "mcp_status": "${{ steps.mcp.outputs.status }}",
+              "mcp_skills_count": ${{ steps.mcp.outputs.skills_count || 0 }},
+              "superset_status": "${{ steps.superset.outputs.status }}",
+              "ocr_status": "${{ steps.ocr.outputs.status }}",
+              "landing_status": "${{ steps.landing.outputs.status }}",
+              "overall_status": "${{ steps.overall.outputs.overall_status }}",
+              "health_percentage": ${{ steps.overall.outputs.health_percentage }}
+            }'
+
+      - name: Alert on degraded health
+        if: steps.overall.outputs.severity == 'warning' || steps.overall.outputs.severity == 'error'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "${{ steps.overall.outputs.severity == 'error' && 'danger' || 'warning' }}",
+                "title": "${{ steps.overall.outputs.severity == 'error' && '🚨 CRITICAL: System Health Degraded' || '⚠️ WARNING: Service Issues Detected' }}",
+                "fields": [
+                  {
+                    "title": "Overall Health",
+                    "value": "${{ steps.overall.outputs.health_percentage }}% (${{ steps.overall.outputs.healthy_count }}/${{ steps.overall.outputs.total_count }} services)",
+                    "short": true
+                  },
+                  {
+                    "title": "Timestamp",
+                    "value": "${{ steps.timestamp.outputs.timestamp }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Odoo ERP",
+                    "value": "${{ steps.odoo.outputs.status == 'healthy' && '✅ Healthy' || '❌ Unhealthy' }}",
+                    "short": true
+                  },
+                  {
+                    "title": "MCP Coordinator",
+                    "value": "${{ steps.mcp.outputs.status == 'healthy' && '✅ Healthy' || '❌ Unhealthy' }}",
+                    "short": true
+                  },
+                  {
+                    "title": "Superset",
+                    "value": "${{ steps.superset.outputs.status == 'healthy' && '✅ Healthy' || '❌ Unhealthy' }}",
+                    "short": true
+                  },
+                  {
+                    "title": "OCR Service",
+                    "value": "${{ steps.ocr.outputs.status == 'healthy' && '✅ Healthy' || '❌ Unhealthy' }}",
+                    "short": true
+                  }
+                ],
+                "footer": "InsightPulse AI Health Monitor",
+                "footer_icon": "https://insightpulseai.net/favicon.ico"
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Create incident if critical
+        if: steps.overall.outputs.severity == 'error'
+        run: |
+          # Log critical incident to Supabase
+          curl -X POST https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/incidents \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "timestamp": "${{ steps.timestamp.outputs.timestamp }}",
+              "severity": "critical",
+              "title": "Multiple services unhealthy",
+              "description": "Health check failed for ${{ steps.overall.outputs.total_count - steps.overall.outputs.healthy_count }} out of ${{ steps.overall.outputs.total_count }} services",
+              "affected_services": [
+                "${{ steps.odoo.outputs.status != 'healthy' && 'odoo' || '' }}",
+                "${{ steps.mcp.outputs.status != 'healthy' && 'mcp' || '' }}",
+                "${{ steps.superset.outputs.status != 'healthy' && 'superset' || '' }}",
+                "${{ steps.ocr.outputs.status != 'healthy' && 'ocr' || '' }}",
+                "${{ steps.landing.outputs.status != 'healthy' && 'landing' || '' }}"
+              ],
+              "status": "open"
+            }'
+
+  uptime-report:
+    runs-on: ubuntu-latest
+    needs: health-check
+    if: always()
+    
+    steps:
+      - name: Generate uptime report
+        run: |
+          # Query last 24 hours of health checks from Supabase
+          REPORT=$(curl -s "https://spdtwktxdalcfigzeqrz.supabase.co/rest/v1/health_checks?select=*&timestamp=gte.$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)&order=timestamp.desc" \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
+          
+          echo "24-Hour Health Report:"
+          echo "$REPORT" | jq 'group_by(.overall_status) | map({status: .[0].overall_status, count: length})'
+
+      - name: Daily health summary
+        if: github.event.schedule == '0 0 * * *'
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "attachments": [{
+                "color": "good",
+                "title": "📊 Daily Health Summary",
+                "text": "InsightPulse AI - 24 Hour Health Report",
+                "footer": "View detailed metrics in Supabase"
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
