@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Menu Items -->
+    <menuitem id="menu_ip_expense_mvp_root"
+              name="Expenses"
+              sequence="50"/>
+
+    <menuitem id="menu_ip_ocr_receipts"
+              name="OCR Receipts"
+              parent="menu_ip_expense_mvp_root"
+              action="action_ip_ocr_receipt"
+              sequence="10"/>
+</odoo>
