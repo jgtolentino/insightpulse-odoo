@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-06T10:28:20.036268+00:00Z
+Generated: 2025-11-06T12:29:47.675049+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -10,6 +10,7 @@ Generated: 2025-11-06T10:28:20.036268+00:00Z
 | ip_expense_mvp | Custom | 0.1.0 | unknown | Mobile receipt upload → OCR → admin review | hr_expense,web | addons/ip_expense_mvp |
 | ip_expense_mvp | Custom | 0.1.0 | unknown | Mobile receipt capture + OCR, cash advance/liquidation scaffolds, admin dashboard | base,web,hr,hr_expense | custom_addons/ip_expense_mvp |
 | ipai_agent | Custom | 1.0.0 | unknown | AI-powered chatbot for Odoo Discuss with automation capabilities | base,mail,hr_expense,account | addons/ipai_agent |
+| ipai_agent_hybrid | Custom | 19.0.1.0.0 | unknown | Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration | base,web,mail,project,calendar | addons/ipai_agent_hybrid |
 | ipai_approvals | Custom | 19.0.1.0.0 | unknown | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) | ipai_core,purchase,hr_expense,account,queue_job | addons/custom/ipai_approvals |
 | ipai_ariba_cxml | Custom | 19.0.1.0.0 | unknown | SAP Ariba cXML (PO/Invoice) → purchase/account.move | base,purchase,account | odoo_addons/ipai_ariba_cxml |
 | ipai_audit_discovery | Custom | 19.0.1.0.0 | unknown | Immutable audit trail, legal hold, eDiscovery export | ipai_chat_core,auditlog | odoo_addons/ipai_audit_discovery |
