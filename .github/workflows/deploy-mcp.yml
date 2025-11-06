@@ -154,14 +154,15 @@ jobs:
               "deployed_at": "${{ github.event.head_commit.timestamp }}"
             }'
 
-      - name: Notify Slack
-        if: always() && secrets.SLACK_WEBHOOK != ''
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: |
-            MCP Coordinator deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
-            Result: ${{ job.status }}
-            Commit: ${{ github.event.head_commit.message }}
-            URL: https://mcp.insightpulseai.net
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      # Slack notification disabled - add SLACK_WEBHOOK secret to enable
+      # - name: Notify Slack
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     text: |
+      #       MCP Coordinator deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      #       Result: ${{ job.status }}
+      #       Commit: ${{ github.event.head_commit.message }}
+      #       URL: https://mcp.insightpulseai.net
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}
