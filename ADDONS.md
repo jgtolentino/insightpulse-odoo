@@ -3,6 +3,7 @@
 | Module | Version | Category | Summary | Maintainers |
 |--------|---------|----------|---------|-------------|
 | `apps_admin_enhancements` | 19.0.251026.1 | Tools | Enhanced Apps management with source tracking and accessibility |  |
+| `finance_ssc_closing` | 19.0.1.0.0 | Accounting/Finance | Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center |  |
 | `github_integration` | 1.0.0 | Operations | GitHub webhook and OAuth integration via pulser-hub app | jgtolentino |
 | `insightpulse_app_sources` | 19.0.1.0.0 | Tools | Display addon sources (OCA, Custom, Community) in Apps list |  |
 | `ipai_agent` | 1.0.0 | Productivity | AI-powered chatbot for Odoo Discuss with automation capabilities |  |
