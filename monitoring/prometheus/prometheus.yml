@@ -1,0 +1,147 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'insightpulse-ai'
+    environment: 'production'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - 'alertmanager:9093'
+
+# Load alert rules
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'prometheus'
+
+  # Alertmanager
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+        labels:
+          service: 'alertmanager'
+
+  # Node Exporter (system metrics)
+  - job_name: 'node_exporter'
+    static_configs:
+      - targets: ['node_exporter:9100']
+        labels:
+          service: 'node_exporter'
+          instance: 'local-host'
+
+  # cAdvisor (container metrics)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+        labels:
+          service: 'cadvisor'
+
+  # PostgreSQL (Supabase)
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres_exporter:9187']
+        labels:
+          service: 'postgresql'
+          database: 'supabase'
+
+  # Odoo ERP Application
+  - job_name: 'odoo'
+    metrics_path: '/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets: ['erp.insightpulseai.net']
+        labels:
+          service: 'odoo'
+          environment: 'production'
+
+  # Superset Analytics
+  - job_name: 'superset'
+    metrics_path: '/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets: ['superset.insightpulseai.net']
+        labels:
+          service: 'superset'
+          environment: 'production'
+
+  # MCP Server
+  - job_name: 'mcp_server'
+    metrics_path: '/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets: ['mcp.insightpulseai.net']
+        labels:
+          service: 'mcp_server'
+          environment: 'production'
+
+  # Blackbox Exporter - HTTP Endpoint Monitoring
+  - job_name: 'blackbox_http'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://erp.insightpulseai.net/web/health
+        - https://superset.insightpulseai.net/health
+        - https://mcp.insightpulseai.net/health
+        - https://ocr.insightpulseai.net/health
+        - https://llm.insightpulseai.net/health
+        labels:
+          check_type: 'http_health'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  # Blackbox Exporter - SSL Certificate Monitoring
+  - job_name: 'blackbox_ssl'
+    metrics_path: /probe
+    params:
+      module: [http_2xx]
+    static_configs:
+      - targets:
+        - https://erp.insightpulseai.net
+        - https://superset.insightpulseai.net
+        - https://mcp.insightpulseai.net
+        - https://insightpulseai.net
+        labels:
+          check_type: 'ssl_expiry'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: blackbox_exporter:9115
+
+  # OCR/LLM Droplet (if node_exporter installed)
+  - job_name: 'ocr_llm_droplet'
+    static_configs:
+      - targets: ['ocr.insightpulseai.net:9100']
+        labels:
+          service: 'ocr_llm'
+          droplet: 'ocr'
+
+  # GitHub Actions CI/CD Metrics (via webhook)
+  - job_name: 'github_actions'
+    honor_timestamps: true
+    metrics_path: /metrics
+    scheme: http
+    static_configs:
+      - targets: ['localhost:9091']
+        labels:
+          service: 'github_actions'

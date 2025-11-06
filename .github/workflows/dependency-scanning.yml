@@ -1,0 +1,308 @@
+name: Dependency Scanning
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 1'  # Weekly on Monday midnight UTC
+
+permissions:
+  contents: read
+  security-events: write
+  issues: write
+
+jobs:
+  python-dependencies:
+    name: Python Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install safety pip-audit
+
+      - name: Run Safety check
+        id: safety
+        run: |
+          safety check --json --output safety-report.json || true
+          safety check --output safety-report.txt || true
+        continue-on-error: true
+
+      - name: Run pip-audit
+        id: pip_audit
+        run: |
+          pip-audit --format json --output pip-audit-report.json || true
+          pip-audit --format markdown --output pip-audit-report.md || true
+        continue-on-error: true
+
+      - name: Upload Python dependency reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: python-dependency-reports
+          path: |
+            safety-report.*
+            pip-audit-report.*
+
+  npm-dependencies:
+    name: NPM Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+        continue-on-error: true
+
+      - name: Run npm audit
+        id: npm_audit
+        run: |
+          npm audit --json > npm-audit-report.json || true
+          npm audit > npm-audit-report.txt || true
+        continue-on-error: true
+
+      - name: Upload NPM dependency reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-dependency-reports
+          path: npm-audit-report.*
+
+  snyk-scan:
+    name: Snyk Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/python@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --sarif-file-output=snyk-results.sarif
+
+      - name: Upload result to GitHub Code Scanning
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: snyk-results.sarif
+
+  trivy-scan:
+    name: Trivy Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Run Trivy for JSON output
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'json'
+          output: 'trivy-results.json'
+
+      - name: Upload Trivy JSON results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: trivy-results
+          path: trivy-results.json
+
+  docker-image-scan:
+    name: Docker Image Vulnerability Scan
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        image:
+          - 'Dockerfile'
+          - 'docker/superset/Dockerfile'
+          - 'services/mcp-server/Dockerfile'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          IMAGE_NAME=$(echo ${{ matrix.image }} | sed 's/\//-/g' | sed 's/Dockerfile/image/g')
+          docker build -f ${{ matrix.image }} -t ${IMAGE_NAME}:test . || true
+
+      - name: Run Trivy on Docker image
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          image-ref: '${IMAGE_NAME}:test'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+        continue-on-error: true
+
+      - name: Upload Docker scan results
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+
+  license-check:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install pip-licenses
+        run: pip install pip-licenses
+
+      - name: Check Python licenses
+        run: |
+          pip-licenses --format=json --output-file=python-licenses.json
+          pip-licenses --format=markdown --output-file=python-licenses.md
+
+      - name: Upload license reports
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: license-reports
+          path: |
+            python-licenses.json
+            python-licenses.md
+
+  dependency-report:
+    name: Generate Dependency Report
+    needs: [python-dependencies, npm-dependencies, snyk-scan, trivy-scan, docker-image-scan, license-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate dependency summary
+        run: |
+          cat > dependency-summary.md <<'EOF'
+          # Dependency Scanning Summary
+
+          **Date**: $(date)
+          **Branch**: ${{ github.ref_name }}
+          **Commit**: ${{ github.sha }}
+
+          ## Scans Performed
+
+          ### 1. Python Dependencies
+          - Safety check (known vulnerabilities)
+          - pip-audit (dependency audit)
+          - See `python-dependency-reports` artifact
+
+          ### 2. NPM Dependencies
+          - npm audit
+          - See `npm-dependency-reports` artifact
+
+          ### 3. Snyk Vulnerability Scan
+          - Multi-language vulnerability detection
+          - Results uploaded to GitHub Security
+
+          ### 4. Trivy Filesystem Scan
+          - Comprehensive vulnerability scanning
+          - Results uploaded to GitHub Security
+          - See `trivy-results` artifact
+
+          ### 5. Docker Image Security
+          - Image vulnerability scanning
+          - Base image CVE detection
+          - Results uploaded to GitHub Security
+
+          ### 6. License Compliance
+          - License compatibility check
+          - See `license-reports` artifact
+
+          ## Action Items
+
+          1. Review all critical and high severity vulnerabilities
+          2. Update dependencies with security patches
+          3. Check for license compliance issues
+          4. Schedule dependency updates
+
+          ## Resources
+
+          - [GitHub Security](https://github.com/${{ github.repository }}/security)
+          - [Dependency Graph](https://github.com/${{ github.repository }}/network/dependencies)
+          - [Dependabot Alerts](https://github.com/${{ github.repository }}/security/dependabot)
+
+          ---
+          *Automated dependency scanning via GitHub Actions*
+          EOF
+
+          cat dependency-summary.md
+
+      - name: Upload dependency summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-summary
+          path: dependency-summary.md
+
+      - name: Create issue for critical vulnerabilities
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Critical Dependency Vulnerabilities Detected',
+              body: `Dependency scanning has detected critical vulnerabilities:
+
+              - **Branch**: ${{ github.ref_name }}
+              - **Commit**: ${{ github.sha }}
+              - **Date**: ${new Date().toISOString()}
+
+              **Action Required**
+
+              Please review the vulnerability reports and update affected dependencies.
+
+              ## Quick Links
+              - [Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+              - [Security Advisories](https://github.com/${context.repo.owner}/${context.repo.repo}/security/advisories)
+              - [Dependabot Alerts](https://github.com/${context.repo.owner}/${context.repo.repo}/security/dependabot)
+
+              ## Recommended Actions
+              1. Review all critical and high severity alerts
+              2. Update vulnerable dependencies
+              3. Test thoroughly after updates
+              4. Monitor for new vulnerabilities`,
+              labels: ['security', 'dependencies', 'critical']
+            });

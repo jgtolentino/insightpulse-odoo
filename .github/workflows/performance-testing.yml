@@ -1,0 +1,355 @@
+name: Performance & Load Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL for load testing'
+        required: true
+        default: 'https://erp.insightpulseai.net'
+      duration:
+        description: 'Test duration in seconds'
+        required: true
+        default: '60'
+      virtual_users:
+        description: 'Number of virtual users'
+        required: true
+        default: '10'
+  schedule:
+    - cron: '0 2 * * 1'  # Weekly on Monday at 2 AM UTC
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  lighthouse-performance:
+    name: Lighthouse Performance Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Run Lighthouse
+        run: |
+          lhci autorun \
+            --collect.url=https://erp.insightpulseai.net \
+            --collect.url=https://superset.insightpulseai.net \
+            --collect.numberOfRuns=3 \
+            --upload.target=temporary-public-storage
+        continue-on-error: true
+
+      - name: Upload Lighthouse Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: lighthouse-results
+          path: .lighthouseci
+
+  k6-load-test:
+    name: K6 Load Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create K6 test script
+        run: |
+          mkdir -p ./load-tests
+          cat > ./load-tests/test.js <<'EOF'
+          import http from 'k6/http';
+          import { check, sleep } from 'k6';
+          import { Rate } from 'k6/metrics';
+
+          // Custom metrics
+          const errorRate = new Rate('errors');
+
+          export const options = {
+            stages: [
+              { duration: '1m', target: 10 },   // Ramp up
+              { duration: '3m', target: 10 },   // Stay at 10 users
+              { duration: '1m', target: 50 },   // Spike to 50 users
+              { duration: '3m', target: 50 },   // Stay at 50 users
+              { duration: '2m', target: 0 },    // Ramp down
+            ],
+            thresholds: {
+              http_req_duration: ['p(95)<2000'], // 95% of requests should be below 2s
+              http_req_failed: ['rate<0.01'],    // Error rate should be below 1%
+              errors: ['rate<0.1'],              // Custom error rate below 10%
+            },
+          };
+
+          const BASE_URL = __ENV.TARGET_URL || 'https://erp.insightpulseai.net';
+
+          export default function () {
+            // Test homepage
+            let res = http.get(`${BASE_URL}/web/health`);
+            check(res, {
+              'status is 200': (r) => r.status === 200,
+              'response time < 2000ms': (r) => r.timings.duration < 2000,
+            }) || errorRate.add(1);
+
+            sleep(1);
+
+            // Test login page
+            res = http.get(`${BASE_URL}/web/login`);
+            check(res, {
+              'login page loads': (r) => r.status === 200,
+            }) || errorRate.add(1);
+
+            sleep(2);
+          }
+          EOF
+
+      - name: Run K6 load test
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: ./load-tests/test.js
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+
+      - name: Upload K6 Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: k6-results
+          path: summary.json
+
+  artillery-load-test:
+    name: Artillery Load Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Artillery
+        run: npm install -g artillery@latest
+
+      - name: Create Artillery test config
+        run: |
+          mkdir -p ./load-tests
+          cat > ./load-tests/artillery-config.yml <<'EOF'
+          config:
+            target: "{{ $processEnvironment.TARGET_URL }}"
+            phases:
+              - duration: 60
+                arrivalRate: 5
+                name: "Warm up"
+              - duration: 120
+                arrivalRate: 10
+                name: "Sustained load"
+              - duration: 60
+                arrivalRate: 20
+                name: "Spike"
+            payload:
+              path: "./users.csv"
+              fields:
+                - "username"
+                - "password"
+            defaults:
+              headers:
+                User-Agent: "Artillery Load Test"
+
+          scenarios:
+            - name: "Health Check"
+              flow:
+                - get:
+                    url: "/web/health"
+                    expect:
+                      - statusCode: 200
+                      - contentType: json
+
+            - name: "Homepage"
+              flow:
+                - get:
+                    url: "/web"
+                    expect:
+                      - statusCode: 200
+
+            - name: "Login Flow"
+              flow:
+                - get:
+                    url: "/web/login"
+                - think: 2
+                - post:
+                    url: "/web/login"
+                    json:
+                      login: "{{ username }}"
+                      password: "{{ password }}"
+          EOF
+
+          # Create dummy users CSV
+          cat > ./load-tests/users.csv <<'EOF'
+          username,password
+          test1,password1
+          test2,password2
+          test3,password3
+          EOF
+
+      - name: Run Artillery test
+        run: |
+          artillery run \
+            --output ./load-tests/artillery-report.json \
+            ./load-tests/artillery-config.yml
+        env:
+          TARGET_URL: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+        continue-on-error: true
+
+      - name: Generate Artillery HTML report
+        if: always()
+        run: |
+          artillery report \
+            --output ./load-tests/artillery-report.html \
+            ./load-tests/artillery-report.json
+
+      - name: Upload Artillery Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: artillery-results
+          path: ./load-tests/artillery-report.html
+
+  database-performance:
+    name: Database Performance Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install psycopg2-binary
+
+      - name: Run database performance tests
+        run: |
+          python3 <<'EOF'
+          import psycopg2
+          import time
+          import statistics
+
+          # Database connection
+          conn_string = "postgresql://postgres.spdtwktxdalcfigzeqrz:${{ secrets.SUPABASE_DB_PASSWORD }}@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+
+          try:
+              conn = psycopg2.connect(conn_string)
+              cur = conn.cursor()
+
+              # Test 1: Simple query
+              times = []
+              for _ in range(10):
+                  start = time.time()
+                  cur.execute("SELECT 1;")
+                  cur.fetchone()
+                  times.append(time.time() - start)
+
+              print(f"Simple query - Avg: {statistics.mean(times)*1000:.2f}ms, P95: {statistics.quantiles(times, n=20)[18]*1000:.2f}ms")
+
+              # Test 2: Table scan
+              times = []
+              for _ in range(5):
+                  start = time.time()
+                  cur.execute("SELECT COUNT(*) FROM pg_tables;")
+                  cur.fetchone()
+                  times.append(time.time() - start)
+
+              print(f"Table scan - Avg: {statistics.mean(times)*1000:.2f}ms, P95: {statistics.quantiles(times, n=20)[18]*1000:.2f}ms")
+
+              conn.close()
+              print("✅ Database performance tests completed")
+
+          except Exception as e:
+              print(f"❌ Database performance tests failed: {e}")
+              exit(1)
+          EOF
+
+  performance-report:
+    name: Generate Performance Report
+    needs: [lighthouse-performance, k6-load-test, artillery-load-test, database-performance]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate performance summary
+        run: |
+          cat > performance-summary.md <<'EOF'
+          # Performance Testing Summary
+
+          **Date**: $(date)
+          **Target**: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+
+          ## Test Results
+
+          ### Lighthouse Performance Audit
+          - See `lighthouse-results` artifact for detailed report
+
+          ### K6 Load Testing
+          - Virtual Users: ${{ github.event.inputs.virtual_users || '10-50' }}
+          - Duration: 10 minutes
+          - See `k6-results` artifact for detailed metrics
+
+          ### Artillery Load Testing
+          - See `artillery-results` artifact for HTML report
+
+          ### Database Performance
+          - Connection latency tests completed
+
+          ## Recommendations
+
+          1. Review response time percentiles
+          2. Check error rates during peak load
+          3. Monitor database query performance
+          4. Verify cache effectiveness
+
+          ---
+          *Automated performance testing via GitHub Actions*
+          EOF
+
+          cat performance-summary.md
+
+      - name: Upload performance summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-summary
+          path: performance-summary.md
+
+      - name: Create issue on performance degradation
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '⚠️ Performance Test Failures Detected',
+              body: `Performance tests have detected issues:
+
+              - **Target**: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+              - **Date**: ${new Date().toISOString()}
+
+              Please review the workflow run and artifacts for details.
+
+              [View Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              labels: ['performance', 'needs-investigation']
+            });
