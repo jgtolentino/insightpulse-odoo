@@ -1,0 +1,103 @@
+global:
+  resolve_timeout: 5m
+  smtp_from: 'alerts@insightpulseai.net'
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_auth_username: 'alerts@insightpulseai.net'
+  smtp_auth_password: '${SMTP_PASSWORD}'
+  smtp_require_tls: true
+
+# Templates for notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route configuration
+route:
+  group_by: ['alertname', 'cluster', 'service', 'severity']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 12h
+  receiver: 'default'
+
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 0s
+      repeat_interval: 5m
+
+    # Warning alerts - grouped notifications
+    - match:
+        severity: warning
+      receiver: 'warning-alerts'
+      group_wait: 30s
+      repeat_interval: 1h
+
+    # Database alerts - dedicated channel
+    - match:
+        category: database
+      receiver: 'database-team'
+      group_by: ['alertname', 'instance']
+
+    # Business metrics - notify business team
+    - match:
+        category: business
+      receiver: 'business-team'
+      group_by: ['alertname']
+
+# Receivers (notification channels)
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: 'admin@insightpulseai.net'
+        headers:
+          Subject: '[InsightPulse] {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: 'admin@insightpulseai.net,ops@insightpulseai.net'
+        headers:
+          Subject: '[CRITICAL] InsightPulse Alert: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+        send_resolved: true
+    # webhook_configs:
+    #   - url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+    #     send_resolved: true
+
+  - name: 'warning-alerts'
+    email_configs:
+      - to: 'admin@insightpulseai.net'
+        headers:
+          Subject: '[WARNING] InsightPulse: {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'database-team'
+    email_configs:
+      - to: 'dba@insightpulseai.net'
+        headers:
+          Subject: '[DATABASE] {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+  - name: 'business-team'
+    email_configs:
+      - to: 'business@insightpulseai.net'
+        headers:
+          Subject: '[BUSINESS ALERT] {{ .GroupLabels.alertname }}'
+        html: '{{ template "email.default.html" . }}'
+
+# Inhibition rules (suppress certain alerts when others fire)
+inhibit_rules:
+  # Suppress warning if critical alert is firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+
+  # Suppress endpoint down if service is down
+  - source_match:
+      alertname: 'ServiceDown'
+    target_match:
+      alertname: 'HTTPEndpointDown'
+    equal: ['instance']

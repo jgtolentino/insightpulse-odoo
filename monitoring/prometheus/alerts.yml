@@ -1,0 +1,233 @@
+groups:
+  # Service Health Alerts
+  - name: service_health
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.instance }} of job {{ $labels.job }} has been down for more than 2 minutes."
+          runbook: "https://docs.insightpulseai.net/runbooks/service-down"
+
+      - alert: HTTPEndpointDown
+        expr: probe_success{job="blackbox_http"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          category: availability
+        annotations:
+          summary: "HTTP endpoint {{ $labels.instance }} is down"
+          description: "The endpoint {{ $labels.instance }} has been unreachable for more than 2 minutes."
+          runbook: "https://docs.insightpulseai.net/runbooks/endpoint-down"
+
+      - alert: SSLCertificateExpiringSoon
+        expr: (probe_ssl_earliest_cert_expiry{job="blackbox_ssl"} - time()) / 86400 < 30
+        for: 1h
+        labels:
+          severity: warning
+          category: security
+        annotations:
+          summary: "SSL certificate for {{ $labels.instance }} expires soon"
+          description: "SSL certificate for {{ $labels.instance }} expires in {{ $value | humanizeDuration }}."
+          runbook: "https://docs.insightpulseai.net/runbooks/ssl-renewal"
+
+  # System Resource Alerts
+  - name: system_resources
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% for more than 5 minutes. Current value: {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/high-cpu"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 95%. Current value: {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/critical-cpu"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85%. Current value: {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/high-memory"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          category: performance
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 95%. Immediate action required. Current value: {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/critical-memory"
+
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+          category: storage
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 15% on {{ $labels.mountpoint }}. Current value: {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/low-disk-space"
+
+      - alert: DiskSpaceCritical
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 1m
+        labels:
+          severity: critical
+          category: storage
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk space is below 5% on {{ $labels.mountpoint }}. Immediate cleanup required."
+          runbook: "https://docs.insightpulseai.net/runbooks/critical-disk-space"
+
+  # Database Alerts
+  - name: database_health
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          category: database
+        annotations:
+          summary: "PostgreSQL database connection failed"
+          description: "Cannot connect to PostgreSQL database {{ $labels.instance }}"
+          runbook: "https://docs.insightpulseai.net/runbooks/postgresql-down"
+
+      - alert: PostgreSQLTooManyConnections
+        expr: sum by (instance) (pg_stat_activity_count) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Too many PostgreSQL connections"
+          description: "PostgreSQL instance {{ $labels.instance }} has {{ $value }} connections (threshold: 80)"
+          runbook: "https://docs.insightpulseai.net/runbooks/too-many-connections"
+
+      - alert: PostgreSQLSlowQueries
+        expr: rate(pg_stat_activity_max_tx_duration{datname!~"template.*"}[5m]) > 300
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Slow PostgreSQL queries detected"
+          description: "Long-running queries detected on {{ $labels.instance }}"
+          runbook: "https://docs.insightpulseai.net/runbooks/slow-queries"
+
+  # Application Performance Alerts
+  - name: application_performance
+    interval: 30s
+    rules:
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          category: performance
+        annotations:
+          summary: "High response time for {{ $labels.service }}"
+          description: "95th percentile response time is {{ $value | humanize }}s (threshold: 2s)"
+          runbook: "https://docs.insightpulseai.net/runbooks/high-response-time"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: reliability
+        annotations:
+          summary: "High error rate for {{ $labels.service }}"
+          description: "Error rate is {{ $value | humanizePercentage }} (threshold: 5%)"
+          runbook: "https://docs.insightpulseai.net/runbooks/high-error-rate"
+
+  # Container Alerts
+  - name: container_health
+    interval: 30s
+    rules:
+      - alert: ContainerKilled
+        expr: time() - container_last_seen{name!=""} > 60
+        for: 1m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} was killed"
+          description: "Container {{ $labels.name }} has been killed and has not restarted"
+          runbook: "https://docs.insightpulseai.net/runbooks/container-killed"
+
+      - alert: ContainerHighCPU
+        expr: (sum(rate(container_cpu_usage_seconds_total{name!=""}[5m])) by (name) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU usage"
+          description: "Container {{ $labels.name }} CPU usage is {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/container-high-cpu"
+
+      - alert: ContainerHighMemory
+        expr: (sum(container_memory_usage_bytes{name!=""}) by (name) / sum(container_spec_memory_limit_bytes{name!=""} > 0) by (name) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+          category: container
+        annotations:
+          summary: "Container {{ $labels.name }} high memory usage"
+          description: "Container {{ $labels.name }} memory usage is {{ $value | humanize }}%"
+          runbook: "https://docs.insightpulseai.net/runbooks/container-high-memory"
+
+  # Business Metrics Alerts (Odoo-specific)
+  - name: business_metrics
+    interval: 1m
+    rules:
+      - alert: NoOdooSessionsActive
+        expr: odoo_sessions_active == 0
+        for: 10m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "No active Odoo sessions"
+          description: "No users have been active in Odoo for the past 10 minutes"
+          runbook: "https://docs.insightpulseai.net/runbooks/no-active-sessions"
+
+      - alert: HighOdooResponseTime
+        expr: odoo_request_duration_seconds > 5
+        for: 5m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "Odoo requests are slow"
+          description: "Odoo average response time is {{ $value | humanize }}s"
+          runbook: "https://docs.insightpulseai.net/runbooks/slow-odoo"
