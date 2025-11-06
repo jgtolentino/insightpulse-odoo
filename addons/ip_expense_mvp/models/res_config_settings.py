@@ -6,7 +6,7 @@ class ResConfigSettings(models.TransientModel):
     ip_ai_ocr_url = fields.Char(
         string="AI OCR URL",
         config_parameter='ip.ai_ocr_url',
-        default="http://127.0.0.1:8100/v1/ocr/receipt"
+        default="https://ocr.insightpulseai.net/v1/ocr/receipt"
     )
     ip_supabase_url = fields.Char(
         string="Supabase URL",

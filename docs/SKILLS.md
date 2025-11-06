@@ -86,6 +86,37 @@ This document catalogs the comprehensive skill set of the Odoo Development Agent
   - pg_hba.conf configuration
   - SSL/TLS connections
 
+### Supabase Cloud PostgreSQL
+**Operational Skills**: See `~/.claude/superclaude/skills/supabase/` for executable Supabase operations
+
+- **Database Operations**: Schema design, RLS policies, PostgreSQL functions, migrations, query optimization
+  - **Skill**: [supabase-database-operations](~/.claude/superclaude/skills/supabase/supabase-database-operations/SKILL.md)
+  - **Capabilities**: Table creation with RLS, user-scoped policies, upsert functions, connection pooling (port 6543), full-text search
+  - **Integration**: Odoo Python backend, Supabase PostgreSQL (project: spdtwktxdalcfigzeqrz)
+
+- **REST API Operations**: CRUD, advanced filtering, pagination, RPC calls, authentication
+  - **Skill**: [supabase-rest-api](~/.claude/superclaude/skills/supabase/supabase-rest-api/SKILL.md)
+  - **Capabilities**: PostgREST operations, JSON filtering, batch operations, anon key vs service role authentication
+  - **Integration**: Frontend data access, mobile apps, webhook handlers
+
+**InsightPulse AI Stack**:
+```
+Mobile Upload → Odoo ERP (erp.insightpulseai.net)
+    ↓
+PaddleOCR Service (ocr.insightpulseai.net)
+    ↓
+Supabase PostgreSQL (spdtwktxdalcfigzeqrz)
+    ↓
+Apache Superset (superset.insightpulseai.net) [Pending]
+```
+
+**Platform Compatibility**:
+- ✅ **Claude Code** (VS Code): Full support with MCP or psql
+- ⚠️ **Claude.ai Code** (Web): Via psql or REST API (if available in sandbox)
+- ✅ **Claude Desktop**: Full support with Supabase MCP
+- ⚠️ **Claude CLI**: Via psql CLI (manual MCP setup)
+- ❌ **Claude.ai** (Chat): Not supported
+
 ---
 
 ## 🔧 Odoo Framework
@@ -718,8 +749,62 @@ This document catalogs the comprehensive skill set of the Odoo Development Agent
 
 ---
 
+---
+
+## 🌐 Cross-Platform Skills Framework
+
+### SuperClaude Skills Integration
+**Complete Skills Inventory**: See `~/.claude/CROSS_PLATFORM_SKILLS_MATRIX.md` for comprehensive cross-platform alignment
+
+**55 Operational Skills** across 11 categories:
+1. **Analytics** (1): superset-dashboard-automation
+2. **Core** (6): code-generation, documentation-generator, iac-templates, librarian-indexer, makefile-generator, repo-architect
+3. **Document** (4): docx, pdf, pptx, xlsx
+4. **Finance** (3): bir-tax-filing, multi-agency-orchestrator, travel-expense-management
+5. **GitHub Integration** (1): github-integration
+6. **Infrastructure** (2): paddle-ocr-validation, supabase-rpc-manager
+7. **Meta** (10): algorithmic-art, artifacts-builder, brand-guidelines, canvas-design, internal-comms, mcp-builder, skill-creator, template-skill, theme-factory, webapp-testing
+8. **Notion** (20): Complete Notion API operations, workspace management, knowledge capture
+9. **Odoo** (36): Comprehensive Odoo 19.0 Enterprise development (see `~/.claude/superclaude/skills/odoo/SKILLS_INDEX.md`)
+10. **Procurement** (2): procurement-sourcing, project-portfolio-management
+11. **Supabase** (2): supabase-database-operations, supabase-rest-api
+
+**Platform Compatibility**:
+| Platform | Skill Support | MCP Servers | Tool Execution |
+|----------|--------------|-------------|----------------|
+| **Claude Code** (VS Code) | ✅ 55/55 (100%) | ✅ Full | ✅ Bash, Python, etc. |
+| **Claude.ai Code** (Web) | ⚠️ 40/55 (73%) | ⚠️ Limited | ⚠️ Sandboxed |
+| **Claude Desktop** | ✅ 55/55 (100%) | ✅ Full | ✅ Limited |
+| **Claude CLI** | ⚠️ 45/55 (82%) | ⚠️ Manual | ✅ Full shell |
+| **Claude.ai** (Chat) | ❌ 0/55 (0%) | ❌ None | ❌ None |
+
+**Usage Across Platforms**:
+```bash
+# Claude Code (VS Code) - BEST
+"Use the supabase-database-operations skill to create RLS policies"
+
+# Claude.ai Code (Web) - UPLOAD SKILL.md
+Upload: supabase-database-operations/SKILL.md
+"Use this skill to create RLS policies"
+
+# Claude Desktop - NATIVE
+"Use the odoo19-oca-devops skill to scaffold module"
+
+# Claude CLI - MANUAL
+claude "Use the bir-tax-filing skill to generate 1601-C form"
+```
+
+**Skill Auto-Activation**:
+- Keywords trigger relevant skills automatically
+- Example: "supabase", "postgresql", "rls" → `supabase-database-operations`
+- Example: "odoo module", "scaffold", "oca" → `odoo19-oca-devops`
+- Example: "bir form", "1601-c", "tax" → `bir-tax-filing`
+
+---
+
 ## Version History
 
+- **2025-11-06**: Added SuperClaude cross-platform skills framework integration
 - **2025-10-26**: Initial skills inventory creation
 - **Target Odoo Version**: 19.0
-- **Focus Areas**: Data connectors, Superset BI, security, deployment
+- **Focus Areas**: Data connectors, Superset BI, security, deployment, cross-platform skills

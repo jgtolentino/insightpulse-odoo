@@ -12,7 +12,7 @@ class IpReceiptController(http.Controller):
         if not f:
             return request.make_response("No file provided", headers=[("Status","400 Bad Request")])
 
-        ai_url = _cfg("ip.ai_ocr_url", "http://127.0.0.1:8100/v1/ocr/receipt")
+        ai_url = _cfg("ip.ai_ocr_url", "https://ocr.insightpulseai.net/v1/ocr/receipt")
         try:
             r = requests.post(ai_url, files={"file": (f.filename, f.stream, f.mimetype)}, timeout=60)
             r.raise_for_status()

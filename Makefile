@@ -618,3 +618,80 @@ superclaude-clean: ## Clean worktrees and temporary files
 
 # Default threshold for skill suggestions
 THRESHOLD ?= 500
+
+# ══════════════════════════════════════════════════════════════
+# 📋 SPEC-DRIVEN CI/CD
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: spec spec-validate spec-drift spec-bump mqt-odoo spec-format spec-clean spec-ci
+
+spec: ## Generate OpenAPI spec from Pydantic
+	@echo "🔧 Generating OpenAPI spec..."
+	@python3 ci/speckit/generate_openapi.py
+
+spec-validate: ## Validate spec contracts
+	@echo "🔒 Validating spec contracts..."
+	@python3 ci/speckit/validate_spec_contract.py
+
+spec-drift: ## Check for spec drift
+	@echo "🔍 Checking for spec drift..."
+	@python3 ci/speckit/spec_drift_gate.py
+
+spec-bump: ## Bump __manifest__.py versions
+	@echo "📦 Bumping manifest versions..."
+	@python3 ci/speckit/bump_manifest_version.py
+
+mqt-odoo: ## Run OCA MQT quality checks
+	@echo "🔍 Running OCA MQT checks..."
+	@bash ci/qa/run_mqt.sh
+
+spec-format: ## Format spec code with black
+	@echo "✨ Formatting spec code..."
+	@black addons/ ci/ || echo "⚠️  black not installed"
+
+spec-clean: ## Clean generated spec files
+	@echo "🧹 Cleaning spec artifacts..."
+	@rm -rf spec/*.json
+	@rm -rf htmlcov/
+	@rm -rf .pytest_cache/
+	@find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	@find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	@echo "✅ Spec artifacts cleaned"
+
+spec-ci: ## Run full spec-driven CI pipeline locally
+	@echo "🚀 Running spec-driven CI pipeline..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@make spec
+	@make spec-validate
+	@make spec-drift
+	@make mqt-odoo
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ All spec-driven CI checks passed!"
+
+# ══════════════════════════════════════════════════════════════
+# 📱 SUPABASE + EXPO PWA
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: supabase-login supabase-link supabase-push supabase-deploy web
+
+supabase-login: ## Login to Supabase CLI
+	@echo "🔐 Logging into Supabase..."
+	@supabase login
+
+supabase-link: ## Link local project to Supabase
+	@echo "🔗 Linking to Supabase project..."
+	@supabase link --project-ref $(SUPABASE_PROJECT_REF)
+
+supabase-push: ## Push database migrations to Supabase
+	@echo "📤 Pushing database migrations..."
+	@supabase db push
+
+supabase-deploy: ## Deploy Supabase Edge Functions
+	@echo "🚀 Deploying Edge Functions..."
+	@supabase functions deploy notify-odoo --no-verify-jwt
+	@echo "✅ Edge Functions deployed!"
+
+web: ## Build and serve PWA locally
+	@echo "🌐 Building PWA..."
+	@npx expo export --platform web
+	@echo "✅ PWA build complete! Serve with: npx serve dist"
