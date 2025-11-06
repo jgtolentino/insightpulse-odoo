@@ -67,17 +67,17 @@ jobs:
                 - key: ODOO_USERNAME
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.ODOO_ADMIN_USER }}
+                  value: ${{ secrets.ODOO_LOGIN }}
                 - key: ODOO_PASSWORD
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.ODOO_ADMIN_PASSWORD }}
+                  value: ${{ secrets.ODOO_PASSWORD }}
                 - key: SUPERSET_URL
                   value: https://superset.insightpulseai.net
                 - key: NOTION_TOKEN
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.NOTION_INTEGRATION_TOKEN }}
+                  value: ${{ secrets.NOTION_API_KEY }}
                 - key: ENVIRONMENT
                   value: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
           EOF
@@ -155,7 +155,7 @@ jobs:
             }'
 
       - name: Notify Slack
-        if: always()
+        if: always() && secrets.SLACK_WEBHOOK != ''
         uses: 8398a7/action-slack@v3
         with:
           status: ${{ job.status }}
