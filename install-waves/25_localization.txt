@@ -1,0 +1,13 @@
+# Wave 2.5: Localization
+# Generic chart of accounts (customize based on your country)
+# Install after: 20_sales_inventory.txt
+# Install with: odoo-bin -d mydb -i $(cat 25_localization.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+l10n_generic_coa
+
+# Country-specific localizations (uncomment as needed):
+# l10n_in              # India
+# l10n_mx              # Mexico
+# l10n_nl              # Netherlands
+# l10n_pe              # Peru
+# l10n_us              # United States

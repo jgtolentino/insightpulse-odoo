@@ -1,0 +1,20 @@
+# Wave 3: Accounting & Finance
+# Core accounting with OCA enhancements
+# Install after: 25_localization.txt
+# Install with: odoo-bin -d mydb -i $(cat 30_accounting.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+account
+account_accountant
+account_asset
+account_budget
+account_check_printing
+account_invoice_refund
+account_reports_followup
+currency_rate_live
+mis_builder
+
+# Bank statement imports (OCA modules - install if needed):
+# account_bank_statement_import_camt
+# account_bank_statement_import_csv
+# account_bank_statement_import_ofx
+# account_bank_statement_import_qif

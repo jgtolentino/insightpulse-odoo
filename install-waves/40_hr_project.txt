@@ -1,0 +1,11 @@
+# Wave 4: HR & Project Management
+# Core HR and project modules
+# Install after: 30_accounting.txt
+# Install with: odoo-bin -d mydb -i $(cat 40_hr_project.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+hr
+hr_attendance
+hr_contract
+hr_expense
+hr_timesheet
+project
