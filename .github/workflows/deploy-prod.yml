@@ -1,0 +1,113 @@
+name: deploy-prod
+on:
+  push:
+    tags:
+      - "v*.*.*"
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+    env:
+      REGISTRY: ${{ vars.DOCKER_REGISTRY || 'ghcr.io' }}
+      IMAGE_BASE: ghcr.io/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set versions
+        id: v
+        run: |
+          TAG="${GITHUB_REF_NAME:-latest}"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Odoo 18 image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infrastructure/docker/odoo18.Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/odoo18:${{ steps.v.outputs.TAG }}
+            ${{ env.IMAGE_BASE }}/odoo18:latest
+
+      - name: Build DeepWiki image (conditional)
+        if: ${{ hashFiles('apps/deepwiki-service/main.py') != '' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/deepwiki-service
+          file: apps/deepwiki-service/Dockerfile
+          push: true
+          tags: |
+            ${{ env.IMAGE_BASE }}/deepwiki:${{ steps.v.outputs.TAG }}
+            ${{ env.IMAGE_BASE }}/deepwiki:latest
+
+      - name: Validate MVP bundle
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 - <<'PY'
+import sys, os, json, pathlib
+errors=[]
+must_files=[
+  "infrastructure/docker/docker-compose.prod.yml",
+  "infrastructure/docker/odoo18.Dockerfile",
+  ".github/workflows/deploy-prod.yml",
+]
+for f in must_files:
+  if not pathlib.Path(f).exists():
+    errors.append(f"missing: {f}")
+if errors:
+  print("❌ MVP validation failed:")
+  [print(" -",e) for e in errors]
+  sys.exit(1)
+print("✅ MVP validation OK")
+PY
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -euo pipefail
+            mkdir -p ${{ vars.DEPLOY_PATH }}
+            # Write env file (safe vars only)
+            cat > ${{ vars.DEPLOY_PATH }}/.env <<EOF
+            POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-odoo}
+            ODOO_FQDN=${{ vars.ODOO_FQDN }}
+            LOG_LEVEL=${{ vars.LOG_LEVEL || 'info' }}
+            GITHUB_REPOSITORY=${{ github.repository }}
+            EOF
+            # Push compose content (inline)
+            cat > ${{ vars.DEPLOY_PATH }}/docker-compose.yml <<'COMPOSE'
+            $(sed 's/[$]/$$/g' infrastructure/docker/docker-compose.prod.yml)
+            COMPOSE
+            cd ${{ vars.DEPLOY_PATH }}
+            docker compose pull || true
+            docker compose up -d
+            docker compose ps
+
+      - name: Post-deploy health checks
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ vars.DEPLOY_HOST }}
+          username: ${{ vars.DEPLOY_USER || 'root' }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script_stop: true
+          script: |
+            set -e
+            docker compose -f ${{ vars.DEPLOY_PATH }}/docker-compose.yml ps
+            curl -fsS http://127.0.0.1:8069/ >/dev/null || (echo "Odoo not healthy" && exit 1)
+            curl -fsS http://127.0.0.1:8098/health >/dev/null || echo "DeepWiki missing or unhealthy (ok if not used)"

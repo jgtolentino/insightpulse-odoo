@@ -1,0 +1,60 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks: [erp]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  odoo:
+    image: ghcr.io/${GITHUB_REPOSITORY}/odoo18:latest
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    environment:
+      HOST: ${ODOO_FQDN}
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: odoo
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-odoo}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "127.0.0.1:8069:8069"
+    volumes:
+      - odoo_data:/var/lib/odoo
+      - ./addons:/mnt/addons:ro
+      - ./custom:/mnt/custom:ro
+    networks: [erp]
+
+  deepwiki:
+    image: ghcr.io/${GITHUB_REPOSITORY}/deepwiki:latest
+    restart: unless-stopped
+    environment:
+      DEEPWIKI_ROOT: /data
+      DEEPWIKI_CACHE: /cache
+    ports:
+      - "127.0.0.1:8098:8098"
+    volumes:
+      - deepwiki_data:/data
+      - deepwiki_cache:/cache
+    networks: [erp]
+
+volumes:
+  pgdata:
+  odoo_data:
+  deepwiki_data:
+  deepwiki_cache:
+
+networks:
+  erp:
+    driver: bridge
