@@ -1,0 +1,13 @@
+# Wave 9: Optional Modules
+# CRM, reporting, and other optional features
+# Install after: 40_hr_project.txt
+# Install with: odoo-bin -d mydb -i $(cat 90_optional.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+crm
+event_social
+ir_attachment_url
+link_tracker
+product_email_template
+report_xlsx
+social_push_notifications
+stock_logistics_reporting

@@ -1,0 +1,10 @@
+# Wave 2: Sales & Inventory
+# Core sales, purchase, and inventory management
+# Install after: 10_web_ux.txt
+# Install with: odoo-bin -d mydb -i $(cat 20_sales_inventory.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+purchase
+sale
+sale_management
+stock
+stock_account

@@ -1,15 +1,20 @@
-# InsightPulse AI - Terraform Infrastructure as Code
+# InsightPulse AI - Infrastructure as Code
 
-Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean.
+> **OpenTofu/Terraform configuration for deploying the complete InsightPulse AI stack on DigitalOcean**
+
+Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean with DigitalOcean Spaces backend.
 
 ## 📁 Directory Structure
 
 ```
 terraform/
-├── main.tf                    # Main infrastructure configuration
+├── backend.tf                 # DigitalOcean Spaces backend configuration
+├── main.tf                    # Core infrastructure (VPC, firewall, monitoring)
 ├── variables.tf               # Variable definitions
 ├── apps.tf                    # DigitalOcean App Platform applications
 ├── droplets.tf                # Droplet and volume configurations
+├── dns.tf                     # DNS records for all services
+├── outputs.tf                 # Output values
 ├── terraform.tfvars.example   # Example variables file
 ├── README.md                  # This file
 └── cloud-init/
@@ -42,53 +47,63 @@ terraform/
 
 ### Prerequisites
 
-1. **DigitalOcean Account**
+1. **OpenTofu or Terraform installed**
+   ```bash
+   # Install OpenTofu (recommended)
+   brew install opentofu
+
+   # OR install Terraform
+   brew install terraform
+   ```
+
+2. **DigitalOcean CLI (doctl) installed** (for backend setup)
+   ```bash
+   brew install doctl
+   doctl auth init
+   ```
+
+3. **DigitalOcean Account**
    - Create an account at https://digitalocean.com
    - Generate a Personal Access Token (Settings → API → Generate New Token)
 
-2. **Terraform Installation**
-   ```bash
-   # macOS
-   brew install terraform
-
-   # Ubuntu/Debian
-   wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-   echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-   sudo apt update && sudo apt install terraform
-   ```
-
-3. **DigitalOcean Spaces for State Storage** (optional but recommended)
-   ```bash
-   doctl compute region list  # Choose a region
-   doctl spaces create insightpulse-terraform-state --region sgp1
-   ```
-
 ### Initial Setup
 
-1. **Clone the repository**
+1. **Set up DigitalOcean Spaces backend** (for state management)
    ```bash
-   cd /path/to/insightpulse-odoo/terraform
+   # Run the setup script
+   ./scripts/setup-digitalocean-backend.sh
+
+   # This creates a DigitalOcean Space for Terraform state
+   # Cost: $5/month (includes 250GB storage + 1TB transfer)
    ```
 
-2. **Configure variables**
+2. **Set Spaces credentials** (from DigitalOcean console)
    ```bash
+   # Get keys from: https://cloud.digitalocean.com/account/api/spaces
+   export AWS_ACCESS_KEY_ID="your-spaces-access-key"
+   export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
+   ```
+
+3. **Configure variables**
+   ```bash
+   cd terraform
    cp terraform.tfvars.example terraform.tfvars
    vim terraform.tfvars  # Fill in your values
    ```
 
-3. **Initialize Terraform**
+4. **Initialize OpenTofu/Terraform**
    ```bash
-   terraform init
+   tofu init  # or: terraform init
    ```
 
-4. **Review the plan**
+5. **Review the plan**
    ```bash
-   terraform plan
+   tofu plan  # or: terraform plan
    ```
 
-5. **Apply the infrastructure**
+6. **Apply the infrastructure**
    ```bash
-   terraform apply
+   tofu apply  # or: terraform apply
    ```
 
 ## 🔧 Configuration
@@ -98,13 +113,24 @@ terraform/
 Edit `terraform.tfvars` with your specific values:
 
 ```hcl
+# Cloud Provider Credentials
 do_token               = "dop_v1_xxxxx"
+
+# SSH Configuration
 ssh_public_key         = "ssh-rsa AAAAB3..."
+
+# Database Configuration
 supabase_db_password   = "your-db-password"
+
+# Odoo Configuration
 odoo_admin_password    = "your-odoo-password"
+
+# GitHub Configuration
 github_private_key     = "-----BEGIN RSA PRIVATE KEY-----\n..."
 github_installation_id = "12345678"
 ```
+
+**Note:** Spaces credentials are set as environment variables, not in `terraform.tfvars`.
 
 ### Optional Customizations
 
@@ -202,45 +228,60 @@ Configured alerts (sent via email):
 
 ## 📦 State Management
 
-### Remote State Backend
+### Backend: DigitalOcean Spaces (S3-Compatible)
 
-By default, Terraform state is stored in DigitalOcean Spaces (S3-compatible):
+**Why DigitalOcean Spaces instead of Terraform Cloud?**
+- ✅ **Cost:** $5/month (includes 250GB + 1TB transfer) vs $20+/month
+- ✅ **Control:** Full control over state files
+- ✅ **Privacy:** State files stay in your DigitalOcean account
+- ✅ **Simple:** No additional cloud provider dependencies
+- ✅ **S3-compatible:** Works seamlessly with Terraform/OpenTofu
 
+**Features:**
+- ✅ **Versioning:** Enable in Spaces console (recommended)
+- ✅ **Encryption:** HTTPS for data in transit
+- ✅ **Reliability:** 99.9% uptime SLA
+- ✅ **Backup:** Optional versioning for state history
+
+**Configuration:**
 ```hcl
-backend "s3" {
-  endpoint = "sgp1.digitaloceanspaces.com"
-  bucket   = "insightpulse-terraform-state"
-  key      = "production/terraform.tfstate"
+terraform {
+  backend "s3" {
+    endpoint                    = "sgp1.digitaloceanspaces.com"
+    region                      = "us-east-1"  # Required but not used
+    bucket                      = "insightpulse-terraform-state"
+    key                         = "production/terraform.tfstate"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
+  }
 }
 ```
 
-**Setup Spaces backend:**
+**Setup:**
+```bash
+# Run the automated setup script
+./scripts/setup-digitalocean-backend.sh
 
-1. Create Spaces bucket:
-   ```bash
-   doctl spaces create insightpulse-terraform-state --region sgp1
-   ```
+# Set Spaces credentials
+export AWS_ACCESS_KEY_ID="your-spaces-access-key"
+export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
 
-2. Set credentials:
-   ```bash
-   export AWS_ACCESS_KEY_ID="your-spaces-access-key"
-   export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
-   ```
-
-3. Initialize with backend:
-   ```bash
-   terraform init
-   ```
-
-### Local State (Development)
-
-For local testing, comment out the backend block in `main.tf`:
-
-```hcl
-# backend "s3" {
-#   ...
-# }
+# Initialize Terraform
+cd terraform && tofu init
 ```
+
+**⚠️ Important: No State Locking**
+
+DigitalOcean Spaces does NOT support DynamoDB-style state locking.
+
+**Best practices for team collaboration:**
+1. Use a shared Slack/Teams channel to coordinate deployments
+2. Create a deployment schedule (e.g., "Alice deploys Mon/Wed, Bob Tue/Thu")
+3. Always run `tofu plan` first to check for conflicts
+4. Consider using GitOps workflow (all changes via CI/CD)
+
+**Alternative:** Use Terraform Cloud if state locking is critical (~$20/month)
 
 ## 🔄 Common Operations
 
