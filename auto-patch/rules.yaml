@@ -1,0 +1,109 @@
+version: 1
+
+rules:
+  - id: ODOO-VIEW-XPATH-ERROR
+    description: Fix missing position attribute in xpath elements
+    paths:
+      - "addons/**/views/*.xml"
+      - "addons/**/data/*.xml"
+    match: '<xpath expr="'
+    fix: |
+      # Ensure xpath elements have position attribute
+      # Common values: inside, after, before, replace, attributes
+    severity: P2
+    create_pr:
+      title: "fix(odoo): Add position attributes to xpath elements"
+      labels: ["auto-patch", "odoo", "views"]
+
+  - id: PYTHON-MISSING-DOCSTRING
+    description: Add TODO for missing docstrings in public methods
+    paths:
+      - "**/*.py"
+    match: "def [a-z_]+\\(self"
+    fix: |
+      # Add docstring placeholder
+      # TODO: Add proper docstring
+    severity: P2
+    create_pr:
+      title: "docs(python): Add docstring placeholders"
+      labels: ["auto-patch", "documentation"]
+
+  - id: ODOO-HARDCODED-UID
+    description: Replace hardcoded user IDs with proper context
+    paths:
+      - "addons/**/*.py"
+    match: "uid = 1"
+    fix: |
+      # Use proper user context
+      uid = self.env.uid
+    severity: P1
+    create_pr:
+      title: "fix(odoo): Replace hardcoded UIDs with context"
+      labels: ["auto-patch", "odoo", "security"]
+
+  - id: SQL-INJECTION-RISK
+    description: Flag potential SQL injection risks
+    paths:
+      - "**/*.py"
+    match: 'cr\\.execute\\(".*%s'
+    fix: |
+      # Use parameterized queries
+      # cr.execute("SELECT * FROM table WHERE id = %s", (id,))
+    severity: P0
+    create_pr:
+      title: "security: Fix potential SQL injection risks"
+      labels: ["auto-patch", "security", "critical"]
+
+  - id: ODOO-DEPRECATED-API
+    description: Flag deprecated Odoo API usage
+    paths:
+      - "addons/**/*.py"
+    match: "@api\\.one"
+    fix: |
+      # Replace with @api.multi or newer API
+      # @api.one is deprecated since Odoo 12
+    severity: P2
+    create_pr:
+      title: "refactor(odoo): Remove deprecated @api.one decorators"
+      labels: ["auto-patch", "odoo", "deprecation"]
+
+  - id: MISSING-RLS-POLICY
+    description: Flag tables without RLS policies
+    paths:
+      - "supabase/migrations/*.sql"
+    match: "create table"
+    fix: |
+      # Add RLS policies
+      # ALTER TABLE <table> ENABLE ROW LEVEL SECURITY;
+      # CREATE POLICY ...
+    severity: P0
+    create_pr:
+      title: "security(supabase): Enable RLS on tables"
+      labels: ["auto-patch", "supabase", "security"]
+
+  - id: DOCKER-NO-HEALTHCHECK
+    description: Add healthcheck to Dockerfile
+    paths:
+      - "**/Dockerfile"
+    match: "FROM "
+    fix: |
+      # Add HEALTHCHECK instruction
+      # HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
+      #   CMD curl -f http://localhost:8000/health || exit 1
+    severity: P2
+    create_pr:
+      title: "ops(docker): Add healthchecks to Dockerfiles"
+      labels: ["auto-patch", "docker", "ops"]
+
+  - id: SUPERSET-NO-CACHE-TTL
+    description: Add cache TTL to Superset datasets
+    paths:
+      - "superset/**/*.py"
+    match: "class.*Dataset"
+    fix: |
+      # Add cache_timeout attribute
+      cache_timeout = 3600  # 1 hour
+    severity: P2
+    create_pr:
+      title: "perf(superset): Add cache TTL to datasets"
+      labels: ["auto-patch", "superset", "performance"]

@@ -1,0 +1,54 @@
+- id: ODOO-LONGPOLL-STALL
+  service: odoo
+  severity: P0
+  symptoms: ["UI freezes", "Chatbus unresponsive", "Delayed notifications"]
+  causes: ["Gevent worker deadlock", "Under-provisioned workers", "DB saturation"]
+  signals: ["odoo_longpoll_latency_seconds p95>1s", "CPU 90%+", "pg_connections 90%+"]
+  queries:
+    - "histogram_quantile(0.95, sum(rate(odoo_longpoll_latency_seconds_bucket[5m])) by (le))"
+    - "pg_stat_activity_count / pg_max_connections"
+  auto_heal: ["restart_longpoll.sh"]
+  guardrails: ["scale workers for CPU-bound load", "separate longpoll worker class"]
+  verify: ["latency p95<1s for 10m", "user actions real-time"]
+  runbook: "docs/runbooks/odoo.md#bus-longpoll-stalls"
+
+- id: ODOO-CRON-JAM
+  service: odoo
+  severity: P1
+  symptoms: ["Scheduled jobs delayed >30m"]
+  causes: ["Lock contention", "Bad job concurrency"]
+  signals: ["cron job age > 1800s"]
+  queries:
+    - "increase(odoo_cron_job_age_seconds_sum[10m]) > 1800"
+  auto_heal: ["unlock_cron.sh"]
+  guardrails: ["set concurrency per job", "idempotent jobs with retries"]
+  verify: ["pending jobs=0", "new jobs execute within SLA"]
+  runbook: "docs/runbooks/odoo.md#cron-jam"
+
+- id: ODOO-DB-DEADLOCK
+  service: odoo
+  severity: P1
+  symptoms: ["Transaction timeouts", "HTTP 504", "Workers hanging"]
+  causes: ["Circular lock dependencies", "Long-running queries"]
+  signals: ["pg_stat_activity.wait_event_type='Lock'", "query duration >30s"]
+  queries:
+    - "pg_stat_activity{wait_event_type='Lock'}"
+    - "SELECT count(*) FROM pg_stat_activity WHERE state='active' AND query_start < now() - interval '30s'"
+  auto_heal: ["kill_slow_queries.sh"]
+  guardrails: ["index optimization", "query timeout settings", "serialization isolation"]
+  verify: ["no queries waiting on locks for 5m"]
+  runbook: "docs/runbooks/odoo.md#db-deadlock"
+
+- id: ODOO-MEMORY-LEAK
+  service: odoo
+  severity: P2
+  symptoms: ["Workers OOMKilled", "Slow response times", "Container restarts"]
+  causes: ["Large recordset caching", "Attachment processing", "Report generation"]
+  signals: ["container_memory_usage_bytes > 90%", "oom_kill_total increasing"]
+  queries:
+    - "container_memory_usage_bytes{container='odoo'} / container_spec_memory_limit_bytes > 0.9"
+    - "rate(container_oom_kill_total[10m]) > 0"
+  auto_heal: ["restart_odoo_workers.sh"]
+  guardrails: ["limit recordset size", "stream large attachments", "paginate reports"]
+  verify: ["memory usage <80% for 30m"]
+  runbook: "docs/runbooks/odoo.md#memory-leak"

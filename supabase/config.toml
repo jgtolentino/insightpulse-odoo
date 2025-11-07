@@ -1,0 +1,21 @@
+[project]
+id = "spdtwktxdalcfigzeqrz"
+
+# Edge Functions Configuration
+[functions.health_heartbeat]
+verify_jwt = false  # Allow unauthenticated for internal monitoring
+
+[functions.drain_webhooks]
+verify_jwt = true  # Requires service role key
+
+[functions.escalate_incidents]
+verify_jwt = true  # Requires service role key
+
+[functions.synthetic_order_flow]
+verify_jwt = false  # Allow for monitoring, but validate secret in body
+
+[functions.superset_cache_warm]
+verify_jwt = true  # Requires service role key
+
+[functions.odoo_sync_dispatcher]
+verify_jwt = true  # Requires service role key

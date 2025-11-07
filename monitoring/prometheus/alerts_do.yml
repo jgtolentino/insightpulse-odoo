@@ -1,0 +1,112 @@
+groups:
+- name: digitalocean.alerts
+  interval: 30s
+  rules:
+  - alert: DODeployFailed
+    expr: increase(do_deploy_failures_total[15m]) > 0
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean App Platform deploy failed"
+      description: "{{ $value }} deploy failures in last 15m for app {{ $labels.app }}"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/do.md#deploy-rollbacks"
+
+  - alert: DOAppHealthCheckFailing
+    expr: do_app_health_check_failures > 3
+    for: 5m
+    labels:
+      severity: "critical"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean app {{ $labels.app }} health check failing"
+      description: "App {{ $labels.app }} has failed {{ $value }} health checks"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/do.md#health-check-failing"
+
+  - alert: DOScalingStuck
+    expr: |
+      do_app_instance_count < do_app_instance_target
+      and
+      avg(container_cpu_usage_percent) by (app) > 80
+    for: 15m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean app {{ $labels.app }} not scaling"
+      description: "App {{ $labels.app }} has {{ $value }} instances (target: {{ $labels.target }}), CPU >80%"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/do.md#scaling-stuck"
+
+  - alert: DODatabaseConnectionLimit
+    expr: |
+      do_managed_db_connections / do_managed_db_connection_limit > 0.9
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "managed-database"
+    annotations:
+      summary: "DigitalOcean managed DB {{ $labels.database }} connections >90%"
+      description: "Database {{ $labels.database }} connections at {{ $value | humanizePercentage }}"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/do.md#database-connection-limit"
+
+  - alert: DODeploymentDurationHigh
+    expr: do_deployment_duration_seconds > 600
+    for: 1m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean deployment taking >10 minutes"
+      description: "Deployment for app {{ $labels.app }} has taken {{ $value }}s"
+
+  - alert: DOAppCrashLoop
+    expr: rate(do_app_restart_count[15m]) > 0.5
+    for: 5m
+    labels:
+      severity: "critical"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean app {{ $labels.app }} in crash loop"
+      description: "App {{ $labels.app }} restarting {{ $value }} times/15m"
+
+  - alert: DOManagedDatabaseCPUHigh
+    expr: do_managed_db_cpu_percent > 90
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "managed-database"
+    annotations:
+      summary: "DigitalOcean managed DB {{ $labels.database }} CPU >90%"
+      description: "Database {{ $labels.database }} CPU at {{ $value }}%"
+
+  - alert: DOManagedDatabaseDiskFull
+    expr: |
+      do_managed_db_disk_used_bytes / do_managed_db_disk_size_bytes > 0.9
+    for: 10m
+    labels:
+      severity: "critical"
+      service: "digitalocean"
+      component: "managed-database"
+    annotations:
+      summary: "DigitalOcean managed DB {{ $labels.database }} disk >90%"
+      description: "Database {{ $labels.database }} disk at {{ $value | humanizePercentage }}"
+
+  - alert: DOAppBuildFailed
+    expr: increase(do_app_build_failures_total[15m]) > 0
+    for: 1m
+    labels:
+      severity: "warning"
+      service: "digitalocean"
+      component: "app-platform"
+    annotations:
+      summary: "DigitalOcean app {{ $labels.app }} build failed"
+      description: "{{ $value }} build failures for app {{ $labels.app }} in last 15m"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/do.md#deploy-rollbacks"

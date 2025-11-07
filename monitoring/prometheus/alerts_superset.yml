@@ -1,0 +1,124 @@
+groups:
+- name: superset.alerts
+  interval: 30s
+  rules:
+  - alert: SupersetQueryTimeout
+    expr: |
+      histogram_quantile(0.95,
+        sum(rate(superset_sql_query_seconds_bucket[5m])) by (le)
+      ) > 5
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "query"
+    annotations:
+      summary: "Superset p95 query duration >5s"
+      description: "Superset query p95 duration is {{ $value }}s"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#query-timeout"
+
+  - alert: SupersetQueryTimeoutErrors
+    expr: rate(superset_query_timeout_total[10m]) > 0
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "query"
+    annotations:
+      summary: "Superset queries timing out"
+      description: "{{ $value }} queries/sec are timing out"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#query-timeout"
+
+  - alert: SupersetMetadataDbDeadlock
+    expr: |
+      count(
+        pg_stat_activity_wait_event_type{
+          datname="superset",
+          wait_event_type="Lock"
+        } > 0
+      ) > 3
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "metadata-db"
+    annotations:
+      summary: "Superset metadata DB has deadlocks"
+      description: "{{ $value }} queries waiting on locks in metadata DB"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#metadata-db-deadlock"
+
+  - alert: SupersetCacheMissHigh
+    expr: |
+      sum(rate(superset_cache_hits[5m])) /
+      (sum(rate(superset_cache_hits[5m])) + sum(rate(superset_cache_misses[5m]))) < 0.5
+    for: 15m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "cache"
+    annotations:
+      summary: "Superset cache hit ratio <50%"
+      description: "Cache hit ratio is {{ $value | humanizePercentage }}"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#cache-miss"
+
+  - alert: SupersetWorkerOverload
+    expr: sum(celery_queue_length) by (queue) > 100
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "worker"
+    annotations:
+      summary: "Superset Celery queue {{ $labels.queue }} >100 tasks"
+      description: "Celery queue {{ $labels.queue }} has {{ $value }} pending tasks"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#worker-overload"
+
+  - alert: SupersetWorkerCPUHigh
+    expr: |
+      container_cpu_usage_percent{container="superset-worker"} > 90
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "worker"
+    annotations:
+      summary: "Superset worker CPU >90%"
+      description: "Superset worker CPU usage is {{ $value }}%"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/superset.md#worker-overload"
+
+  - alert: SupersetDashboardLoadSlow
+    expr: |
+      histogram_quantile(0.95,
+        sum(rate(superset_dashboard_load_seconds_bucket[5m])) by (le)
+      ) > 10
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "dashboard"
+    annotations:
+      summary: "Superset dashboard load p95 >10s"
+      description: "Dashboard load p95 is {{ $value }}s"
+
+  - alert: SupersetHighErrorRate
+    expr: |
+      sum(rate(superset_http_requests_total{status=~"5.."}[5m])) /
+      sum(rate(superset_http_requests_total[5m])) > 0.05
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "superset"
+      component: "http"
+    annotations:
+      summary: "Superset HTTP error rate >5%"
+      description: "Superset is returning {{ $value | humanizePercentage }} 5xx errors"
+
+  - alert: SupersetDown
+    expr: up{job="superset"} == 0
+    for: 2m
+    labels:
+      severity: "critical"
+      service: "superset"
+    annotations:
+      summary: "Superset is down"
+      description: "Superset has been down for more than 2 minutes"
