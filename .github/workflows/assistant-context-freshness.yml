@@ -1,0 +1,34 @@
+name: assistant-context-freshness
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: "0 3 * * *" # daily 03:00 UTC
+
+jobs:
+  freshness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Ensure claude.md exists
+        run: test -f claude.md || (echo "::error ::claude.md is missing"; exit 1)
+
+      - name: Fail if claude.md older than 7 days
+        run: |
+          TS=$(git log -1 --format=%ct -- claude.md || echo 0)
+          NOW=$(date +%s)
+          DELTA=$((NOW - TS))
+          # 7 days = 604800 seconds
+          if [ "$DELTA" -gt 604800 ]; then
+            echo "::error ::claude.md is older than 7 days (delta=${DELTA}s). Please refresh section 0–2 and 10–11."
+            exit 1
+          fi
+          echo "claude.md freshness OK (delta=${DELTA}s)"
+
+      - name: Optional: validate MUST/SHOULD sections present
+        run: |
+          grep -q "## 0) Normative Rules" claude.md
+          grep -q "## 10) Evals (Blocking)" claude.md
+          grep -q "## 11) Deployment Guardrails" claude.md
