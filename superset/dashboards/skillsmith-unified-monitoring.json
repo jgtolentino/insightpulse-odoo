@@ -1,0 +1,217 @@
+{
+  "dashboard_title": "Skillsmith Unified AI/ML Monitoring",
+  "description": "Complete monitoring of error mining, skill effectiveness, training pipeline, and ML feedback loop",
+  "slug": "skillsmith-unified-monitoring",
+  "published": true,
+  "position_json": {
+    "CHART-1": { "col": 0, "row": 0, "size_x": 6, "size_y": 4 },
+    "CHART-2": { "col": 6, "row": 0, "size_x": 6, "size_y": 4 },
+    "CHART-3": { "col": 0, "row": 4, "size_x": 4, "size_y": 4 },
+    "CHART-4": { "col": 4, "row": 4, "size_x": 4, "size_y": 4 },
+    "CHART-5": { "col": 8, "row": 4, "size_x": 4, "size_y": 4 },
+    "CHART-6": { "col": 0, "row": 8, "size_x": 12, "size_y": 5 },
+    "CHART-7": { "col": 0, "row": 13, "size_x": 6, "size_y": 4 },
+    "CHART-8": { "col": 6, "row": 13, "size_x": 6, "size_y": 4 }
+  },
+  "charts": [
+    {
+      "id": "CHART-1",
+      "slice_name": "Error Trend (7d vs 30d Rolling)",
+      "viz_type": "line",
+      "description": "Live error frequency from production (error_signatures)",
+      "params": {
+        "datasource": "error_signatures",
+        "viz_type": "line",
+        "metrics": ["hits_7d", "hits_30d"],
+        "groupby": ["kind"],
+        "time_range": "30 days",
+        "granularity_sqla": "ts",
+        "order_desc": true,
+        "row_limit": 50
+      },
+      "query_context": {
+        "datasource": {
+          "type": "table",
+          "id": "error_signatures"
+        },
+        "queries": [
+          {
+            "metrics": [
+              { "label": "Hits (7d)", "expressionType": "SIMPLE", "column": { "column_name": "hits_7d" }, "aggregate": "SUM" },
+              { "label": "Hits (30d)", "expressionType": "SIMPLE", "column": { "column_name": "hits_30d" }, "aggregate": "SUM" }
+            ],
+            "groupby": ["kind"],
+            "orderby": [["hits_7d", false]],
+            "row_limit": 50
+          }
+        ]
+      }
+    },
+    {
+      "id": "CHART-2",
+      "slice_name": "Skill Effectiveness by Type",
+      "viz_type": "bar",
+      "description": "Confidence scores and impact metrics for approved skills",
+      "params": {
+        "datasource": "skills_metadata",
+        "viz_type": "bar",
+        "metrics": ["avg_confidence", "total_impact"],
+        "groupby": ["kind"],
+        "order_desc": true
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT kind, AVG(confidence) as avg_confidence, SUM(impact_score) as total_impact FROM (SELECT kind, (metadata->>'confidence')::float as confidence, (metadata->>'impact_score')::float as impact_score FROM skills WHERE status = 'approved') sub GROUP BY kind"
+        }
+      }
+    },
+    {
+      "id": "CHART-3",
+      "slice_name": "Top Error Patterns",
+      "viz_type": "pie",
+      "description": "Distribution of errors by category",
+      "params": {
+        "datasource": "error_signatures",
+        "viz_type": "pie",
+        "metric": "hits_7d",
+        "groupby": ["kind"],
+        "row_limit": 10
+      },
+      "query_context": {
+        "datasource": { "type": "table", "id": "error_signatures" },
+        "queries": [
+          {
+            "metrics": [{ "label": "Occurrences", "column": { "column_name": "hits_7d" }, "aggregate": "SUM" }],
+            "groupby": ["kind"],
+            "row_limit": 10
+          }
+        ]
+      }
+    },
+    {
+      "id": "CHART-4",
+      "slice_name": "Guardrail Coverage",
+      "viz_type": "gauge",
+      "description": "% of error patterns covered by active guardrails",
+      "params": {
+        "datasource": "error_catalog_stats",
+        "viz_type": "gauge",
+        "metric": "coverage_pct"
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT (COUNT(CASE WHEN active_guardrails IS NOT NULL THEN 1 END)::float / COUNT(*)::float * 100) as coverage_pct FROM error_catalog"
+        }
+      }
+    },
+    {
+      "id": "CHART-5",
+      "slice_name": "Training Dataset Growth",
+      "viz_type": "big_number_total",
+      "description": "Total examples in TRM dataset",
+      "params": {
+        "datasource": "trm_dataset_stats",
+        "viz_type": "big_number_total",
+        "metric": "total_examples"
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT COUNT(*) as total_examples FROM trm_dataset"
+        }
+      }
+    },
+    {
+      "id": "CHART-6",
+      "slice_name": "Skill Impact Timeline",
+      "viz_type": "mixed_timeseries",
+      "description": "Before/after error rates for deployed skills",
+      "params": {
+        "datasource": "confidence_history",
+        "viz_type": "mixed_timeseries",
+        "metrics": ["error_rate_before", "error_rate_after", "confidence_score"],
+        "groupby": ["skill_id"],
+        "time_range": "90 days",
+        "granularity_sqla": "timestamp"
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT skill_id, timestamp, hits_before as error_rate_before, hits_after as error_rate_after, confidence as confidence_score FROM confidence_updates ORDER BY timestamp DESC"
+        }
+      }
+    },
+    {
+      "id": "CHART-7",
+      "slice_name": "Knowledge Source Distribution",
+      "viz_type": "sunburst",
+      "description": "Training examples by source (Skillsmith vs Forum vs Manual)",
+      "params": {
+        "datasource": "trm_dataset",
+        "viz_type": "sunburst",
+        "groupby": ["source", "kind"],
+        "metric": "count"
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT source, kind, COUNT(*) as count FROM trm_dataset GROUP BY source, kind"
+        }
+      }
+    },
+    {
+      "id": "CHART-8",
+      "slice_name": "Confidence Distribution",
+      "viz_type": "histogram",
+      "description": "Distribution of confidence scores across all skills",
+      "params": {
+        "datasource": "skills",
+        "viz_type": "histogram",
+        "column": "confidence",
+        "bins": 20
+      },
+      "query_context": {
+        "datasource": {
+          "type": "query",
+          "sql": "SELECT (metadata->>'confidence')::float as confidence FROM skills WHERE status = 'approved' AND metadata->>'confidence' IS NOT NULL"
+        }
+      }
+    }
+  ],
+  "native_filters": [
+    {
+      "id": "filter-timerange",
+      "name": "Time Range",
+      "filterType": "filter_timerange",
+      "targets": [
+        { "datasetId": "error_signatures", "column": { "name": "ts" } },
+        { "datasetId": "confidence_history", "column": { "name": "timestamp" } }
+      ],
+      "defaultValue": { "value": "30 days" }
+    },
+    {
+      "id": "filter-kind",
+      "name": "Error Kind",
+      "filterType": "filter_select",
+      "targets": [
+        { "datasetId": "error_signatures", "column": { "name": "kind" } }
+      ]
+    },
+    {
+      "id": "filter-component",
+      "name": "Component",
+      "filterType": "filter_select",
+      "targets": [
+        { "datasetId": "error_signatures", "column": { "name": "component" } }
+      ]
+    }
+  ],
+  "metadata": {
+    "refresh_frequency": 300,
+    "default_filters": {},
+    "color_scheme": "supersetColors",
+    "label_colors": {}
+  }
+}

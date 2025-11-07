@@ -695,3 +695,146 @@ web: ## Build and serve PWA locally
 	@echo "🌐 Building PWA..."
 	@npx expo export --platform web
 	@echo "✅ PWA build complete! Serve with: npx serve dist"
+
+# ══════════════════════════════════════════════════════════════
+# 🤖 SKILLSMITH - AUTO-SKILL BUILDER
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: skills-mine skills-propose skills-approve skills-db-setup skills-test
+
+skills-db-setup: ## Setup Skillsmith database schema
+	@echo "🗄️  Setting up Skillsmith database schema..."
+	@test -n "$(SUPABASE_DB_HOST)" || (echo "❌ SUPABASE_DB_HOST not set" && exit 1)
+	@psql "postgresql://$(SUPABASE_DB_USER):$(SUPABASE_DB_PASSWORD)@$(SUPABASE_DB_HOST):$(SUPABASE_DB_PORT)/$(SUPABASE_DB_NAME)?sslmode=require" \
+		-f sql/skillsmith.sql
+	@echo "✅ Skillsmith schema deployed!"
+
+skills-mine: ## Mine errors and generate skill candidates
+	@echo "⛏️  Mining error patterns..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q psycopg jinja2 python-slugify
+	@. .venv/bin/activate && python3 services/skillsmith/miner.py --min_hits 2 --top 50
+	@echo "✅ Skill candidates generated in skills/proposed/"
+
+skills-propose: ## Create PR with skill proposals
+	@echo "📤 Proposing skills via PR..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && python3 services/skillsmith/propose_pr.py
+	@echo "✅ PR created (or changes committed locally)"
+
+skills-approve: ## Approve skills (move from proposed/ to skills/)
+	@echo "✅ To approve skills:"
+	@echo "   1. Review YAML files in skills/proposed/"
+	@echo "   2. Create autopatch scripts for fixers (if needed)"
+	@echo "   3. Move approved files: mv skills/proposed/GR-*.yaml skills/"
+	@echo "   4. Update status to 'approved' in YAML"
+	@echo "   5. Run: make retrain"
+
+skills-test: ## Test Skillsmith components
+	@echo "🧪 Testing Skillsmith..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q pytest psycopg
+	@. .venv/bin/activate && pytest tests/test_skillsmith*.py tests/test_db_fingerprint.py -v
+
+skills-help: ## Show Skillsmith usage guide
+	@echo "🤖 Skillsmith - Auto-Skill Builder"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Setup:"
+	@echo "  1. make skills-db-setup         # One-time DB schema setup"
+	@echo ""
+	@echo "Daily workflow:"
+	@echo "  2. make skills-mine              # Mine errors → generate proposals"
+	@echo "  3. make skills-propose           # Create PR with proposals"
+	@echo "  4. Review PR in GitHub"
+	@echo "  5. make skills-approve           # Manual approval process"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make skills-test                 # Run Skillsmith tests"
+	@echo ""
+	@echo "Configuration:"
+	@echo "  - Min hits: Edit --min_hits in skills-mine target"
+	@echo "  - Top N: Edit --top in skills-mine target"
+	@echo "  - Templates: services/skillsmith/templates/*.j2"
+	@echo ""
+	@echo "Learn more: docs/skillsmith-guide.md"
+
+# ══════════════════════════════════════════════════════════════
+# 🔗 SKILLSMITH INTEGRATION - AI/ML PIPELINE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: skills-integrate skills-feedback skills-sync-trm skills-sync-catalog skills-dashboard-setup
+
+skills-integrate: ## Run full integration pipeline (feedback + TRM + catalog)
+	@echo "🔗 Running Skillsmith integration pipeline..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q psycopg jinja2 pyyaml
+	@. .venv/bin/activate && python3 services/skillsmith/integrate.py
+	@echo "✅ Integration complete!"
+
+skills-feedback: ## Update skill confidence from error outcomes
+	@echo "📊 Updating skill confidence scores..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q psycopg pyyaml
+	@. .venv/bin/activate && python3 services/skillsmith/feedback_loop.py
+	@echo "✅ Confidence scores updated!"
+
+skills-sync-trm: ## Sync approved skills to training dataset
+	@echo "📚 Syncing skills to TRM training dataset..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q pyyaml
+	@. .venv/bin/activate && python3 services/skillsmith/trm_sync.py
+	@echo "✅ TRM dataset updated!"
+
+skills-sync-catalog: ## Update error catalog with live production data
+	@echo "📖 Syncing error catalog..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && pip install -q psycopg pyyaml
+	@. .venv/bin/activate && python3 services/skillsmith/sync_catalog.py
+	@echo "✅ Error catalog updated!"
+
+skills-dashboard-setup: ## Setup Superset dashboard views
+	@echo "📊 Setting up Superset dashboard views..."
+	@test -n "$(SUPABASE_DB_HOST)" || (echo "❌ SUPABASE_DB_HOST not set" && exit 1)
+	@psql "postgresql://$(SUPABASE_DB_USER):$(SUPABASE_DB_PASSWORD)@$(SUPABASE_DB_HOST):$(SUPABASE_DB_PORT)/$(SUPABASE_DB_NAME)?sslmode=require" \
+		-f superset/sql/skillsmith-views.sql
+	@echo "✅ Dashboard views created!"
+	@echo "📝 Import dashboard: superset/dashboards/skillsmith-unified-monitoring.json"
+
+skills-pipeline-help: ## Show integration pipeline usage
+	@echo "🔗 Skillsmith Integration Pipeline"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Pipeline Components:"
+	@echo "  1. Error Mining        (make skills-mine)"
+	@echo "  2. Confidence Updates  (make skills-feedback)"
+	@echo "  3. TRM Dataset Sync    (make skills-sync-trm)"
+	@echo "  4. Catalog Sync        (make skills-sync-catalog)"
+	@echo "  5. Dashboard Views     (make skills-dashboard-setup)"
+	@echo ""
+	@echo "Quick Commands:"
+	@echo "  make skills-integrate        # Run full pipeline"
+	@echo "  make skills-feedback         # Update confidence only"
+	@echo "  make skills-sync-trm         # Sync to training dataset"
+	@echo "  make skills-sync-catalog     # Update error catalog"
+	@echo ""
+	@echo "Integration Flow:"
+	@echo "  Production Errors"
+	@echo "   ↓ normalize + fingerprint"
+	@echo "  error_signatures (Supabase)"
+	@echo "   ↓ mine patterns"
+	@echo "  skills/proposed/*.yaml"
+	@echo "   ↓ human review"
+	@echo "  skills/*.yaml (approved)"
+	@echo "   ↓ integration pipeline"
+	@echo "  • Confidence updated (feedback_loop.py)"
+	@echo "  • TRM dataset appended (trm_sync.py)"
+	@echo "  • Error catalog synced (sync_catalog.py)"
+	@echo "   ↓"
+	@echo "  make retrain → Updated ML model"
+	@echo ""
+	@echo "Monitoring:"
+	@echo "  • Superset: http://localhost:8088"
+	@echo "  • Dashboard: skillsmith-unified-monitoring"
+	@echo "  • Logs: logs/skillsmith-integration.jsonl"
+	@echo ""

@@ -1,0 +1,3 @@
+# Auto-patch Scripts
+# Fixer skills reference Python scripts in this directory
+# Scripts must be idempotent and safe to run multiple times
