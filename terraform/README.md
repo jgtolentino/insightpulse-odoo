@@ -2,13 +2,13 @@
 
 > **OpenTofu/Terraform configuration for deploying the complete InsightPulse AI stack on DigitalOcean**
 
-Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean with AWS S3 + DynamoDB backend.
+Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean with DigitalOcean Spaces backend.
 
 ## 📁 Directory Structure
 
 ```
 terraform/
-├── backend.tf                 # AWS S3 + DynamoDB backend configuration
+├── backend.tf                 # DigitalOcean Spaces backend configuration
 ├── main.tf                    # Core infrastructure (VPC, firewall, monitoring)
 ├── variables.tf               # Variable definitions
 ├── apps.tf                    # DigitalOcean App Platform applications
@@ -56,10 +56,10 @@ terraform/
    brew install terraform
    ```
 
-2. **AWS CLI installed and configured** (for state management)
+2. **DigitalOcean CLI (doctl) installed** (for backend setup)
    ```bash
-   brew install awscli
-   aws configure
+   brew install doctl
+   doctl auth init
    ```
 
 3. **DigitalOcean Account**
@@ -68,35 +68,40 @@ terraform/
 
 ### Initial Setup
 
-1. **Set up AWS backend** (for state management)
+1. **Set up DigitalOcean Spaces backend** (for state management)
    ```bash
    # Run the setup script
-   ./scripts/setup-aws-backend.sh
+   ./scripts/setup-digitalocean-backend.sh
 
-   # This creates:
-   # - S3 bucket: ipai-tofu-state (with versioning and encryption)
-   # - DynamoDB table: ipai-tofu-locks (for state locking)
-   # Cost: ~$0.50/month vs $20+/month for Terraform Cloud
+   # This creates a DigitalOcean Space for Terraform state
+   # Cost: $5/month (includes 250GB storage + 1TB transfer)
    ```
 
-2. **Configure variables**
+2. **Set Spaces credentials** (from DigitalOcean console)
+   ```bash
+   # Get keys from: https://cloud.digitalocean.com/account/api/spaces
+   export AWS_ACCESS_KEY_ID="your-spaces-access-key"
+   export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
+   ```
+
+3. **Configure variables**
    ```bash
    cd terraform
    cp terraform.tfvars.example terraform.tfvars
    vim terraform.tfvars  # Fill in your values
    ```
 
-3. **Initialize OpenTofu/Terraform**
+4. **Initialize OpenTofu/Terraform**
    ```bash
    tofu init  # or: terraform init
    ```
 
-4. **Review the plan**
+5. **Review the plan**
    ```bash
    tofu plan  # or: terraform plan
    ```
 
-5. **Apply the infrastructure**
+6. **Apply the infrastructure**
    ```bash
    tofu apply  # or: terraform apply
    ```
@@ -110,8 +115,6 @@ Edit `terraform.tfvars` with your specific values:
 ```hcl
 # Cloud Provider Credentials
 do_token               = "dop_v1_xxxxx"
-aws_access_key         = "AKIAIOSFODNN7EXAMPLE"
-aws_secret_key         = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
 
 # SSH Configuration
 ssh_public_key         = "ssh-rsa AAAAB3..."
@@ -126,6 +129,8 @@ odoo_admin_password    = "your-odoo-password"
 github_private_key     = "-----BEGIN RSA PRIVATE KEY-----\n..."
 github_installation_id = "12345678"
 ```
+
+**Note:** Spaces credentials are set as environment variables, not in `terraform.tfvars`.
 
 ### Optional Customizations
 
@@ -223,30 +228,32 @@ Configured alerts (sent via email):
 
 ## 📦 State Management
 
-### Backend: AWS S3 + DynamoDB
+### Backend: DigitalOcean Spaces (S3-Compatible)
 
-**Why AWS S3 instead of Terraform Cloud?**
-- ✅ **Cost:** ~$0.50/month vs $20+/month
+**Why DigitalOcean Spaces instead of Terraform Cloud?**
+- ✅ **Cost:** $5/month (includes 250GB + 1TB transfer) vs $20+/month
 - ✅ **Control:** Full control over state files
-- ✅ **Privacy:** State files stay in your AWS account
-- ✅ **Reliability:** S3 offers 99.999999999% durability
-- ✅ **No vendor lock-in:** Open-source compatible
+- ✅ **Privacy:** State files stay in your DigitalOcean account
+- ✅ **Simple:** No additional cloud provider dependencies
+- ✅ **S3-compatible:** Works seamlessly with Terraform/OpenTofu
 
 **Features:**
-- ✅ **Versioning:** S3 bucket versioning enabled
-- ✅ **Encryption:** AES-256 encryption at rest
-- ✅ **Locking:** DynamoDB prevents concurrent modifications
-- ✅ **Backup:** State file versions retained
+- ✅ **Versioning:** Enable in Spaces console (recommended)
+- ✅ **Encryption:** HTTPS for data in transit
+- ✅ **Reliability:** 99.9% uptime SLA
+- ✅ **Backup:** Optional versioning for state history
 
 **Configuration:**
 ```hcl
 terraform {
   backend "s3" {
-    bucket         = "ipai-tofu-state"
-    key            = "insightpulse/odoo-stack/terraform.tfstate"
-    region         = "us-east-1"
-    dynamodb_table = "ipai-tofu-locks"
-    encrypt        = true
+    endpoint                    = "sgp1.digitaloceanspaces.com"
+    region                      = "us-east-1"  # Required but not used
+    bucket                      = "insightpulse-terraform-state"
+    key                         = "production/terraform.tfstate"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
   }
 }
 ```
@@ -254,34 +261,27 @@ terraform {
 **Setup:**
 ```bash
 # Run the automated setup script
-./scripts/setup-aws-backend.sh
+./scripts/setup-digitalocean-backend.sh
 
-# Or manually create resources:
-aws s3api create-bucket --bucket ipai-tofu-state --region us-east-1
-aws s3api put-bucket-versioning --bucket ipai-tofu-state --versioning-configuration Status=Enabled
-aws dynamodb create-table --table-name ipai-tofu-locks \
-  --attribute-definitions AttributeName=LockID,AttributeType=S \
-  --key-schema AttributeName=LockID,KeyType=HASH \
-  --billing-mode PAY_PER_REQUEST --region us-east-1
+# Set Spaces credentials
+export AWS_ACCESS_KEY_ID="your-spaces-access-key"
+export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
+
+# Initialize Terraform
+cd terraform && tofu init
 ```
 
-### Migrating from DigitalOcean Spaces
+**⚠️ Important: No State Locking**
 
-If you're migrating from the old DigitalOcean Spaces backend:
+DigitalOcean Spaces does NOT support DynamoDB-style state locking.
 
-```bash
-# 1. Set up AWS backend
-./scripts/setup-aws-backend.sh
+**Best practices for team collaboration:**
+1. Use a shared Slack/Teams channel to coordinate deployments
+2. Create a deployment schedule (e.g., "Alice deploys Mon/Wed, Bob Tue/Thu")
+3. Always run `tofu plan` first to check for conflicts
+4. Consider using GitOps workflow (all changes via CI/CD)
 
-# 2. Update backend.tf with your bucket name
-vim terraform/backend.tf
-
-# 3. Initialize and migrate
-cd terraform
-tofu init -migrate-state
-
-# 4. Type 'yes' when prompted
-```
+**Alternative:** Use Terraform Cloud if state locking is critical (~$20/month)
 
 ## 🔄 Common Operations
 

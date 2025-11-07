@@ -10,10 +10,6 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.34"
     }
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
   }
 
   # Backend configuration is now in backend.tf
@@ -22,13 +18,6 @@ terraform {
 # DigitalOcean Provider Configuration
 provider "digitalocean" {
   token = var.do_token
-}
-
-# AWS Provider Configuration (for S3 backend)
-provider "aws" {
-  region     = var.aws_region
-  access_key = var.aws_access_key
-  secret_key = var.aws_secret_key
 }
 
 # Data sources for existing resources

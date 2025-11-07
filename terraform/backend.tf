@@ -1,59 +1,56 @@
 # InsightPulse AI - OpenTofu/Terraform Backend Configuration
-# AWS S3 + DynamoDB for state management and locking
+# DigitalOcean Spaces for state management (S3-compatible)
 #
 # This replaces Terraform Cloud and provides:
-# - State storage in S3 (versioned, encrypted)
-# - State locking via DynamoDB (prevents concurrent modifications)
-# - Cost: ~$0.50/month (vs $20+/month for Terraform Cloud)
+# - State storage in DigitalOcean Spaces (S3-compatible, versioned)
+# - Cost: $5/month (includes 250GB storage + 1TB transfer)
+# - No additional cloud provider dependencies
 #
 # Setup Instructions:
-# 1. Run: ./scripts/setup-aws-backend.sh
-# 2. Run: tofu init (or terraform init)
-# 3. Type 'yes' when prompted to migrate state
+# 1. Run: ./scripts/setup-digitalocean-backend.sh
+# 2. Set credentials: export AWS_ACCESS_KEY_ID="your-spaces-key"
+#                     export AWS_SECRET_ACCESS_KEY="your-spaces-secret"
+# 3. Run: tofu init (or terraform init)
+# 4. Type 'yes' when prompted to migrate state
+#
+# Note: DigitalOcean Spaces does NOT support state locking.
+# Only one person should run "tofu apply" at a time.
 
 terraform {
   backend "s3" {
-    # S3 bucket for state storage (must be globally unique)
-    # Replace this with your own bucket name
-    bucket = "ipai-tofu-state"
+    # DigitalOcean Spaces endpoint (Singapore region)
+    # Change to your preferred region: nyc3, sfo3, ams3, sgp1, fra1
+    endpoint = "sgp1.digitaloceanspaces.com"
 
-    # State file path within the bucket
-    # This allows multiple environments to share the same bucket
-    key = "insightpulse/odoo-stack/terraform.tfstate"
-
-    # AWS region for S3 and DynamoDB
+    # Region is required but not used by DigitalOcean Spaces
     region = "us-east-1"
 
-    # DynamoDB table for state locking
-    # Prevents multiple users from modifying state simultaneously
-    dynamodb_table = "ipai-tofu-locks"
+    # Space name (must be globally unique)
+    bucket = "insightpulse-terraform-state"
 
-    # Encryption for state file at rest
-    encrypt = true
+    # State file path within the Space
+    key = "production/terraform.tfstate"
 
-    # Additional S3 settings
-    # These enable better reliability and consistency
-    acl = "private"
+    # Skip AWS-specific validations (required for DigitalOcean Spaces)
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_region_validation      = true
 
-    # Workspace prefix for multi-environment support
-    # workspace_key_prefix = "env"  # Uncomment for workspace support
+    # Force path-style URLs (required for DigitalOcean Spaces)
+    force_path_style = false
   }
 }
 
-# NOTE: If you're migrating from DigitalOcean Spaces or another backend:
-# 1. Comment out the old backend configuration in main.tf
-# 2. Run: tofu init -migrate-state
-# 3. Follow the prompts to migrate your existing state
+# IMPORTANT: State Locking
+# DigitalOcean Spaces does NOT support DynamoDB-style state locking.
 #
-# To use DigitalOcean Spaces instead of AWS S3:
-# 1. Replace the backend "s3" block above with:
-#    backend "s3" {
-#      endpoint                    = "sgp1.digitaloceanspaces.com"
-#      region                      = "us-east-1"  # Required but not used
-#      bucket                      = "insightpulse-terraform-state"
-#      key                         = "production/terraform.tfstate"
-#      skip_credentials_validation = true
-#      skip_metadata_api_check     = true
-#      skip_region_validation      = true
-#    }
-# 2. Note: DigitalOcean Spaces does NOT support DynamoDB locking
+# Best practices for team collaboration:
+# 1. Use a shared Slack/Teams channel to coordinate deployments
+# 2. Create a deployment schedule (e.g., "John deploys Mon/Wed, Jane Tue/Thu")
+# 3. Always run "tofu plan" first to check for conflicts
+# 4. Consider using Terraform Cloud for state locking if needed (~$20/month)
+#
+# Alternative: Use GitOps workflow
+# - All changes go through pull requests
+# - CI/CD pipeline runs "tofu apply"
+# - Only automated system has write access to state
