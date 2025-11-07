@@ -202,23 +202,4 @@ resource "digitalocean_firewall" "monitoring_firewall" {
   }
 }
 
-# Outputs
-output "ocr_droplet_ip" {
-  value       = digitalocean_droplet.paddleocr.ipv4_address
-  description = "PaddleOCR + Ollama Droplet IP"
-}
-
-output "monitoring_droplet_ip" {
-  value       = digitalocean_droplet.monitoring.ipv4_address
-  description = "Prometheus + Grafana Droplet IP"
-}
-
-output "prometheus_url" {
-  value       = "http://${digitalocean_droplet.monitoring.ipv4_address}:9090"
-  description = "Prometheus dashboard URL"
-}
-
-output "grafana_url" {
-  value       = "http://${digitalocean_droplet.monitoring.ipv4_address}:3000"
-  description = "Grafana dashboard URL"
-}
+# Outputs are now consolidated in outputs.tf
