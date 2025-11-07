@@ -1,0 +1,201 @@
+name: Skillsmith - Auto Skill Builder
+# Mines error patterns and proposes skill candidates automatically
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      min_hits:
+        description: 'Minimum hits in 7d to qualify'
+        required: false
+        default: '2'
+      top_n:
+        description: 'Maximum candidates to generate'
+        required: false
+        default: '50'
+
+jobs:
+  mine-and-propose:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install psycopg jinja2 python-slugify
+
+      - name: Mine error patterns
+        env:
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          echo "⛏️  Mining error patterns..."
+          MIN_HITS=${{ github.event.inputs.min_hits || '2' }}
+          TOP_N=${{ github.event.inputs.top_n || '50' }}
+          python3 services/skillsmith/miner.py --min_hits $MIN_HITS --top $TOP_N
+
+      - name: Check for candidates
+        id: check_files
+        run: |
+          if [ -d "skills/proposed" ] && [ -n "$(ls -A skills/proposed/*.yaml 2>/dev/null)" ]; then
+            echo "has_files=true" >> $GITHUB_OUTPUT
+            COUNT=$(ls -1 skills/proposed/*.yaml 2>/dev/null | wc -l)
+            echo "count=$COUNT" >> $GITHUB_OUTPUT
+          else
+            echo "has_files=false" >> $GITHUB_OUTPUT
+            echo "count=0" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configure git
+        if: steps.check_files.outputs.has_files == 'true'
+        run: |
+          git config user.email "bot@insightpulseai.net"
+          git config user.name "skillsmith-bot"
+
+      - name: Create branch and commit
+        if: steps.check_files.outputs.has_files == 'true'
+        id: create_branch
+        run: |
+          BRANCH="skillsmith/${{ github.run_id }}"
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          git checkout -b "$BRANCH"
+          git add skills/proposed
+          COUNT=${{ steps.check_files.outputs.count }}
+
+          cat > /tmp/commit_msg.txt <<EOF
+          chore(skillsmith): propose $COUNT new skills from error mining
+
+          Generated $COUNT skill candidates from error patterns.
+
+          - Mining run: ${{ github.run_id }}
+          - Source: error_signatures (30d window)
+          - Min hits (7d): ${{ github.event.inputs.min_hits || '2' }}
+          - Timestamp: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          To approve:
+          1. Review skill definitions in skills/proposed/
+          2. Create autopatch scripts for fixers (if needed)
+          3. Move approved skills to skills/ directory
+          4. Set status: approved
+          5. Run: make retrain
+          EOF
+
+          git commit -F /tmp/commit_msg.txt
+
+      - name: Push branch
+        if: steps.check_files.outputs.has_files == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH="${{ steps.create_branch.outputs.branch }}"
+          git push -u origin "$BRANCH"
+
+      - name: Create Pull Request
+        if: steps.check_files.outputs.has_files == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          COUNT=${{ steps.check_files.outputs.count }}
+          BRANCH="${{ steps.create_branch.outputs.branch }}"
+
+          # Create PR body
+          cat > /tmp/pr_body.md <<'EOF'
+          # Skillsmith: Auto-Generated Skill Proposals
+
+          This PR contains skill candidates automatically generated from error mining.
+
+          ## 📊 Summary
+
+          - **Candidates**: $COUNT skills
+          - **Mining run**: `${{ github.run_id }}`
+          - **Source**: `error_signatures` (30d window)
+          - **Min hits (7d)**: ${{ github.event.inputs.min_hits || '2' }}
+          - **Generated**: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ## 📋 Review Checklist
+
+          - [ ] Review each skill definition in `skills/proposed/`
+          - [ ] Verify guardrails won't cause false positives
+          - [ ] For fixers: Implement autopatch scripts (see TODOs in YAML)
+          - [ ] Test in sandbox environment
+          - [ ] Move approved skills to `skills/` directory
+          - [ ] Update `status: approved` in YAML files
+          - [ ] Run `make retrain` to rebuild skill index
+
+          ## 🔍 Skill Types
+
+          Skills are categorized as:
+          - **Guardrails** (GR-*): Prevent known error patterns
+          - **Fixers** (FX-*): Auto-patch known issues
+
+          ## 🚀 Deployment
+
+          After approval:
+          ```bash
+          # Move approved skills
+          mv skills/proposed/GR-ABCD1234*.yaml skills/
+
+          # Update status in YAML
+          sed -i 's/status: proposed/status: approved/' skills/GR-*.yaml
+
+          # Retrain
+          make retrain
+          ```
+
+          ## 📚 Documentation
+
+          - [Skillsmith Guide](docs/skillsmith-guide.md)
+          - [Error Mining](docs/error-mining.md)
+
+          ---
+          *Automated by Skillsmith - [View logs](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})*
+          EOF
+
+          # Replace variables in PR body
+          sed -i "s/\$COUNT/$COUNT/g" /tmp/pr_body.md
+          sed -i "s|\${{ github.run_id }}|${{ github.run_id }}|g" /tmp/pr_body.md
+          sed -i "s|\${{ github.event.inputs.min_hits \|\| '2' }}|${{ github.event.inputs.min_hits || '2' }}|g" /tmp/pr_body.md
+          sed -i "s|\$(date -u +\"%Y-%m-%d %H:%M:%S UTC\")|$(date -u +"%Y-%m-%d %H:%M:%S UTC")|g" /tmp/pr_body.md
+          sed -i "s|\${{ github.server_url }}|${{ github.server_url }}|g" /tmp/pr_body.md
+          sed -i "s|\${{ github.repository }}|${{ github.repository }}|g" /tmp/pr_body.md
+
+          gh pr create \
+            --title "Skillsmith: $COUNT proposed skills from error mining" \
+            --body-file /tmp/pr_body.md \
+            --head "$BRANCH" \
+            --label "skillsmith" \
+            --label "automated"
+
+      - name: No candidates found
+        if: steps.check_files.outputs.has_files == 'false'
+        run: |
+          echo "ℹ️  No skill candidates found with current thresholds"
+          echo "   Min hits: ${{ github.event.inputs.min_hits || '2' }}"
+          echo "   This is normal if error patterns are below threshold"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ "${{ steps.check_files.outputs.has_files }}" == "true" ]; then
+            echo "✅ Created PR with ${{ steps.check_files.outputs.count }} skill candidates"
+          else
+            echo "ℹ️  No candidates to propose"
+          fi
