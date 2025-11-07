@@ -4,7 +4,7 @@ USER root
 
 # Copy custom addons
 COPY addons/ipai_agent_hybrid /mnt/extra-addons/ipai_agent_hybrid
-COPY addons/ipai_ocr /mnt/extra-addons/ipai_ocr
+# Note: ipai_ocr will be added in Phase 3 after module creation
 
 # Install Python dependencies for modules and curl for healthcheck
 RUN pip3 install --no-cache-dir \
