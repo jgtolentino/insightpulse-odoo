@@ -1,0 +1,213 @@
+"""
+Slack Client
+Wrapper around Slack Web API
+"""
+import os
+import logging
+from typing import List, Dict, Any, Optional
+from slack_sdk import WebClient
+from slack_sdk.errors import SlackApiError
+
+logger = logging.getLogger(__name__)
+
+
+class SlackClient:
+    """
+    Slack Web API client
+
+    Environment variables:
+    - SLACK_BOT_TOKEN: Bot token (xoxb-...)
+    """
+
+    def __init__(self, bot_token: Optional[str] = None):
+        self.bot_token = bot_token or os.getenv('SLACK_BOT_TOKEN')
+        if not self.bot_token:
+            logger.warning("⚠️  SLACK_BOT_TOKEN not set. Slack integration disabled.")
+            self.client = None
+        else:
+            self.client = WebClient(token=self.bot_token)
+            logger.info("✅ Slack client initialized")
+
+    def test_connection(self) -> bool:
+        """Test Slack connection"""
+        if not self.client:
+            return False
+        try:
+            auth = self.client.auth_test()
+            return auth['ok']
+        except:
+            return False
+
+    async def post_message(
+        self,
+        channel: str,
+        text: str,
+        blocks: Optional[List[Dict]] = None,
+        thread_ts: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """
+        Post message to Slack channel
+
+        Args:
+            channel: Channel ID or name
+            text: Message text (fallback)
+            blocks: Block Kit blocks for rich formatting
+            thread_ts: Thread timestamp for threading
+
+        Returns:
+            Slack API response
+        """
+        if not self.client:
+            logger.warning("Slack client not initialized. Skipping message.")
+            return {'ok': False, 'error': 'no_client'}
+
+        try:
+            response = self.client.chat_postMessage(
+                channel=channel,
+                text=text,
+                blocks=blocks,
+                thread_ts=thread_ts
+            )
+            logger.info(f"✅ Posted to Slack channel {channel}")
+            return response.data
+
+        except SlackApiError as e:
+            logger.error(f"❌ Slack API error: {e.response['error']}")
+            raise
+
+    async def post_thread_reply(
+        self,
+        channel: str,
+        thread_ts: str,
+        text: str,
+        blocks: Optional[List[Dict]] = None
+    ) -> Dict[str, Any]:
+        """Post a threaded reply"""
+        return await self.post_message(
+            channel=channel,
+            text=text,
+            blocks=blocks,
+            thread_ts=thread_ts
+        )
+
+    async def update_message(
+        self,
+        channel: str,
+        ts: str,
+        text: str,
+        blocks: Optional[List[Dict]] = None
+    ) -> Dict[str, Any]:
+        """Update an existing message"""
+        if not self.client:
+            return {'ok': False, 'error': 'no_client'}
+
+        try:
+            response = self.client.chat_update(
+                channel=channel,
+                ts=ts,
+                text=text,
+                blocks=blocks
+            )
+            return response.data
+
+        except SlackApiError as e:
+            logger.error(f"❌ Slack update error: {e.response['error']}")
+            raise
+
+    async def get_user_info(self, user_id: str) -> Dict[str, Any]:
+        """Get Slack user info"""
+        if not self.client:
+            return {}
+
+        try:
+            response = self.client.users_info(user=user_id)
+            return response['user']
+        except SlackApiError as e:
+            logger.error(f"❌ Error getting user info: {e.response['error']}")
+            return {}
+
+    async def get_channel_info(self, channel_id: str) -> Dict[str, Any]:
+        """Get channel info"""
+        if not self.client:
+            return {}
+
+        try:
+            response = self.client.conversations_info(channel=channel_id)
+            return response['channel']
+        except SlackApiError as e:
+            logger.error(f"❌ Error getting channel info: {e.response['error']}")
+            return {}
+
+    def build_prd_summary_blocks(
+        self,
+        meeting_name: str,
+        page_url: str,
+        task_count: int,
+        meeting_date: str
+    ) -> List[Dict]:
+        """Build Block Kit blocks for PRD summary"""
+        return [
+            {
+                "type": "header",
+                "text": {
+                    "type": "plain_text",
+                    "text": f"🤖 PRD Generated: {meeting_name}"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"I've created a PRD from your meeting:\n• *{task_count} tasks* extracted\n• <{page_url}|View PRD in Odoo>"
+                }
+            },
+            {
+                "type": "divider"
+            },
+            {
+                "type": "context",
+                "elements": [
+                    {
+                        "type": "mrkdwn",
+                        "text": f"Meeting: {meeting_date} | Generated by AI Agent"
+                    }
+                ]
+            }
+        ]
+
+    def build_task_list_blocks(
+        self,
+        tasks: List[Dict[str, Any]],
+        page_url: str
+    ) -> List[Dict]:
+        """Build Block Kit blocks for task list"""
+        blocks = [
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"*Tasks extracted from <{page_url}|PRD>:*"
+                }
+            }
+        ]
+
+        # Add first 5 tasks
+        for task in tasks[:5]:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"• {task.get('name', 'Untitled')}"
+                }
+            })
+
+        if len(tasks) > 5:
+            blocks.append({
+                "type": "context",
+                "elements": [{
+                    "type": "mrkdwn",
+                    "text": f"_+{len(tasks) - 5} more tasks in Odoo_"
+                }]
+            })
+
+        return blocks
