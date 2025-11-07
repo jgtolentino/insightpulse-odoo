@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Inherit partner form view to add IPAI code -->
+        <record id="view_partner_form_ipai" model="ir.ui.view">
+            <field name="name">res.partner.form.ipai</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="ipai_code" placeholder="e.g., IPAI-001"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Add IPAI code to partner tree view -->
+        <record id="view_partner_tree_ipai" model="ir.ui.view">
+            <field name="name">res.partner.tree.ipai</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="base.view_partner_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='display_name']" position="after">
+                    <field name="ipai_code" optional="hide"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

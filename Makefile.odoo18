@@ -1,0 +1,127 @@
+# Makefile for Odoo 18 + OCA Setup
+# Production-grade project structure for Odoo 18 CE + OCA modules
+
+.PHONY: help up down init waves shell logs check clean restart psql install-module update-module
+
+include .env
+export
+
+# Default target
+.DEFAULT_GOAL := help
+
+help: ## Show this help message
+	@echo "╔════════════════════════════════════════════════════════════════╗"
+	@echo "║  Odoo 18 + OCA Stack Management                                ║"
+	@echo "╚════════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🚀 DOCKER OPERATIONS
+# ══════════════════════════════════════════════════════════════
+
+up: ## Start Odoo 18 stack
+	@echo "🚀 Starting Odoo 18 stack..."
+	docker compose -f docker/docker-compose.odoo18.yml up -d
+	@echo ""
+	@echo "✅ Odoo 18 is running!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "🌐 Odoo:      http://localhost:$${HOST_PORT_ODOO}"
+	@echo "🗄️  Database:  localhost:$${HOST_PORT_DB}"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+down: ## Stop Odoo 18 stack (preserve data)
+	@echo "🛑 Stopping Odoo 18 stack..."
+	docker compose -f docker/docker-compose.odoo18.yml down
+	@echo "✅ Stack stopped (data preserved)"
+
+restart: down up ## Restart Odoo 18 stack
+
+# ══════════════════════════════════════════════════════════════
+# 🔧 INITIALIZATION
+# ══════════════════════════════════════════════════════════════
+
+init: up ## Initialize project (clone OCA, setup addons_path)
+	@echo "🔧 Initializing Odoo 18 + OCA..."
+	@echo ""
+	@echo "Step 1: Cloning OCA repositories..."
+	bash scripts/clone_oca.sh ./oca
+	@echo ""
+	@echo "Step 2: Generating addons_path..."
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo bash -c "/entrypoint.d/10-gen-addons-path.sh"
+	@echo ""
+	@echo "Step 3: Running API compatibility checks..."
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo bash -c "bash /mnt/scripts/check_api_mismatches.sh"
+	@echo ""
+	@echo "✅ Initialization complete!"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Next: Run 'make waves' to install modules"
+
+# ══════════════════════════════════════════════════════════════
+# 📦 MODULE INSTALLATION
+# ══════════════════════════════════════════════════════════════
+
+waves: ## Install modules in waves
+	@echo "📦 Installing modules in waves..."
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo bash -c "bash /mnt/scripts/install_waves.sh $${POSTGRES_DB}"
+	@echo "✅ All waves installed!"
+
+install-module: ## Install a specific module (usage: make install-module MODULE=module_name)
+	@if [ -z "$(MODULE)" ]; then \
+		echo "❌ Error: MODULE variable not set"; \
+		echo "Usage: make install-module MODULE=module_name"; \
+		exit 1; \
+	fi
+	@echo "📦 Installing module: $(MODULE)..."
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo odoo -d $${POSTGRES_DB} -i $(MODULE) -c /etc/odoo/odoo.conf --stop-after-init
+	@echo "✅ Module $(MODULE) installed!"
+
+update-module: ## Update a specific module (usage: make update-module MODULE=module_name)
+	@if [ -z "$(MODULE)" ]; then \
+		echo "❌ Error: MODULE variable not set"; \
+		echo "Usage: make update-module MODULE=module_name"; \
+		exit 1; \
+	fi
+	@echo "🔄 Updating module: $(MODULE)..."
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo odoo -d $${POSTGRES_DB} -u $(MODULE) -c /etc/odoo/odoo.conf --stop-after-init
+	@echo "✅ Module $(MODULE) updated!"
+
+# ══════════════════════════════════════════════════════════════
+# 🔍 DEBUGGING & LOGS
+# ══════════════════════════════════════════════════════════════
+
+shell: ## Open bash shell in Odoo container
+	docker compose -f docker/docker-compose.odoo18.yml exec odoo bash
+
+logs: ## Show Odoo logs (follow mode)
+	docker compose -f docker/docker-compose.odoo18.yml logs -f --tail=200
+
+psql: ## Open PostgreSQL shell
+	docker compose -f docker/docker-compose.odoo18.yml exec db psql -U $${POSTGRES_USER} -d $${POSTGRES_DB}
+
+# ══════════════════════════════════════════════════════════════
+# ✅ VALIDATION & CHECKS
+# ══════════════════════════════════════════════════════════════
+
+check: ## Run API compatibility checks
+	@echo "🔍 Running compatibility checks..."
+	bash scripts/clone_oca.sh ./oca 18.0
+	docker compose -f docker/docker-compose.odoo18.yml run --rm odoo bash -c "/entrypoint.d/10-gen-addons-path.sh && bash /mnt/scripts/check_api_mismatches.sh"
+	@echo "✅ Checks passed!"
+
+# ══════════════════════════════════════════════════════════════
+# 🧹 CLEANUP
+# ══════════════════════════════════════════════════════════════
+
+clean: ## Clean up (remove containers, volumes, and OCA repos)
+	@echo "🧹 Cleaning up..."
+	@read -p "This will remove all containers, volumes, and OCA repositories. Continue? [y/N] " -n 1 -r; \
+	echo ""; \
+	if [[ $$REPLY =~ ^[Yy]$$ ]]; then \
+		docker compose -f docker/docker-compose.odoo18.yml down -v; \
+		rm -rf oca; \
+		echo "✅ Cleanup complete!"; \
+	else \
+		echo "❌ Cleanup cancelled"; \
+	fi

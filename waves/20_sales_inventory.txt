@@ -1,0 +1,7 @@
+sale
+sale_management
+purchase
+purchase_request
+stock
+stock_account
+stock_picking_invoice_link

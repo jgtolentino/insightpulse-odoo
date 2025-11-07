@@ -1,0 +1,4 @@
+crm
+report_xlsx
+queue_job
+base_import_match

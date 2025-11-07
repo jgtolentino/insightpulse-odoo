@@ -1,0 +1,8 @@
+hr
+hr_contract
+hr_attendance
+hr_holidays
+project
+project_task_default_stage
+hr_timesheet
+hr_timesheet_sheet

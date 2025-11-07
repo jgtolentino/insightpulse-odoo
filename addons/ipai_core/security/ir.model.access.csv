@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_partner_user,access_ipai_partner_user,base.model_res_partner,base.group_user,1,1,1,0
+access_ipai_partner_manager,access_ipai_partner_manager,base.model_res_partner,group_ipai_manager,1,1,1,1
