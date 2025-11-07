@@ -1,0 +1,52 @@
+name: odoo19-erp
+region: sgp
+services:
+  - name: web
+    dockerfile_path: infra/docker/Dockerfile.odoo19
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    health_check:
+      http_path: /web/health
+      initial_delay_seconds: 120
+      period_seconds: 10
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+    http_port: 8069
+    instance_count: 1
+    instance_size_slug: basic-xs
+    routes:
+      - path: /
+    envs:
+      - key: DB_HOST
+        scope: RUN_TIME
+        value: aws-1-us-east-1.pooler.supabase.com
+      - key: DB_PORT
+        scope: RUN_TIME
+        value: "6543"
+      - key: DB_USER
+        scope: RUN_TIME
+        value: postgres.spdtwktxdalcfigzeqrz
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: SHWYXDMFAwXI1drT
+      - key: DB_NAME
+        scope: RUN_TIME
+        value: postgres
+      - key: SUPABASE_URL
+        scope: RUN_TIME
+        value: https://spdtwktxdalcfigzeqrz.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwZHR3a3R4ZGFsY2ZpZ3plcXJ6Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDY0NDAzNSwiZXhwIjoyMDc2MjIwMDM1fQ.Rhdi18B5EuUeaSGfdB4rqZ6UoPSrJ9IbzkN_YboyvhU
+      - key: ADMIN_PASSWD
+        scope: RUN_TIME
+        type: SECRET
+        value: Postgres_26
+      - key: OCR_SERVICE_URL
+        scope: RUN_TIME
+        value: http://188.166.237.231:8100

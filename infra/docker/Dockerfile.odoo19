@@ -1,0 +1,32 @@
+FROM odoo:19.0
+
+USER root
+
+# Copy custom addons
+COPY addons/ipai_agent_hybrid /mnt/extra-addons/ipai_agent_hybrid
+COPY addons/ipai_ocr /mnt/extra-addons/ipai_ocr
+
+# Install Python dependencies for modules
+RUN pip3 install --no-cache-dir \
+    supabase \
+    openai \
+    requests
+
+# Create odoo configuration directory
+RUN mkdir -p /etc/odoo
+
+# Expose Odoo port
+EXPOSE 8069
+
+# Health check endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -f http://localhost:8069/web/health || exit 1
+
+# Set proper permissions
+RUN chown -R odoo:odoo /mnt/extra-addons
+
+USER odoo
+
+# Entry point and command
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["odoo", "--db_host=${DB_HOST}", "--db_port=${DB_PORT}", "--db_user=${DB_USER}", "--db_password=${DB_PASSWORD}", "--addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons"]
