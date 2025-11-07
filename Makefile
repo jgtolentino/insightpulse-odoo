@@ -779,6 +779,27 @@ claude:sync-check: ## Check drift and print proposed section 19 update (no write
 claude:sync-write: ## Update section 19 in-place from skills dir (creates a branch in CI)
 	@python3 scripts/skillsmith_sync.py --claude-md $(CLAUDE_MD) --skills-dir $(SKILLS_DIR) --write
 
+claude:ci-local: ## Run validator + drift check locally (fast)
+	@echo "🔍 Running local CI checks..."
+	@python3 scripts/validate-claude-config.py --project-root . --claude-md $(CLAUDE_MD) --mcp-config $(MCP_CFG)
+	@chmod +x scripts/ci/assert-clean-section19.sh
+	@bash scripts/ci/assert-clean-section19.sh
+	@echo "✅ Local CI checks passed!"
+
+claude:pr: ## Open or update drift PR (uses gh)
+	@echo "🔀 Creating/updating drift PR..."
+	@CLAUDE_SYNC_WRITE=true bash scripts/ci/open-pr-on-drift.sh
+	@echo "✅ PR created/updated!"
+
+claude:release-patch: ## Tag a patch release after successful sync
+	@VER=$$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"); \
+	PATCH=$$(echo $$VER | awk -F. '{print $$3+1}'); \
+	MAJOR=$$(echo $$VER | awk -F. '{print $$1}' | sed 's/v//'); \
+	MINOR=$$(echo $$VER | awk -F. '{print $$2}'); \
+	NEW_TAG="v$$MAJOR.$$MINOR.$$PATCH"; \
+	echo "Tagging $$NEW_TAG"; \
+	git tag "$$NEW_TAG" && git push origin "$$NEW_TAG"
+
 # ══════════════════════════════════════════════════════════════
 # 🔗 SKILLSMITH INTEGRATION - AI/ML PIPELINE
 # ══════════════════════════════════════════════════════════════

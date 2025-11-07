@@ -1,0 +1,13 @@
+name: Claude Config — Nightly Drift Check
+on:
+  schedule:
+    - cron: "17 3 * * *" # nightly UTC
+  workflow_dispatch:
+
+env:
+  CLAUDE_SYNC_WRITE: ${{ vars.CLAUDE_SYNC_WRITE || 'false' }}
+
+jobs:
+  nightly:
+    uses: ./.github/workflows/claude-sync-ci.yml
+    secrets: inherit
