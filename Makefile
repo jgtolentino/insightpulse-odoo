@@ -296,7 +296,7 @@ fix-permissions: ## Fix file permissions
 # ✅ VALIDATION & VERIFICATION
 # ══════════════════════════════════════════════════════════════
 
-validate: ## Run all validation checks
+validate: assistant-guard assistant-tasks-lint ## Run all validation checks
 	@echo "🔍 Running validation checks..."
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@python3 scripts/validate-repo-structure.py
@@ -901,6 +901,37 @@ gittodoc-cron-run: ## run nightly ingest once against production API
 gittodoc-cron-test: ## run against local dev (service on :8099)
 	@echo "Dev API http://127.0.0.1:8099"
 	@GITTODOC_API=http://127.0.0.1:8099 python3 apps/gittodoc-service/scripts/nightly_ingest.py
+
+# ══════════════════════════════════════════════════════════════
+# 🤖 ASSISTANT GUARD - CLAUDE/CURSOR RULES
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: assistant-guard assistant-tasks-lint release
+
+assistant-guard: ## Validate Claude/Cursor rules & docs
+	@python3 - <<'PY'
+import re, sys, pathlib
+cr = pathlib.Path(".cursorrules").read_text(errors="ignore")
+assert "Odoo 18" in cr and "CE" in cr, ".cursorrules must say 'Odoo 18 CE'"
+# Check that if Odoo 19 or Enterprise are mentioned, they're in a negative context
+if "Enterprise" in cr:
+    assert re.search(r"(NOT|NEVER|no|avoid|don't|❌).*Enterprise", cr, re.I), "Enterprise must be disallowed"
+if "Odoo 19" in cr or "19 CE" in cr:
+    assert re.search(r"(NOT|NEVER|no|avoid|don't|❌).*19", cr, re.I), "Odoo 19 must be disallowed"
+for f in ["TASKS.md","PLANNING.md","ARCHITECTURE.md"]:
+    t=pathlib.Path(f).read_text(errors="ignore"); assert t.strip().startswith("#"), f"{f} needs H1"
+print("✅ Assistant guard OK")
+PY
+
+assistant-tasks-lint: ## Fail if TASKS has unresolved criticals
+	@grep -qi "known issues" TASKS.md || (echo "TASKS.md missing Known Issues section"; exit 1)
+	@! grep -iE "^\s*-\s*\[ \].*critical" TASKS.md || (echo "❌ Open CRITICAL tasks in TASKS.md"; exit 1)
+	@echo "✅ TASKS clean"
+
+release: ## Tag & push semantic version (env VER=v18.0.1)
+	@test -n "$(VER)" || (echo "Usage: make release VER=v18.0.1" && exit 1)
+	git tag $(VER)
+	git push origin $(VER)
 
 # ══════════════════════════════════════════════════════════════
 # 🚨 MONITORING & OPS HARDENING
