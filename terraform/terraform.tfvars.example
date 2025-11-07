@@ -1,8 +1,20 @@
-# Terraform Variables Configuration
-# Copy this file to terraform.tfvars and fill in the values
+# InsightPulse AI - Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your actual values
+# NEVER commit terraform.tfvars to git (it contains secrets)
 
-# DigitalOcean Configuration
+# ========================================
+# Cloud Provider Credentials
+# ========================================
+
+# DigitalOcean API token
+# Get it from: https://cloud.digitalocean.com/account/api/tokens
 do_token = "dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# AWS credentials for S3 backend (state management)
+# Get them from: https://console.aws.amazon.com/iam/home#/security_credentials
+aws_access_key = "AKIAIOSFODNN7EXAMPLE"
+aws_secret_key = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+aws_region     = "us-east-1"
 
 # SSH Configuration
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... admin@insightpulseai.net"

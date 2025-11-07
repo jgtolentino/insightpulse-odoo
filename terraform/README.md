@@ -1,15 +1,20 @@
-# InsightPulse AI - Terraform Infrastructure as Code
+# InsightPulse AI - Infrastructure as Code
 
-Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean.
+> **OpenTofu/Terraform configuration for deploying the complete InsightPulse AI stack on DigitalOcean**
+
+Complete Infrastructure as Code (IaC) for InsightPulse AI platform on DigitalOcean with AWS S3 + DynamoDB backend.
 
 ## 📁 Directory Structure
 
 ```
 terraform/
-├── main.tf                    # Main infrastructure configuration
+├── backend.tf                 # AWS S3 + DynamoDB backend configuration
+├── main.tf                    # Core infrastructure (VPC, firewall, monitoring)
 ├── variables.tf               # Variable definitions
 ├── apps.tf                    # DigitalOcean App Platform applications
 ├── droplets.tf                # Droplet and volume configurations
+├── dns.tf                     # DNS records for all services
+├── outputs.tf                 # Output values
 ├── terraform.tfvars.example   # Example variables file
 ├── README.md                  # This file
 └── cloud-init/
@@ -42,53 +47,58 @@ terraform/
 
 ### Prerequisites
 
-1. **DigitalOcean Account**
+1. **OpenTofu or Terraform installed**
+   ```bash
+   # Install OpenTofu (recommended)
+   brew install opentofu
+
+   # OR install Terraform
+   brew install terraform
+   ```
+
+2. **AWS CLI installed and configured** (for state management)
+   ```bash
+   brew install awscli
+   aws configure
+   ```
+
+3. **DigitalOcean Account**
    - Create an account at https://digitalocean.com
    - Generate a Personal Access Token (Settings → API → Generate New Token)
 
-2. **Terraform Installation**
-   ```bash
-   # macOS
-   brew install terraform
-
-   # Ubuntu/Debian
-   wget -O- https://apt.releases.hashicorp.com/gpg | sudo gpg --dearmor -o /usr/share/keyrings/hashicorp-archive-keyring.gpg
-   echo "deb [signed-by=/usr/share/keyrings/hashicorp-archive-keyring.gpg] https://apt.releases.hashicorp.com $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/hashicorp.list
-   sudo apt update && sudo apt install terraform
-   ```
-
-3. **DigitalOcean Spaces for State Storage** (optional but recommended)
-   ```bash
-   doctl compute region list  # Choose a region
-   doctl spaces create insightpulse-terraform-state --region sgp1
-   ```
-
 ### Initial Setup
 
-1. **Clone the repository**
+1. **Set up AWS backend** (for state management)
    ```bash
-   cd /path/to/insightpulse-odoo/terraform
+   # Run the setup script
+   ./scripts/setup-aws-backend.sh
+
+   # This creates:
+   # - S3 bucket: ipai-tofu-state (with versioning and encryption)
+   # - DynamoDB table: ipai-tofu-locks (for state locking)
+   # Cost: ~$0.50/month vs $20+/month for Terraform Cloud
    ```
 
 2. **Configure variables**
    ```bash
+   cd terraform
    cp terraform.tfvars.example terraform.tfvars
    vim terraform.tfvars  # Fill in your values
    ```
 
-3. **Initialize Terraform**
+3. **Initialize OpenTofu/Terraform**
    ```bash
-   terraform init
+   tofu init  # or: terraform init
    ```
 
 4. **Review the plan**
    ```bash
-   terraform plan
+   tofu plan  # or: terraform plan
    ```
 
 5. **Apply the infrastructure**
    ```bash
-   terraform apply
+   tofu apply  # or: terraform apply
    ```
 
 ## 🔧 Configuration
@@ -98,10 +108,21 @@ terraform/
 Edit `terraform.tfvars` with your specific values:
 
 ```hcl
+# Cloud Provider Credentials
 do_token               = "dop_v1_xxxxx"
+aws_access_key         = "AKIAIOSFODNN7EXAMPLE"
+aws_secret_key         = "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+# SSH Configuration
 ssh_public_key         = "ssh-rsa AAAAB3..."
+
+# Database Configuration
 supabase_db_password   = "your-db-password"
+
+# Odoo Configuration
 odoo_admin_password    = "your-odoo-password"
+
+# GitHub Configuration
 github_private_key     = "-----BEGIN RSA PRIVATE KEY-----\n..."
 github_installation_id = "12345678"
 ```
@@ -202,44 +223,64 @@ Configured alerts (sent via email):
 
 ## 📦 State Management
 
-### Remote State Backend
+### Backend: AWS S3 + DynamoDB
 
-By default, Terraform state is stored in DigitalOcean Spaces (S3-compatible):
+**Why AWS S3 instead of Terraform Cloud?**
+- ✅ **Cost:** ~$0.50/month vs $20+/month
+- ✅ **Control:** Full control over state files
+- ✅ **Privacy:** State files stay in your AWS account
+- ✅ **Reliability:** S3 offers 99.999999999% durability
+- ✅ **No vendor lock-in:** Open-source compatible
 
+**Features:**
+- ✅ **Versioning:** S3 bucket versioning enabled
+- ✅ **Encryption:** AES-256 encryption at rest
+- ✅ **Locking:** DynamoDB prevents concurrent modifications
+- ✅ **Backup:** State file versions retained
+
+**Configuration:**
 ```hcl
-backend "s3" {
-  endpoint = "sgp1.digitaloceanspaces.com"
-  bucket   = "insightpulse-terraform-state"
-  key      = "production/terraform.tfstate"
+terraform {
+  backend "s3" {
+    bucket         = "ipai-tofu-state"
+    key            = "insightpulse/odoo-stack/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "ipai-tofu-locks"
+    encrypt        = true
+  }
 }
 ```
 
-**Setup Spaces backend:**
+**Setup:**
+```bash
+# Run the automated setup script
+./scripts/setup-aws-backend.sh
 
-1. Create Spaces bucket:
-   ```bash
-   doctl spaces create insightpulse-terraform-state --region sgp1
-   ```
+# Or manually create resources:
+aws s3api create-bucket --bucket ipai-tofu-state --region us-east-1
+aws s3api put-bucket-versioning --bucket ipai-tofu-state --versioning-configuration Status=Enabled
+aws dynamodb create-table --table-name ipai-tofu-locks \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST --region us-east-1
+```
 
-2. Set credentials:
-   ```bash
-   export AWS_ACCESS_KEY_ID="your-spaces-access-key"
-   export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
-   ```
+### Migrating from DigitalOcean Spaces
 
-3. Initialize with backend:
-   ```bash
-   terraform init
-   ```
+If you're migrating from the old DigitalOcean Spaces backend:
 
-### Local State (Development)
+```bash
+# 1. Set up AWS backend
+./scripts/setup-aws-backend.sh
 
-For local testing, comment out the backend block in `main.tf`:
+# 2. Update backend.tf with your bucket name
+vim terraform/backend.tf
 
-```hcl
-# backend "s3" {
-#   ...
-# }
+# 3. Initialize and migrate
+cd terraform
+tofu init -migrate-state
+
+# 4. Type 'yes' when prompted
 ```
 
 ## 🔄 Common Operations

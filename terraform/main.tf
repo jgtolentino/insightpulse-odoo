@@ -10,24 +10,25 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.34"
     }
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
   }
 
-  # Backend configuration for state management
-  backend "s3" {
-    # DigitalOcean Spaces configuration
-    endpoint                    = "sgp1.digitaloceanspaces.com"
-    region                      = "us-east-1"  # Required but not used by DO Spaces
-    bucket                      = "insightpulse-terraform-state"
-    key                         = "production/terraform.tfstate"
-    skip_credentials_validation = true
-    skip_metadata_api_check     = true
-    skip_region_validation      = true
-  }
+  # Backend configuration is now in backend.tf
 }
 
 # DigitalOcean Provider Configuration
 provider "digitalocean" {
   token = var.do_token
+}
+
+# AWS Provider Configuration (for S3 backend)
+provider "aws" {
+  region     = var.aws_region
+  access_key = var.aws_access_key
+  secret_key = var.aws_secret_key
 }
 
 # Data sources for existing resources
@@ -101,67 +102,7 @@ resource "digitalocean_firewall" "web_firewall" {
   }
 }
 
-# Domain configuration
-resource "digitalocean_domain" "insightpulseai" {
-  name = "insightpulseai.net"
-}
-
-# DNS Records
-resource "digitalocean_record" "root" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "A"
-  name   = "@"
-  value  = digitalocean_app.odoo_saas.live_url_base
-  ttl    = 300
-}
-
-resource "digitalocean_record" "erp" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "CNAME"
-  name   = "erp"
-  value  = "${digitalocean_app.odoo_saas.default_ingress}."
-  ttl    = 300
-}
-
-resource "digitalocean_record" "superset" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "CNAME"
-  name   = "superset"
-  value  = "${digitalocean_app.superset.default_ingress}."
-  ttl    = 300
-}
-
-resource "digitalocean_record" "mcp" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "CNAME"
-  name   = "mcp"
-  value  = "${digitalocean_app.mcp_server.default_ingress}."
-  ttl    = 300
-}
-
-resource "digitalocean_record" "ocr" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "A"
-  name   = "ocr"
-  value  = digitalocean_droplet.paddleocr.ipv4_address
-  ttl    = 300
-}
-
-resource "digitalocean_record" "llm" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "A"
-  name   = "llm"
-  value  = digitalocean_droplet.paddleocr.ipv4_address
-  ttl    = 300
-}
-
-resource "digitalocean_record" "agent" {
-  domain = digitalocean_domain.insightpulseai.id
-  type   = "CNAME"
-  name   = "agent"
-  value  = "${digitalocean_app.mcp_server.default_ingress}."
-  ttl    = 300
-}
+# DNS configuration is now in dns.tf
 
 # SSH Key for Droplets
 resource "digitalocean_ssh_key" "insightpulse_admin" {
@@ -235,29 +176,4 @@ resource "digitalocean_monitor_alert" "disk_alert" {
   description = "Disk usage exceeded 90%"
 }
 
-# Outputs
-output "odoo_url" {
-  value       = digitalocean_app.odoo_saas.live_url
-  description = "Odoo SaaS platform URL"
-}
-
-output "superset_url" {
-  value       = digitalocean_app.superset.live_url
-  description = "Superset analytics URL"
-}
-
-output "mcp_server_url" {
-  value       = digitalocean_app.mcp_server.live_url
-  description = "MCP Server URL"
-}
-
-output "ocr_droplet_ip" {
-  value       = digitalocean_droplet.paddleocr.ipv4_address
-  description = "PaddleOCR Droplet IP"
-  sensitive   = false
-}
-
-output "vpc_id" {
-  value       = digitalocean_vpc.insightpulse_vpc.id
-  description = "VPC ID for private networking"
-}
+# Outputs are now in outputs.tf

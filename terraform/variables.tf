@@ -1,9 +1,31 @@
 # Terraform Variables for InsightPulse AI Infrastructure
 
+# ========================================
+# Cloud Provider Credentials
+# ========================================
+
 variable "do_token" {
   description = "DigitalOcean API token"
   type        = string
   sensitive   = true
+}
+
+variable "aws_access_key" {
+  description = "AWS access key for S3 backend"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_secret_key" {
+  description = "AWS secret key for S3 backend"
+  type        = string
+  sensitive   = true
+}
+
+variable "aws_region" {
+  description = "AWS region for S3 backend"
+  type        = string
+  default     = "us-east-1"
 }
 
 variable "region" {
