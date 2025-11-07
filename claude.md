@@ -3,7 +3,7 @@
 **Purpose**: Operating contract + context for AI assistants working in this repo
 **Audience**: Claude 4 (Sonnet/Opus) and compatible assistants
 **Last Updated**: 2025-11-08
-**Primary ERP Target**: **Odoo 18 CE** (note: plan for 19 CE; do not mix APIs—see version matrix)
+**Primary ERP Target**: **Odoo 18 CE** (consistent across project; do not mix APIs—see version matrix)
 
 ---
 
@@ -37,12 +37,12 @@ Build an **enterprise-grade Finance Shared Service Center (SSC)** for the Philip
 
 | Area     | Primary       | Notes                                                            |
 | -------- | ------------- | ---------------------------------------------------------------- |
-| Odoo     | **18 CE**     | Use 18 docs & APIs; if proposing 19-only features, flag clearly. |
-| OCA      | 18.0 branches | Match module branches to Odoo 18.                                |
-| Docs     | Odoo **18.0** | Link to 18 docs for controllers/QWeb.                            |
+| Odoo     | **18 CE**     | Use Odoo 18.0 docs & APIs exclusively; ignore any Odoo 19 references. |
+| OCA      | 18.0 branches | Match module branches to Odoo 18.0.                                |
+| Docs     | Odoo **18.0** | Link to odoo.com/documentation/18.0/ for controllers/QWeb.                            |
 | Superset | latest        | Official image behind Nginx `/superset`.                         |
 
-> If you find "Odoo 19" references, **assume 18** unless the task explicitly upgrades the target.
+> **Odoo 19 References**: If you encounter "Odoo 19" in project files, treat them as **planning artifacts**. Active implementation uses **Odoo 18 CE only**.
 
 ---
 
@@ -267,9 +267,293 @@ Your code must keep these **green**:
 
 ---
 
+## 17) MCP Server Registry (Canonical)
+
+**7 MCP Servers** configured for VSCode interface:
+
+### pulser-hub (Odoo & Ecosystem Integration)
+- **Command**: `docker run -i --rm pulser-hub-mcp:latest`
+- **Purpose**: Pulser Hub MCP Server for Odoo and ecosystem integration
+- **Tools**: 5 tools (odoo, deployment, ecosystem)
+- **DO App ID**: 60a13dec-1b31-4daf-b4c3-bfe8ca0dbfc8
+- **Status**: ✅ Deployed (GitHub App: 2191216)
+
+### digitalocean (App Platform Management)
+- **Command**: `npx -y @modelcontextprotocol/server-digitalocean`
+- **Env**: `DIGITALOCEAN_TOKEN` (from env)
+- **Purpose**: DigitalOcean App Platform infrastructure management
+- **Tools**: 3 tools (infrastructure, kubernetes, database)
+- **Use Cases**: App deployment, log monitoring, metrics
+
+### kubernetes (Cluster Operations)
+- **Command**: `npx -y @modelcontextprotocol/server-kubernetes`
+- **Env**: `KUBECONFIG` (from env)
+- **Purpose**: Kubernetes cluster operations
+- **Tools**: 22 tools (cluster, deployment, monitoring, networking)
+- **Cluster**: do-nyc3-superset-ai-cluster (nyc3 region)
+
+### docker (Container Management)
+- **Command**: `npx -y @modelcontextprotocol/server-docker`
+- **Purpose**: Docker container management
+- **Tools**: 1 tool (container operations)
+- **Registry**: docker.io
+
+### github (Repository Management)
+- **Command**: `npx -y @modelcontextprotocol/server-github`
+- **Env**: `GITHUB_TOKEN` (from env)
+- **Purpose**: GitHub repository management
+- **Tools**: 40 tools (repository, ci_cd, issues, actions)
+
+### superset (Apache Superset Analytics)
+- **Command**: `npx -y @modelcontextprotocol/server-superset`
+- **Env**: `SUPERSET_URL`, `SUPERSET_USERNAME`, `SUPERSET_PASSWORD`
+- **URL**: https://insightpulseai.net/odoo/superset
+- **Purpose**: Apache Superset analytics, dashboard creation, SQL execution
+- **Tools**: 3+ tools (analytics, dashboard, chart)
+- **App ID**: bc1764a5-b48e-4bec-aa72-8a22cab141bc
+
+**MCP Configuration**: Auto-starts with VSCode, log level: info, total tools: 98
+
+---
+
+## 18) Agent Definitions (Multi-Agent System)
+
+**SuperClaude Architecture**: 4 specialized domain agents
+
+### 1. odoo_developer
+- **Location**: `~/.claude/superclaude/agents/domain/odoo-developer.agent.yaml`
+- **Expertise**: Odoo 18.0 CE module development, OCA standards, Python 3.11, XML views
+- **Skills**: `odoo-module-scaffold`, `odoo-finance-automation`, `odoo-agile-scrum-devops`
+- **MCP Servers**: GitHub, DigitalOcean (App Platform), Supabase
+- **Context**: 8 agencies (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB), BIR compliance, AGPL-3 license, Odoo 18.0 CE only
+- **Auto-Activation**: Keywords: "odoo module", "scaffold", "manifest.py", "models", "views", "controller"
+
+### 2. finance_ssc_expert
+- **Location**: `~/.claude/superclaude/agents/domain/finance-ssc-expert.agent.yaml`
+- **Expertise**: Philippine BIR compliance (Forms 1601-C, 1702-RT, 2550Q, 2550M), multi-agency Finance SSC operations, month-end closing
+- **Skills**: `odoo-finance-automation`, `bir-tax-filing`
+- **MCP Servers**: Supabase (Warehouse), Superset (Analytics), Notion (Documentation)
+- **Context**: 8 agencies with TIN numbers, quarterly/monthly BIR deadlines, withholding tax compliance
+- **Auto-Activation**: Keywords: "BIR", "1601-C", "2550Q", "2550M", "agency", "month-end", "finance", "tax", "withholding"
+
+### 3. bi_architect
+- **Location**: `~/.claude/superclaude/agents/domain/bi-architect.agent.yaml`
+- **Expertise**: Apache Superset 3.0, Tableau Cloud, SQL (PostgreSQL), RLS (Row-Level Security), data modeling
+- **Skills**: `superset-dashboard-automation`, `superset-chart-builder`, `superset-sql-developer`
+- **MCP Servers**: Superset (Chart/Dashboard creation), Tableau (Published sources), Supabase (Direct PostgreSQL)
+- **Context**: Scout transaction data, Odoo analytics integration, MindsDB predictive analytics
+- **Auto-Activation**: Keywords: "superset", "dashboard", "sql view", "analytics", "metrics", "chart", "tableau"
+
+### 4. devops_engineer
+- **Location**: `~/.claude/superclaude/agents/domain/devops-engineer.agent.yaml`
+- **Expertise**: DigitalOcean App Platform, Docker containerization, CI/CD pipelines, GitHub Actions
+- **Skills**: `odoo-agile-scrum-devops`, `github-actions-ci`
+- **MCP Servers**: DigitalOcean (App Platform API), GitHub (Repository management, CI/CD), Docker Hub (Image registry)
+- **Context**: Production deployments (SFO2, SGP regions), zero-downtime strategies, infrastructure as code
+- **Auto-Activation**: Keywords: "deploy", "docker", "ci/cd", "pipeline", "digitalocean", "github actions", "deployment"
+
+**Agent Coordination**: Orchestrated via MCP Coordinator (https://mcp.insightpulseai.net)
+
+---
+
+## 19) Skills Inventory (Auto-Linked)
+
+**46 Skills Total** (auto-synced via SessionStart hook in `.claude/settings.json`)
+
+### Categories
+- **Anthropic Official**: 15 skills (document-skills: docx, pdf, pptx, xlsx)
+- **Community**: 24 skills (odoo, bir-tax-filing, superset-*, supabase-automation)
+- **Notion**: 4 skills (notion-knowledge-capture, notion-meeting-intelligence, etc.)
+- **Other**: 3 skills
+
+### Key Skills for This Project
+- `odoo-module-scaffold` - OCA-compliant Odoo 19.0 module scaffolding
+- `odoo-finance-automation` - BIR tax filing automation (1601-C, 1702-RT, 2550Q)
+- `odoo-agile-scrum-devops` - Sprint planning, CI/CD, DORA metrics
+- `superset-dashboard-automation` - Dashboard creation and metrics
+- `superset-chart-builder` - Chart creation (10+ types)
+- `superset-sql-developer` - SQL execution and query optimization
+
+### Auto-Linking Mechanism
+```bash
+# Runs on SessionStart (configured in .claude/settings.json)
+~/insightpulse-odoo/link_skills.sh
+
+# Links all skills from docs/claude-code-skills/ to .claude/skills/
+find docs/claude-code-skills -name "SKILL.md" -exec dirname {} \; | while read skill_dir; do
+  skill_name=$(basename "$skill_dir")
+  ln -sf "../../$skill_dir" ".claude/skills/$skill_name"
+done
+```
+
+**Skills Storage**: `docs/claude-code-skills/` (central library)
+**Skills Symlinks**: `.claude/skills/` (auto-linked on session start)
+
+---
+
+## 20) GitHub Workflow Integration
+
+**CI Workflows** (`.github/workflows/`)
+
+### assistant-context-freshness.yml
+- **Purpose**: Ensure `claude.md` stays fresh (<7 days old)
+- **Triggers**: Pull requests, push to main, daily at 03:00 UTC
+- **Action**: Fail if `claude.md` last modified >7 days ago
+- **Required Sections**: 0 (Normative Rules), 10 (Evals), 11 (Deployment Guardrails)
+
+### skillsmith-integration.yml
+- **Purpose**: Error-to-skill mining automation
+- **Triggers**: Workflow dispatch, schedule (weekly)
+- **Actions**: Run skill miner, approve skills, sync training data
+- **Output**: New skill templates in `docs/claude-code-skills/`
+
+### claude-autofix-bot.yml
+- **Purpose**: Automated PR fixes using Claude Code
+- **Model**: claude-sonnet-4-5-20250929 (read from claude.md section 22)
+- **Triggers**: PR creation, issue labeled "autofix"
+- **Permissions**: Read/write on contents, pull requests, issues
+
+**Model Version Management**:
+- Primary model defined in section 22 (this file)
+- CI workflows read model from `claude.md` for consistency
+- No hardcoded model versions in workflow files
+
+---
+
+## 21) Permissions Model
+
+**118 Permission Grants** (`.claude/settings.local.json`)
+
+### Bash Command Permissions
+- **Git Operations**: add, pull, commit, push, merge, stash, checkout, fetch, log, rm, mv
+- **GitHub CLI**: issue, pr, run, secret, workflow, release operations
+- **DigitalOcean**: `doctl apps *`, `doctl projects *`, `doctl agent *`
+- **Docker**: ps, exec, stop, rm, logs, run, pull, cp, inspect, compose, system
+- **Database**: `psql *` with full connection strings for both Supabase projects
+- **Python**: `python3 *`, `pip install *`, `pylint *`, `flake8 *`
+- **File Operations**: find, tree, tar, cat, echo, chmod, mkdir, rm, mv, xargs, ls
+
+### Secret Management (Allowed in Bash)
+```bash
+# Supabase (SpendFlow)
+export POSTGRES_URL="postgres://postgres.spdtwktxdalcfigzeqrz:SHWYXDMFAwXI1drT@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+
+# GitHub
+export GITHUB_TOKEN="github_pat_11AJXBTXY0..."
+
+# DigitalOcean
+export DIGITALOCEAN_ACCESS_TOKEN=dop_v1_...
+```
+
+### Read Permissions
+- Full read access to `~/` and all subdirectories
+- Temporary file read access: `/tmp/**`
+
+### WebFetch Permissions
+- `github.com`, `raw.githubusercontent.com`, `api.github.com`
+- `aitmpl.com`
+
+**Security Notes**:
+- Secrets stored in environment variables, never in code
+- Database passwords managed via `~/.zshrc` and macOS Keychain
+- All tokens validated before use with prefix-only debugging
+
+---
+
+## 22) Interface Hierarchy
+
+**Precedence Order** (highest to lowest):
+
+1. **`/claude.md`** (this file) - Canonical assistant context
+   - Odoo version targets (18 CE primary)
+   - BIR compliance rules
+   - Multi-tenancy definitions
+   - Deployment guardrails
+   - Evaluation requirements
+
+2. **`/.claude/settings.json`** - Session hooks and automation
+   - SessionStart hook for skill linking
+   - MCP server auto-start configuration
+   - Log level settings
+
+3. **`/.claude/settings.local.json`** - Permissions model
+   - 118 permission grants for Bash commands
+   - Read/write file access patterns
+   - Secret management patterns
+
+4. **`/mcp/vscode-mcp-config.json`** - MCP server definitions
+   - 7 server configurations
+   - Tool registry (98 total tools)
+   - Workflow orchestration patterns
+
+5. **`/docs/SUPERCLAUDE_ARCHITECTURE.md`** - Agent architecture
+   - 4 agent definitions
+   - MCP integration patterns
+   - Success metrics
+
+**Conflict Resolution**:
+- `claude.md` normative rules override all other configs
+- MCP server settings in `vscode-mcp-config.json` override defaults
+- Permissions in `settings.local.json` are additive (allow-list)
+
+**Model Configuration**:
+- **Primary Model**: `claude-sonnet-4-5-20250929` (Claude Sonnet 4.5)
+- **Fallback Models**: `claude-opus-4-20250514` (Claude Opus 4)
+- **Usage**: CI workflows read model version from this section
+- **Context Window**: 200K tokens (budget management in ORCHESTRATOR.md)
+
+---
+
+## 23) Sync Automation
+
+**Synchronization Scripts** (to be created in Phase 2)
+
+### scripts/sync-claude-configs.sh
+- **Purpose**: Synchronize `/claude.md` changes to all interface touchpoints
+- **Triggers**: Manual execution, post-commit hook, CI workflow
+- **Actions**:
+  1. Validate `/claude.md` structure (sections 0-23 present)
+  2. Extract model version (section 22) → update CI workflows
+  3. Extract MCP servers (section 17) → validate against `mcp/vscode-mcp-config.json`
+  4. Extract agent definitions (section 18) → validate against `~/.claude/superclaude/agents/`
+  5. Extract skills inventory (section 19) → validate against `docs/claude-code-skills/`
+  6. Generate drift report → commit if no conflicts
+
+### scripts/validate-claude-config.py
+- **Purpose**: Validate consistency across all Claude interface configurations
+- **Actions**:
+  1. Parse `/claude.md` sections 17-23
+  2. Compare MCP servers with `vscode-mcp-config.json`
+  3. Compare agent definitions with `~/.claude/superclaude/agents/`
+  4. Compare skills with `docs/claude-code-skills/` inventory
+  5. Compare model version with CI workflow files
+  6. Report conflicts and suggest resolutions
+
+### .github/workflows/claude-config-sync.yml
+- **Purpose**: Automated config sync on push to main
+- **Triggers**: Push to main, manual dispatch
+- **Actions**:
+  1. Run `scripts/validate-claude-config.py`
+  2. Run `scripts/sync-claude-configs.sh`
+  3. Create PR if drift detected
+  4. Notify on Slack if conflicts require manual resolution
+
+**Validation Frequency**:
+- On commit: `scripts/validate-claude-config.py` (pre-commit hook)
+- On push: GitHub Actions drift detection
+- Daily: Scheduled sync audit at 02:00 UTC
+
+**Skillsmith Integration**:
+- Monitors `/claude.md` section 19 for skill inventory changes
+- Auto-generates skill templates when new categories added
+- Updates skill symlinks via `link_skills.sh` on SessionStart
+
+---
+
 ### Footer
 
 **Maintainer**: InsightPulse AI Team
 **Assistant Targets**: Claude 4 (Sonnet/Opus), GPT-compatible agents
 **Repo**: `https://github.com/jgtolentino/insightpulse-odoo`
-**Version**: `assistant-context@2025-11-08` (Odoo 18 primary)
+**Version**: `assistant-context@2025-11-08` (**Odoo 18 CE only - consistent**)
+**Last Sync**: 2025-11-08 (sections 17-23 added, Odoo 18 CE enforced)
