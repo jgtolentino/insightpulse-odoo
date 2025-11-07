@@ -34,10 +34,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
 
 # Minimal runtime libs (Debian trixie compatibility)
 # Note: libpq-dev needed for pg_config during Odoo source installation
+# postgresql-client and redis-tools for entrypoint health checks
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 libpq-dev libxml2 libxslt1.1 libldap2 libsasl2-2 \
     libjpeg62-turbo zlib1g tzdata gosu curl ca-certificates \
     fonts-dejavu fonts-liberation fonts-noto-cjk \
+    postgresql-client redis-tools \
     && rm -rf /var/lib/apt/lists/*
 
 # Create user and dirs
@@ -61,6 +63,12 @@ WORKDIR /opt/odoo
 COPY --chown=odoo:odoo --from=build /src/addons /mnt/extra-addons
 COPY --chown=odoo:odoo --from=build /src/scripts /opt/odoo/scripts
 
+# Copy and setup entrypoint (must be before USER odoo)
+COPY --from=build /src/scripts/entrypoint-oca.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    mkdir -p /etc/odoo /var/lib/odoo /var/log/odoo && \
+    chown -R odoo:odoo /etc/odoo /var/lib/odoo /var/log/odoo
+
 # Healthcheck endpoint (Odoo supports /web/health from 16+)
 HEALTHCHECK --interval=30s --timeout=5s --retries=10 \
   CMD curl -fsS http://localhost:8069/web/health || exit 1
@@ -72,4 +80,5 @@ VOLUME ["/var/lib/odoo", "/var/log/odoo", "/mnt/extra-addons"]
 USER odoo
 
 EXPOSE 8069 8071
+ENTRYPOINT ["/entrypoint.sh"]
 CMD ["odoo", "-c", "/etc/odoo/odoo.conf"]

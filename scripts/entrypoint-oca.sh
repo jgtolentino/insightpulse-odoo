@@ -8,6 +8,13 @@ set -e
 ODOO_RC=${ODOO_RC:-/etc/odoo/odoo.conf}
 DB_ARGS=()
 
+# Map DigitalOcean App Platform env vars to PostgreSQL vars
+export PGHOST="${ODOO_DB_HOST:-${PGHOST:-db}}"
+export PGPORT="${ODOO_DB_PORT:-${PGPORT:-5432}}"
+export PGUSER="${ODOO_DB_USER:-${PGUSER:-odoo}}"
+export PGPASSWORD="${ODOO_DB_PASSWORD:-${PGPASSWORD}}"
+export PGDATABASE="${ODOO_DB_NAME:-${PGDATABASE:-odoo19}}"
+
 function check_postgres() {
     echo "Waiting for PostgreSQL..."
     until PGPASSWORD="$PGPASSWORD" psql -h "$PGHOST" -U "$PGUSER" -d postgres -c '\q' 2>/dev/null; do
