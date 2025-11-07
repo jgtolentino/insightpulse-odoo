@@ -6,11 +6,14 @@ USER root
 COPY addons/ipai_agent_hybrid /mnt/extra-addons/ipai_agent_hybrid
 COPY addons/ipai_ocr /mnt/extra-addons/ipai_ocr
 
-# Install Python dependencies for modules
+# Install Python dependencies for modules and curl for healthcheck
 RUN pip3 install --no-cache-dir \
     supabase \
     openai \
-    requests
+    requests \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create odoo configuration directory
 RUN mkdir -p /etc/odoo
@@ -27,6 +30,6 @@ RUN chown -R odoo:odoo /mnt/extra-addons
 
 USER odoo
 
-# Entry point and command
+# Entry point and command (use shell form to expand env vars)
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["odoo", "--db_host=${DB_HOST}", "--db_port=${DB_PORT}", "--db_user=${DB_USER}", "--db_password=${DB_PASSWORD}", "--addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons"]
+CMD odoo --db_host=$DB_HOST --db_port=$DB_PORT --db_user=$DB_USER --db_password=$DB_PASSWORD --addons-path=/mnt/extra-addons,/usr/lib/python3/dist-packages/odoo/addons
