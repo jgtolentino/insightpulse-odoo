@@ -1,0 +1,59 @@
+name: Claude Config Validation & Skills Sync
+
+on:
+  push:
+    paths:
+      - "claude.md"
+      - "scripts/validate-claude-config.py"
+      - "scripts/skillsmith_sync.py"
+      - "docs/claude-code-skills/**"
+      - "mcp/**"
+  pull_request:
+    paths:
+      - "claude.md"
+      - "docs/claude-code-skills/**"
+      - "mcp/**"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: claude-config-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.11" }
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          pip install colorama rich
+
+      - name: Phase 2.2 Validator
+        run: make claude:validate
+
+      - name: Skillsmith Drift Check
+        id: drift
+        run: |
+          set -e
+          python scripts/skillsmith_sync.py --claude-md claude.md --skills-dir docs/claude-code-skills --check || echo "DRIFT=1" >> $GITHUB_OUTPUT
+
+      - name: Create PR with Section 19 update (optional write)
+        if: ${{ steps.drift.outputs.DRIFT == '1' && vars.CLAUDE_SYNC_WRITE == 'true' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(claude): sync section 19 skills from filesystem"
+          title: "Sync Claude Skills (section 19) from filesystem"
+          body: "Automated Skillsmith sync. Please review."
+          branch: chore/claude-sync
+          add-paths: |
+            claude.md
+            docs/claude-config-validation.md

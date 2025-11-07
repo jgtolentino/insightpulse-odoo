@@ -760,6 +760,26 @@ skills-help: ## Show Skillsmith usage guide
 	@echo "Learn more: docs/skillsmith-guide.md"
 
 # ══════════════════════════════════════════════════════════════
+# 🤖 CLAUDE CONFIG VALIDATION & SYNC
+# ══════════════════════════════════════════════════════════════
+
+# Configuration variables
+CLAUDE_MD   ?= claude.md
+MCP_CFG     ?= mcp/vscode-mcp-config.json
+SKILLS_DIR  ?= docs/claude-code-skills
+
+.PHONY: claude:validate claude:sync-check claude:sync-write
+
+claude:validate: ## Run Claude config validator (Phase 2.2)
+	@python3 scripts/validate-claude-config.py --project-root . --claude-md $(CLAUDE_MD) --mcp-config $(MCP_CFG)
+
+claude:sync-check: ## Check drift and print proposed section 19 update (no write)
+	@python3 scripts/skillsmith_sync.py --claude-md $(CLAUDE_MD) --skills-dir $(SKILLS_DIR) --check
+
+claude:sync-write: ## Update section 19 in-place from skills dir (creates a branch in CI)
+	@python3 scripts/skillsmith_sync.py --claude-md $(CLAUDE_MD) --skills-dir $(SKILLS_DIR) --write
+
+# ══════════════════════════════════════════════════════════════
 # 🔗 SKILLSMITH INTEGRATION - AI/ML PIPELINE
 # ══════════════════════════════════════════════════════════════
 
