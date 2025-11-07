@@ -1,0 +1,65 @@
+# Axolotl Config: Finance SSC (Full Fine-Tune)
+# Optimized for RTX 4090 24GB VRAM
+# Use case: Month-end closing, journal entries, reconciliation
+
+base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+# Full fine-tuning (no LoRA)
+adapter: null
+
+# Dataset
+datasets:
+  - path: /opt/insightpulse/training/datasets/finance_ssc_default.jsonl
+    type: json
+    conversation: messages
+
+# Sequence length
+sequence_len: 4096
+max_packed_sequence_len: 4096
+
+# Training hyperparameters
+num_epochs: 10
+micro_batch_size: 16
+gradient_accumulation_steps: 2
+eval_batch_size: 8
+learning_rate: 0.0001
+warmup_steps: 50
+lr_scheduler: cosine
+optimizer: adamw_torch
+weight_decay: 0.01
+
+# Precision
+bf16: true
+fp16: false
+tf32: true
+flash_attention: true
+sample_packing: true
+
+# Optimization
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Regularization
+max_grad_norm: 1.0
+
+# Logging
+logging_steps: 10
+eval_steps: 50
+save_steps: 100
+save_total_limit: 5
+output_dir: /opt/insightpulse/training/models/finance-ssc-full
+
+# Wandb
+wandb_project: insightpulse-training
+wandb_watch: gradients
+wandb_log_model: checkpoint
+
+# Early stopping
+early_stopping_patience: 3
+
+# Special tokens
+special_tokens:
+  pad_token: "<|endoftext|>"
