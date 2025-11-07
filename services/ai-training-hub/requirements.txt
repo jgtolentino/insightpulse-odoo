@@ -50,6 +50,11 @@ fastapi>=0.104.0
 uvicorn>=0.24.0
 pydantic>=2.5.0
 
+# Semantic layer & text-to-SQL
+sqlparse>=0.4.4  # SQL parsing and formatting
+sqlalchemy>=2.0.0  # Database ORM and query execution
+requests>=2.31.0  # HTTP client for Superset API
+
 # Development tools
 pytest>=7.4.0
 black>=23.11.0
