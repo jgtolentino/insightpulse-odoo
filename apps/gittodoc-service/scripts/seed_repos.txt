@@ -1,0 +1,8 @@
+# One GitHub repo URL per line (comments allowed)
+https://github.com/fastapi/fastapi
+https://github.com/pallets/flask
+https://github.com/excalidraw/excalidraw
+https://github.com/openai/openai-python
+https://github.com/jgtolentino/insightpulse-odoo
+# Add your MCP coordinator if public (example placeholder below)
+# https://github.com/your-org/mcp-coordinator

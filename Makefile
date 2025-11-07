@@ -881,6 +881,28 @@ skills-pipeline-help: ## Show integration pipeline usage
 	@echo ""
 
 # ══════════════════════════════════════════════════════════════
+# 📚 GITTODOC - GITHUB REPO DOCUMENTATION GENERATOR
+# ══════════════════════════════════════════════════════════════
+
+GITTODOC_API ?= https://insightpulseai.net/gittodoc/api
+
+.PHONY: gittodoc-dev gittodoc-web-dev gittodoc-cron-run gittodoc-cron-test
+
+gittodoc-dev: ## run service locally on :8099
+	cd apps/gittodoc-service && pip install -r requirements.txt && ./run.sh
+
+gittodoc-web-dev: ## run web on :3019
+	cd apps/gittodoc-web && npm i && npm run dev
+
+gittodoc-cron-run: ## run nightly ingest once against production API
+	@echo "Using $(GITTODOC_API)"
+	@GITTODOC_API=$(GITTODOC_API) python3 apps/gittodoc-service/scripts/nightly_ingest.py
+
+gittodoc-cron-test: ## run against local dev (service on :8099)
+	@echo "Dev API http://127.0.0.1:8099"
+	@GITTODOC_API=http://127.0.0.1:8099 python3 apps/gittodoc-service/scripts/nightly_ingest.py
+
+# ══════════════════════════════════════════════════════════════
 # 🚨 MONITORING & OPS HARDENING
 # ══════════════════════════════════════════════════════════════
 
