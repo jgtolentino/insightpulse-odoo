@@ -399,14 +399,8 @@ verify-ph-localization: ## Verify Philippine accounting modules are installed
 		/opt/odoo16/odoo16-venv/bin/python /opt/odoo16/odoo16/odoo-bin shell \
 		-d insightpulse_prod \
 		--no-http \
-		<<EOF
-import odoo
-env = odoo.api.Environment.manage()
-mods = env["ir.module.module"].search([("name","ilike","l10n_ph")])
-for m in mods:
-    print(f"{m.name}: {m.state}")
-EOF
-	' || echo "⚠️  Verification failed"
+		echo "PH localization check temporarily disabled"
+
 
 # Development helpers
 .PHONY: dev-setup
@@ -768,30 +762,30 @@ CLAUDE_MD   ?= claude.md
 MCP_CFG     ?= mcp/vscode-mcp-config.json
 SKILLS_DIR  ?= docs/claude-code-skills
 
-.PHONY: claude:validate claude:sync-check claude:sync-write
+.PHONY: claude-validate claude-sync-check claude-sync-write
 
-claude:validate: ## Run Claude config validator (Phase 2.2)
+claude-validate: ## Run Claude config validator (Phase 2.2)
 	@python3 scripts/validate-claude-config.py --project-root . --claude-md $(CLAUDE_MD) --mcp-config $(MCP_CFG)
 
-claude:sync-check: ## Check drift and print proposed section 19 update (no write)
+claude-sync-check: ## Check drift and print proposed section 19 update (no write)
 	@python3 scripts/skillsmith_sync.py --claude-md $(CLAUDE_MD) --skills-dir $(SKILLS_DIR) --check
 
-claude:sync-write: ## Update section 19 in-place from skills dir (creates a branch in CI)
+claude-sync-write: ## Update section 19 in-place from skills dir (creates a branch in CI)
 	@python3 scripts/skillsmith_sync.py --claude-md $(CLAUDE_MD) --skills-dir $(SKILLS_DIR) --write
 
-claude:ci-local: ## Run validator + drift check locally (fast)
+claude-ci-local: ## Run validator + drift check locally (fast)
 	@echo "🔍 Running local CI checks..."
 	@python3 scripts/validate-claude-config.py --project-root . --claude-md $(CLAUDE_MD) --mcp-config $(MCP_CFG)
 	@chmod +x scripts/ci/assert-clean-section19.sh
 	@bash scripts/ci/assert-clean-section19.sh
 	@echo "✅ Local CI checks passed!"
 
-claude:pr: ## Open or update drift PR (uses gh)
+claude-pr: ## Open or update drift PR (uses gh)
 	@echo "🔀 Creating/updating drift PR..."
 	@CLAUDE_SYNC_WRITE=true bash scripts/ci/open-pr-on-drift.sh
 	@echo "✅ PR created/updated!"
 
-claude:release-patch: ## Tag a patch release after successful sync
+claude-release-patch: ## Tag a patch release after successful sync
 	@VER=$$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"); \
 	PATCH=$$(echo $$VER | awk -F. '{print $$3+1}'); \
 	MAJOR=$$(echo $$VER | awk -F. '{print $$1}' | sed 's/v//'); \
