@@ -1,0 +1,420 @@
+name: Consolidated Deployment Pipeline
+
+on:
+  push:
+    branches: [main, staging]
+    paths:
+      - 'services/**'
+      - 'ops/**'
+      - 'infra/**'
+      - '.github/workflows/deploy-consolidated.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+      deployment_type:
+        description: 'Deployment type'
+        required: true
+        default: 'full-stack'
+        type: choice
+        options:
+          - full-stack
+          - odoo-only
+          - supabase-only
+          - superset-only
+      image_tag:
+        description: 'Docker image tag (leave empty for auto-generated)'
+        required: false
+      skip_tests:
+        description: 'Skip smoke tests'
+        type: boolean
+        default: false
+
+env:
+  # Registry configuration
+  DO_REGISTRY: registry.digitalocean.com/insightpulse
+  GHCR_REGISTRY: ghcr.io/${{ github.repository_owner }}/insightpulse-odoo
+
+  # Droplet configuration
+  DROPLET_IP: 165.227.10.178
+
+  # DigitalOcean App Platform
+  DO_APP_ID_PROD: b1bb1b07-46a6-4bbb-85a2-e1e8c7f263b9
+  DO_APP_ID_STAGING: 7f7b673b-35ed-4b20-a2ae-11e74c2109bf
+
+jobs:
+  # Determine deployment parameters
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.config.outputs.environment }}
+      deploy_odoo: ${{ steps.config.outputs.deploy_odoo }}
+      deploy_supabase: ${{ steps.config.outputs.deploy_supabase }}
+      deploy_superset: ${{ steps.config.outputs.deploy_superset }}
+      image_tag: ${{ steps.config.outputs.image_tag }}
+      do_app_id: ${{ steps.config.outputs.do_app_id }}
+      health_url: ${{ steps.config.outputs.health_url }}
+
+    steps:
+      - name: Configure deployment
+        id: config
+        run: |
+          # Determine environment
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENV="${{ github.event.inputs.environment }}"
+            DEPLOY_TYPE="${{ github.event.inputs.deployment_type }}"
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            ENV="production"
+            DEPLOY_TYPE="full-stack"
+          else
+            ENV="staging"
+            DEPLOY_TYPE="full-stack"
+          fi
+
+          echo "environment=$ENV" >> $GITHUB_OUTPUT
+
+          # Determine what to deploy
+          if [ "$DEPLOY_TYPE" = "full-stack" ]; then
+            echo "deploy_odoo=true" >> $GITHUB_OUTPUT
+            echo "deploy_supabase=true" >> $GITHUB_OUTPUT
+            echo "deploy_superset=true" >> $GITHUB_OUTPUT
+          elif [ "$DEPLOY_TYPE" = "odoo-only" ]; then
+            echo "deploy_odoo=true" >> $GITHUB_OUTPUT
+            echo "deploy_supabase=false" >> $GITHUB_OUTPUT
+            echo "deploy_superset=false" >> $GITHUB_OUTPUT
+          elif [ "$DEPLOY_TYPE" = "supabase-only" ]; then
+            echo "deploy_odoo=false" >> $GITHUB_OUTPUT
+            echo "deploy_supabase=true" >> $GITHUB_OUTPUT
+            echo "deploy_superset=false" >> $GITHUB_OUTPUT
+          elif [ "$DEPLOY_TYPE" = "superset-only" ]; then
+            echo "deploy_odoo=false" >> $GITHUB_OUTPUT
+            echo "deploy_supabase=false" >> $GITHUB_OUTPUT
+            echo "deploy_superset=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Generate image tag
+          if [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            IMAGE_TAG="${{ github.event.inputs.image_tag }}"
+          else
+            SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)
+            IMAGE_TAG="${ENV}-${SHORT_SHA}"
+          fi
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+          # Set DO App ID
+          if [ "$ENV" = "production" ]; then
+            echo "do_app_id=${{ env.DO_APP_ID_PROD }}" >> $GITHUB_OUTPUT
+            echo "health_url=https://erp.insightpulseai.net/web/login" >> $GITHUB_OUTPUT
+          else
+            echo "do_app_id=${{ env.DO_APP_ID_STAGING }}" >> $GITHUB_OUTPUT
+            echo "health_url=https://staging.insightpulseai.net/web/login" >> $GITHUB_OUTPUT
+          fi
+
+  # Build Odoo Docker image
+  build-odoo:
+    needs: setup
+    if: needs.setup.outputs.deploy_odoo == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      image_full: ${{ steps.build.outputs.image_full }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to DigitalOcean Container Registry
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Registry login
+        run: doctl registry login --expiry-seconds 1200
+
+      - name: Build and push Odoo image
+        id: build
+        run: |
+          IMAGE_TAG="${{ needs.setup.outputs.image_tag }}"
+          IMAGE_FULL="${{ env.DO_REGISTRY }}/odoo-erp:${IMAGE_TAG}"
+          IMAGE_LATEST="${{ env.DO_REGISTRY }}/odoo-erp:latest"
+
+          echo "🐳 Building Odoo image: ${IMAGE_FULL}"
+
+          # Find Dockerfile
+          if [ -f "services/odoo/Dockerfile" ]; then
+            CONTEXT="services/odoo"
+          elif [ -f "ops/odoo/Dockerfile" ]; then
+            CONTEXT="ops/odoo"
+          elif [ -f "Dockerfile" ]; then
+            CONTEXT="."
+          else
+            echo "❌ No Dockerfile found"
+            exit 1
+          fi
+
+          # Build and push
+          docker build -t "$IMAGE_FULL" -t "$IMAGE_LATEST" "$CONTEXT"
+          docker push "$IMAGE_FULL"
+          docker push "$IMAGE_LATEST"
+
+          echo "image_full=$IMAGE_FULL" >> $GITHUB_OUTPUT
+          echo "✅ Image pushed: ${IMAGE_FULL}"
+
+  # Deploy Supabase (migrations + edge functions)
+  deploy-supabase:
+    needs: setup
+    if: needs.setup.outputs.deploy_supabase == 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Deploy migrations
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "🗄️  Deploying Supabase migrations..."
+          supabase link --project-ref $SUPABASE_PROJECT_REF || echo "Already linked"
+          supabase db push || echo "No migrations to push"
+
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "🔧 Deploying edge functions..."
+
+          # Deploy each function if it exists
+          for FUNC in search answer ingest; do
+            if [ -d "supabase/functions/$FUNC" ]; then
+              supabase functions deploy $FUNC --project-ref $SUPABASE_PROJECT_REF
+              echo "✅ Deployed function: $FUNC"
+            fi
+          done
+
+  # Deploy Odoo to Droplet
+  deploy-odoo:
+    needs: [setup, build-odoo]
+    if: needs.setup.outputs.deploy_odoo == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ needs.setup.outputs.health_url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to Droplet
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          IMAGE: ${{ needs.build-odoo.outputs.image_full }}
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          envs: IMAGE
+          script: |
+            set -e
+
+            echo "🚀 Deploying Odoo image: $IMAGE"
+
+            # Login to registry
+            echo "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" | docker login registry.digitalocean.com -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --password-stdin
+
+            # Pull new image
+            docker pull "$IMAGE"
+
+            # Backup database before deployment
+            echo "💾 Creating database backup..."
+            docker exec odoo-postgres pg_dump -U odoo odoo > /backup/odoo-$(date +%Y%m%d-%H%M%S).sql || echo "Backup skipped"
+
+            # Store current image for rollback
+            CURRENT_IMAGE=$(docker inspect odoo --format='{{.Image}}' 2>/dev/null || echo "")
+
+            # Update deployment
+            cd ~/insightpulse-odoo
+
+            # Update .env with new image tag
+            if [ -f "deploy/.env" ]; then
+              sed -i "s|ODOO_IMAGE=.*|ODOO_IMAGE=$IMAGE|" deploy/.env
+            fi
+
+            # Use docker-compose if available, otherwise manual container management
+            if [ -f "docker-compose.yml" ] || [ -f "deploy/docker-compose.yml" ]; then
+              COMPOSE_FILE=$([ -f "docker-compose.yml" ] && echo "docker-compose.yml" || echo "deploy/docker-compose.yml")
+              docker-compose -f "$COMPOSE_FILE" pull odoo
+              docker-compose -f "$COMPOSE_FILE" up -d --force-recreate odoo
+            else
+              # Manual deployment
+              docker stop odoo || true
+              docker rm odoo || true
+
+              docker run -d \
+                --name odoo \
+                --restart unless-stopped \
+                -p 8069:8069 \
+                -v odoo-web-data:/var/lib/odoo \
+                -v /opt/odoo/addons:/mnt/extra-addons \
+                -e POSTGRES_USER=odoo \
+                -e POSTGRES_PASSWORD=${{ secrets.ODOO_DB_PASSWORD }} \
+                -e POSTGRES_DB=odoo \
+                --link odoo-postgres:db \
+                "$IMAGE"
+            fi
+
+            echo "✅ Odoo container restarted"
+
+      - name: Health check
+        run: |
+          echo "🏥 Running health checks..."
+
+          # Wait for service to be ready
+          sleep 15
+
+          # Check health endpoint
+          MAX_ATTEMPTS=20
+          ATTEMPT=0
+
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            if curl -sf "${{ needs.setup.outputs.health_url }}" > /dev/null; then
+              echo "✅ Odoo is healthy!"
+              exit 0
+            fi
+
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS failed, waiting..."
+            sleep 10
+          done
+
+          echo "❌ Health check failed after $MAX_ATTEMPTS attempts"
+          exit 1
+
+      - name: Smoke tests
+        if: github.event.inputs.skip_tests != 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            echo "🧪 Running smoke tests..."
+
+            # Test database connection
+            docker exec odoo-postgres psql -U odoo -d odoo -c "SELECT 1;" || exit 1
+
+            # Test web interface
+            curl -sf https://erp.insightpulseai.net/web/database/selector || exit 1
+
+            echo "✅ Smoke tests passed"
+
+  # Deploy Superset dashboards
+  deploy-superset:
+    needs: setup
+    if: needs.setup.outputs.deploy_superset == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy dashboards
+        env:
+          SUPERSET_URL: https://superset.insightpulseai.net
+          SUPERSET_USERNAME: admin
+          SUPERSET_PASSWORD: ${{ secrets.SUPERSET_PASSWORD }}
+        run: |
+          echo "📊 Deploying Superset dashboards..."
+
+          if [ ! -d "superset/dashboards" ]; then
+            echo "⚠️  No dashboards found, skipping"
+            exit 0
+          fi
+
+          # Login
+          ACCESS_TOKEN=$(curl -sS -X POST "${SUPERSET_URL}/api/v1/security/login" \
+            -H "Content-Type: application/json" \
+            -d "{\"username\":\"${SUPERSET_USERNAME}\",\"password\":\"${SUPERSET_PASSWORD}\",\"provider\":\"db\",\"refresh\":true}" \
+            | jq -r '.access_token' 2>/dev/null || echo "")
+
+          if [ -z "$ACCESS_TOKEN" ] || [ "$ACCESS_TOKEN" = "null" ]; then
+            echo "⚠️  Failed to authenticate, skipping"
+            exit 0
+          fi
+
+          # Import dashboards
+          for DASHBOARD in superset/dashboards/*.json; do
+            [ -f "$DASHBOARD" ] || continue
+
+            DASHBOARD_NAME=$(basename "$DASHBOARD" .json)
+            echo "📥 Importing ${DASHBOARD_NAME}..."
+
+            curl -sS -X POST "${SUPERSET_URL}/api/v1/dashboard/import/" \
+              -H "Authorization: Bearer ${ACCESS_TOKEN}" \
+              -H "Content-Type: multipart/form-data" \
+              -F "formData=@${DASHBOARD}" > /dev/null
+
+            echo "✅ Imported ${DASHBOARD_NAME}"
+          done
+
+  # Deployment summary
+  summary:
+    needs: [setup, deploy-odoo, deploy-supabase, deploy-superset]
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deployment summary
+        run: |
+          echo "📊 Deployment Summary"
+          echo "===================="
+          echo ""
+          echo "Environment: ${{ needs.setup.outputs.environment }}"
+          echo "Image Tag: ${{ needs.setup.outputs.image_tag }}"
+          echo ""
+          echo "Components:"
+          echo "  Odoo: ${{ needs.deploy-odoo.result || 'skipped' }}"
+          echo "  Supabase: ${{ needs.deploy-supabase.result || 'skipped' }}"
+          echo "  Superset: ${{ needs.deploy-superset.result || 'skipped' }}"
+          echo ""
+          echo "🔗 Links:"
+          echo "  Odoo ERP: https://erp.insightpulseai.net"
+          echo "  Superset: https://superset.insightpulseai.net"
+          echo "  Supabase: https://supabase.com/dashboard/project/${{ secrets.SUPABASE_PROJECT_REF }}"
+
+      - name: Send notification
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          STATUS="${{ job.status }}"
+          COLOR=$( [ "$STATUS" = "success" ] && echo "good" || echo "danger" )
+
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"attachments\": [{
+                \"color\": \"$COLOR\",
+                \"title\": \"Deployment $STATUS\",
+                \"fields\": [
+                  {\"title\": \"Environment\", \"value\": \"${{ needs.setup.outputs.environment }}\", \"short\": true},
+                  {\"title\": \"Commit\", \"value\": \"${{ github.sha }}\", \"short\": true},
+                  {\"title\": \"Odoo\", \"value\": \"${{ needs.deploy-odoo.result }}\", \"short\": true},
+                  {\"title\": \"Supabase\", \"value\": \"${{ needs.deploy-supabase.result }}\", \"short\": true}
+                ]
+              }]
+            }"

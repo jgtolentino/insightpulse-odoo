@@ -1,0 +1,73 @@
+name: Close Duplicate Health Check Issues
+
+on:
+  workflow_dispatch:
+
+jobs:
+  close-duplicates:
+    name: Close Duplicate Health Issues
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Close All Duplicate Health Check Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            console.log('🧹 Closing duplicate health check issues...');
+
+            // Get all open health check issues
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-check',
+              per_page: 100
+            });
+
+            console.log(`Found ${openIssues.data.length} open health check issue(s)`);
+
+            // Close each one
+            for (const issue of openIssues.data) {
+              console.log(`Closing issue #${issue.number}...`);
+
+              // Add closing comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **Resolved: Health Monitor Updated**
+
+This issue is being closed because:
+
+1. The health monitor has been updated to prevent duplicate issue creation
+2. It now automatically closes issues when health is restored
+3. Multiple duplicate issues were created during a transient WAF/CDN issue
+
+The root cause was a Cloudflare WAF configuration that temporarily blocked health check requests. The health monitor now handles this gracefully.
+
+**Changes made:**
+- Health monitor now checks for existing open issues before creating new ones
+- Auto-closes issues when health is restored
+- Added better diagnostics to distinguish between WAF and origin issues
+
+If you continue to see health issues, they will be tracked in a single consolidated issue going forward.
+
+*Auto-closed by health monitor cleanup workflow*`
+              });
+
+              // Close the issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+
+              console.log(`✓ Closed issue #${issue.number}`);
+            }
+
+            console.log(`\n✅ Closed ${openIssues.data.length} health check issue(s)`);
+            console.log('The health monitor will now create only one issue per incident.');

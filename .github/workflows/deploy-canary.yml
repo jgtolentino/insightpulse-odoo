@@ -1,0 +1,373 @@
+name: Canary Deployment
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: 'Docker image tag to deploy'
+        required: true
+      canary_percentage:
+        description: 'Initial canary traffic percentage'
+        required: false
+        default: '10'
+        type: choice
+        options:
+          - '10'
+          - '25'
+          - '50'
+      monitoring_duration:
+        description: 'Monitoring duration (minutes) before next stage'
+        required: false
+        default: '15'
+      error_threshold:
+        description: 'Error rate threshold (%) for automatic rollback'
+        required: false
+        default: '5'
+      auto_promote:
+        description: 'Automatically promote to 100% if healthy'
+        type: boolean
+        default: true
+
+env:
+  DROPLET_IP: 165.227.10.178
+  REGISTRY: registry.digitalocean.com/insightpulse
+  HEALTH_URL: https://erp.insightpulseai.net/web/health
+  CANARY_PORT: 8070
+  STABLE_PORT: 8069
+
+jobs:
+  # Deploy canary version
+  deploy-canary:
+    name: Deploy Canary (v${{ github.event.inputs.image_tag }})
+    runs-on: ubuntu-latest
+    outputs:
+      canary_deployed: ${{ steps.deploy.outputs.success }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy canary container
+        id: deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+
+            IMAGE="${{ env.REGISTRY }}/odoo-erp:${{ github.event.inputs.image_tag }}"
+
+            echo "🚀 Deploying canary: $IMAGE"
+
+            # Login to registry
+            echo "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" | docker login registry.digitalocean.com -u "${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}" --password-stdin
+
+            # Pull new image
+            docker pull "$IMAGE"
+
+            # Check if canary already exists
+            if docker ps -a --format '{{.Names}}' | grep -q '^odoo-canary$'; then
+              echo "Removing existing canary container..."
+              docker stop odoo-canary || true
+              docker rm odoo-canary || true
+            fi
+
+            # Start canary container on different port
+            docker run -d \
+              --name odoo-canary \
+              --restart unless-stopped \
+              -p ${{ env.CANARY_PORT }}:8069 \
+              -v odoo-canary-data:/var/lib/odoo \
+              -v /opt/odoo/addons:/mnt/extra-addons:ro \
+              -e POSTGRES_USER=odoo \
+              -e POSTGRES_PASSWORD=${{ secrets.ODOO_DB_PASSWORD }} \
+              -e POSTGRES_DB=odoo_canary \
+              -e CANARY_MODE=true \
+              --link odoo-postgres:db \
+              "$IMAGE"
+
+            echo "✅ Canary container started on port ${{ env.CANARY_PORT }}"
+            echo "success=true" >> $GITHUB_OUTPUT
+
+      - name: Wait for canary to be ready
+        run: |
+          echo "⏳ Waiting for canary to be ready..."
+
+          MAX_WAIT=120
+          ELAPSED=0
+
+          while [ $ELAPSED -lt $MAX_WAIT ]; do
+            if curl -sf "http://${{ env.DROPLET_IP }}:${{ env.CANARY_PORT }}/web/health" > /dev/null 2>&1; then
+              echo "✅ Canary is ready!"
+              exit 0
+            fi
+
+            sleep 5
+            ELAPSED=$((ELAPSED + 5))
+            echo "Waiting... (${ELAPSED}s / ${MAX_WAIT}s)"
+          done
+
+          echo "❌ Canary failed to become ready within ${MAX_WAIT}s"
+          exit 1
+
+  # Configure traffic split
+  configure-traffic:
+    name: Configure Traffic Split (${{ github.event.inputs.canary_percentage }}%)
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Update nginx/load balancer configuration
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+
+            CANARY_PERCENT="${{ github.event.inputs.canary_percentage }}"
+
+            echo "🔀 Configuring traffic split: ${CANARY_PERCENT}% canary"
+
+            # Create nginx upstream configuration for weighted routing
+            cat > /etc/nginx/conf.d/odoo-canary.conf <<EOF
+            upstream odoo_backend {
+                # Stable version - $((100 - CANARY_PERCENT))%
+                server localhost:${{ env.STABLE_PORT }} weight=$((100 - CANARY_PERCENT));
+
+                # Canary version - ${CANARY_PERCENT}%
+                server localhost:${{ env.CANARY_PORT }} weight=${CANARY_PERCENT};
+
+                # Enable session persistence
+                ip_hash;
+            }
+
+            server {
+                listen 80;
+                server_name erp.insightpulseai.net;
+
+                location / {
+                    proxy_pass http://odoo_backend;
+                    proxy_set_header Host \$host;
+                    proxy_set_header X-Real-IP \$remote_addr;
+                    proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto \$scheme;
+
+                    # Add canary headers for tracking
+                    add_header X-Canary-Backend \$upstream_addr always;
+                }
+
+                # Health check endpoint (always use stable)
+                location /web/health {
+                    proxy_pass http://localhost:${{ env.STABLE_PORT }};
+                }
+            }
+            EOF
+
+            # Test and reload nginx
+            nginx -t
+            nginx -s reload
+
+            echo "✅ Traffic split configured: ${CANARY_PERCENT}% → canary"
+
+  # Monitor canary
+  monitor-canary:
+    name: Monitor Canary (${{ github.event.inputs.monitoring_duration }}min)
+    needs: configure-traffic
+    runs-on: ubuntu-latest
+    outputs:
+      healthy: ${{ steps.monitor.outputs.healthy }}
+      error_rate: ${{ steps.monitor.outputs.error_rate }}
+
+    steps:
+      - name: Monitor canary metrics
+        id: monitor
+        run: |
+          echo "📊 Monitoring canary for ${{ github.event.inputs.monitoring_duration }} minutes..."
+
+          DURATION=${{ github.event.inputs.monitoring_duration }}
+          THRESHOLD=${{ github.event.inputs.error_threshold }}
+
+          # Calculate check interval (monitor every 30 seconds)
+          TOTAL_CHECKS=$((DURATION * 2))
+          ERROR_COUNT=0
+          SUCCESS_COUNT=0
+
+          for i in $(seq 1 $TOTAL_CHECKS); do
+            echo "Check $i/$TOTAL_CHECKS..."
+
+            # Check canary health
+            if curl -sf "http://${{ env.DROPLET_IP }}:${{ env.CANARY_PORT }}/web/health" > /dev/null 2>&1; then
+              SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
+            else
+              ERROR_COUNT=$((ERROR_COUNT + 1))
+            fi
+
+            # Check if error rate exceeds threshold
+            if [ $i -gt 10 ]; then
+              ERROR_RATE=$((ERROR_COUNT * 100 / i))
+              echo "Current error rate: ${ERROR_RATE}%"
+
+              if [ $ERROR_RATE -gt $THRESHOLD ]; then
+                echo "❌ Error rate ${ERROR_RATE}% exceeds threshold ${THRESHOLD}%"
+                echo "healthy=false" >> $GITHUB_OUTPUT
+                echo "error_rate=${ERROR_RATE}" >> $GITHUB_OUTPUT
+                exit 1
+              fi
+            fi
+
+            sleep 30
+          done
+
+          # Calculate final metrics
+          TOTAL=$((SUCCESS_COUNT + ERROR_COUNT))
+          FINAL_ERROR_RATE=$((ERROR_COUNT * 100 / TOTAL))
+
+          echo "📈 Final metrics:"
+          echo "  Total checks: $TOTAL"
+          echo "  Successful: $SUCCESS_COUNT"
+          echo "  Errors: $ERROR_COUNT"
+          echo "  Error rate: ${FINAL_ERROR_RATE}%"
+
+          if [ $FINAL_ERROR_RATE -le $THRESHOLD ]; then
+            echo "✅ Canary is healthy!"
+            echo "healthy=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Canary is unhealthy"
+            echo "healthy=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "error_rate=${FINAL_ERROR_RATE}" >> $GITHUB_OUTPUT
+
+  # Promote canary or rollback
+  finalize:
+    name: Finalize Deployment
+    needs: [deploy-canary, monitor-canary]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Decide promotion or rollback
+        id: decision
+        run: |
+          HEALTHY="${{ needs.monitor-canary.outputs.healthy }}"
+          AUTO_PROMOTE="${{ github.event.inputs.auto_promote }}"
+
+          if [ "$HEALTHY" = "true" ] && [ "$AUTO_PROMOTE" = "true" ]; then
+            echo "action=promote" >> $GITHUB_OUTPUT
+            echo "✅ Canary is healthy - will promote to 100%"
+          elif [ "$HEALTHY" = "false" ]; then
+            echo "action=rollback" >> $GITHUB_OUTPUT
+            echo "❌ Canary is unhealthy - will rollback"
+          else
+            echo "action=hold" >> $GITHUB_OUTPUT
+            echo "⏸️  Canary is healthy but auto-promote is disabled - holding at ${{ github.event.inputs.canary_percentage }}%"
+          fi
+
+      - name: Promote to 100%
+        if: steps.decision.outputs.action == 'promote'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🚀 Promoting canary to production..."
+
+            # Stop stable container
+            docker stop odoo || true
+
+            # Rename canary to stable
+            docker stop odoo-canary
+            docker rename odoo-canary odoo-new
+
+            # Update stable container with canary image
+            CANARY_IMAGE=$(docker inspect odoo-new --format='{{.Config.Image}}')
+
+            docker rm odoo || true
+            docker run -d \
+              --name odoo \
+              --restart unless-stopped \
+              -p ${{ env.STABLE_PORT }}:8069 \
+              -v odoo-web-data:/var/lib/odoo \
+              -v /opt/odoo/addons:/mnt/extra-addons:ro \
+              -e POSTGRES_USER=odoo \
+              -e POSTGRES_PASSWORD=${{ secrets.ODOO_DB_PASSWORD }} \
+              -e POSTGRES_DB=odoo \
+              --link odoo-postgres:db \
+              "$CANARY_IMAGE"
+
+            # Remove temporary canary container
+            docker stop odoo-new || true
+            docker rm odoo-new || true
+
+            # Remove canary nginx config
+            rm -f /etc/nginx/conf.d/odoo-canary.conf
+            nginx -s reload
+
+            echo "✅ Canary promoted to production"
+
+      - name: Rollback canary
+        if: steps.decision.outputs.action == 'rollback'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.DROPLET_IP }}
+          username: root
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            set -e
+
+            echo "🔄 Rolling back canary deployment..."
+
+            # Stop and remove canary
+            docker stop odoo-canary || true
+            docker rm odoo-canary || true
+
+            # Remove canary nginx config
+            rm -f /etc/nginx/conf.d/odoo-canary.conf
+            nginx -s reload
+
+            echo "✅ Canary rolled back - traffic back to 100% stable"
+
+      - name: Deployment summary
+        run: |
+          echo "📊 Canary Deployment Summary"
+          echo "============================"
+          echo ""
+          echo "Image Tag: ${{ github.event.inputs.image_tag }}"
+          echo "Canary Percentage: ${{ github.event.inputs.canary_percentage }}%"
+          echo "Monitoring Duration: ${{ github.event.inputs.monitoring_duration }} minutes"
+          echo "Error Threshold: ${{ github.event.inputs.error_threshold }}%"
+          echo ""
+          echo "Results:"
+          echo "  Canary Health: ${{ needs.monitor-canary.outputs.healthy }}"
+          echo "  Error Rate: ${{ needs.monitor-canary.outputs.error_rate }}%"
+          echo "  Action Taken: ${{ steps.decision.outputs.action }}"
+
+      - name: Notify Slack
+        if: always() && secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          ACTION="${{ steps.decision.outputs.action }}"
+          COLOR="warning"
+          [ "$ACTION" = "promote" ] && COLOR="good"
+          [ "$ACTION" = "rollback" ] && COLOR="danger"
+
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"attachments\": [{
+                \"color\": \"$COLOR\",
+                \"title\": \"Canary Deployment: $ACTION\",
+                \"fields\": [
+                  {\"title\": \"Image Tag\", \"value\": \"${{ github.event.inputs.image_tag }}\", \"short\": true},
+                  {\"title\": \"Error Rate\", \"value\": \"${{ needs.monitor-canary.outputs.error_rate }}%\", \"short\": true},
+                  {\"title\": \"Action\", \"value\": \"$ACTION\", \"short\": true},
+                  {\"title\": \"Canary %\", \"value\": \"${{ github.event.inputs.canary_percentage }}%\", \"short\": true}
+                ]
+              }]
+            }"

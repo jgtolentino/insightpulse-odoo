@@ -187,17 +187,149 @@ jobs:
     if: failure()
 
     steps:
-      - name: Send notification
+      - name: Send Slack Notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "🚨 Health Check Failed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚨 Health Check Failed"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Timestamp:*\n'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Public Health:*\n${{ needs.public-health.result }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Origin Health:*\n${{ needs.origin-health.result }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }' || echo "Failed to send Slack notification"
+
+      - name: Send Discord Notification
+        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "🚨 Health Check Failed",
+                "color": 15548997,
+                "fields": [
+                  {
+                    "name": "Timestamp",
+                    "value": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+                    "inline": true
+                  },
+                  {
+                    "name": "Repository",
+                    "value": "${{ github.repository }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Public Health",
+                    "value": "${{ needs.public-health.result }}",
+                    "inline": true
+                  },
+                  {
+                    "name": "Origin Health",
+                    "value": "${{ needs.origin-health.result }}",
+                    "inline": true
+                  }
+                ],
+                "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              }]
+            }' || echo "Failed to send Discord notification"
+
+      - name: Send PagerDuty Alert
+        if: ${{ secrets.PAGERDUTY_INTEGRATION_KEY != '' }}
+        run: |
+          curl -X POST "https://events.pagerduty.com/v2/enqueue" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "routing_key": "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}",
+              "event_action": "trigger",
+              "dedup_key": "health-check-failure",
+              "payload": {
+                "summary": "Health Check Failed - InsightPulse Infrastructure",
+                "source": "${{ github.repository }}",
+                "severity": "error",
+                "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
+                "custom_details": {
+                  "public_health": "${{ needs.public-health.result }}",
+                  "origin_health": "${{ needs.origin-health.result }}",
+                  "workflow_run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                }
+              }
+            }' || echo "Failed to send PagerDuty alert"
+
+      - name: Log notification status
         run: |
           echo "::warning::Health check failed for one or more services"
           echo "Public health status: ${{ needs.public-health.result }}"
           echo "Origin health status: ${{ needs.origin-health.result }}"
-          # Add Slack/Discord/email notification here if needed
+          echo "Real-time notifications sent (if configured)"
 
-      - name: Create GitHub Issue
+      - name: Create or Update GitHub Issue
         uses: actions/github-script@v7
         with:
           script: |
+            // Check if there's already an open health check issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-check',
+              per_page: 100
+            });
+
+            // If there's already an open issue, just update it with a comment
+            if (existingIssues.data.length > 0) {
+              const latestIssue = existingIssues.data[0];
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: latestIssue.number,
+                body: `🔄 **Health check still failing** - ${new Date().toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}\n**Origin Health**: ${{ needs.origin-health.result }}`
+              });
+              console.log(`Updated existing issue #${latestIssue.number}`);
+              return;
+            }
+
+            // No existing issue, create a new one
             const title = '🚨 Health Check Failed - ' + new Date().toISOString();
             const body = `
             ## Health Check Failure Report
@@ -207,6 +339,10 @@ jobs:
             **Public Health**: ${{ needs.public-health.result }}
             **Origin Health**: ${{ needs.origin-health.result }}
 
+            ### Diagnosis
+            - If public health fails but origin succeeds: **Cloudflare WAF/CDN issue**
+            - If both fail: **Origin server issue**
+
             ### Next Steps
             1. Check origin health directly: \`ssh root@165.227.10.178\`
             2. Review Cloudflare WAF logs
@@ -215,6 +351,9 @@ jobs:
             5. Run manual smoke test: \`./scripts/smoke_test_production.sh\`
 
             **Contact**: jgtolentino_rn@yahoo.com or support@insightpulseai.com
+
+            ---
+            *This issue will be automatically closed when health is restored.*
             `;
 
             await github.rest.issues.create({
@@ -224,3 +363,93 @@ jobs:
               body: body,
               labels: ['health-check', 'incident', 'priority-high']
             });
+
+  close-resolved-issues:
+    name: Close Resolved Health Issues
+    needs: [public-health, origin-health]
+    runs-on: ubuntu-latest
+    if: success()
+
+    steps:
+      - name: Send Slack Success Notification
+        if: ${{ secrets.SLACK_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.SLACK_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "✅ Health Restored",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "✅ Health Restored"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "All services are now healthy. Previous health check issues will be automatically closed."
+                  }
+                }
+              ]
+            }' || true
+
+      - name: Send Discord Success Notification
+        if: ${{ secrets.DISCORD_WEBHOOK_URL != '' }}
+        run: |
+          curl -X POST "${{ secrets.DISCORD_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "embeds": [{
+                "title": "✅ Health Restored",
+                "description": "All services are now healthy.",
+                "color": 5763719
+              }]
+            }' || true
+
+      - name: Resolve PagerDuty Alert
+        if: ${{ secrets.PAGERDUTY_INTEGRATION_KEY != '' }}
+        run: |
+          curl -X POST "https://events.pagerduty.com/v2/enqueue" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "routing_key": "${{ secrets.PAGERDUTY_INTEGRATION_KEY }}",
+              "event_action": "resolve",
+              "dedup_key": "health-check-failure"
+            }' || true
+
+      - name: Close Health Check Issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Find all open health check issues
+            const openIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'health-check',
+              per_page: 100
+            });
+
+            // Close them all since health is now restored
+            for (const issue of openIssues.data) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ **Health restored** - ${new Date().toISOString()}\n\nAll services are now healthy. Auto-closing this issue.`
+              });
+
+              console.log(`Closed issue #${issue.number}`);
+            }
+
+            console.log(`Closed ${openIssues.data.length} health check issue(s)`);
