@@ -1,0 +1,36 @@
+name: Deploy Supabase Functions
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'supabase/functions/**'
+      - '.github/workflows/supabase-funcs.yml'
+  workflow_dispatch:
+
+env:
+  SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+  SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $SUPABASE_PROJECT_REF
+
+      - name: Deploy notify-odoo function
+        run: supabase functions deploy notify-odoo --no-verify-jwt
+
+      - name: Deployment summary
+        run: |
+          echo "✅ Edge Functions deployed successfully!"
+          echo "📍 Project: $SUPABASE_PROJECT_REF"
+          echo "🔗 Function URL: https://$SUPABASE_PROJECT_REF.supabase.co/functions/v1/notify-odoo"

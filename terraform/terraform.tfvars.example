@@ -1,0 +1,72 @@
+# InsightPulse AI - Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your actual values
+# NEVER commit terraform.tfvars to git (it contains secrets)
+
+# ========================================
+# Cloud Provider Credentials
+# ========================================
+
+# DigitalOcean API token
+# Get it from: https://cloud.digitalocean.com/account/api/tokens
+do_token = "dop_v1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# ========================================
+# Backend Configuration (DigitalOcean Spaces)
+# ========================================
+# Set these as environment variables for the backend:
+# export AWS_ACCESS_KEY_ID="your-spaces-access-key"
+# export AWS_SECRET_ACCESS_KEY="your-spaces-secret-key"
+#
+# Get Spaces keys from: https://cloud.digitalocean.com/account/api/spaces
+
+# ========================================
+# SSH Configuration
+# ========================================
+ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC... admin@insightpulseai.net"
+
+# Admin IP Whitelist (restrict SSH access)
+admin_ip_whitelist = [
+  "203.0.113.0/24",  # Office network
+  "198.51.100.50/32" # Admin workstation
+]
+
+# Alert Configuration
+alert_emails = [
+  "admin@insightpulseai.net",
+  "ops@insightpulseai.net"
+]
+
+# Supabase Database Configuration
+supabase_db_host     = "aws-1-us-east-1.pooler.supabase.com"
+supabase_db_port     = 6543
+supabase_db_name     = "postgres"
+supabase_db_user     = "postgres.spdtwktxdalcfigzeqrz"
+supabase_db_password = "SHWYXDMFAwXI1drT"
+
+# Odoo Configuration
+odoo_admin_password = "InsightPulse2025!Admin"
+odoo_workers        = 2
+odoo_db_maxconn     = 8
+
+# GitHub Configuration (for MCP Server)
+github_app_id          = "2191216"
+github_private_key     = "-----BEGIN RSA PRIVATE KEY-----\nMIIE...\n-----END RSA PRIVATE KEY-----"
+github_installation_id = "12345678"
+
+# Infrastructure Configuration
+region                = "sgp1"
+droplet_size_small    = "s-1vcpu-1gb"
+droplet_size_medium   = "s-2vcpu-2gb"
+app_instance_size     = "basic-xxs"
+app_instance_count    = 1
+
+# Feature Flags
+enable_monitoring = true
+enable_backups    = true
+
+# Cost Management
+monthly_budget_alert = 50
+
+# Environment Tags
+environment  = "production"
+project_name = "insightpulse-ai"

@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db16:
+    image: postgres:14
+    container_name: odoo16_postgres
+    environment:
+      POSTGRES_DB: odoo16
+      POSTGRES_USER: odoo16
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo16secure}
+    volumes:
+      - pgdata16:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - odoo16_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo16 -d odoo16"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo16:
+    image: odoo:16.0
+    container_name: odoo16_app
+    depends_on:
+      db16:
+        condition: service_healthy
+    environment:
+      HOST: db16
+      USER: odoo16
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo16secure}
+      # Performance tuning
+      WORKERS: 4
+      MAX_CRON_THREADS: 2
+      LIMIT_MEMORY_HARD: 2684354560
+      LIMIT_MEMORY_SOFT: 2147483648
+      LIMIT_TIME_CPU: 600
+      LIMIT_TIME_REAL: 1200
+    volumes:
+      - ./addons:/mnt/extra-addons:ro              # Custom addons (ip_expense_mvp)
+      - ./oca/16.0:/mnt/oca-addons:ro              # OCA modules (read-only for safety)
+      - odoo16_data:/var/lib/odoo
+      - ./config/odoo16.conf:/etc/odoo/odoo.conf:ro
+    ports:
+      - "8069:8069"
+    networks:
+      - odoo16_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: >
+      --db-filter=^odoo16$$
+      --addons-path=/mnt/extra-addons,/mnt/oca-addons/account-financial-tools,/mnt/oca-addons/account-invoice-reporting,/mnt/oca-addons/account-reconcile,/mnt/oca-addons/project,/usr/lib/python3/dist-packages/odoo/addons
+
+volumes:
+  pgdata16:
+    name: odoo16_postgres_data
+  odoo16_data:
+    name: odoo16_filestore
+
+networks:
+  odoo16_network:
+    name: odoo16_network
+    driver: bridge

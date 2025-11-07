@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, staging]
     paths:
-      - 'services/mcp-coordinator/**'
+      - 'services/mcp-hub/**'
       - '.github/workflows/deploy-mcp.yml'
   workflow_dispatch:
 
@@ -42,9 +42,9 @@ jobs:
                 repo: jgtolentino/insightpulse-odoo
                 branch: ${{ github.ref_name }}
                 deploy_on_push: true
-              source_dir: /services/mcp-coordinator
-              dockerfile_path: /services/mcp-coordinator/Dockerfile
-              http_port: 8000
+              source_dir: /services/mcp-hub
+              dockerfile_path: /services/mcp-hub/Dockerfile
+              http_port: 8001
               instance_count: 1
               instance_size_slug: professional-xs
               routes:
@@ -67,17 +67,17 @@ jobs:
                 - key: ODOO_USERNAME
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.ODOO_ADMIN_USER }}
+                  value: ${{ secrets.ODOO_LOGIN }}
                 - key: ODOO_PASSWORD
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.ODOO_ADMIN_PASSWORD }}
+                  value: ${{ secrets.ODOO_PASSWORD }}
                 - key: SUPERSET_URL
                   value: https://superset.insightpulseai.net
                 - key: NOTION_TOKEN
                   scope: RUN_TIME
                   type: SECRET
-                  value: ${{ secrets.NOTION_INTEGRATION_TOKEN }}
+                  value: ${{ secrets.NOTION_API_KEY }}
                 - key: ENVIRONMENT
                   value: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
           EOF
@@ -123,21 +123,20 @@ jobs:
         run: |
           # Wait for service to be fully ready
           sleep 30
-          
+
           # Test health endpoint
           curl -f https://mcp.insightpulseai.net/health
-          
+
+          # Test root endpoint
+          curl -f https://mcp.insightpulseai.net/
+
           # Test OpenAPI docs
           curl -f https://mcp.insightpulseai.net/docs
-          
-          # Test skill invocation (superset automation)
-          curl -X POST https://mcp.insightpulseai.net/invoke \
+
+          # Test MCP protocol - list tools
+          curl -X POST https://mcp.insightpulseai.net/mcp \
             -H "Content-Type: application/json" \
-            -d '{
-              "skill": "superset_automation",
-              "action": "list_dashboards",
-              "params": {}
-            }' | jq -e '.status == "success"'
+            -d '{"method":"tools/list","params":{}}' | jq -e '.result | length > 0'
 
       - name: Log to Supabase
         if: always()
@@ -155,14 +154,15 @@ jobs:
               "deployed_at": "${{ github.event.head_commit.timestamp }}"
             }'
 
-      - name: Notify Slack
-        if: always()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          text: |
-            MCP Coordinator deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
-            Result: ${{ job.status }}
-            Commit: ${{ github.event.head_commit.message }}
-            URL: https://mcp.insightpulseai.net
-          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+      # Slack notification disabled - add SLACK_WEBHOOK secret to enable
+      # - name: Notify Slack
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     text: |
+      #       MCP Coordinator deployment to ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+      #       Result: ${{ job.status }}
+      #       Commit: ${{ github.event.head_commit.message }}
+      #       URL: https://mcp.insightpulseai.net
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK }}

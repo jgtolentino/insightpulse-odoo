@@ -8,6 +8,9 @@ PyYAML>=6.0.2
 pydantic>=2.8.2
 gradient>=0.1.0  # Gradient AI SDK for LLM fallback
 
+# Odoo upgrade automation
+openupgradelib>=3.3.0  # OCA migration support library
+
 # Optional dependencies for development
 # Uncomment if needed for development/testing
 

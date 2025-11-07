@@ -1,0 +1,9 @@
+# Wave 1: Web & UX Improvements
+# Includes core automation and OCA web/server enhancements
+# Install after: 00_base.txt
+# Install with: odoo-bin -d mydb -i $(cat 10_web_ux.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+base_automation
+server_environment
+web_dashboard
+web_responsive

@@ -1,0 +1,41 @@
+# LiteLLM Gateway Configuration
+# OpenAI-compatible API for vLLM models
+
+model_list:
+  # Production BIR compliance model
+  - model_name: bir-compliance-prod
+    litellm_params:
+      model: openai/vllm
+      api_base: http://vllm-bir-compliance:8000/v1
+      api_key: dummy
+
+  # Production expense classifier
+  - model_name: expense-classifier-prod
+    litellm_params:
+      model: openai/vllm
+      api_base: http://vllm-expense-classifier:8000/v1
+      api_key: dummy
+
+# Router settings
+router_settings:
+  routing_strategy: least-busy
+  num_retries: 2
+  timeout: 60
+
+# Database
+database_url: postgresql://litellm:litellm@litellm-db:5432/litellm
+
+# Cache
+cache:
+  type: redis
+  host: localhost
+  port: 6379
+
+# Master key (set via env: LITELLM_MASTER_KEY)
+# Default: sk-insightpulse
+
+# Logging
+litellm_settings:
+  success_callback: ["supabase"]
+  failure_callback: ["supabase"]
+  service_callback: ["supabase"]

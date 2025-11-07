@@ -1,0 +1,172 @@
+# InsightPulse AI Training Stack
+# Integrates with PR #320 (Axolotl, vLLM, Unsloth, LiteLLM)
+# No n8n - uses MCP + Claude Max + CLI automation
+
+version: '3.8'
+
+services:
+  # ============================================================================
+  # Axolotl - Fine-Tuning Engine (RTX 4090 Optimized)
+  # ============================================================================
+  axolotl:
+    image: winglian/axolotl:main-py3.11-cu124-2.5.1
+    container_name: insightpulse-axolotl
+    runtime: nvidia
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+      - WANDB_PROJECT=insightpulse-training
+      - WANDB_API_KEY=${WANDB_API_KEY}
+      - HF_TOKEN=${HF_TOKEN}
+    volumes:
+      - ./training/configs:/workspace/configs
+      - ./training/datasets:/workspace/datasets
+      - ./training/models:/workspace/models
+      - ./training/logs:/workspace/logs
+      - ${HF_CACHE_DIR:-./cache/huggingface}:/root/.cache/huggingface
+    working_dir: /workspace
+    command: bash -c "tail -f /dev/null"  # Keep alive for exec commands
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - insightpulse
+
+  # ============================================================================
+  # vLLM - Inference Server (Production Model Serving)
+  # ============================================================================
+  vllm-bir-compliance:
+    image: vllm/vllm-openai:latest
+    container_name: insightpulse-vllm-bir
+    runtime: nvidia
+    ports:
+      - "8001:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./training/models/bir-compliance-prod:/model:ro
+    command: >
+      --model /model
+      --gpu-memory-utilization 0.9
+      --max-model-len 4096
+      --dtype bfloat16
+      --enable-chunked-prefill
+      --served-model-name bir-compliance-prod
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+  vllm-expense-classifier:
+    image: vllm/vllm-openai:latest
+    container_name: insightpulse-vllm-expense
+    runtime: nvidia
+    ports:
+      - "8002:8000"
+    environment:
+      - CUDA_VISIBLE_DEVICES=0
+    volumes:
+      - ./training/models/expense-classifier-prod:/model:ro
+    command: >
+      --model /model
+      --gpu-memory-utilization 0.45
+      --max-model-len 2048
+      --dtype bfloat16
+      --served-model-name expense-classifier-prod
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+  # ============================================================================
+  # LiteLLM - OpenAI-Compatible Gateway (Model Router)
+  # ============================================================================
+  litellm:
+    image: ghcr.io/berriai/litellm:main-latest
+    container_name: insightpulse-litellm
+    ports:
+      - "4000:4000"
+    environment:
+      - LITELLM_MASTER_KEY=${LITELLM_MASTER_KEY:-sk-insightpulse}
+      - DATABASE_URL=postgresql://litellm:litellm@litellm-db:5432/litellm
+    volumes:
+      - ./litellm/config.yaml:/app/config.yaml:ro
+    command: --config /app/config.yaml --port 4000
+    depends_on:
+      - litellm-db
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+  litellm-db:
+    image: postgres:16
+    container_name: insightpulse-litellm-db
+    environment:
+      - POSTGRES_USER=litellm
+      - POSTGRES_PASSWORD=litellm
+      - POSTGRES_DB=litellm
+    volumes:
+      - litellm-data:/var/lib/postgresql/data
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+  # ============================================================================
+  # TensorBoard - Training Monitoring
+  # ============================================================================
+  tensorboard:
+    image: tensorflow/tensorflow:latest
+    container_name: insightpulse-tensorboard
+    ports:
+      - "6006:6006"
+    volumes:
+      - ./training/logs:/logs:ro
+    command: tensorboard --logdir /logs --host 0.0.0.0 --port 6006
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+  # ============================================================================
+  # MCP Training Hub Server (integrates with existing mcp.insightpulseai.net)
+  # ============================================================================
+  mcp-training-hub:
+    build:
+      context: ./mcp/training-hub
+      dockerfile: Dockerfile
+    container_name: insightpulse-mcp-training
+    ports:
+      - "8003:8000"
+    environment:
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE=${SUPABASE_SERVICE_ROLE}
+      - POSTGRES_URL=${POSTGRES_URL}
+      - OCR_API_URL=http://ocr.insightpulseai.net
+      - WANDB_API_KEY=${WANDB_API_KEY}
+    volumes:
+      - ./training:/opt/insightpulse/training
+      - /var/run/docker.sock:/var/run/docker.sock  # Docker-in-Docker for vLLM deployment
+    networks:
+      - insightpulse
+    restart: unless-stopped
+
+volumes:
+  litellm-data:
+
+networks:
+  insightpulse:
+    driver: bridge

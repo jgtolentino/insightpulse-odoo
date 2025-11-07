@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <record id="view_general_configuration_inherit_ip" model="ir.ui.view">
+    <field name="name">res.config.settings.form.inherit.ip</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//div[@id='integration']" position="after">
+        <div class="col-xs-12 col-md-6 o_setting_box">
+          <div class="o_setting_left_pane"/>
+          <div class="o_setting_right_pane">
+            <label string="AI OCR Service URL"/>
+            <div class="text-muted">Where /ip/mobile/receipt POSTs image files</div>
+            <div class="content-group">
+              <div class="mt16">
+                <field name="ip_ai_ocr_url" placeholder="http://127.0.0.1:8100/v1/ocr/receipt" class="oe_inline"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-xs-12 col-md-6 o_setting_box">
+          <div class="o_setting_left_pane"/>
+          <div class="o_setting_right_pane">
+            <label string="Supabase Analytics"/>
+            <div class="text-muted">Auto-sync OCR receipts to analytics.ip_ocr_receipts</div>
+            <div class="content-group">
+              <div class="mt16">
+                <field name="ip_supabase_url" placeholder="https://xxxx.supabase.co" class="oe_inline"/>
+                <field name="ip_supabase_key" password="True" placeholder="Service role key" class="oe_inline"/>
+              </div>
+            </div>
+          </div>
+        </div>
+      </xpath>
+    </field>
+  </record>
+
+  <record id="res_config_settings_view_form" model="ir.ui.view">
+    <field name="name">res.config.settings.view.form.inherit.ip</field>
+    <field name="model">res.config.settings</field>
+    <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form" position="inside">
+        <field name="ip_ai_ocr_url" invisible="1"/>
+        <field name="ip_supabase_url" invisible="1"/>
+        <field name="ip_supabase_key" invisible="1"/>
+      </xpath>
+    </field>
+  </record>
+</odoo>

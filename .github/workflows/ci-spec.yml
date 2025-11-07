@@ -1,0 +1,123 @@
+name: CI – Spec-Driven Build
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "addons/**/*.py"
+      - "spec/**/*.json"
+      - ".github/workflows/ci-spec.yml"
+      - "ci/**"
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "addons/**/*.py"
+      - "spec/**/*.json"
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  spec-regen:
+    runs-on: ubuntu-latest
+    outputs:
+      drift_detected: ${{ steps.drift.outputs.drift }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pydantic pyyaml click
+
+      - name: Generate OpenAPI from Pydantic
+        run: python ci/speckit/generate_openapi.py
+
+      - name: Detect spec drift
+        id: drift
+        run: |
+          python ci/speckit/spec_drift_gate.py || echo "drift=true" >> $GITHUB_OUTPUT
+
+      - name: Validate spec contracts
+        run: python ci/speckit/validate_spec_contract.py
+
+      - name: Bump manifest versions
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: python ci/speckit/bump_manifest_version.py
+
+      - name: Upload spec artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-specs
+          path: spec/*.json
+
+  otel-probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install OTel dependencies
+        run: pip install opentelemetry-api opentelemetry-sdk pytest
+
+      - name: Run OTel header propagation tests
+        run: pytest ci/otel/trace_probe_test.py -v
+
+  oca-mqt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Odoo dependencies
+        run: |
+          pip install --upgrade pip
+          pip install odoo odoo-analyse-module
+
+      - name: Run OCA MQT checks
+        run: bash ci/qa/run_mqt.sh
+
+  quality-gates:
+    runs-on: ubuntu-latest
+    needs: [spec-regen, otel-probe, oca-mqt]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install pytest pytest-cov black flake8
+
+      - name: Run linting
+        run: |
+          black --check addons/
+          flake8 addons/
+
+      - name: Run tests
+        run: pytest ci/qa/ -v --cov=addons --cov-report=term-missing
+
+      - name: Quality gate check
+        run: |
+          if [[ "${{ needs.spec-regen.outputs.drift_detected }}" == "true" ]]; then
+            echo "❌ Spec drift detected - breaking changes require version bump"
+            exit 1
+          fi
+          echo "✅ All quality gates passed"

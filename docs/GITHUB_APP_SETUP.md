@@ -18,6 +18,19 @@ export GITHUB_APP_PEM_PATH=~/.github/apps/pulser-hub.pem
 export GITHUB_APP_NAME=pulser-hub
 ```
 
+### OAuth Callback URLs
+
+**Supabase Auth Callback** (for GitHub OAuth):
+```
+https://spdtwktxdalcfigzeqrz.supabase.co/auth/v1/callback
+```
+
+**Configuration Required**:
+1. Add to GitHub App settings: https://github.com/settings/apps/pulser-hub
+2. Navigate to: General → Callback URL
+3. Add: `https://spdtwktxdalcfigzeqrz.supabase.co/auth/v1/callback`
+4. Save changes
+
 ### Private Key Location
 
 **Path**: `~/.github/apps/pulser-hub.pem`

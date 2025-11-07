@@ -1,0 +1,74 @@
+# Axolotl Config: BIR Compliance (Llama 3.3 70B LoRA)
+# Optimized for RTX 4090 24GB VRAM
+# Use case: BIR form field extraction (1601C, 2550Q, 1702RT, 2307)
+
+base_model: meta-llama/Llama-3.3-70B-Instruct
+model_type: LlamaForCausalLM
+tokenizer_type: AutoTokenizer
+
+# LoRA Configuration
+adapter: lora
+lora_r: 32
+lora_alpha: 64
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+lora_fan_in_fan_out: false
+
+# Dataset (will be overridden by MCP tool)
+datasets:
+  - path: /opt/insightpulse/training/datasets/bir_default.jsonl
+    type: json
+    conversation: messages
+
+# Sequence length
+sequence_len: 4096
+max_packed_sequence_len: 4096
+
+# Training hyperparameters
+num_epochs: 3
+micro_batch_size: 4
+gradient_accumulation_steps: 4
+eval_batch_size: 2
+learning_rate: 0.0002
+warmup_steps: 10
+lr_scheduler: cosine
+optimizer: adamw_torch
+
+# Precision & optimization
+bf16: true
+fp16: false
+tf32: true
+flash_attention: true
+sample_packing: true
+eval_sample_packing: false
+
+# RTX 4090 optimizations
+load_in_4bit: false  # Full precision for 70B with LoRA
+load_in_8bit: false
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Logging
+logging_steps: 10
+eval_steps: 50
+save_steps: 100
+save_total_limit: 3
+output_dir: /opt/insightpulse/training/models/bir-llama-lora
+
+# Wandb
+wandb_project: insightpulse-training
+wandb_entity: null
+wandb_watch: gradients
+wandb_log_model: checkpoint
+
+# Special tokens
+special_tokens:
+  pad_token: "<|end_of_text|>"

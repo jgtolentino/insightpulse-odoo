@@ -1,0 +1,67 @@
+# Axolotl Config: Receipt OCR (SmolLM2 1.7B LoRA)
+# Optimized for RTX 4090 24GB VRAM
+# Use case: Philippine receipt text extraction, PaddleOCR refinement
+
+base_model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+model_type: AutoModelForCausalLM
+tokenizer_type: AutoTokenizer
+
+# LoRA Configuration
+adapter: lora
+lora_r: 16
+lora_alpha: 32
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+
+# Dataset
+datasets:
+  - path: /opt/insightpulse/training/datasets/receipt_ocr_default.jsonl
+    type: json
+    conversation: messages
+
+# Sequence length
+sequence_len: 2048
+max_packed_sequence_len: 2048
+
+# Training hyperparameters
+num_epochs: 5
+micro_batch_size: 32
+gradient_accumulation_steps: 1
+eval_batch_size: 16
+learning_rate: 0.0003
+warmup_steps: 30
+lr_scheduler: cosine
+optimizer: adamw_torch
+
+# Precision
+bf16: true
+fp16: false
+tf32: true
+flash_attention: true
+sample_packing: true
+eval_sample_packing: false
+
+# Optimization
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Logging
+logging_steps: 5
+eval_steps: 25
+save_steps: 50
+save_total_limit: 3
+output_dir: /opt/insightpulse/training/models/receipt-ocr-lora
+
+# Wandb
+wandb_project: insightpulse-training
+wandb_watch: gradients
+wandb_log_model: checkpoint
+
+# Special tokens
+special_tokens:
+  pad_token: "<|endoftext|>"

@@ -1,0 +1,260 @@
+name: Infrastructure Validation
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - '.github/workflows/infrastructure-validation.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'terraform/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  terraform-validate:
+    name: Terraform Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.0
+
+      - name: Terraform Format Check
+        id: fmt
+        run: terraform fmt -check -recursive
+        working-directory: ./terraform
+        continue-on-error: true
+
+      - name: Terraform Init
+        id: init
+        run: terraform init -backend=false
+        working-directory: ./terraform
+
+      - name: Terraform Validate
+        id: validate
+        run: terraform validate
+        working-directory: ./terraform
+
+      - name: Comment PR - Terraform Validation
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
+            #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
+            #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
+
+            *Pusher: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            })
+
+  tflint:
+    name: TFLint Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Cache TFLint plugin directory
+        uses: actions/cache@v3
+        with:
+          path: ~/.tflint.d/plugins
+          key: ${{ runner.os }}-tflint-${{ hashFiles('.tflint.hcl') }}
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: v0.50.0
+
+      - name: Initialize TFLint
+        run: tflint --init
+        working-directory: ./terraform
+
+      - name: Run TFLint
+        run: tflint --format=compact --module
+        working-directory: ./terraform
+
+  checkov:
+    name: Checkov Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov
+        id: checkov
+        run: |
+          checkov --directory ./terraform \
+            --output cli \
+            --output json \
+            --output-file-path ./checkov-results.json \
+            --framework terraform \
+            --download-external-modules true \
+            --soft-fail
+        continue-on-error: true
+
+      - name: Upload Checkov Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: checkov-results
+          path: checkov-results.json
+
+      - name: Checkov PR Comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            let results;
+            try {
+              results = JSON.parse(fs.readFileSync('checkov-results.json', 'utf8'));
+            } catch (error) {
+              console.log('Could not parse Checkov results');
+              return;
+            }
+
+            const summary = results.summary || {};
+            const passed = summary.passed || 0;
+            const failed = summary.failed || 0;
+            const skipped = summary.skipped || 0;
+
+            const output = `## Checkov Security Scan Results
+
+            | Status | Count |
+            |--------|-------|
+            | ✅ Passed | ${passed} |
+            | ❌ Failed | ${failed} |
+            | ⏭️ Skipped | ${skipped} |
+
+            ${failed > 0 ? '⚠️ **Security issues detected!** Please review the failed checks.' : '✅ **No security issues found!**'}
+
+            *View detailed results in the workflow artifacts.*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  tfsec:
+    name: TFSec Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run tfsec
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: ./terraform
+          format: sarif
+          soft_fail: true
+
+      - name: Upload SARIF file
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: tfsec.sarif
+
+  cost-estimation:
+    name: Infrastructure Cost Estimation
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init -backend=false
+        working-directory: ./terraform
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color -out=tfplan
+        working-directory: ./terraform
+        continue-on-error: true
+        env:
+          TF_VAR_do_token: ${{ secrets.DO_TOKEN }}
+          TF_VAR_ssh_public_key: "dummy-key"
+          TF_VAR_supabase_db_password: "dummy"
+          TF_VAR_odoo_admin_password: "dummy"
+          TF_VAR_github_private_key: "dummy"
+          TF_VAR_github_installation_id: "dummy"
+
+      - name: Comment PR - Cost Impact
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `## Infrastructure Changes
+
+            \`\`\`terraform
+            ${{ steps.plan.outputs.stdout }}
+            \`\`\`
+
+            **⚠️ Please review the cost implications of these infrastructure changes.**
+
+            Estimated monthly costs:
+            - App Platform Apps: $5/app
+            - Droplets: $6-18/month per droplet
+            - Volumes: $0.10/GB/month
+
+            *Review the full plan output above for resource changes.*`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: output
+            });
+
+  docker-scan:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.16.1
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'

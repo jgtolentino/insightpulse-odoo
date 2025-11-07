@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db17:
+    image: postgres:15
+    container_name: odoo17_postgres
+    environment:
+      POSTGRES_DB: odoo17
+      POSTGRES_USER: odoo17
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-odoo17secure}
+    volumes:
+      - pgdata17:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - odoo17_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo17 -d odoo17"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo17:
+    image: odoo:17.0
+    container_name: odoo17_app
+    depends_on:
+      db17:
+        condition: service_healthy
+    environment:
+      HOST: db17
+      USER: odoo17
+      PASSWORD: ${POSTGRES_PASSWORD:-odoo17secure}
+      # Performance tuning
+      WORKERS: 4
+      MAX_CRON_THREADS: 2
+      LIMIT_MEMORY_HARD: 2684354560
+      LIMIT_MEMORY_SOFT: 2147483648
+      LIMIT_TIME_CPU: 600
+      LIMIT_TIME_REAL: 1200
+    volumes:
+      - ./addons:/mnt/extra-addons:ro              # Custom addons (ip_expense_mvp)
+      - ./oca/17.0:/mnt/oca-addons:ro              # OCA modules (read-only for safety)
+      - odoo17_data:/var/lib/odoo
+      - ./config/odoo17.conf:/etc/odoo/odoo.conf:ro
+    ports:
+      - "8070:8069"
+    networks:
+      - odoo17_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    command: >
+      --db-filter=^odoo17$$
+      --addons-path=/mnt/extra-addons,/mnt/oca-addons,/usr/lib/python3/dist-packages/odoo/addons
+
+volumes:
+  pgdata17:
+    name: odoo17_postgres_data
+  odoo17_data:
+    name: odoo17_filestore
+
+networks:
+  odoo17_network:
+    name: odoo17_network
+    driver: bridge

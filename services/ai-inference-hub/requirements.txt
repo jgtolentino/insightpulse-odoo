@@ -1,0 +1,31 @@
+# OCR Framework (PaddleOCR - lightweight, 25MB total)
+paddleocr==2.7.3
+paddlepaddle==2.6.0
+
+# API framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+python-multipart==0.0.12
+
+# Image processing
+pillow==11.0.0
+einops==0.8.0
+addict==2.4.0
+easydict==1.13
+
+# Database
+supabase==2.10.0
+pydantic==2.10.0
+
+# Document processing
+langchain==0.3.7
+langchain-community==0.3.7
+
+# Speech models
+openai-whisper==20240930
+pydub==0.25.1
+TTS==0.22.0
+
+# Additional dependencies
+sentencepiece==0.2.1
+protobuf==5.29.3

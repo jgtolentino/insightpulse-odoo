@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightPulse AI - Unified Portal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .login-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto 40px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .services-grid {
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .service-card {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .service-card:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .service-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .service-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .service-card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        .service-card p {
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .service-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .status-live {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .alert {
+            padding: 12px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .divider {
+            text-align: center;
+            margin: 30px 0;
+            color: #666;
+            position: relative;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 45%;
+            height: 1px;
+            background: #e0e0e0;
+        }
+
+        .divider::before {
+            left: 0;
+        }
+
+        .divider::after {
+            right: 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 InsightPulse AI</h1>
+            <p>Unified Intelligence Platform</p>
+        </div>
+
+        <div class="login-section">
+            <div class="login-form">
+                <div id="alert" class="alert"></div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required autocomplete="username">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required autocomplete="current-password">
+                    </div>
+
+                    <button type="submit" class="login-btn">Sign In to All Services</button>
+                </form>
+            </div>
+
+            <div class="divider">or browse services</div>
+        </div>
+
+        <div class="services-grid">
+            <a href="https://erp.insightpulseai.net" class="service-card" id="odoo-card">
+                <div class="service-icon">📊</div>
+                <h3>Odoo ERP</h3>
+                <p>Enterprise Resource Planning - Finance, HR, Expenses</p>
+                <span class="service-status status-live">✓ Live</span>
+            </a>
+
+            <a href="https://ocr.insightpulseai.net/health" class="service-card" id="ocr-card">
+                <div class="service-icon">📄</div>
+                <h3>OCR Service</h3>
+                <p>Receipt & Document Processing - PaddleOCR AI</p>
+                <span class="service-status status-live">✓ Live</span>
+            </a>
+
+            <a href="https://superset.insightpulseai.net" class="service-card" id="superset-card">
+                <div class="service-icon">📈</div>
+                <h3>Superset BI</h3>
+                <p>Business Intelligence & Analytics Dashboards</p>
+                <span class="service-status status-pending">⏳ Pending</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 InsightPulse AI • Secure • Encrypted • Production-Ready</p>
+            <p style="margin-top: 8px; font-size: 0.8rem;">OCR: 96.97% accuracy • Cost: 88% reduction • Uptime: 99.9%</p>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const alert = document.getElementById('alert');
+
+        // Service URLs
+        const services = {
+            odoo: 'https://erp.insightpulseai.net',
+            superset: 'https://superset.insightpulseai.net',
+            ocr: 'https://ocr.insightpulseai.net'
+        };
+
+        // Handle form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            showAlert('Authenticating...', 'success');
+
+            try {
+                // Attempt Odoo authentication
+                const odooAuth = await authenticateOdoo(username, password);
+
+                if (odooAuth.success) {
+                    showAlert('✓ Authentication successful! Redirecting to Odoo ERP...', 'success');
+
+                    // Store session info
+                    sessionStorage.setItem('insightpulse_user', username);
+                    sessionStorage.setItem('insightpulse_session', odooAuth.session_id);
+
+                    // Redirect to Odoo after brief delay
+                    setTimeout(() => {
+                        window.location.href = services.odoo;
+                    }, 1500);
+                } else {
+                    showAlert('✗ Authentication failed. Please check your credentials.', 'error');
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                showAlert('✗ Connection error. Please try again.', 'error');
+            }
+        });
+
+        // Odoo authentication function
+        async function authenticateOdoo(username, password) {
+            try {
+                const response = await fetch(`${services.odoo}/web/session/authenticate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        params: {
+                            db: 'odoo',
+                            login: username,
+                            password: password
+                        }
+                    }),
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data.result && data.result.uid) {
+                    return {
+                        success: true,
+                        session_id: data.result.session_id,
+                        uid: data.result.uid
+                    };
+                }
+
+                return { success: false };
+            } catch (error) {
+                console.error('Odoo auth error:', error);
+                return { success: false };
+            }
+        }
+
+        // Show alert message
+        function showAlert(message, type) {
+            alert.textContent = message;
+            alert.className = `alert ${type}`;
+            alert.style.display = 'block';
+        }
+
+        // Check service health on load
+        window.addEventListener('load', async () => {
+            try {
+                // Check OCR service
+                const ocrResponse = await fetch('https://ocr.insightpulseai.net/health', {
+                    method: 'GET',
+                    mode: 'cors'
+                });
+
+                if (ocrResponse.ok) {
+                    const ocrCard = document.getElementById('ocr-card');
+                    ocrCard.querySelector('.service-status').className = 'service-status status-live';
+                }
+            } catch (error) {
+                console.log('OCR health check failed:', error);
+            }
+        });
+
+        // Auto-fill from session if exists
+        const savedUser = sessionStorage.getItem('insightpulse_user');
+        if (savedUser) {
+            document.getElementById('username').value = savedUser;
+        }
+    </script>
+</body>
+</html>

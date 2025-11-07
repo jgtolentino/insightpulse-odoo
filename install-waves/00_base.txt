@@ -1,0 +1,16 @@
+# Wave 0: Base System Modules
+# These are core Odoo 18 CE modules that must be installed first
+# Install with: odoo-bin -d mydb -i $(cat 00_base.txt | grep -v '^#' | tr '\n' ',' | sed 's/,$//')
+
+analytic
+base
+base_import
+base_setup
+bus
+iap
+im_livechat
+mail_bot
+portal
+web
+web_editor
+website

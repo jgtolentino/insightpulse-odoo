@@ -1,0 +1,83 @@
+---
+# Ansible Playbook: Deploy Monitoring Stack
+# Deploys Prometheus + Grafana monitoring stack
+
+- name: Deploy Monitoring Stack
+  hosts: monitoring
+  become: yes
+  vars:
+    monitoring_dir: /opt/monitoring
+    grafana_admin_password: "{{ lookup('env', 'GRAFANA_ADMIN_PASSWORD') | default('insightpulse2025', true) }}"
+
+  tasks:
+    - name: Create monitoring directory
+      file:
+        path: "{{ monitoring_dir }}"
+        state: directory
+        mode: '0755'
+
+    - name: Copy monitoring configuration files
+      synchronize:
+        src: ../../monitoring/
+        dest: "{{ monitoring_dir }}/"
+        delete: yes
+        rsync_opts:
+          - "--exclude=.git"
+          - "--exclude=*.md"
+
+    - name: Create environment file
+      template:
+        dest: "{{ monitoring_dir }}/.env"
+        content: |
+          GRAFANA_ADMIN_USER=admin
+          GRAFANA_ADMIN_PASSWORD={{ grafana_admin_password }}
+          GRAFANA_ROOT_URL=https://monitoring.insightpulseai.net
+          SUPABASE_DB_HOST={{ lookup('env', 'SUPABASE_DB_HOST') }}
+          SUPABASE_DB_PORT={{ lookup('env', 'SUPABASE_DB_PORT') }}
+          SUPABASE_DB_NAME={{ lookup('env', 'SUPABASE_DB_NAME') }}
+          SUPABASE_DB_USER={{ lookup('env', 'SUPABASE_DB_USER') }}
+          SUPABASE_DB_PASSWORD={{ lookup('env', 'SUPABASE_DB_PASSWORD') }}
+          SMTP_PASSWORD={{ lookup('env', 'SMTP_PASSWORD') }}
+        mode: '0600'
+
+    - name: Pull Docker images
+      command: docker-compose pull
+      args:
+        chdir: "{{ monitoring_dir }}"
+
+    - name: Stop existing monitoring stack
+      command: docker-compose down
+      args:
+        chdir: "{{ monitoring_dir }}"
+      ignore_errors: yes
+
+    - name: Start monitoring stack
+      command: docker-compose up -d
+      args:
+        chdir: "{{ monitoring_dir }}"
+
+    - name: Wait for Prometheus to be healthy
+      uri:
+        url: http://localhost:9090/-/healthy
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 10
+
+    - name: Wait for Grafana to be healthy
+      uri:
+        url: http://localhost:3000/api/health
+        status_code: 200
+      register: result
+      until: result.status == 200
+      retries: 30
+      delay: 10
+
+    - name: Display monitoring URLs
+      debug:
+        msg:
+          - "Monitoring stack deployed successfully!"
+          - "Grafana: https://monitoring.insightpulseai.net"
+          - "Prometheus: https://prometheus.insightpulseai.net"
+          - "Default credentials: admin / {{ grafana_admin_password }}"

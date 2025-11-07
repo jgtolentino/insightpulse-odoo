@@ -1,0 +1,62 @@
+# AI Training Hub Dependencies
+# Private model training infrastructure for InsightPulse
+
+# Core ML frameworks
+torch>=2.0.0
+transformers>=4.35.0
+datasets>=2.14.0
+accelerate>=0.24.0
+evaluate>=0.4.0
+
+# PaddleOCR fine-tuning
+paddlepaddle>=2.5.0
+paddleocr>=2.7.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# SmolLM/LLM training
+peft>=0.6.0  # Parameter-efficient fine-tuning
+bitsandbytes>=0.41.0  # 4-bit quantization
+scipy>=1.10.0
+
+# Whisper STT fine-tuning
+openai-whisper>=20230918
+librosa>=0.10.0
+soundfile>=0.12.0
+jiwer>=3.0.0  # WER metric
+
+# Vision models
+timm>=0.9.0  # Vision transformers
+scikit-image>=0.21.0  # SSIM for visual regression
+
+# UI Automation
+pyautogui>=0.9.54
+playwright>=1.40.0
+
+# MLflow experiment tracking
+mlflow>=2.8.0
+
+# Data processing
+numpy>=1.24.0
+pandas>=2.1.0
+pyyaml>=6.0
+
+# Supabase integration
+supabase>=2.0.0
+psycopg2-binary>=2.9.0
+
+# API frameworks
+fastapi>=0.104.0
+uvicorn>=0.24.0
+pydantic>=2.5.0
+
+# Semantic layer & text-to-SQL
+sqlparse>=0.4.4  # SQL parsing and formatting
+sqlalchemy>=2.0.0  # Database ORM and query execution
+requests>=2.31.0  # HTTP client for Superset API
+
+# Development tools
+pytest>=7.4.0
+black>=23.11.0
+ruff>=0.1.6
+mypy>=1.7.0

@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # AI Inference Hub with GPU support (vLLM)
+  ai-hub-gpu:
+    build:
+      context: .
+      dockerfile: Dockerfile.gpu
+    container_name: ai-inference-hub-gpu
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8100:8000"
+    environment:
+      # GPU mode
+      MODE: production
+      PROVIDER: vllm
+      VLLM_ENGINE: "true"
+
+      # vLLM configuration
+      LLM_MODEL: ${LLM_MODEL:-deepseek-ai/DeepSeek-V3}
+      QUANTIZATION: ${QUANTIZATION:-8bit}
+      MAX_MODEL_LEN: ${MAX_MODEL_LEN:-8192}
+      GPU_MEMORY_UTILIZATION: ${GPU_MEMORY_UTILIZATION:-0.9}
+      TENSOR_PARALLEL_SIZE: ${TENSOR_PARALLEL_SIZE:-1}
+
+      # Model configuration
+      MODEL_NAME: ${MODEL_NAME:-deepseek-ai/DeepSeek-OCR}
+      WHISPER_MODEL: ${WHISPER_MODEL:-base}
+      TTS_MODEL: ${TTS_MODEL:-tts_models/en/ljspeech/tacotron2-DDC}
+      TORCH_DEVICE: cuda
+      IMAGE_SIZE: ${IMAGE_SIZE:-base}
+
+      # Supabase
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+
+      # Performance
+      PORT: 8000
+      MAX_REQUEST_SIZE_MB: ${MAX_REQUEST_SIZE_MB:-25}
+      RATE_LIMIT_PER_MINUTE: ${RATE_LIMIT_PER_MINUTE:-120}
+    volumes:
+      - model-cache:/models
+      - ./logs:/app/logs
+    networks:
+      - ai-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 300s  # GPU model loading takes longer
+
+  # Nginx reverse proxy
+  nginx:
+    image: nginx:alpine
+    container_name: ai-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx-site.conf:/etc/nginx/conf.d/default.conf:ro
+      - letsencrypt-data:/etc/letsencrypt
+      - web-root:/var/www/html
+    networks:
+      - ai-network
+    depends_on:
+      - ai-hub-gpu
+
+volumes:
+  model-cache:
+    driver: local
+  letsencrypt-data:
+    driver: local
+  web-root:
+    driver: local
+
+networks:
+  ai-network:
+    driver: bridge

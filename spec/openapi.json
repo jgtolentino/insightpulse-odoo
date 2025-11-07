@@ -1,0 +1,26 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "InsightPulse Odoo API",
+    "version": "1.0.0",
+    "description": "Auto-generated from Pydantic models"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "health operation",
+        "description": "",
+        "tags": [
+          "placeholder"
+        ],
+        "x-atomic": false,
+        "x-idempotency": "none",
+        "x-role-scopes": []
+      }
+    }
+  },
+  "components": {
+    "schemas": {}
+  }
+}

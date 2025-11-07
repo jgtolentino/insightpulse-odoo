@@ -1,0 +1,354 @@
+name: DAST Security Testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: 'Target URL for DAST scan'
+        required: true
+        default: 'https://erp.insightpulseai.net'
+  schedule:
+    - cron: '0 3 * * 1'  # Weekly on Monday at 3 AM UTC
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
+jobs:
+  zap-scan:
+    name: OWASP ZAP Security Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+          fail_action: false
+
+      - name: Upload ZAP Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: zap-results
+          path: report_html.html
+
+  nuclei-scan:
+    name: Nuclei Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Nuclei Scan
+        uses: projectdiscovery/nuclei-action@main
+        with:
+          target: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+          flags: "-severity critical,high,medium"
+          output: nuclei-results.txt
+
+      - name: Upload Nuclei Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: nuclei-results
+          path: nuclei-results.txt
+
+  ssl-scan:
+    name: SSL/TLS Configuration Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install testssl.sh
+        run: |
+          git clone --depth 1 https://github.com/drwetter/testssl.sh.git
+          cd testssl.sh
+
+      - name: Run SSL scan
+        run: |
+          TARGET="${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}"
+          DOMAIN=$(echo $TARGET | sed -e 's|^[^/]*//||' -e 's|/.*$||')
+          ./testssl.sh/testssl.sh \
+            --jsonfile ssl-results.json \
+            --htmlfile ssl-results.html \
+            $DOMAIN
+        continue-on-error: true
+
+      - name: Upload SSL Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ssl-scan-results
+          path: |
+            ssl-results.json
+            ssl-results.html
+
+  security-headers:
+    name: Security Headers Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check security headers
+        run: |
+          TARGET="${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}"
+
+          echo "# Security Headers Report" > security-headers.md
+          echo "Target: $TARGET" >> security-headers.md
+          echo "Date: $(date)" >> security-headers.md
+          echo "" >> security-headers.md
+
+          # Check headers
+          HEADERS=$(curl -sI $TARGET)
+
+          echo "## Headers Found" >> security-headers.md
+          echo "\`\`\`" >> security-headers.md
+          echo "$HEADERS" >> security-headers.md
+          echo "\`\`\`" >> security-headers.md
+          echo "" >> security-headers.md
+
+          echo "## Security Analysis" >> security-headers.md
+
+          # Check for security headers
+          if echo "$HEADERS" | grep -iq "Strict-Transport-Security"; then
+            echo "✅ HSTS header present" >> security-headers.md
+          else
+            echo "❌ HSTS header missing" >> security-headers.md
+          fi
+
+          if echo "$HEADERS" | grep -iq "Content-Security-Policy"; then
+            echo "✅ CSP header present" >> security-headers.md
+          else
+            echo "⚠️ CSP header missing" >> security-headers.md
+          fi
+
+          if echo "$HEADERS" | grep -iq "X-Frame-Options"; then
+            echo "✅ X-Frame-Options header present" >> security-headers.md
+          else
+            echo "⚠️ X-Frame-Options header missing" >> security-headers.md
+          fi
+
+          if echo "$HEADERS" | grep -iq "X-Content-Type-Options"; then
+            echo "✅ X-Content-Type-Options header present" >> security-headers.md
+          else
+            echo "⚠️ X-Content-Type-Options header missing" >> security-headers.md
+          fi
+
+          if echo "$HEADERS" | grep -iq "X-XSS-Protection"; then
+            echo "✅ X-XSS-Protection header present" >> security-headers.md
+          else
+            echo "⚠️ X-XSS-Protection header missing" >> security-headers.md
+          fi
+
+          cat security-headers.md
+
+      - name: Upload Security Headers Report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-headers-report
+          path: security-headers.md
+
+  api-security:
+    name: API Security Testing
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: API Security Tests
+        run: |
+          python3 <<'EOF'
+          import requests
+          import json
+
+          BASE_URL = "${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}"
+
+          results = {
+              "tests": [],
+              "passed": 0,
+              "failed": 0
+          }
+
+          def test_api(name, endpoint, method="GET", expected_status=None):
+              try:
+                  url = f"{BASE_URL}{endpoint}"
+                  if method == "GET":
+                      response = requests.get(url, timeout=10)
+                  elif method == "POST":
+                      response = requests.post(url, json={}, timeout=10)
+
+                  passed = True
+                  if expected_status and response.status_code != expected_status:
+                      passed = False
+
+                  result = {
+                      "name": name,
+                      "endpoint": endpoint,
+                      "status_code": response.status_code,
+                      "passed": passed
+                  }
+
+                  results["tests"].append(result)
+                  if passed:
+                      results["passed"] += 1
+                  else:
+                      results["failed"] += 1
+
+                  print(f"{'✅' if passed else '❌'} {name}: {response.status_code}")
+
+              except Exception as e:
+                  results["tests"].append({
+                      "name": name,
+                      "endpoint": endpoint,
+                      "error": str(e),
+                      "passed": False
+                  })
+                  results["failed"] += 1
+                  print(f"❌ {name}: {e}")
+
+          # Run tests
+          test_api("Health Check", "/web/health", expected_status=200)
+          test_api("SQL Injection Test", "/web/database?id=1' OR '1'='1", expected_status=400)
+          test_api("XSS Test", "/web/search?q=<script>alert('xss')</script>", expected_status=400)
+
+          # Save results
+          with open('api-security-results.json', 'w') as f:
+              json.dump(results, f, indent=2)
+
+          print(f"\n📊 Summary: {results['passed']} passed, {results['failed']} failed")
+          EOF
+
+      - name: Upload API Security Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: api-security-results
+          path: api-security-results.json
+
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'InsightPulse-Odoo'
+          path: '.'
+          format: 'HTML'
+          out: 'dependency-check-report'
+
+      - name: Upload Dependency Check Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-check-report
+          path: dependency-check-report
+
+  security-report:
+    name: Generate Security Report
+    needs: [zap-scan, nuclei-scan, ssl-scan, security-headers, api-security, dependency-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate security summary
+        run: |
+          cat > security-summary.md <<'EOF'
+          # DAST Security Testing Summary
+
+          **Date**: $(date)
+          **Target**: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+
+          ## Scans Performed
+
+          ### 1. OWASP ZAP Baseline Scan
+          - Passive security scanning
+          - See `zap-results` artifact for detailed report
+
+          ### 2. Nuclei Vulnerability Scan
+          - Template-based vulnerability detection
+          - Severity: Critical, High, Medium
+          - See `nuclei-results` artifact
+
+          ### 3. SSL/TLS Configuration
+          - Certificate validation
+          - Protocol and cipher analysis
+          - See `ssl-scan-results` artifact
+
+          ### 4. Security Headers
+          - HTTP security header validation
+          - See `security-headers-report` artifact
+
+          ### 5. API Security Testing
+          - Injection attack tests
+          - XSS vulnerability tests
+          - See `api-security-results` artifact
+
+          ### 6. Dependency Security Check
+          - Known vulnerability scanning
+          - See `dependency-check-report` artifact
+
+          ## Recommendations
+
+          1. Review all high/critical vulnerabilities immediately
+          2. Implement missing security headers
+          3. Update dependencies with known vulnerabilities
+          4. Schedule regular DAST scans
+
+          ---
+          *Automated DAST testing via GitHub Actions*
+          EOF
+
+          cat security-summary.md
+
+      - name: Upload security summary
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-summary
+          path: security-summary.md
+
+      - name: Create security issue on critical findings
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔒 Critical Security Vulnerabilities Detected',
+              body: `DAST security scanning has detected critical vulnerabilities:
+
+              - **Target**: ${{ github.event.inputs.target_url || 'https://erp.insightpulseai.net' }}
+              - **Date**: ${new Date().toISOString()}
+
+              **Immediate Action Required**
+
+              Please review the workflow run and artifacts for details.
+
+              [View Workflow Run](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`,
+              labels: ['security', 'critical', 'needs-investigation']
+            });
