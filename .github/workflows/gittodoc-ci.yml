@@ -1,0 +1,10 @@
+name: gittodoc-ci
+on: [push, pull_request]
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install -r apps/gittodoc-service/requirements.txt
+      - run: nohup bash -lc "cd apps/gittodoc-service && GITTODOC_ROOT=$(pwd) GITTODOC_CACHE=$(pwd) uvicorn main:app --port 8099 &" && sleep 3
+      - run: curl -sSf http://127.0.0.1:8099/health
