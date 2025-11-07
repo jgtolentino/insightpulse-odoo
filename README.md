@@ -659,6 +659,19 @@ This project is licensed under the **LGPL-3.0 License** - see the [LICENSE](LICE
 
 ---
 
+## 🤖 For AI Assistants
+
+This repository includes AI assistant instructions for code generation and architectural guidance. See [claude.md](claude.md) for:
+- Multi-tenant architecture rules
+- BIR compliance patterns
+- Code generation guardrails
+- Security best practices
+- Conditional deployment triggers
+
+**For operational tasks** (installation, monitoring, troubleshooting), refer to this README.
+
+---
+
 ## 🙏 Acknowledgments
 
 - [Odoo Community Association (OCA)](https://github.com/OCA) - Community modules and development standards
