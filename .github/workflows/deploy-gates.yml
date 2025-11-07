@@ -2,6 +2,12 @@ name: Deploy Gates
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
 
 jobs:
   gates:
@@ -65,3 +71,47 @@ jobs:
           test -d skillsmith || echo "⚠️  skillsmith/ not found"
           test -f .github/workflows/tee-mvp-ci.yml || echo "⚠️  tee-mvp-ci.yml not found"
           echo "✅ T&E MVP structure check complete"
+
+      - name: Verify repo variables/secrets (non-blocking)
+        run: |
+          req_vars=( ODOO_HOST OCR_HOST )
+          req_secrets=( SUPABASE_DB_HOST SUPABASE_DB_PORT SUPABASE_DB_NAME SUPABASE_DB_USER SUPABASE_DB_PASSWORD )
+
+          echo ""
+          echo "════════════════════════════════════════════════════"
+          echo "📋 Configuration Verification (T&E MVP Bundle)"
+          echo "════════════════════════════════════════════════════"
+          echo ""
+          echo "== Repository Variables =="
+          for v in "${req_vars[@]}"; do
+            if [ -n "${!v:-}" ]; then
+              printf "✅ %s=%s\n" "$v" "${!v}"
+            else
+              printf "❌ %s (MISSING - required for deployment)\n" "$v"
+            fi
+          done
+
+          echo ""
+          echo "== Repository Secrets (presence check) =="
+          for s in "${req_secrets[@]}"; do
+            if [ -n "${!s:-}" ]; then
+              printf "✅ %s present\n" "$s"
+            else
+              printf "❌ %s MISSING (required for warehouse/Skillsmith)\n" "$s"
+            fi
+          done
+
+          echo ""
+          echo "════════════════════════════════════════════════════"
+          echo "ℹ️  Missing config will not block this PR but must be"
+          echo "   set before deployment. See PR_DEPLOYMENT_CHECKLIST.md"
+          echo "════════════════════════════════════════════════════"
+          echo ""
+        env:
+          ODOO_HOST: ${{ vars.ODOO_HOST }}
+          OCR_HOST: ${{ vars.OCR_HOST }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}

@@ -956,3 +956,37 @@ pr-secrets: ## Verify required secrets/env vars are documented
 	@echo "    - SUPABASE_DB_PASSWORD"
 	@echo ""
 	@echo "✅ Verify these are set in your GitHub repository settings"
+
+# ══════════════════════════════════════════════════════════════
+# 🔧 DEPLOYMENT HELPERS
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: gh-check-pr gh-trigger-gates gh-view-gates deploy-smoke
+
+gh-check-pr: ## Check PR status and required checks
+	@echo "📋 PR #326 Status:"
+	@gh pr view 326 --json number,title,state,isDraft,mergeable || echo "⚠️  gh CLI not available or PR not found"
+	@echo ""
+	@echo "Required Checks:"
+	@gh pr checks 326 || echo "⚠️  No checks found or gh CLI not available"
+
+gh-trigger-gates: ## Manually trigger deploy-gates workflow
+	@echo "🚀 Triggering deploy-gates workflow..."
+	@gh workflow run deploy-gates.yml || echo "⚠️  gh CLI not available or workflow not found"
+	@echo "✅ Workflow triggered. View status with: gh run list"
+
+gh-view-gates: ## View latest deploy-gates workflow run
+	@echo "📊 Latest deploy-gates runs:"
+	@gh run list --workflow=deploy-gates.yml --limit=5 || echo "⚠️  gh CLI not available"
+
+deploy-smoke: ## Quick deployment smoke test (local)
+	@echo "🔥 Running deployment smoke test..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@make pr-clear
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Smoke test complete!"
+	@echo ""
+	@echo "Next steps:"
+	@echo "  1. Review: cat PR_DEPLOYMENT_CHECKLIST.md"
+	@echo "  2. Deploy: Follow POST_MERGE_DEPLOYMENT.md"
+	@echo "  3. Monitor: make tee-health"
