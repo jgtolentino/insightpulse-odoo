@@ -1,0 +1,11 @@
+version: "3.8"
+services:
+  superset:
+    image: apache/superset:latest
+    environment:
+      - SUPERSET_SECRET_KEY=change-me
+    ports:
+      - "127.0.0.1:8088:8088"
+    volumes:
+      - ./dashboards:/dashboards
+    command: ["/bin/sh", "-c", "/app/docker/docker-bootstrap.sh && superset run -p 8088 -h 0.0.0.0"]

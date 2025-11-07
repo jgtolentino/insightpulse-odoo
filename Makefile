@@ -695,3 +695,46 @@ web: ## Build and serve PWA locally
 	@echo "🌐 Building PWA..."
 	@npx expo export --platform web
 	@echo "✅ PWA build complete! Serve with: npx serve dist"
+
+# ══════════════════════════════════════════════════════════════
+# 🧾 T&E MVP BUNDLE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: tee-odoo-upgrade tee-ocr-build tee-ocr-run tee-superset-up tee-skills-db tee-skills-mine tee-health
+
+tee-odoo-upgrade: ## Upgrade T&E Odoo modules
+	@echo "📦 Upgrading T&E Odoo modules..."
+	sudo odoo -c /etc/odoo/odoo.conf -d odoo_prod -u ip_expense_ocr,ip_expense_policy,ip_expense_match,ip_expense_audit --stop-after-init
+	sudo systemctl restart odoo
+	@echo "✅ T&E modules upgraded!"
+
+tee-ocr-build: ## Build OCR service Docker image
+	@echo "🐳 Building OCR service..."
+	cd ocrsvc && docker build -t ip-ocr:latest .
+	@echo "✅ OCR image built!"
+
+tee-ocr-run: ## Run OCR service container
+	@echo "🚀 Running OCR service..."
+	docker rm -f ip-ocr || true
+	docker run -d --name ip-ocr -p 127.0.0.1:$(OCR_PORT):8080 --restart=always --env-file .env ip-ocr:latest
+	@echo "✅ OCR service running on port $(OCR_PORT)!"
+
+tee-superset-up: ## Start Superset analytics
+	@echo "📊 Starting Superset..."
+	cd superset && chmod +x superset_bootstrap.sh && ./superset_bootstrap.sh && docker compose up -d
+	@echo "✅ Superset running!"
+
+tee-skills-db: ## Initialize Skillsmith database
+	@echo "🗄️  Initializing Skillsmith..."
+	psql "$(SUPABASE_DB_HOST)" -U "$(SUPABASE_DB_USER)" -d "$(SUPABASE_DB_NAME)" -h "$(SUPABASE_DB_HOST)" -p "$(SUPABASE_DB_PORT)" -f skillsmith/sql/skillsmith.sql
+	@echo "✅ Skillsmith DB ready!"
+
+tee-skills-mine: ## Mine errors and generate skills
+	@echo "⛏️  Mining errors for skills..."
+	python3 skillsmith/miner.py --min_hits 2 --top 50
+	@echo "✅ Skills mined! Check skills/proposed/"
+
+tee-health: ## Check T&E service health
+	@echo "🏥 Checking T&E service health..."
+	@echo "OCR Service:"
+	@curl -s https://$(OCR_HOST)/health && echo "✅" || echo "❌"

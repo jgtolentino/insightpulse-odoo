@@ -1,0 +1,15 @@
+id: {{ id }}
+title: "{{ title }}"
+type: fixer
+component: {{ component }}
+fingerprint: {{ fingerprint }}
+pattern: "{{ pattern }}"
+fix:
+  - name: auto_patch
+    action: |
+      # Add auto-fix logic here
+      pass
+manual_steps:
+  - Review error context
+  - Apply fix manually if auto-fix fails
+auto_fix: true

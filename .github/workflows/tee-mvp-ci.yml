@@ -1,0 +1,39 @@
+name: tee-mvp-ci
+on: [push, pull_request]
+
+jobs:
+  spec:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: OpenAPI atomic check
+        run: |
+          python - <<'PY'
+          import json
+          j = json.load(open('openapi/expense-intake.json'))
+          for p, mm in j['paths'].items():
+            for m, op in mm.items():
+              assert op.get('x-atomic') is True
+              assert isinstance(op.get('x-role-scopes'), list) and op['x-role-scopes']
+          print('OpenAPI checks OK')
+          PY
+
+  evals:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Curl OAuth link exists
+        run: |
+          curl -sS "https://${{ vars.ODOO_HOST || 'erp.insightpulseai.net' }}/web/login?debug=assets" | grep -q '/auth_oauth/signin' && echo 'OAuth link present' || echo 'No provider link (ok if none enabled)'
+
+      - name: OCR + Warehouse evals (blocking)
+        env:
+          OCR_HOST: ${{ vars.OCR_HOST }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+        run: |
+          pip install requests psycopg pytest
+          pytest -q tests/test_ocr_endpoints.py tests/test_warehouse_views.py
