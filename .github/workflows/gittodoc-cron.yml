@@ -1,0 +1,26 @@
+name: gittodoc-nightly
+on:
+  schedule:
+    - cron: "17 2 * * *" # daily 02:17 UTC
+  workflow_dispatch:
+  push:
+    paths:
+      - "apps/gittodoc-service/scripts/seed_repos.txt"
+      - ".github/workflows/gittodoc-cron.yml"
+
+jobs:
+  nightly-ingest:
+    runs-on: ubuntu-latest
+    env:
+      # Set this repo variable to your public API base if different
+      GITTODOC_API: ${{ vars.GITTODOC_API || 'https://insightpulseai.net/gittodoc/api' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Python deps
+        run: |
+          pip install -r apps/gittodoc-service/requirements.txt
+
+      - name: Nightly ingest
+        run: |
+          python apps/gittodoc-service/scripts/nightly_ingest.py

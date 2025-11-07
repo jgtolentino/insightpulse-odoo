@@ -1,0 +1,53 @@
+- id: SUPERSET-QUERY-TIMEOUT
+  service: superset
+  severity: P1
+  symptoms: ["Dashboard panels show timeout errors", "Slow dashboard load", "User complaints"]
+  causes: ["Unoptimized SQL", "Missing indexes", "Large dataset scans", "DB overload"]
+  signals: ["superset_sql_query_seconds p95 > 5s", "query_timeout_total increasing"]
+  queries:
+    - "histogram_quantile(0.95, sum(rate(superset_sql_query_seconds_bucket[5m])) by (le)) > 5"
+    - "rate(superset_query_timeout_total[10m]) > 0"
+  auto_heal: ["warm_superset_cache.sh"]
+  guardrails: ["add database indexes", "use materialized views", "set query timeout limits", "async query execution"]
+  verify: ["p95 query duration <3s", "no timeouts in 15m"]
+  runbook: "docs/runbooks/superset.md#query-timeout"
+
+- id: SUPERSET-METADATA-DB-DEADLOCK
+  service: superset
+  severity: P1
+  symptoms: ["Dashboard save failures", "Chart edit errors", "502 Bad Gateway"]
+  causes: ["Concurrent metadata writes", "Long transactions", "Lock contention"]
+  signals: ["metadata_db_lock_wait_time > 1s"]
+  queries:
+    - "SELECT count(*) FROM pg_stat_activity WHERE datname='superset' AND wait_event_type='Lock'"
+  auto_heal: ["restart_superset.sh"]
+  guardrails: ["upgrade metadata DB", "tune connection pool", "serialize critical writes"]
+  verify: ["no lock waits for 10m"]
+  runbook: "docs/runbooks/superset.md#metadata-db-deadlock"
+
+- id: SUPERSET-CACHE-MISS
+  service: superset
+  severity: P2
+  symptoms: ["Slow dashboard loads despite warm cache", "High DB load", "Cache hit ratio <50%"]
+  causes: ["Cache eviction too aggressive", "TTL too short", "Cache key mismatches"]
+  signals: ["superset_cache_hit_ratio < 0.5"]
+  queries:
+    - "sum(rate(superset_cache_hits[5m])) / (sum(rate(superset_cache_hits[5m])) + sum(rate(superset_cache_misses[5m])))"
+  auto_heal: ["warm_superset_cache.sh"]
+  guardrails: ["increase cache size", "tune TTL", "pre-warm popular dashboards"]
+  verify: ["cache hit ratio >70% for 30m"]
+  runbook: "docs/runbooks/superset.md#cache-miss"
+
+- id: SUPERSET-WORKER-OVERLOAD
+  service: superset
+  severity: P2
+  symptoms: ["Slow async query execution", "Email reports delayed", "Celery queue growing"]
+  causes: ["Too few Celery workers", "Long-running queries blocking workers", "Memory pressure"]
+  signals: ["celery_queue_length > 100", "worker_cpu_usage > 90%"]
+  queries:
+    - "sum(celery_queue_length) by (queue) > 100"
+    - "container_cpu_usage_percent{container='superset-worker'} > 90"
+  auto_heal: ["scale_superset_workers.sh"]
+  guardrails: ["scale workers horizontally", "set task timeouts", "prioritize queues"]
+  verify: ["queue length <50", "CPU <80%"]
+  runbook: "docs/runbooks/superset.md#worker-overload"

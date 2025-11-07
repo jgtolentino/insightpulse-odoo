@@ -1,0 +1,30 @@
+{
+  "name": "gittodoc",
+  "description": "Ingest GitHub repos into static docs and search them",
+  "actions": [
+    {
+      "name": "ingest",
+      "description": "Clone and index a repository; returns docs URL",
+      "args": [{ "name": "repo_url", "type": "string" }]
+    },
+    {
+      "name": "search",
+      "description": "Search GitHub repos or code",
+      "args": [
+        { "name": "q", "type": "string" },
+        { "name": "repo", "type": "string", "optional": true }
+      ]
+    },
+    {
+      "name": "open_doc",
+      "description": "Open generated documentation by slug",
+      "args": [{ "name": "slug", "type": "string" }]
+    }
+  ],
+  "base_url": "https://insightpulseai.net",
+  "routes": {
+    "ingest": "/gittodoc/api/ingest",
+    "search": "/gittodoc/api/search",
+    "open_doc": "/gittodoc/{slug}/"
+  }
+}

@@ -3,19 +3,19 @@ name: Assistant Context Freshness
 on:
   # Run daily at 3 AM UTC
   schedule:
-    - cron: '0 3 * * *'
+    - cron: "0 3 * * *"
 
   # Run on push to main
   push:
     branches: [main]
     paths:
-      - 'claude.md'
+      - "claude.md"
 
   # Run on pull requests
   pull_request:
     branches: [main, develop]
     paths:
-      - 'claude.md'
+      - "claude.md"
 
   # Allow manual trigger
   workflow_dispatch:

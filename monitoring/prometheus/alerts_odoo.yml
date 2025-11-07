@@ -1,0 +1,91 @@
+groups:
+- name: odoo.alerts
+  interval: 30s
+  rules:
+  - alert: OdooLongpollLatencyHigh
+    expr: histogram_quantile(0.95, sum(rate(odoo_longpoll_latency_seconds_bucket[5m])) by (le)) > 1
+    for: 10m
+    labels:
+      severity: "critical"
+      service: "odoo"
+      component: "longpoll"
+    annotations:
+      summary: "Odoo longpoll p95 latency >1s"
+      description: "Odoo longpoll latency p95 is {{ $value }}s (threshold: 1s)"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/odoo.md#bus-longpoll-stalls"
+      dashboard: "https://grafana.example.com/d/odoo/odoo-overview"
+
+  - alert: OdooCronStuck
+    expr: increase(odoo_cron_job_age_seconds_sum[10m]) > 1800
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "odoo"
+      component: "cron"
+    annotations:
+      summary: "Odoo cron jobs delayed >30m"
+      description: "Odoo cron jobs have been delayed by {{ $value }}s"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/odoo.md#cron-jam"
+
+  - alert: OdooDbDeadlock
+    expr: |
+      count by (instance) (
+        pg_stat_activity_wait_event_type{wait_event_type="Lock", app="odoo"} > 0
+      ) > 5
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "odoo"
+      component: "database"
+    annotations:
+      summary: "Odoo database deadlock detected"
+      description: "{{ $value }} queries are waiting on locks"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/odoo.md#db-deadlock"
+
+  - alert: OdooMemoryLeak
+    expr: |
+      container_memory_usage_bytes{container="odoo"} / container_spec_memory_limit_bytes > 0.9
+    for: 15m
+    labels:
+      severity: "warning"
+      service: "odoo"
+      component: "worker"
+    annotations:
+      summary: "Odoo container memory usage >90%"
+      description: "Odoo memory usage is {{ $value | humanizePercentage }} of limit"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/odoo.md#memory-leak"
+
+  - alert: OdooOOMKill
+    expr: rate(container_oom_kill_total{container="odoo"}[10m]) > 0
+    for: 1m
+    labels:
+      severity: "critical"
+      service: "odoo"
+      component: "worker"
+    annotations:
+      summary: "Odoo container being OOM killed"
+      description: "Odoo container has been OOM killed {{ $value }} times in last 10m"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/odoo.md#memory-leak"
+
+  - alert: OdooHighErrorRate
+    expr: |
+      sum(rate(odoo_http_requests_total{status=~"5.."}[5m])) /
+      sum(rate(odoo_http_requests_total[5m])) > 0.05
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "odoo"
+      component: "http"
+    annotations:
+      summary: "Odoo HTTP error rate >5%"
+      description: "Odoo is returning {{ $value | humanizePercentage }} 5xx errors"
+
+  - alert: OdooDown
+    expr: up{job="odoo"} == 0
+    for: 2m
+    labels:
+      severity: "critical"
+      service: "odoo"
+    annotations:
+      summary: "Odoo is down"
+      description: "Odoo has been down for more than 2 minutes"
