@@ -1,0 +1,24 @@
+[Unit]
+Description=InsightPulse DB Connection Auto-Healer
+Documentation=https://github.com/jgtolentino/insightpulse-odoo
+After=network.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/%i/insightpulse-odoo
+ExecStart=/usr/bin/python3 auto-healing/remediation/fix_db_connections.py
+User=%i
+Group=%i
+StandardOutput=journal
+StandardError=journal
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/%i/insightpulse-odoo/auto-healing/logs
+
+[Install]
+WantedBy=multi-user.target

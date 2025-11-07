@@ -1,0 +1,27 @@
+[Unit]
+Description=InsightPulse Superset Health Check + Auto-Restart
+Documentation=https://github.com/jgtolentino/insightpulse-odoo
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/%i/insightpulse-odoo
+ExecStart=/usr/bin/bash auto-healing/remediation/superset_health_check.sh
+User=%i
+Group=%i
+StandardOutput=journal
+StandardError=journal
+
+# Environment (can be overridden by systemctl edit)
+Environment="SUPERSET_URL=https://superset.insightpulseai.net"
+
+# Security hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/%i/insightpulse-odoo/auto-healing/logs
+
+[Install]
+WantedBy=multi-user.target

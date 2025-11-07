@@ -1,0 +1,12 @@
+[Unit]
+Description=Run InsightPulse DB Connection Healer every 5 minutes
+Documentation=https://github.com/jgtolentino/insightpulse-odoo
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+Unit=ip-db-healer.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

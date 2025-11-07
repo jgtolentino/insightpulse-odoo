@@ -695,3 +695,44 @@ web: ## Build and serve PWA locally
 	@echo "🌐 Building PWA..."
 	@npx expo export --platform web
 	@echo "✅ PWA build complete! Serve with: npx serve dist"
+
+# ══════════════════════════════════════════════════════════════
+# 🏥 AUTO-PATCH & AUTO-HEALING (ODOO 19)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: odoo19:scan odoo19:auto-fix healing:start healing:stop healing:status
+
+odoo19:scan: ## Detect Odoo 19 breaking changes
+	@echo "🔍 Scanning for Odoo 19 deprecated API usage..."
+	@bash scripts/auto-patch/detect-deprecated-api.sh
+
+odoo19:auto-fix: ## Apply import + OWL auto-fixes
+	@echo "🔧 Applying Odoo 19 compatibility fixes..."
+	@bash scripts/auto-patch/fix-odoo19-imports.sh
+	@bash scripts/auto-patch/migrate-owl-views.sh
+	@echo "✅ Auto-fixes applied!"
+
+healing:start: ## Start systemd healers (DB + Superset)
+	@echo "🏥 Starting auto-healing services..."
+	@sudo systemctl daemon-reload
+	@sudo systemctl enable --now ip-db-healer.service ip-db-healer.timer
+	@sudo systemctl enable --now ip-superset-healer.service ip-superset-healer.timer
+	@echo ""
+	@systemctl list-timers | grep ip- || true
+	@echo "✅ Auto-healing services started!"
+
+healing:stop: ## Stop systemd healers
+	@echo "🛑 Stopping auto-healing services..."
+	@sudo systemctl disable --now ip-db-healer.timer ip-db-healer.service || true
+	@sudo systemctl disable --now ip-superset-healer.timer ip-superset-healer.service || true
+	@echo "✅ Auto-healing services stopped!"
+
+healing:status: ## Check healer status
+	@echo "🏥 Auto-Healing Service Status"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@systemctl status ip-db-healer.service --no-pager || true
+	@echo ""
+	@systemctl status ip-superset-healer.service --no-pager || true
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "Active timers:"
+	@systemctl list-timers | grep ip- || echo "⚠️  No auto-healing timers active"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run InsightPulse Superset Healer every 2 minutes
+Documentation=https://github.com/jgtolentino/insightpulse-odoo
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+Unit=ip-superset-healer.service
+Persistent=true
+
+[Install]
+WantedBy=timers.target

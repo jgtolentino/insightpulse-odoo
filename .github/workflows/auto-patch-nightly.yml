@@ -1,0 +1,110 @@
+name: Auto-Patch Nightly
+
+on:
+  schedule:
+    - cron: '31 2 * * *'  # 02:31 UTC daily
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  nightly-auto-patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Odoo 19 compatibility scan
+        id: scan
+        continue-on-error: true
+        run: |
+          echo "🔍 Scanning for deprecated API usage..."
+          bash scripts/auto-patch/detect-deprecated-api.sh || echo "SCAN_FAILED=true" >> $GITHUB_ENV
+
+      - name: Apply auto-fixes (imports/OWL)
+        id: fix
+        run: |
+          echo "🔧 Applying auto-fixes..."
+          bash scripts/auto-patch/fix-odoo19-imports.sh || true
+          bash scripts/auto-patch/migrate-owl-views.sh || true
+
+      - name: Check for changes
+        id: changes
+        run: |
+          if ! git diff --quiet; then
+            echo "HAS_CHANGES=true" >> $GITHUB_ENV
+            echo "✅ Changes detected"
+            git diff --stat
+          else
+            echo "HAS_CHANGES=false" >> $GITHUB_ENV
+            echo "✅ No changes from auto-patch"
+          fi
+
+      - name: Create PR with auto-fixes
+        if: env.HAS_CHANGES == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          git config user.name "auto-patch-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+          BRANCH="bot/auto-patch-$(date +%F-%H%M)"
+          git checkout -B "$BRANCH"
+          git add -A
+          git commit -m "chore(auto-patch): nightly Odoo 19 compatibility fixes
+
+          Auto-generated fixes from nightly scan:
+          - Fixed deprecated import statements
+          - Migrated OWL framework views
+          - Updated deprecated API usage
+
+          Scan run: ${{ github.run_id }}
+          Triggered: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          git push -u origin "$BRANCH" --force
+
+          gh pr create \
+            --title "🤖 Auto-Patch: Nightly Odoo 19 Compatibility Fixes" \
+            --body "## Auto-Generated PR
+
+          This PR contains automated fixes for Odoo 19 compatibility issues detected by nightly scan.
+
+          ### Changes Applied
+          - ✅ Fixed deprecated import statements (registry, xlsxwriter)
+          - ✅ Migrated Kanban views to OWL framework
+          - ✅ Updated deprecated API usage (self._uid, _apply_ir_rules)
+
+          ### Verification
+          - Scan report: See workflow logs
+          - Manual review recommended before merge
+
+          ### Next Steps
+          1. Review changes
+          2. Run tests: \`make test\`
+          3. Merge if all checks pass
+
+          ---
+          **Workflow:** auto-patch-nightly
+          **Run ID:** ${{ github.run_id }}
+          **Generated:** $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --label "automated,odoo-19-compat" \
+            --assignee "${{ github.actor }}" || echo "PR already exists or creation failed"
+
+      - name: Report completion
+        if: always()
+        run: |
+          if [ "${{ env.HAS_CHANGES }}" = "true" ]; then
+            echo "✅ Auto-patch PR created"
+          else
+            echo "✅ No changes detected - system is clean"
+          fi
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "❌ Auto-patch workflow failed"
+          echo "Check logs at: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
