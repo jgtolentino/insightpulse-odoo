@@ -1,0 +1,75 @@
+# Axolotl Config: Expense Classification (Mistral 7B QLoRA)
+# Optimized for RTX 4090 24GB VRAM
+# Use case: Expense categorization, receipt OCR classification
+
+base_model: mistralai/Mistral-7B-Instruct-v0.2
+model_type: MistralForCausalLM
+tokenizer_type: AutoTokenizer
+
+# QLoRA Configuration (4-bit quantization)
+adapter: qlora
+lora_r: 64
+lora_alpha: 128
+lora_dropout: 0.05
+lora_target_modules:
+  - q_proj
+  - v_proj
+  - k_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+# 4-bit quantization (QLoRA)
+load_in_4bit: true
+bnb_4bit_quant_type: nf4
+bnb_4bit_use_double_quant: true
+bnb_4bit_compute_dtype: bfloat16
+
+# Dataset
+datasets:
+  - path: /opt/insightpulse/training/datasets/expense_default.jsonl
+    type: json
+    conversation: messages
+
+# Sequence length
+sequence_len: 2048
+max_packed_sequence_len: 2048
+
+# Training hyperparameters
+num_epochs: 5
+micro_batch_size: 8
+gradient_accumulation_steps: 2
+eval_batch_size: 4
+learning_rate: 0.0003
+warmup_steps: 20
+lr_scheduler: cosine
+optimizer: adamw_bnb_8bit
+
+# Precision
+bf16: true
+fp16: false
+tf32: true
+flash_attention: true
+sample_packing: true
+
+# Optimization
+gradient_checkpointing: true
+gradient_checkpointing_kwargs:
+  use_reentrant: false
+
+# Logging
+logging_steps: 5
+eval_steps: 25
+save_steps: 50
+save_total_limit: 3
+output_dir: /opt/insightpulse/training/models/expense-mistral-qlora
+
+# Wandb
+wandb_project: insightpulse-training
+wandb_watch: gradients
+wandb_log_model: checkpoint
+
+# Special tokens
+special_tokens:
+  pad_token: "</s>"

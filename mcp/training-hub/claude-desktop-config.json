@@ -1,0 +1,56 @@
+{
+  "$comment": "Claude Desktop MCP Server Configuration",
+  "$comment2": "Copy this to: ~/.config/claude/mcp_servers.json (Linux/Mac) or %APPDATA%/Claude/mcp_servers.json (Windows)",
+
+  "mcpServers": {
+    "insightpulse-main": {
+      "url": "https://mcp.insightpulseai.net",
+      "transport": "sse",
+      "description": "Main InsightPulse MCP server (existing production)"
+    },
+
+    "insightpulse-training": {
+      "url": "http://localhost:8003",
+      "transport": "sse",
+      "description": "Training orchestration tools (local development)",
+      "tools": [
+        "prepare_bir_training_data",
+        "start_axolotl_training",
+        "deploy_vllm_model",
+        "run_model_evaluation",
+        "get_training_status",
+        "list_available_models"
+      ],
+      "env": {
+        "SUPABASE_URL": "https://spdtwktxdalcfigzeqrz.supabase.co",
+        "SUPABASE_SERVICE_ROLE": "${SUPABASE_SERVICE_ROLE}",
+        "POSTGRES_URL": "${POSTGRES_URL}"
+      }
+    }
+  },
+
+  "usage_examples": {
+    "example_1": {
+      "prompt": "Start BIR training with forms from this week",
+      "expected_tools": [
+        "prepare_bir_training_data",
+        "start_axolotl_training",
+        "get_training_status"
+      ]
+    },
+    "example_2": {
+      "prompt": "Deploy the latest expense classification model",
+      "expected_tools": [
+        "deploy_vllm_model",
+        "run_model_evaluation"
+      ]
+    },
+    "example_3": {
+      "prompt": "Show me training metrics for bir-compliance model",
+      "expected_tools": [
+        "get_training_status",
+        "run_model_evaluation"
+      ]
+    }
+  }
+}
