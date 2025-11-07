@@ -1,0 +1,114 @@
+groups:
+- name: docker.alerts
+  interval: 30s
+  rules:
+  - alert: DockerDiskPressure
+    expr: |
+      node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} /
+      node_filesystem_size_bytes < 0.15
+    for: 10m
+    labels:
+      severity: "critical"
+      service: "docker"
+      component: "storage"
+    annotations:
+      summary: "Docker host disk <15% free"
+      description: "Host disk usage is {{ $value | humanizePercentage }} ({{ $labels.mountpoint }})"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#disk-pressure"
+
+  - alert: DockerOOMKill
+    expr: rate(container_oom_kill_total[10m]) > 0
+    for: 1m
+    labels:
+      severity: "critical"
+      service: "docker"
+      component: "container"
+    annotations:
+      summary: "Docker container being OOM killed"
+      description: "Container {{ $labels.container }} has been OOM killed {{ $value }} times in last 10m"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#oom-kill"
+
+  - alert: DockerContainerMemoryHigh
+    expr: |
+      container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.95
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "container"
+    annotations:
+      summary: "Docker container {{ $labels.container }} memory >95%"
+      description: "Container {{ $labels.container }} memory usage is {{ $value | humanizePercentage }} of limit"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#oom-kill"
+
+  - alert: DockerNetworkErrors
+    expr: rate(container_network_receive_errors_total[5m]) > 0
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "network"
+    annotations:
+      summary: "Docker container {{ $labels.container }} network errors"
+      description: "Container {{ $labels.container }} is experiencing {{ $value }} network errors/sec"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#network-isolation"
+
+  - alert: DockerContainerRestarts
+    expr: rate(container_restart_count[15m]) > 0.1
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "container"
+    annotations:
+      summary: "Docker container {{ $labels.container }} restarting frequently"
+      description: "Container {{ $labels.container }} has restarted {{ $value }} times in last 15m"
+
+  - alert: DockerImagePullRateLimit
+    expr: |
+      sum(rate(image_pull_errors_total{error=~".*rate limit.*"}[5m])) > 0
+    for: 5m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "registry"
+    annotations:
+      summary: "Docker image pull rate limited"
+      description: "{{ $value }} image pulls/sec are being rate limited"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#image-pull-rate-limit"
+
+  - alert: DockerDaemonDown
+    expr: up{job="docker"} == 0
+    for: 2m
+    labels:
+      severity: "critical"
+      service: "docker"
+    annotations:
+      summary: "Docker daemon is down"
+      description: "Docker daemon has been down for more than 2 minutes"
+
+  - alert: DockerContainerCPUHigh
+    expr: |
+      rate(container_cpu_usage_seconds_total[5m]) * 100 > 90
+    for: 15m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "container"
+    annotations:
+      summary: "Docker container {{ $labels.container }} CPU >90%"
+      description: "Container {{ $labels.container }} CPU usage is {{ $value }}%"
+
+  - alert: DockerVolumeSpaceLow
+    expr: |
+      docker_volume_size_bytes{volume!~".*tmp.*"} /
+      docker_volume_quota_bytes > 0.85
+    for: 10m
+    labels:
+      severity: "warning"
+      service: "docker"
+      component: "volume"
+    annotations:
+      summary: "Docker volume {{ $labels.volume }} >85% full"
+      description: "Volume {{ $labels.volume }} is {{ $value | humanizePercentage }} full"
+      runbook: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/runbooks/docker.md#disk-pressure"

@@ -838,3 +838,101 @@ skills-pipeline-help: ## Show integration pipeline usage
 	@echo "  • Dashboard: skillsmith-unified-monitoring"
 	@echo "  • Logs: logs/skillsmith-integration.jsonl"
 	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🚨 MONITORING & OPS HARDENING
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: monitor-apply synthetics autopatch-preview autopatch-apply chaos-cpu chaos-kill chaos-network sb-serve sb-deploy sb-cron sb-verify
+
+monitor-apply: ## (Re)load Prometheus/Alertmanager with new rules
+	@echo "📊 Reloading monitoring stack..."
+	@cd monitoring && docker compose up -d --build
+	@echo "✅ Monitoring stack reloaded!"
+	@echo "  Prometheus: http://localhost:9090"
+	@echo "  Alertmanager: http://localhost:9093"
+
+synthetics: ## Run synthetic cross-service test
+	@echo "🧪 Running synthetic order flow test..."
+	@pytest -q tests/integration/test_synthetic_order_flow.py
+
+autopatch-preview: ## Preview auto-patch without changes
+	@echo "🔍 Previewing auto-patch (no changes)..."
+	@APPLY=false python3 auto-patch/autopatch.py
+
+autopatch-apply: ## Apply auto-patch and create branch
+	@echo "⚡ Applying auto-patch..."
+	@APPLY=true python3 auto-patch/autopatch.py
+
+chaos-cpu: ## Run CPU stress chaos test
+	@echo "🔥 Running CPU stress test..."
+	@./scripts/chaos/cpu_stress.sh
+
+chaos-kill: ## Run kill worker chaos test (usage: make chaos-kill TARGET=odoo)
+	@echo "💥 Running kill worker test..."
+	@./scripts/chaos/kill_worker.sh $(TARGET)
+
+chaos-network: ## Run network flakiness chaos test (usage: make chaos-network TARGET=odoo)
+	@echo "📡 Running network flakiness test..."
+	@./scripts/chaos/net_flaky.sh $(TARGET)
+
+sb-serve: ## Run local Supabase Edge Functions
+	@echo "🚀 Starting Supabase Edge Functions locally..."
+	@. supabase/.env && supabase functions serve --env-file supabase/.env
+
+sb-deploy: ## Deploy all Supabase Edge Functions
+	@echo "📤 Deploying Supabase Edge Functions..."
+	@. supabase/.env && \
+	for f in supabase/functions/*; do \
+		fn=$$(basename $$f); \
+		echo "Deploying $$fn..."; \
+		supabase functions deploy $$fn --project-ref spdtwktxdalcfigzeqrz --env-file supabase/.env; \
+	done
+	@echo "✅ All Edge Functions deployed!"
+
+sb-cron: ## Apply pg_cron jobs and schema
+	@echo "⏰ Applying pg_cron jobs..."
+	@psql "$(POSTGRES_URL)" -f supabase/sql/schema_tables.sql
+	@psql "$(POSTGRES_URL)" -f supabase/sql/rls_policies.sql
+	@psql "$(POSTGRES_URL)" -f supabase/sql/cron_jobs.sql
+	@echo "✅ Cron jobs and schema applied!"
+
+sb-verify: ## Call health + synthetic Edge Functions
+	@echo "✅ Verifying Supabase Edge Functions..."
+	@. supabase/.env && \
+	curl -s -X POST "$(SUPABASE_URL)/functions/v1/health_heartbeat" \
+		-H "Authorization: Bearer $(SUPABASE_SERVICE_ROLE_KEY)" \
+		-d '{"source":"manual","status":"ok"}' | jq . ; \
+	curl -s -X POST "$(SUPABASE_URL)/functions/v1/synthetic_order_flow" \
+		-H "Authorization: Bearer $(SUPABASE_SERVICE_ROLE_KEY)" \
+		-d '{}' | jq .
+
+ops-help: ## Show ops hardening commands
+	@echo "🚨 Ops Hardening Pack Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Monitoring:"
+	@echo "  monitor-apply              Reload Prometheus/Alertmanager"
+	@echo "  synthetics                 Run synthetic cross-service test"
+	@echo ""
+	@echo "Auto-Patch:"
+	@echo "  autopatch-preview          Preview auto-patch (safe)"
+	@echo "  autopatch-apply            Apply auto-patch and create branch"
+	@echo ""
+	@echo "Chaos Testing:"
+	@echo "  chaos-cpu                  Run CPU stress test"
+	@echo "  chaos-kill TARGET=odoo     Kill worker test"
+	@echo "  chaos-network TARGET=odoo  Network flakiness test"
+	@echo ""
+	@echo "Supabase Edge Functions:"
+	@echo "  sb-serve                   Run Edge Functions locally"
+	@echo "  sb-deploy                  Deploy all Edge Functions"
+	@echo "  sb-cron                    Apply pg_cron jobs"
+	@echo "  sb-verify                  Verify Edge Functions"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  Error Catalog:     ops/error-catalog/"
+	@echo "  Runbooks:          docs/runbooks/"
+	@echo "  Prometheus Alerts: monitoring/prometheus/"
+	@echo "  Auto-heal Scripts: auto-healing/handlers/"
+	@echo ""

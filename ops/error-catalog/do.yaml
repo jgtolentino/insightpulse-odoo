@@ -1,0 +1,53 @@
+- id: DO-DEPLOY-FAILED
+  service: digitalocean
+  severity: P1
+  symptoms: ["Deployment fails", "App stuck in deploying state", "Rollback triggered"]
+  causes: ["Build errors", "Health check failures", "Resource limits", "Invalid config"]
+  signals: ["do_deploy_failures_total increasing", "deployment_duration_seconds > 600"]
+  queries:
+    - "increase(do_deploy_failures_total[15m]) > 0"
+    - "do_deployment_duration_seconds > 600"
+  auto_heal: ["rollback_do_app.sh"]
+  guardrails: ["test builds locally", "health check validation", "staged rollouts"]
+  verify: ["deployment succeeded", "app healthy"]
+  runbook: "docs/runbooks/do.md#deploy-rollbacks"
+
+- id: DO-APP-HEALTH-CHECK-FAILING
+  service: digitalocean
+  severity: P0
+  symptoms: ["App marked unhealthy", "Traffic not routed", "Automatic restarts"]
+  causes: ["App crash loop", "Slow startup", "Health endpoint down", "Port misconfiguration"]
+  signals: ["do_app_health_check_failures > 3"]
+  queries:
+    - "do_app_health_check_failures > 3"
+  auto_heal: ["restart_do_app.sh"]
+  guardrails: ["increase health check timeout", "validate health endpoint", "graceful shutdown"]
+  verify: ["health checks passing for 10m"]
+  runbook: "docs/runbooks/do.md#health-check-failing"
+
+- id: DO-SCALING-STUCK
+  service: digitalocean
+  severity: P2
+  symptoms: ["App not scaling up despite load", "Autoscaler inactive", "Manual scale fails"]
+  causes: ["Resource quota exceeded", "Region capacity", "Config errors"]
+  signals: ["do_app_instance_count < expected", "cpu_usage > 80% sustained"]
+  queries:
+    - "do_app_instance_count < do_app_instance_target"
+    - "avg(container_cpu_usage_percent) by (app) > 80"
+  auto_heal: []
+  guardrails: ["monitor quotas", "test autoscaling", "multi-region deployment"]
+  verify: ["instance count matches target", "CPU <70%"]
+  runbook: "docs/runbooks/do.md#scaling-stuck"
+
+- id: DO-DATABASE-CONNECTION-LIMIT
+  service: digitalocean
+  severity: P1
+  symptoms: ["Connection errors from app", "Database refusing connections", "504 errors"]
+  causes: ["Managed DB connection limit reached", "Connection leaks", "No connection pooling"]
+  signals: ["db_connection_count / db_connection_limit > 0.9"]
+  queries:
+    - "do_managed_db_connections / do_managed_db_connection_limit > 0.9"
+  auto_heal: ["kill_idle_db_connections.sh"]
+  guardrails: ["use PgBouncer", "set connection limits per app", "connection timeout tuning"]
+  verify: ["connections <80%", "no connection errors"]
+  runbook: "docs/runbooks/do.md#database-connection-limit"
