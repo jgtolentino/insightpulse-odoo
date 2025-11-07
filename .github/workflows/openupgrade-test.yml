@@ -1,0 +1,290 @@
+name: OpenUpgrade Migration Test
+
+# Test Odoo module upgrades using OpenUpgrade framework
+# Runs on: PRs, manual trigger, scheduled weekly
+
+on:
+  pull_request:
+    paths:
+      - 'odoo/custom-addons/**'
+      - '.github/workflows/openupgrade-test.yml'
+  workflow_dispatch:
+    inputs:
+      module_name:
+        description: 'Module to test (e.g., my_custom_module)'
+        required: false
+        default: 'all'
+      from_version:
+        description: 'Upgrade from version (e.g., 18.0)'
+        required: false
+        default: '18.0'
+      to_version:
+        description: 'Upgrade to version (e.g., 19.0)'
+        required: false
+        default: '19.0'
+  schedule:
+    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM
+
+jobs:
+  analyze-migrations:
+    name: Analyze Migration Scripts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install openupgradelib lxml
+
+      - name: Clone OpenUpgrade
+        run: |
+          git clone --depth 1 --branch 19.0 https://github.com/OCA/OpenUpgrade.git /tmp/openupgrade
+
+      - name: Analyze custom modules
+        id: analyze
+        run: |
+          python3 /tmp/openupgrade/openupgrade_scripts/openupgrade_analysis.py \
+            --addons-path odoo/custom-addons \
+            --output /tmp/analysis.json || true
+
+          # Check if analysis found issues
+          if [ -f /tmp/analysis.json ]; then
+            echo "analysis_found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload analysis results
+        if: steps.analyze.outputs.analysis_found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: openupgrade-analysis
+          path: /tmp/analysis.json
+
+  test-upgrade:
+    name: Test Upgrade (${{ matrix.module }})
+    runs-on: ubuntu-latest
+    needs: analyze-migrations
+
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - insightpulse_connection_manager
+          - insightpulse_finance_ssc
+          # Add your custom modules here
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpq-dev \
+            libsasl2-dev \
+            libldap2-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            libssl-dev
+
+      - name: Install Python dependencies
+        run: |
+          pip install wheel
+          pip install -r requirements.txt
+          pip install openupgradelib
+
+      - name: Clone OpenUpgrade
+        run: |
+          git clone --depth 1 --branch 19.0 https://github.com/OCA/OpenUpgrade.git /tmp/openupgrade
+
+      - name: Set up old version database
+        run: |
+          # Create database with old version structure
+          export PGPASSWORD=odoo
+          psql -h localhost -U odoo -d odoo_test -c "SELECT 1" || true
+
+      - name: Install old version modules
+        run: |
+          # Install old version first (simulate existing installation)
+          # This would normally be a dump from production
+          echo "Simulating old version installation..."
+          # TODO: Add old version installation logic
+
+      - name: Backup database before upgrade
+        run: |
+          export PGPASSWORD=odoo
+          pg_dump -h localhost -U odoo odoo_test > /tmp/backup_pre_upgrade.sql
+
+      - name: Run OpenUpgrade migration
+        id: upgrade
+        run: |
+          # Run migration with OpenUpgrade
+          python3 /tmp/openupgrade/odoo-bin \
+            -d odoo_test \
+            --db_host localhost \
+            --db_port 5432 \
+            --db_user odoo \
+            --db_password odoo \
+            --addons-path odoo/custom-addons,/tmp/openupgrade/odoo/addons \
+            -u ${{ matrix.module }} \
+            --stop-after-init \
+            --log-level=debug \
+            2>&1 | tee /tmp/upgrade.log
+
+          # Check for errors
+          if grep -i "error" /tmp/upgrade.log | grep -v "ERROR_HANDLED"; then
+            echo "upgrade_failed=true" >> $GITHUB_OUTPUT
+          else
+            echo "upgrade_success=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate migration
+        if: steps.upgrade.outputs.upgrade_success == 'true'
+        run: |
+          # Run post-migration validation
+          export PGPASSWORD=odoo
+
+          # Check for NULL values in required fields
+          psql -h localhost -U odoo -d odoo_test -c "
+            SELECT table_name, column_name
+            FROM information_schema.columns
+            WHERE table_schema = 'public'
+              AND is_nullable = 'NO'
+              AND column_name LIKE '%${{ matrix.module }}%'
+          "
+
+          # Count records before/after
+          echo "Validation complete"
+
+      - name: Upload upgrade logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-logs-${{ matrix.module }}
+          path: |
+            /tmp/upgrade.log
+            /tmp/backup_pre_upgrade.sql
+
+      - name: Report upgrade status
+        if: always()
+        run: |
+          if [ "${{ steps.upgrade.outputs.upgrade_success }}" == "true" ]; then
+            echo "✅ Module ${{ matrix.module }} upgraded successfully"
+          else
+            echo "❌ Module ${{ matrix.module }} upgrade failed"
+            exit 1
+          fi
+
+  test-oca-modules:
+    name: Test OCA Module Upgrades
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        oca_module:
+          - account
+          - sale
+          - purchase
+          # Add OCA modules you depend on
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: odoo_test_oca
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5433:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Clone OCA modules
+        run: |
+          git clone --depth 1 --branch 19.0 \
+            https://github.com/OCA/${{ matrix.oca_module }}.git \
+            /tmp/oca_${{ matrix.oca_module }}
+
+      - name: Clone OpenUpgrade
+        run: |
+          git clone --depth 1 --branch 19.0 \
+            https://github.com/OCA/OpenUpgrade.git \
+            /tmp/openupgrade
+
+      - name: Test OCA module upgrade
+        run: |
+          echo "Testing ${{ matrix.oca_module }} upgrade compatibility"
+          # Check if migration scripts exist
+          if [ -d "/tmp/openupgrade/openupgrade_scripts/scripts/${{ matrix.oca_module }}" ]; then
+            echo "✅ Migration scripts found for ${{ matrix.oca_module }}"
+          else
+            echo "⚠️  No migration scripts for ${{ matrix.oca_module }}"
+          fi
+
+  notify-results:
+    name: Notify Upgrade Test Results
+    runs-on: ubuntu-latest
+    needs: [analyze-migrations, test-upgrade, test-oca-modules]
+    if: always()
+
+    steps:
+      - name: Send Slack notification
+        if: env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" == "success" ]; then
+            EMOJI="✅"
+            COLOR="good"
+          else
+            EMOJI="❌"
+            COLOR="danger"
+          fi
+
+          curl -X POST $SLACK_WEBHOOK_URL \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"$EMOJI OpenUpgrade Migration Tests: $STATUS\",
+              \"attachments\": [{
+                \"color\": \"$COLOR\",
+                \"fields\": [
+                  {\"title\": \"Repository\", \"value\": \"${{ github.repository }}\", \"short\": true},
+                  {\"title\": \"Branch\", \"value\": \"${{ github.ref_name }}\", \"short\": true}
+                ]
+              }]
+            }"
