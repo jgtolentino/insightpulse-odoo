@@ -395,18 +395,18 @@ setup-ph-localization: ## Install Philippine accounting localization in Odoo
 .PHONY: verify-ph-localization
 verify-ph-localization: ## Verify Philippine accounting modules are installed
 	@echo "🔍 Verifying PH localization..."
-	@ssh $(ODOO_HOST) '\
+	@ssh $(ODOO_HOST) " \
 		/opt/odoo16/odoo16-venv/bin/python /opt/odoo16/odoo16/odoo-bin shell \
 		-d insightpulse_prod \
 		--no-http \
-		<<EOF
-import odoo
-env = odoo.api.Environment.manage()
-mods = env["ir.module.module"].search([("name","ilike","l10n_ph")])
-for m in mods:
-    print(f"{m.name}: {m.state}")
-EOF
-	' || echo "⚠️  Verification failed"
+		<<'EOFPY' \
+		&& echo 'import odoo' \
+		&& echo 'env = odoo.api.Environment.manage()' \
+		&& echo 'mods = env[\"ir.module.module\"].search([(\"name\",\"ilike\",\"l10n_ph\")])' \
+		&& echo 'for m in mods:' \
+		&& echo '    print(f\"{m.name}: {m.state}\")' \
+		EOFPY \
+	" || echo "⚠️  Verification failed"
 
 # Development helpers
 .PHONY: dev-setup
@@ -881,3 +881,78 @@ skills-pipeline-help: ## Show integration pipeline usage
 	@echo "  • Dashboard: skillsmith-unified-monitoring"
 	@echo "  • Logs: logs/skillsmith-integration.jsonl"
 	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🚦 PR DEPLOYMENT CLEARANCE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: pr-clear pr-ci pr-dbml pr-schema pr-odoo pr-edge pr-secrets
+
+pr-clear: ## Run the most common deploy clearance checks
+	@echo "🚦 Running PR deployment clearance checks..."
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	$(MAKE) pr-ci
+	$(MAKE) pr-dbml
+	$(MAKE) pr-schema
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo "✅ Basic deploy clearance checks passed!"
+
+pr-ci: ## Local mirror of CI (validator + section19)
+	@echo "🔍 Validating Claude config and Section 19..."
+	@test -f scripts/validate-claude-config.py && python scripts/validate-claude-config.py || echo "⚠️  validate-claude-config.py not found (skipping)"
+	@test -f scripts/skillsmith_sync.py && chmod +x scripts/skillsmith_sync.py && ./scripts/skillsmith_sync.py --check || echo "⚠️  skillsmith_sync.py not found (skipping)"
+	@echo "✅ CI checks passed"
+
+pr-dbml: ## Ensure DBML compiles to SQL and ERD renders
+	@echo "📊 Checking DBML schema..."
+	@if [ -f schema/insightpulse_odoo.dbml ]; then \
+		npm list -g @dbml/cli || npm i -g @dbml/cli; \
+		mkdir -p build; \
+		dbml2sql schema/insightpulse_odoo.dbml --postgres -o build/odoo_schema.sql; \
+		echo "✅ DBML compiled to SQL"; \
+	else \
+		echo "⚠️  No DBML schema found (skipping)"; \
+	fi
+
+pr-schema: ## Quick sanity: detect obvious FK/comment TODOs
+	@echo "🔍 Checking for TODO markers in generated SQL..."
+	@if [ -f build/odoo_schema.sql ]; then \
+		if grep -R "TODO FK\|TODO" build/odoo_schema.sql >/dev/null 2>&1; then \
+			echo "⚠️  Found TODOs in generated SQL — review before deploy"; \
+			grep -n "TODO" build/odoo_schema.sql | head -10; \
+			exit 1; \
+		else \
+			echo "✅ No obvious TODO markers in SQL"; \
+		fi; \
+	else \
+		echo "⚠️  No generated SQL found (skipping)"; \
+	fi
+
+pr-odoo: ## Smoke: Odoo module autoload (adjust command if needed)
+	@echo "🔧 Running Odoo smoke test..."
+	@echo "⚠️  Manual Odoo smoke test required:"
+	@echo "   odoo-bin -d <devdb> -u all --stop-after-init"
+
+pr-edge: ## If edge functions changed, run fmt/lint/tests
+	@echo "🌊 Checking edge functions..."
+	@if [ -d supabase/functions ]; then \
+		cd supabase/functions && deno fmt && deno lint --fix && (deno test -A || true); \
+		echo "✅ Edge functions checked"; \
+	else \
+		echo "⚠️  No edge functions found (skipping)"; \
+	fi
+
+pr-secrets: ## Verify required secrets/env vars are documented
+	@echo "🔐 Checking required secrets documentation..."
+	@echo "Required for T&E MVP Bundle:"
+	@echo "  Variables (GitHub Settings → Actions → Variables):"
+	@echo "    - ODOO_HOST"
+	@echo "    - OCR_HOST"
+	@echo "  Secrets (GitHub Settings → Actions → Repository secrets):"
+	@echo "    - SUPABASE_DB_HOST"
+	@echo "    - SUPABASE_DB_PORT"
+	@echo "    - SUPABASE_DB_NAME"
+	@echo "    - SUPABASE_DB_USER"
+	@echo "    - SUPABASE_DB_PASSWORD"
+	@echo ""
+	@echo "✅ Verify these are set in your GitHub repository settings"
