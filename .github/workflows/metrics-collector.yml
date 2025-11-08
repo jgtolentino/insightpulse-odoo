@@ -46,16 +46,40 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
+          # Check if Supabase credentials are configured
+          if [[ -z "$SUPABASE_URL" ]] || [[ -z "$SUPABASE_SERVICE_ROLE_KEY" ]]; then
+            echo "⚠️  Supabase credentials not configured. Skipping upload."
+            echo "ℹ️  To enable metrics upload:"
+            echo "   1. gh secret set SUPABASE_URL --body 'https://your-project.supabase.co'"
+            echo "   2. gh secret set SUPABASE_SERVICE_ROLE_KEY --body 'your-service-role-key'"
+            echo "   3. Ensure table 'ops.workflow_runs' exists in Supabase"
+            exit 0
+          fi
+
           # Upload each metric to Supabase
+          echo "📤 Uploading metrics to Supabase..."
+          UPLOAD_COUNT=0
+          UPLOAD_ERRORS=0
+
           cat metrics.json | jq -c '.[]' | while read -r metric; do
-            curl -X POST "${SUPABASE_URL}/rest/v1/ops.workflow_runs" \
+            HTTP_CODE=$(curl -s -w "%{http_code}" -o /tmp/upload_response.txt \
+              -X POST "${SUPABASE_URL}/rest/v1/ops.workflow_runs" \
               -H "apikey: ${SUPABASE_SERVICE_ROLE_KEY}" \
               -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}" \
               -H "Content-Type: application/json" \
               -H "Prefer: return=minimal" \
-              -d "$metric"
+              -d "$metric")
+
+            if [[ "$HTTP_CODE" =~ ^2[0-9][0-9]$ ]]; then
+              ((UPLOAD_COUNT++))
+            else
+              echo "⚠️  Upload failed with HTTP $HTTP_CODE"
+              cat /tmp/upload_response.txt
+              ((UPLOAD_ERRORS++))
+            fi
           done
-          echo "✅ Uploaded $(jq length metrics.json) metrics to Supabase"
+
+          echo "✅ Uploaded $UPLOAD_COUNT metrics to Supabase ($UPLOAD_ERRORS errors)"
 
       - name: Summary
         run: |
