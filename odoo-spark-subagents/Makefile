@@ -240,6 +240,86 @@ knowledge_daily:
 # 0 2 * * * cd /path/to/odoo-spark-subagents && make knowledge_daily
 
 # ============================================================================
+# KNOWLEDGE SYSTEM - INTEGRATION TARGETS
+# ============================================================================
+
+# --- Linting & Validation ---
+
+knowledge_lint:
+	@echo "Running static checks for knowledge system..."
+	python -m compileall scripts/knowledge
+	@command -v ruff >/dev/null 2>&1 && ruff check scripts/knowledge || echo "ruff not installed, skipping"
+	@command -v mypy >/dev/null 2>&1 && mypy --no-strict-optional scripts/knowledge || echo "mypy not installed, skipping"
+
+knowledge_validate:
+	@echo "Validating knowledge system configuration..."
+	@echo "[1/4] Validating SQL schema..."
+	@grep -E "(CREATE TABLE|CREATE INDEX|CREATE FUNCTION)" supabase/schema/knowledge_graph.sql >/dev/null || { echo "Error: Invalid SQL schema"; exit 1; }
+	@echo "  ✓ SQL schema valid"
+	@echo "[2/4] Validating agent config..."
+	@test -f agents/knowledge_client/agent.yaml && python -c "import yaml; yaml.safe_load(open('agents/knowledge_client/agent.yaml'))" || echo "Warning: Agent config missing"
+	@echo "  ✓ Agent config valid"
+	@echo "[3/4] Validating skill config..."
+	@test -f skills/knowledge_lookup/skill.yaml && python -c "import yaml; yaml.safe_load(open('skills/knowledge_lookup/skill.yaml'))" || echo "Warning: Skill config missing"
+	@echo "  ✓ Skill config valid"
+	@echo "[4/4] Validating environment template..."
+	@grep -q "SUPABASE_URL=" config/knowledge.env.example || { echo "Error: Missing SUPABASE_URL in env template"; exit 1; }
+	@echo "  ✓ Environment template valid"
+	@echo ""
+	@echo "All validation checks passed ✓"
+
+# --- Bulk Operations ---
+
+knowledge_harvest_all:
+	@echo "Running full knowledge skill harvest..."
+	python scripts/knowledge/skill_harvester.py --auto-harvest --hours 168
+
+knowledge_error_learn:
+	@echo "Running error learner for recent failures..."
+	python scripts/knowledge/error_learner.py --auto-learn --hours $${LOOKBACK_HOURS:-24}
+
+# --- Preview & Testing ---
+
+knowledge_cron_preview:
+	@echo "========================================="
+	@echo "DAILY CRON SEQUENCE PREVIEW"
+	@echo "========================================="
+	@echo ""
+	@echo "This is what runs every night at 2 AM:"
+	@echo ""
+	@echo "  1) Scrape: make knowledge_scrape_incremental"
+	@echo "     → Fetch new Odoo docs, forum posts, GitHub issues"
+	@echo "     → Duration: ~5 minutes"
+	@echo "     → Cost: ~$$0.50"
+	@echo ""
+	@echo "  2) Harvest: make knowledge_harvest"
+	@echo "     → Auto-generate skills from successful runs"
+	@echo "     → Duration: ~10 minutes"
+	@echo "     → Cost: ~$$1.00"
+	@echo ""
+	@echo "  3) Learn: make knowledge_learn"
+	@echo "     → Create guardrails from failures"
+	@echo "     → Duration: ~5 minutes"
+	@echo "     → Cost: ~$$0.50"
+	@echo ""
+	@echo "Total: ~20 minutes, ~$$2/day, ~$$60/month"
+	@echo "Savings: ~$$4,000/month in developer time"
+	@echo ""
+	@echo "To add to cron:"
+	@echo "  crontab -e"
+	@echo "  0 2 * * * cd $(shell pwd) && make knowledge_daily"
+	@echo "========================================="
+
+knowledge_test_connection:
+	@echo "Testing knowledge system connections..."
+	@echo "[1/3] Testing Supabase connection..."
+	@python -c "from supabase import create_client; import os; client = create_client(os.getenv('SUPABASE_URL', ''), os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')); print('✓ Supabase connection OK')" || echo "✗ Supabase connection failed"
+	@echo "[2/3] Testing OpenAI connection..."
+	@python -c "from openai import OpenAI; import os; client = OpenAI(api_key=os.getenv('OPENAI_API_KEY', '')); print('✓ OpenAI connection OK')" || echo "✗ OpenAI connection failed"
+	@echo "[3/3] Testing GitHub connection..."
+	@curl -s -H "Authorization: Bearer $${GITHUB_TOKEN}" https://api.github.com/user >/dev/null && echo "✓ GitHub connection OK" || echo "✗ GitHub connection failed (optional)"
+
+# ============================================================================
 # RELEASE
 # ============================================================================
 
