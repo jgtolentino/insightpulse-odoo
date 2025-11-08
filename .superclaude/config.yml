@@ -39,6 +39,9 @@ agents:
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+      - https://github.com/OCA/OpenUpgrade
 
     # Capabilities
     capabilities:
@@ -50,6 +53,8 @@ agents:
       - Plan technical roadmap
       - Design database upgrade strategies
       - Design Odoo module architecture
+      - Design low-code Studio customizations
+      - Design automated workflow actions
 
     # Tools this agent prefers
     preferred_tools:
@@ -83,6 +88,8 @@ agents:
     # Reference documentation
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
 
     capabilities:
       - Build prompt templates
@@ -92,6 +99,7 @@ agents:
       - Integrate LLM APIs
       - Build AI workflows
       - Integrate AI with Odoo modules
+      - Design AI-driven automated actions
 
     preferred_tools:
       - Read
@@ -119,6 +127,8 @@ agents:
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
+      - https://github.com/OCA/OpenUpgrade
 
     capabilities:
       - Write IaC (Terraform, Docker)
@@ -129,6 +139,8 @@ agents:
       - Manage secrets
       - Execute Odoo database upgrades
       - Deploy Odoo modules and addons
+      - Configure Odoo mobile administration
+      - Manage Odoo.sh deployments
 
     preferred_tools:
       - Bash
@@ -157,6 +169,8 @@ agents:
     # Reference documentation
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
 
     capabilities:
       - Write technical documentation
@@ -166,6 +180,8 @@ agents:
       - Write user guides
       - Create training materials
       - Document Odoo modules and customizations
+      - Document Studio customizations
+      - Document mobile app configurations
 
     preferred_tools:
       - Write
@@ -192,6 +208,8 @@ agents:
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://github.com/OCA/OpenUpgrade
+      - https://github.com/OCA/openupgradelib
 
     capabilities:
       - Write unit tests
@@ -202,6 +220,7 @@ agents:
       - Define quality gates
       - Test database upgrade procedures
       - Test Odoo modules and customizations
+      - Test OpenUpgrade migration scripts
 
     preferred_tools:
       - Write
@@ -230,6 +249,8 @@ agents:
     reference_docs:
       - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
 
     capabilities:
       - BIR form automation (1601-C, 2550Q, 1702-RT)
@@ -240,6 +261,7 @@ agents:
       - Expense automation
       - Upgrade Finance SSC custom modules
       - Develop custom Odoo financial modules
+      - Build automated financial workflows with Studio
 
     preferred_tools:
       - Read
