@@ -47,16 +47,17 @@ RUN useradd -m -d /var/lib/odoo -U -r -s /usr/sbin/nologin odoo && \
     mkdir -p /var/lib/odoo/.local /var/log/odoo /mnt/extra-addons /var/lib/odoo/.cache/pip && \
     chown -R odoo:odoo /var/lib/odoo /var/log/odoo /mnt/extra-addons
 
+# Install python wheels built in stage 1 FIRST (includes psycopg2-binary)
+COPY --from=build /wheels /wheels
+RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
+
 # Install Odoo from source (19.0 branch - not yet on PyPI)
+# Installing after our wheels ensures psycopg2-binary is already present
 RUN apt-get update && apt-get install -y --no-install-recommends git && \
     git clone --depth 1 --branch 19.0 https://github.com/odoo/odoo.git /opt/odoo-src && \
     cd /opt/odoo-src && \
     pip install --no-cache-dir -e . && \
     apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-# Install python wheels built in stage 1
-COPY --from=build /wheels /wheels
-RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels
 
 # Copy application code (custom addons and scripts)
 WORKDIR /opt/odoo
