@@ -35,6 +35,30 @@ skills:
     outputs: ["conflict_report", "fix_plan"]
     deps: []
 
+  - id: sap_process_intelligence
+    path: skills/integrations/sap-process-intelligence
+    spec: skills/integrations/sap-process-intelligence/skill.yaml
+    purpose: "SAP S/4HANA process mining with variant analysis, bottleneck detection, and KPI prediction"
+    inputs: ["process_id", "date_range", "process_type"]
+    outputs: ["event_traces", "variant_summary", "bottlenecks", "kpi_forecast", "process_map"]
+    deps: ["SAP_ODATA_ENDPOINT", "SAP_BAPI_ENDPOINT", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
+    examples:
+      - skills/integrations/sap-process-intelligence/examples/extract_po_events.json
+    agent: .superclaude/agents/sap-executor-agent.yml
+
+  - id: drawio_adapter
+    path: skills/integrations/drawio-adapter
+    spec: skills/integrations/drawio-adapter/skill.yaml
+    purpose: "Create, validate, and export Draw.io diagrams for process mining and orchestration visualization"
+    inputs: ["source_format", "content", "filename"]
+    outputs: ["file_path", "validation_details", "export_path", "encoded_url"]
+    deps: []
+    examples:
+      - skills/integrations/drawio-adapter/examples/create_process_map.json
+    templates:
+      - skills/integrations/drawio-adapter/templates/sap-odoo-orchestration.drawio
+      - skills/integrations/drawio-adapter/templates/procure-to-pay-map.drawio
+
 # Planned skills for future implementation
 planned:
   - id: bir-vat-validation

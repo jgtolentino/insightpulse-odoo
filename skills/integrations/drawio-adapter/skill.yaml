@@ -1,0 +1,149 @@
+name: drawio_adapter
+version: 0.1.0
+category: integrations
+description: >
+  Draw.io adapter for creating, validating, and exporting process diagrams and agent
+  orchestration maps. Enables agentic diagram generation from event graphs, skill maps,
+  and process mining results.
+
+metadata:
+  author: InsightPulse AI
+  tags: [drawio, diagrams, visualization, process-mining, bpmn, orchestration]
+  updated: "2025-11-08"
+
+entrypoints:
+  - name: create_diagram
+    description: Create a new .drawio diagram from a graph or structured data
+    inputs:
+      - name: source_format
+        type: string
+        enum: [mermaid, csv, json, bpmn]
+        required: true
+        description: Input format for diagram data
+      - name: content
+        type: string
+        required: true
+        description: Diagram content in the specified format
+      - name: filename
+        type: string
+        required: true
+        description: Output filename (must end with .drawio)
+      - name: template
+        type: string
+        required: false
+        description: Optional template to use (process_map, orchestration, swimlane)
+    outputs:
+      - name: file_path
+        type: string
+        description: Path to created .drawio file
+
+  - name: validate_diagram
+    description: Verify page count, layers, and style integrity of a Draw.io file
+    inputs:
+      - name: file_path
+        type: string
+        required: true
+        description: Path to .drawio file to validate
+      - name: strict_mode
+        type: boolean
+        required: false
+        default: false
+        description: Enable strict validation (checks styles, connections, etc.)
+    outputs:
+      - name: valid
+        type: boolean
+        description: Whether diagram is valid
+      - name: details
+        type: object
+        description: Validation details (pages, layers, errors)
+
+  - name: export_diagram
+    description: Export a Draw.io file to PNG, SVG, or PDF
+    inputs:
+      - name: file_path
+        type: string
+        required: true
+        description: Path to .drawio file
+      - name: format
+        type: string
+        enum: [png, svg, pdf]
+        required: true
+        description: Export format
+      - name: page_index
+        type: integer
+        required: false
+        default: 0
+        description: Page index to export (0-based)
+      - name: scale
+        type: number
+        required: false
+        default: 1.0
+        description: Export scale factor
+    outputs:
+      - name: export_path
+        type: string
+        description: Path to exported file
+
+  - name: encode_url
+    description: Generate a URL-encoded version of a diagram for embedding/sharing
+    inputs:
+      - name: file_path
+        type: string
+        required: true
+        description: Path to .drawio file
+    outputs:
+      - name: encoded_url
+        type: string
+        description: URL to open diagram in diagrams.net
+
+  - name: create_from_process_events
+    description: Auto-generate process map from SAP event traces
+    inputs:
+      - name: events
+        type: array
+        required: true
+        description: List of EventTrace objects from SAP Process Intelligence
+      - name: diagram_type
+        type: string
+        enum: [flowchart, swimlane, bpmn]
+        default: flowchart
+      - name: filename
+        type: string
+        required: true
+    outputs:
+      - name: file_path
+        type: string
+      - name: statistics
+        type: object
+
+  - name: create_orchestration_map
+    description: Generate agent orchestration diagram from skill graph
+    inputs:
+      - name: skill_graph
+        type: object
+        required: true
+        description: Skill dependency graph (nodes and edges)
+      - name: filename
+        type: string
+        required: true
+    outputs:
+      - name: file_path
+        type: string
+
+security:
+  mode: local
+  auth: none
+
+dependencies:
+  - drawio_cli
+  - lxml
+  - pydantic
+
+configuration:
+  DRAWIO_CLI_PATH: "${DRAWIO_CLI_PATH:-/usr/local/bin/draw.io}"
+  TEMPLATES_PATH: "skills/integrations/drawio-adapter/templates"
+
+examples:
+  - create_process_map.json
+  - export_to_png.json
+  - create_orchestration.json
