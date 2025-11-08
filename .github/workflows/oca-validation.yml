@@ -1,0 +1,355 @@
+name: OCA Module Validation
+
+# Trigger on all PRs and commits to main branches
+on:
+  pull_request:
+    paths:
+      - 'apps/odoo/addons/**'
+      - '.github/workflows/oca-validation.yml'
+  push:
+    branches:
+      - main
+      - 'claude/**'
+    paths:
+      - 'apps/odoo/addons/**'
+
+jobs:
+  # Job 1: Manifest validation
+  validate-manifests:
+    name: Validate Module Manifests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install manifestoo-core
+        run: |
+          pip install manifestoo-core
+
+      - name: Validate manifests
+        run: |
+          echo "🔍 Validating module manifests..."
+          for manifest in $(find apps/odoo/addons -name "__manifest__.py"); do
+            module_dir=$(dirname "$manifest")
+            module_name=$(basename "$module_dir")
+
+            echo "Checking $module_name..."
+
+            # Check manifest syntax
+            python3 -c "import ast; ast.literal_eval(open('$manifest').read())" || {
+              echo "❌ Invalid manifest syntax in $module_name"
+              exit 1
+            }
+
+            # Extract and validate required keys
+            python3 << EOF || exit 1
+import ast
+manifest = ast.literal_eval(open('$manifest').read())
+
+required_keys = ['name', 'version', 'category', 'author', 'license', 'depends']
+for key in required_keys:
+    if key not in manifest:
+        print(f"❌ Missing required key '{key}' in $module_name")
+        exit(1)
+
+# Validate version format (should be <odoo_version>.x.y.z)
+version = manifest.get('version', '')
+if not version or len(version.split('.')) != 5:
+    print(f"❌ Invalid version format in $module_name: {version}")
+    print("   Expected format: <odoo_version>.x.y.z (e.g., 17.0.1.0.0)")
+    exit(1)
+
+# Validate license
+valid_licenses = [
+    'LGPL-3', 'GPL-2', 'GPL-3', 'AGPL-3',
+    'GPL-2 or any later version',
+    'GPL-3 or any later version',
+    'Other OSI approved licence',
+]
+license_val = manifest.get('license', '')
+if license_val not in valid_licenses:
+    print(f"⚠️  Non-standard license in $module_name: {license_val}")
+
+# Validate OCA author requirement
+author = manifest.get('author', '')
+if 'Odoo Community Association (OCA)' not in author:
+    print(f"⚠️  OCA not listed as author in $module_name")
+
+print(f"✅ $module_name manifest valid")
+EOF
+          done
+
+  # Job 2: Python linting with pylint-odoo
+  pylint-odoo:
+    name: Pylint Odoo Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install pylint-odoo pylint
+
+      - name: Run pylint-odoo
+        run: |
+          echo "🔍 Running pylint-odoo checks..."
+          if [ -f .pylintrc ]; then
+            pylint --rcfile=.pylintrc apps/odoo/addons/*/  || {
+              echo "⚠️  Pylint found issues (see above)"
+              exit 1
+            }
+          else
+            echo "⚠️  .pylintrc not found, skipping"
+          fi
+
+  # Job 3: Code formatting checks
+  code-formatting:
+    name: Code Formatting (Black, isort)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install formatters
+        run: |
+          pip install black isort
+
+      - name: Check Black formatting
+        run: |
+          echo "🔍 Checking Black formatting..."
+          black --check apps/odoo/addons/ || {
+            echo "❌ Code not formatted with Black"
+            echo "Run: black apps/odoo/addons/"
+            exit 1
+          }
+
+      - name: Check isort imports
+        run: |
+          echo "🔍 Checking import sorting..."
+          isort --check-only apps/odoo/addons/ || {
+            echo "❌ Imports not sorted correctly"
+            echo "Run: isort apps/odoo/addons/"
+            exit 1
+          }
+
+  # Job 4: Security scanning
+  security-scan:
+    name: Security Scan (Bandit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Bandit
+        run: |
+          pip install bandit
+
+      - name: Run security scan
+        run: |
+          echo "🔍 Running security scan..."
+          if [ -f .bandit ]; then
+            bandit -r apps/odoo/addons/ -c .bandit || {
+              echo "⚠️  Security issues found"
+              exit 1
+            }
+          else
+            bandit -r apps/odoo/addons/ --skip B101,B601 || {
+              echo "⚠️  Security issues found"
+              exit 1
+            }
+          fi
+
+  # Job 5: XML/View validation
+  validate-views:
+    name: Validate XML Views
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install xmllint
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libxml2-utils
+
+      - name: Validate XML syntax
+        run: |
+          echo "🔍 Validating XML files..."
+          find apps/odoo/addons -name "*.xml" | while read xml_file; do
+            xmllint --noout "$xml_file" 2>&1 || {
+              echo "❌ Invalid XML: $xml_file"
+              exit 1
+            }
+          done
+          echo "✅ All XML files valid"
+
+  # Job 6: Test coverage
+  test-modules:
+    name: Run Module Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Odoo dependencies
+        run: |
+          # This is a placeholder - adjust based on your Odoo setup
+          echo "Installing Odoo dependencies..."
+          # pip install -r apps/odoo/requirements.txt
+
+      - name: Run tests
+        run: |
+          echo "🔍 Running module tests..."
+          # Placeholder for actual test command
+          # ./apps/odoo/odoo-bin -d test_db -i <modules> --test-enable --stop-after-init
+          echo "⚠️  Configure Odoo test runner"
+
+  # Job 7: Documentation validation
+  validate-docs:
+    name: Validate README Files
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check README.rst exists
+        run: |
+          echo "🔍 Checking for README.rst files..."
+          missing=0
+          for addon_dir in apps/odoo/addons/*/; do
+            module_name=$(basename "$addon_dir")
+            readme="$addon_dir/README.rst"
+
+            if [ ! -f "$readme" ]; then
+              echo "⚠️  Missing README.rst in $module_name"
+              ((missing++))
+            else
+              # Check minimum content
+              if ! grep -q "Table of contents" "$readme"; then
+                echo "⚠️  README.rst incomplete in $module_name"
+              fi
+            fi
+          done
+
+          if [ $missing -gt 0 ]; then
+            echo ""
+            echo "📝 Tip: Use ./scripts/oca-scaffold-module.sh to generate compliant READMEs"
+          fi
+
+  # Job 8: Dependency check
+  check-dependencies:
+    name: Check Module Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Validate dependencies
+        run: |
+          echo "🔍 Checking module dependencies..."
+          for manifest in $(find apps/odoo/addons -name "__manifest__.py"); do
+            module_dir=$(dirname "$manifest")
+            module_name=$(basename "$module_dir")
+
+            python3 << EOF
+import ast
+import os
+
+manifest_path = '$manifest'
+manifest = ast.literal_eval(open(manifest_path).read())
+depends = manifest.get('depends', [])
+
+# Check if dependencies exist
+addons_dir = os.path.dirname(os.path.dirname(manifest_path))
+missing_deps = []
+
+for dep in depends:
+    dep_path = os.path.join(addons_dir, dep)
+    if not os.path.exists(dep_path):
+        # Check if it's a core Odoo module (we'll assume these exist)
+        if dep not in ['base', 'web', 'mail', 'portal', 'website', 'sale', 'purchase', 'account', 'stock']:
+            missing_deps.append(dep)
+
+if missing_deps:
+    print(f"⚠️  $module_name has missing dependencies: {', '.join(missing_deps)}")
+    print(f"   Run: ./scripts/oca-update-deps.sh install")
+else:
+    print(f"✅ $module_name dependencies OK")
+EOF
+          done
+
+  # Summary job
+  validation-summary:
+    name: Validation Summary
+    runs-on: ubuntu-latest
+    needs:
+      - validate-manifests
+      - pylint-odoo
+      - code-formatting
+      - security-scan
+      - validate-views
+      - validate-docs
+      - check-dependencies
+    if: always()
+    steps:
+      - name: Check results
+        run: |
+          echo "📊 OCA Validation Summary"
+          echo "========================"
+          echo ""
+          echo "All validation checks completed."
+          echo ""
+          echo "✅ = Passed"
+          echo "❌ = Failed"
+          echo ""
+
+      - name: Report status
+        run: |
+          if [ "${{ needs.validate-manifests.result }}" != "success" ] || \
+             [ "${{ needs.pylint-odoo.result }}" != "success" ] || \
+             [ "${{ needs.code-formatting.result }}" != "success" ] || \
+             [ "${{ needs.security-scan.result }}" != "success" ] || \
+             [ "${{ needs.validate-views.result }}" != "success" ]; then
+            echo "❌ Some checks failed. Please review and fix."
+            exit 1
+          else
+            echo "✅ All OCA validation checks passed!"
+          fi

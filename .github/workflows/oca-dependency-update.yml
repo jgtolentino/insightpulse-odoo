@@ -1,0 +1,160 @@
+name: OCA Dependency Update
+
+# Run weekly to check for OCA module updates
+on:
+  schedule:
+    - cron: '0 0 * * 0'  # Every Sunday at midnight
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  check-updates:
+    name: Check for OCA Updates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install OCA tools
+        run: |
+          ./scripts/install-oca-tools.sh
+
+      - name: Check for dependency updates
+        id: check_updates
+        run: |
+          echo "🔍 Checking for OCA dependency updates..."
+
+          updates_available=false
+          update_summary=""
+
+          # Install current dependencies if not present
+          if [ ! -d "apps/odoo/../oca-repos" ]; then
+            ./scripts/oca-update-deps.sh install
+          fi
+
+          cd apps/odoo/../oca-repos
+
+          for repo_dir in oca-*; do
+            [ -d "$repo_dir" ] || continue
+
+            repo_name="${repo_dir#oca-}"
+            cd "$repo_dir"
+
+            # Fetch latest changes
+            git fetch origin --quiet
+
+            # Check if updates available
+            LOCAL=$(git rev-parse HEAD)
+            REMOTE=$(git rev-parse @{u} 2>/dev/null || echo "$LOCAL")
+
+            if [ "$LOCAL" != "$REMOTE" ]; then
+              updates_available=true
+              commits_behind=$(git rev-list --count HEAD..@{u})
+              last_update=$(git log -1 @{u} --format="%ar - %s")
+
+              echo "📦 $repo_name has updates:"
+              echo "   $commits_behind commits behind"
+              echo "   Latest: $last_update"
+              echo ""
+
+              update_summary="$update_summary\n- **$repo_name**: $commits_behind commits behind"
+            else
+              echo "✅ $repo_name is up to date"
+            fi
+
+            cd ..
+          done
+
+          if [ "$updates_available" = true ]; then
+            echo "updates_available=true" >> $GITHUB_OUTPUT
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$update_summary" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "updates_available=false" >> $GITHUB_OUTPUT
+            echo "✅ All OCA dependencies are up to date"
+          fi
+
+      - name: Create update PR
+        if: steps.check_updates.outputs.updates_available == 'true'
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore(oca): update OCA dependencies'
+          branch: chore/oca-dependency-update
+          title: 'chore(oca): Weekly OCA dependency update'
+          body: |
+            ## OCA Dependency Updates Available
+
+            This automated PR updates OCA dependencies to their latest versions.
+
+            ### Updates:
+            ${{ steps.check_updates.outputs.update_summary }}
+
+            ### Testing Checklist
+            - [ ] Run module tests: `./scripts/validate-all.sh`
+            - [ ] Check for breaking changes in updated modules
+            - [ ] Verify manifest compatibility
+            - [ ] Test affected workflows
+
+            ### Auto-generated
+            This PR was automatically created by the OCA dependency update workflow.
+
+          labels: |
+            dependencies
+            oca
+            automated
+
+      - name: Notify on updates
+        if: steps.check_updates.outputs.updates_available == 'true'
+        run: |
+          echo "📬 OCA dependency update PR created"
+          echo ""
+          echo "${{ steps.check_updates.outputs.update_summary }}"
+
+  validate-compatibility:
+    name: Validate OCA Compatibility
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Check module compatibility
+        run: |
+          echo "🔍 Validating OCA module compatibility..."
+
+          # Check if all dependencies are for same Odoo version
+          odoo_versions=()
+          for manifest in $(find apps/odoo/addons -name "__manifest__.py"); do
+            version=$(python3 -c "
+import ast
+m = ast.literal_eval(open('$manifest').read())
+print(m.get('version', '0.0.0.0.0').split('.')[0:2])
+" 2>/dev/null | tr -d "[]'," | tr -d ' ')
+
+            if [ -n "$version" ]; then
+              odoo_versions+=("$version")
+            fi
+          done
+
+          # Get unique versions
+          unique_versions=($(printf '%s\n' "${odoo_versions[@]}" | sort -u))
+
+          if [ ${#unique_versions[@]} -gt 1 ]; then
+            echo "⚠️  Multiple Odoo versions detected:"
+            printf '   - %s\n' "${unique_versions[@]}"
+            echo ""
+            echo "All modules should target the same Odoo version."
+            exit 1
+          else
+            echo "✅ All modules target Odoo ${unique_versions[0]}"
+          fi
