@@ -1,0 +1,38 @@
+{
+  "slice_name": "Top Spenders",
+  "viz_type": "table",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["total_amount", "expense_count", "avg_amount"],
+        "groupby": ["employee_name"],
+        "orderby": [["total_amount", false]],
+        "row_limit": 25
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "table",
+    "groupby": ["employee_name"],
+    "metrics": ["total_amount", "expense_count", "avg_amount"],
+    "all_columns": [],
+    "percent_metrics": [],
+    "adhoc_filters": [],
+    "order_by_cols": [],
+    "row_limit": 25,
+    "server_page_length": 10,
+    "order_desc": true,
+    "table_timestamp_format": "smart_date",
+    "show_cell_bars": true,
+    "color_pn": true
+  },
+  "description": "Top employees by total expense amount"
+}

@@ -1,0 +1,40 @@
+{
+  "slice_name": "Policy Compliance",
+  "viz_type": "echarts_timeseries_bar",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["expense_count"],
+        "groupby": ["policy_flag"],
+        "granularity": "month_date",
+        "time_range": "Last year"
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "echarts_timeseries_bar",
+    "granularity_sqla": "month_date",
+    "time_grain_sqla": "P1M",
+    "time_range": "Last year",
+    "metrics": ["expense_count"],
+    "groupby": ["policy_flag"],
+    "adhoc_filters": [],
+    "color_scheme": "supersetColors",
+    "show_legend": true,
+    "rich_tooltip": true,
+    "x_axis_time_format": "smart_date",
+    "y_axis_format": ",.0f",
+    "stack": true,
+    "show_value": false,
+    "zoomable": true
+  },
+  "description": "Expense policy compliance over time"
+}

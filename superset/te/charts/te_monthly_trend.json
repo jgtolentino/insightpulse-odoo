@@ -1,0 +1,40 @@
+{
+  "slice_name": "Monthly Expense Trend",
+  "viz_type": "echarts_timeseries_line",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["total_amount"],
+        "time_range": "Last year",
+        "granularity": "month_date"
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "echarts_timeseries_line",
+    "granularity_sqla": "month_date",
+    "time_grain_sqla": "P1M",
+    "time_range": "Last year",
+    "metrics": ["total_amount"],
+    "adhoc_filters": [],
+    "color_scheme": "supersetColors",
+    "show_legend": true,
+    "rich_tooltip": true,
+    "show_value": false,
+    "x_axis_time_format": "smart_date",
+    "y_axis_format": ",.0f",
+    "stack": false,
+    "area": true,
+    "markerEnabled": false,
+    "zoomable": true
+  },
+  "description": "Monthly expense trend over time"
+}

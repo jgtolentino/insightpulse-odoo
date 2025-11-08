@@ -1,0 +1,37 @@
+{
+  "slice_name": "BIR ATP Timeline",
+  "viz_type": "echarts_timeseries_line",
+  "datasource_id": 3,
+  "datasource_type": "table",
+  "datasource_name": "te_approvals_v",
+  "query_context": {
+    "datasource": {
+      "id": 3,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["open_items"],
+        "granularity": "decided_at",
+        "time_range": "Last quarter"
+      }
+    ]
+  },
+  "params": {
+    "datasource": "3__table",
+    "viz_type": "echarts_timeseries_line",
+    "granularity_sqla": "decided_at",
+    "time_grain_sqla": "P1D",
+    "time_range": "Last quarter",
+    "metrics": ["open_items"],
+    "adhoc_filters": [],
+    "color_scheme": "supersetColors",
+    "show_legend": false,
+    "rich_tooltip": true,
+    "x_axis_time_format": "smart_date",
+    "y_axis_format": ",.0f",
+    "markerEnabled": false,
+    "zoomable": true
+  },
+  "description": "Timeline of open approval items"
+}

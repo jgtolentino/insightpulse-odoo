@@ -1,0 +1,10 @@
+{
+  "dashboard_title": "T&E Manager",
+  "slug": "te-manager",
+  "certified_by": "InsightPulse AI",
+  "certification_details": "T&E Manager dashboard for team oversight and approval management",
+  "published": true,
+  "position_json": "{\"DASHBOARD_VERSION_KEY\":\"v2\",\"ROOT_ID\":{\"type\":\"ROOT\",\"id\":\"ROOT_ID\",\"children\":[\"GRID_ID\"]},\"GRID_ID\":{\"type\":\"GRID\",\"id\":\"GRID_ID\",\"children\":[\"HEADER_ID\",\"ROW-1\",\"ROW-2\"],\"parents\":[\"ROOT_ID\"]},\"HEADER_ID\":{\"type\":\"HEADER\",\"id\":\"HEADER_ID\",\"meta\":{\"text\":\"T&E Manager Dashboard\"}},\"ROW-1\":{\"type\":\"ROW\",\"id\":\"ROW-1\",\"children\":[\"CHART-team\",\"CHART-queue\"],\"parents\":[\"GRID_ID\"]},\"CHART-team\":{\"type\":\"CHART\",\"id\":\"CHART-team\",\"children\":[],\"parents\":[\"ROW-1\"],\"meta\":{\"width\":14,\"height\":50,\"chartId\":null,\"sliceName\":\"Team Expense Summary\"}},\"CHART-queue\":{\"type\":\"CHART\",\"id\":\"CHART-queue\",\"children\":[],\"parents\":[\"ROW-1\"],\"meta\":{\"width\":10,\"height\":50,\"chartId\":null,\"sliceName\":\"Approval Queue\"}},\"ROW-2\":{\"type\":\"ROW\",\"id\":\"ROW-2\",\"children\":[\"CHART-policy-comp\",\"CHART-budget\"],\"parents\":[\"GRID_ID\"]},\"CHART-policy-comp\":{\"type\":\"CHART\",\"id\":\"CHART-policy-comp\",\"children\":[],\"parents\":[\"ROW-2\"],\"meta\":{\"width\":12,\"height\":50,\"chartId\":null,\"sliceName\":\"Policy Compliance\"}},\"CHART-budget\":{\"type\":\"CHART\",\"id\":\"CHART-budget\",\"children\":[],\"parents\":[\"ROW-2\"],\"meta\":{\"width\":12,\"height\":50,\"chartId\":null,\"sliceName\":\"Budget vs Actual\"}}}",
+  "metadata_json": "{\"timed_refresh_immune_slices\":[],\"expanded_slices\":{},\"refresh_frequency\":300,\"default_filters\":\"{}\",\"color_scheme\":\"supersetColors\",\"label_colors\":{},\"shared_label_colors\":{},\"color_scheme_domain\":[],\"cross_filters_enabled\":true}",
+  "description": "Manager dashboard showing team expense summary, approval queue, policy compliance metrics, and budget vs actual comparison"
+}

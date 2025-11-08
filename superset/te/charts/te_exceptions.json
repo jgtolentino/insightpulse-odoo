@@ -1,0 +1,50 @@
+{
+  "slice_name": "Policy Violations",
+  "viz_type": "table",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "columns": ["txn_date", "employee_name", "department", "category", "currency", "total_amount", "status", "policy_flag"],
+        "filters": [
+          {
+            "col": "policy_flag",
+            "op": "==",
+            "val": "VIOLATION"
+          }
+        ],
+        "orderby": [["txn_date", false]],
+        "row_limit": 200
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "table",
+    "query_mode": "raw",
+    "all_columns": ["txn_date", "employee_name", "department", "category", "currency", "total_amount", "status", "policy_flag"],
+    "percent_metrics": [],
+    "adhoc_filters": [
+      {
+        "clause": "WHERE",
+        "subject": "policy_flag",
+        "operator": "==",
+        "comparator": "VIOLATION",
+        "expressionType": "SIMPLE"
+      }
+    ],
+    "order_by_cols": ["[\"txn_date\", false]"],
+    "row_limit": 200,
+    "server_page_length": 25,
+    "table_timestamp_format": "smart_date",
+    "show_cell_bars": true,
+    "color_pn": true
+  },
+  "description": "Expenses flagged as policy violations"
+}

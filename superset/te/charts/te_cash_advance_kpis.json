@@ -1,0 +1,30 @@
+{
+  "slice_name": "Cash Advance Outstanding",
+  "viz_type": "big_number_total",
+  "datasource_id": 2,
+  "datasource_type": "table",
+  "datasource_name": "te_cash_advances_v",
+  "query_context": {
+    "datasource": {
+      "id": 2,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["outstanding_balance"]
+      }
+    ]
+  },
+  "params": {
+    "datasource": "2__table",
+    "viz_type": "big_number_total",
+    "metric": "outstanding_balance",
+    "adhoc_filters": [],
+    "header_font_size": 0.3,
+    "subheader_font_size": 0.15,
+    "y_axis_format": ",.2f",
+    "time_format": "smart_date",
+    "subheader": "Outstanding Balance"
+  },
+  "description": "Total outstanding cash advance balance"
+}

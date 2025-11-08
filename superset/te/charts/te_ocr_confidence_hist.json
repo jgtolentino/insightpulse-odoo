@@ -1,0 +1,32 @@
+{
+  "slice_name": "OCR Confidence Distribution",
+  "viz_type": "histogram",
+  "datasource_id": 4,
+  "datasource_type": "table",
+  "datasource_name": "te_receipts_ocr_v",
+  "query_context": {
+    "datasource": {
+      "id": 4,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "columns": ["ocr_confidence"],
+        "row_limit": 5000
+      }
+    ]
+  },
+  "params": {
+    "datasource": "4__table",
+    "viz_type": "histogram",
+    "all_columns_x": "ocr_confidence",
+    "adhoc_filters": [],
+    "row_limit": 5000,
+    "bins": 20,
+    "x_axis_label": "OCR Confidence",
+    "y_axis_label": "Frequency",
+    "normalized": false,
+    "cumulative": false
+  },
+  "description": "Distribution of OCR confidence scores"
+}

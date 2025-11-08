@@ -1,0 +1,34 @@
+{
+  "slice_name": "Approval Queue",
+  "viz_type": "table",
+  "datasource_id": 3,
+  "datasource_type": "table",
+  "datasource_name": "te_approvals_v",
+  "query_context": {
+    "datasource": {
+      "id": 3,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "columns": ["expense_id", "approver_name", "state", "entered_at", "hours_open"],
+        "orderby": [["hours_open", false]],
+        "row_limit": 50
+      }
+    ]
+  },
+  "params": {
+    "datasource": "3__table",
+    "viz_type": "table",
+    "query_mode": "raw",
+    "all_columns": ["expense_id", "approver_name", "state", "entered_at", "hours_open"],
+    "percent_metrics": [],
+    "adhoc_filters": [],
+    "order_by_cols": ["[\"hours_open\", false]"],
+    "row_limit": 50,
+    "server_page_length": 10,
+    "table_timestamp_format": "smart_date",
+    "show_cell_bars": false
+  },
+  "description": "Pending approval items sorted by time in queue"
+}

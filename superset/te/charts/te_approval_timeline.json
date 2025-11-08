@@ -1,0 +1,36 @@
+{
+  "slice_name": "Approval Workflow Timeline",
+  "viz_type": "echarts_timeseries_scatter",
+  "datasource_id": 3,
+  "datasource_type": "table",
+  "datasource_name": "te_approvals_v",
+  "query_context": {
+    "datasource": {
+      "id": 3,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["avg_hours_open"],
+        "granularity": "entered_at",
+        "time_range": "Last month"
+      }
+    ]
+  },
+  "params": {
+    "datasource": "3__table",
+    "viz_type": "echarts_timeseries_scatter",
+    "granularity_sqla": "entered_at",
+    "time_grain_sqla": "P1D",
+    "time_range": "Last month",
+    "metrics": ["avg_hours_open"],
+    "adhoc_filters": [],
+    "color_scheme": "supersetColors",
+    "show_legend": true,
+    "rich_tooltip": true,
+    "x_axis_time_format": "smart_date",
+    "y_axis_format": ",.1f",
+    "zoomable": true
+  },
+  "description": "Average approval time over days"
+}

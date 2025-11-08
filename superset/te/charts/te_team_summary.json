@@ -1,0 +1,35 @@
+{
+  "slice_name": "Team Expense Summary",
+  "viz_type": "pivot_table_v2",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["total_amount"],
+        "columns": ["month_date"],
+        "groupby": ["department"]
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "pivot_table_v2",
+    "groupbyRows": ["department"],
+    "groupbyColumns": ["month_date"],
+    "metrics": ["total_amount"],
+    "adhoc_filters": [],
+    "aggregateFunction": "Sum",
+    "rowOrder": "value_z_to_a",
+    "colOrder": "value_z_to_a",
+    "conditional_formatting": [],
+    "row_limit": 5000,
+    "value_format": ",.2f"
+  },
+  "description": "Expense summary by department and month"
+}

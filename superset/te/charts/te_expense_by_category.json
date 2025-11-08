@@ -1,0 +1,38 @@
+{
+  "slice_name": "Expense by Category",
+  "viz_type": "pie",
+  "datasource_id": 1,
+  "datasource_type": "table",
+  "datasource_name": "te_expenses_v",
+  "query_context": {
+    "datasource": {
+      "id": 1,
+      "type": "table"
+    },
+    "queries": [
+      {
+        "metrics": ["total_amount"],
+        "groupby": ["category"],
+        "time_range": "No filter",
+        "row_limit": 10
+      }
+    ]
+  },
+  "params": {
+    "datasource": "1__table",
+    "viz_type": "pie",
+    "slice_id": null,
+    "groupby": ["category"],
+    "metric": "total_amount",
+    "adhoc_filters": [],
+    "row_limit": 10,
+    "color_scheme": "supersetColors",
+    "show_labels": true,
+    "show_legend": true,
+    "donut": true,
+    "show_labels_threshold": 5,
+    "number_format": ",.2f",
+    "date_format": "smart_date"
+  },
+  "description": "Breakdown of expenses by category"
+}
