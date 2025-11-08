@@ -1,65 +1,55 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
   "title": "InsightPulseAI Unified Branding Theme",
-  "description": "Shared color palette and design tokens for consistent branding across all InsightPulse services",
-  "version": "1.0.0",
+  "description": "Shared color palette and design tokens for consistent branding across all InsightPulse services (extracted from Mattermost)",
+  "version": "2.0.0",
   "last_updated": "2025-11-08",
 
   "brand": {
     "name": "InsightPulseAI",
-    "tagline": "Enterprise Intelligence Platform",
+    "tagline": "Finance SSC Automation",
     "logo_url": "https://insightpulseai.net/assets/logo.png"
   },
 
   "colors": {
     "primary": {
-      "main": "#1455C7",
-      "dark": "#0F3F92",
-      "light": "#3B7BE8",
+      "main": "#2F5BFF",
+      "hover": "#1E44E0",
+      "light": "#E8EEFF",
       "contrast": "#FFFFFF"
     },
-    "secondary": {
-      "main": "#111827",
-      "dark": "#000000",
-      "light": "#374151",
-      "contrast": "#FFFFFF"
+    "neutral": {
+      "white": "#FFFFFF",
+      "gray-50": "#F8F9FA",
+      "gray-100": "#F1F3F5",
+      "gray-200": "#E9ECEF",
+      "gray-300": "#DEE2E6",
+      "gray-400": "#CED4DA",
+      "gray-500": "#ADB5BD",
+      "gray-600": "#6C757D",
+      "gray-700": "#495057",
+      "gray-800": "#343A40",
+      "gray-900": "#212529"
     },
-    "accent": {
-      "main": "#F97316",
-      "dark": "#C2590C",
-      "light": "#FB923C",
-      "contrast": "#FFFFFF"
-    },
-    "background": {
-      "main": "#F3F4F6",
-      "card": "#FFFFFF",
-      "elevated": "#FAFAFA",
-      "overlay": "rgba(17, 24, 39, 0.75)"
+    "semantic": {
+      "success": "#28A745",
+      "warning": "#FFC107",
+      "error": "#DC3545",
+      "info": "#17A2B8"
     },
     "text": {
-      "primary": "#111827",
-      "secondary": "#374151",
-      "muted": "#6B7280",
-      "disabled": "#9CA3AF",
-      "contrast": "#FFFFFF"
-    },
-    "border": {
-      "subtle": "#E5E7EB",
-      "default": "#D1D5DB",
-      "strong": "#9CA3AF"
-    },
-    "status": {
-      "success": "#10B981",
-      "warning": "#F59E0B",
-      "error": "#EF4444",
-      "info": "#3B82F6"
+      "primary": "#212529",
+      "secondary": "#6C757D",
+      "muted": "#ADB5BD",
+      "link": "#2F5BFF",
+      "link-hover": "#1E44E0"
     }
   },
 
   "typography": {
     "font_family": {
-      "sans": "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif",
-      "mono": "'Fira Code', 'Source Code Pro', Menlo, Monaco, Consolas, monospace"
+      "sans": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif",
+      "mono": "'JetBrains Mono', 'Fira Code', monospace"
     },
     "font_size": {
       "xs": "0.75rem",
@@ -69,10 +59,12 @@
       "xl": "1.25rem",
       "2xl": "1.5rem",
       "3xl": "1.875rem",
-      "4xl": "2.25rem"
+      "4xl": "2.25rem",
+      "5xl": "3rem"
     },
     "font_weight": {
-      "normal": "400",
+      "light": "300",
+      "regular": "400",
       "medium": "500",
       "semibold": "600",
       "bold": "700"
@@ -85,28 +77,33 @@
   },
 
   "spacing": {
-    "xs": "0.25rem",
-    "sm": "0.5rem",
-    "md": "1rem",
-    "lg": "1.5rem",
-    "xl": "2rem",
-    "2xl": "3rem",
-    "3xl": "4rem"
+    "0": "0",
+    "1": "0.25rem",
+    "2": "0.5rem",
+    "3": "0.75rem",
+    "4": "1rem",
+    "5": "1.25rem",
+    "6": "1.5rem",
+    "8": "2rem",
+    "10": "2.5rem",
+    "12": "3rem",
+    "16": "4rem"
   },
 
   "border_radius": {
-    "sm": "4px",
-    "md": "8px",
-    "lg": "12px",
-    "xl": "16px",
+    "sm": "0.25rem",
+    "md": "0.375rem",
+    "lg": "0.5rem",
+    "xl": "0.75rem",
+    "2xl": "1rem",
     "full": "9999px"
   },
 
   "shadows": {
     "sm": "0 1px 2px 0 rgba(0, 0, 0, 0.05)",
-    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
-    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
-    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
+    "md": "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+    "lg": "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+    "xl": "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
   },
 
   "transitions": {
@@ -125,28 +122,85 @@
 
   "application_mapping": {
     "odoo": {
-      "description": "ERP system - uses CSS variables and custom theme module",
-      "implementation": "odoo/addons/custom_theme/static/src/css/odoo_custom_theme.css"
+      "description": "Odoo 18 ERP system - uses CSS variables and custom theme module",
+      "implementation": "odoo/addons/custom_theme/static/src/css/odoo_custom_theme.css",
+      "primary_use": "Backend application, forms, kanban views"
     },
     "mattermost": {
       "description": "Team chat - uses custom theme JSON",
-      "implementation": "config/mattermost_theme.json"
+      "implementation": "config/mattermost_theme.json",
+      "primary_use": "Real-time messaging, team collaboration"
     },
     "superset": {
       "description": "BI analytics - uses custom CSS overrides",
-      "implementation": "superset/static/css/custom_theme.css"
+      "implementation": "superset/static/css/custom_theme.css",
+      "primary_use": "Dashboards, charts, SQL queries"
     },
     "n8n": {
       "description": "Workflow automation - uses CSS variables",
-      "implementation": "n8n/custom_theme.css"
+      "implementation": "n8n/custom_theme.css",
+      "primary_use": "Automation workflows, API integrations"
+    },
+    "portal": {
+      "description": "Unified landing page and authentication hub",
+      "implementation": "portal/static/css/insightpulse-theme.css",
+      "primary_use": "Login, signup, account management"
     }
   },
 
+  "component_library": {
+    "buttons": {
+      "primary": {
+        "background": "#2F5BFF",
+        "hover": "#1E44E0",
+        "text": "#FFFFFF",
+        "padding": "0.75rem 1.5rem",
+        "border_radius": "0.5rem",
+        "font_weight": "600"
+      },
+      "secondary": {
+        "background": "#FFFFFF",
+        "hover": "#E8EEFF",
+        "text": "#2F5BFF",
+        "border": "2px solid #2F5BFF",
+        "padding": "0.75rem 1.5rem",
+        "border_radius": "0.5rem",
+        "font_weight": "600"
+      }
+    },
+    "inputs": {
+      "default": {
+        "background": "#FFFFFF",
+        "border": "1px solid #CED4DA",
+        "border_focus": "#2F5BFF",
+        "shadow_focus": "0 0 0 3px #E8EEFF",
+        "padding": "0.75rem 1rem",
+        "border_radius": "0.5rem"
+      }
+    },
+    "cards": {
+      "default": {
+        "background": "#FFFFFF",
+        "border_radius": "0.75rem",
+        "shadow": "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+        "padding": "1.5rem"
+      }
+    }
+  },
+
+  "accessibility": {
+    "wcag_compliance": "AA",
+    "min_contrast_ratio": "4.5:1",
+    "focus_indicator": "2px solid #2F5BFF",
+    "focus_offset": "2px"
+  },
+
   "usage_notes": {
-    "primary_color": "Use for main CTAs, active states, brand elements",
-    "secondary_color": "Use for headers, navigation, emphasis",
-    "accent_color": "Use sparingly for highlights, notifications, urgent actions",
-    "backgrounds": "Maintain contrast ratios for WCAG AA compliance (4.5:1 minimum)",
-    "borders": "Use subtle borders for cards, strong borders for focus states"
+    "primary_color": "Use #2F5BFF for main CTAs, active states, brand elements, links",
+    "neutral_grays": "Use gray-50 for page backgrounds, gray-100 for card backgrounds, gray-400+ for borders",
+    "semantic_colors": "Use green for success, yellow for warnings, red for errors, blue for info",
+    "typography": "Use Inter font family from Google Fonts, maintain type scale",
+    "spacing": "Use spacing scale for consistent padding/margins (multiples of 4px)",
+    "accessibility": "Ensure proper color contrast, keyboard focus states, screen reader support"
   }
 }

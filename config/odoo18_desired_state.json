@@ -37,8 +37,8 @@
   },
   "document_layout": {
     "template": "modern",
-    "primary_color": "#1455C7",
-    "secondary_color": "#111827",
+    "primary_color": "#2F5BFF",
+    "secondary_color": "#212529",
     "logo_file": "ENV:ODOO_LOGO_PATH",
     "footer_text": "InsightPulseAI • Philippine Operations • VAT Registered"
   },

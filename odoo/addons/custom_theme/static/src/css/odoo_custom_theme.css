@@ -6,51 +6,70 @@
  *
  * Branding Specification: /config/branding_theme.json
  * Desired State: /config/odoo18_desired_state.json
+ * Font: Inter from Google Fonts
  */
+
+/* Import Inter font */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 :root {
     /* Primary Brand Colors */
-    --insightpulse-primary: #1455C7;
-    --insightpulse-primary-dark: #0F3F92;
-    --insightpulse-primary-light: #3B7BE8;
+    --insightpulse-primary: #2F5BFF;
+    --insightpulse-primary-dark: #1E44E0;
+    --insightpulse-primary-light: #E8EEFF;
 
-    /* Secondary Colors */
-    --insightpulse-secondary: #111827;
-    --insightpulse-secondary-light: #374151;
-
-    /* Accent Colors */
-    --insightpulse-accent: #F97316;
-    --insightpulse-accent-dark: #C2590C;
+    /* Neutral Grays */
+    --insightpulse-white: #FFFFFF;
+    --insightpulse-gray-50: #F8F9FA;
+    --insightpulse-gray-100: #F1F3F5;
+    --insightpulse-gray-200: #E9ECEF;
+    --insightpulse-gray-300: #DEE2E6;
+    --insightpulse-gray-400: #CED4DA;
+    --insightpulse-gray-500: #ADB5BD;
+    --insightpulse-gray-600: #6C757D;
+    --insightpulse-gray-700: #495057;
+    --insightpulse-gray-800: #343A40;
+    --insightpulse-gray-900: #212529;
 
     /* Background Colors */
-    --insightpulse-bg-main: #F3F4F6;
+    --insightpulse-bg-main: #F8F9FA;
     --insightpulse-bg-card: #FFFFFF;
-    --insightpulse-bg-elevated: #FAFAFA;
+    --insightpulse-bg-elevated: #F1F3F5;
 
     /* Text Colors */
-    --insightpulse-text-primary: #111827;
-    --insightpulse-text-secondary: #374151;
-    --insightpulse-text-muted: #6B7280;
+    --insightpulse-text-primary: #212529;
+    --insightpulse-text-secondary: #6C757D;
+    --insightpulse-text-muted: #ADB5BD;
 
     /* Border Colors */
-    --insightpulse-border-subtle: #E5E7EB;
-    --insightpulse-border-default: #D1D5DB;
+    --insightpulse-border-subtle: #E9ECEF;
+    --insightpulse-border-default: #CED4DA;
 
-    /* Status Colors */
-    --insightpulse-success: #10B981;
-    --insightpulse-warning: #F59E0B;
-    --insightpulse-error: #EF4444;
-    --insightpulse-info: #3B82F6;
+    /* Semantic Status Colors */
+    --insightpulse-success: #28A745;
+    --insightpulse-warning: #FFC107;
+    --insightpulse-error: #DC3545;
+    --insightpulse-info: #17A2B8;
 
     /* Border Radius */
-    --insightpulse-radius-sm: 4px;
-    --insightpulse-radius-md: 8px;
-    --insightpulse-radius-lg: 12px;
+    --insightpulse-radius-sm: 0.25rem;
+    --insightpulse-radius-md: 0.375rem;
+    --insightpulse-radius-lg: 0.5rem;
+    --insightpulse-radius-xl: 0.75rem;
 
     /* Shadows */
     --insightpulse-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --insightpulse-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --insightpulse-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --insightpulse-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --insightpulse-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Apply Inter font to all text */
+body,
+.o_web_client,
+.o_form_view,
+.o_kanban_view,
+.o_list_view {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
 }
 
 /* Override Odoo 18 default primary color */
@@ -85,7 +104,7 @@ a:hover {
 /* Navigation bar */
 .o_navbar_apps_menu,
 .o_main_navbar {
-    background-color: var(--insightpulse-secondary) !important;
+    background-color: var(--insightpulse-gray-900) !important;
     border-bottom: 2px solid var(--insightpulse-primary) !important;
 }
 
@@ -98,7 +117,7 @@ a:hover {
 .o_navbar_apps_menu .dropdown-toggle:hover,
 .o_main_navbar .dropdown-toggle:hover,
 .o_main_navbar .o_menu_sections a:hover {
-    background-color: var(--insightpulse-secondary-light) !important;
+    background-color: var(--insightpulse-gray-800) !important;
 }
 
 /* Active menu items */
