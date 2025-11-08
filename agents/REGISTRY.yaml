@@ -1,7 +1,184 @@
 version: 0.2.0
 updated: 2025-11-08T00:00:00Z
-agents:
+
+# ══════════════════════════════════════════════════════════════
+# SUPERCLAUDE AGENTS (Meta-Orchestration Framework)
+# ══════════════════════════════════════════════════════════════
+# Source: .superclaude/config.yml
+# Purpose: Parallel development workflow with git worktrees
+
+superclaude_agents:
+  - name: architect
+    type: superclaude
+    file: .superclaude/agents/architect-agent.yml
+    role: "Repository Architect - designs structure, makes ADRs"
+    expertise_level: Expert
+    skills:
+      primary: [repo-architect-ai-engineer, odoo-agile-scrum-devops]
+      secondary: [drawio-diagrams-enhanced, pmbok-project-management]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+      - https://github.com/OCA/OpenUpgrade
+    capabilities:
+      - Design repository structure
+      - Make architecture decisions
+      - Create ADRs (Architecture Decision Records)
+      - Define technical standards
+      - Review code architecture
+      - Plan technical roadmap
+      - Design database upgrade strategies
+      - Design Odoo module architecture
+      - Design low-code Studio customizations
+      - Design automated workflow actions
+
+  - name: ai-engineer
+    type: superclaude
+    file: .superclaude/agents/ai-engineer-agent.yml
+    role: "AI/LLM Engineer - builds RAG pipelines, prompt templates"
+    expertise_level: Expert
+    skills:
+      primary: [mcp-complete-guide, mcp-builder, supabase-rpc-manager]
+      secondary: [neon-database-architect, librarian-indexer]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+    capabilities:
+      - Build prompt templates
+      - Design RAG pipelines
+      - Create evaluation frameworks
+      - Setup vector databases
+      - Integrate LLM APIs
+      - Build AI workflows
+      - Integrate AI with Odoo modules
+      - Design AI-driven automated actions
+
+  - name: devops
+    type: superclaude
+    file: .superclaude/agents/devops-agent.yml
+    role: "DevOps Engineer - IaC, CI/CD, monitoring, auto-healing"
+    expertise_level: Expert
+    skills:
+      primary: [odoo-agile-scrum-devops]
+      secondary: [supabase-automation]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
+      - https://github.com/OCA/OpenUpgrade
+    capabilities:
+      - Write IaC (Terraform, Docker)
+      - Build CI/CD pipelines
+      - Setup monitoring (Prometheus, Grafana)
+      - Implement auto-healing
+      - Configure load balancers
+      - Manage secrets
+      - Execute Odoo database upgrades
+      - Deploy Odoo modules and addons
+      - Configure Odoo mobile administration
+      - Manage Odoo.sh deployments
+
+  - name: doc-writer
+    type: superclaude
+    file: .superclaude/agents/doc-writer-agent.yml
+    role: "Documentation Specialist - technical writing, knowledge management"
+    expertise_level: Intermediate
+    skills:
+      primary: [docx, technical-writer]
+      secondary: [drawio-diagrams-enhanced, pmbok-project-management]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
+    capabilities:
+      - Write technical documentation
+      - Create runbooks
+      - Build knowledge base
+      - Generate API docs
+      - Write user guides
+      - Create training materials
+      - Document Odoo modules and customizations
+      - Document Studio customizations
+      - Document mobile app configurations
+
+  - name: qa-engineer
+    type: superclaude
+    file: .superclaude/agents/qa-engineer-agent.yml
+    role: "QA Engineer - testing frameworks, benchmarks, CI integration"
+    expertise_level: Intermediate
+    skills:
+      primary: [audit-skill]
+      secondary: [odoo-agile-scrum-devops]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://github.com/OCA/OpenUpgrade
+      - https://github.com/OCA/openupgradelib
+    capabilities:
+      - Write unit tests
+      - Create integration tests
+      - Build benchmarks
+      - Setup CI testing
+      - Generate test reports
+      - Define quality gates
+      - Test database upgrade procedures
+      - Test Odoo modules and customizations
+      - Test OpenUpgrade migration scripts
+
+  - name: finance-specialist
+    type: superclaude
+    file: .superclaude/agents/finance-specialist-agent.yml
+    role: "Finance SSC Specialist - Philippine BIR compliance, multi-agency workflows"
+    expertise_level: Expert
+    skills:
+      primary: [odoo-finance-automation, bir-tax-filing]
+      secondary: [multi-agency-orchestrator, procurement-sourcing]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+    capabilities:
+      - BIR form automation (1601-C, 2550Q, 1702-RT)
+      - Month-end closing workflows
+      - Multi-agency reconciliation
+      - Financial reporting
+      - Tax compliance validation
+      - Expense automation
+      - Upgrade Finance SSC custom modules
+      - Develop custom Odoo financial modules
+      - Build automated financial workflows with Studio
+
+  - name: bi-architect
+    type: superclaude
+    file: .superclaude/agents/bi-architect-agent.yml
+    role: "Business Intelligence Architect - Superset dashboards, SQL optimization"
+    expertise_level: Expert
+    skills:
+      primary: [superset-dashboard-automation, superset-chart-builder, superset-sql-developer]
+      secondary: [neon-database-architect, database-optimizer]
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+    capabilities:
+      - Design Superset dashboards
+      - Optimize SQL queries
+      - Create data models
+      - Build analytics views
+      - Setup RLS policies
+      - Generate chart configurations
+      - Query Odoo database for BI analytics
+
+# ══════════════════════════════════════════════════════════════
+# ODOO-SPARK-SUBAGENTS (Runtime Automation Agents)
+# ══════════════════════════════════════════════════════════════
+# Purpose: Specialized automation for Odoo operations & Git workflow
+
+automation_agents:
   - name: automation-executor
+    type: automation
     file: agents/automation_executor/agent.yaml
     role: "OpenAPI-first Odoo tool invoker"
     scopes: ["odoo.sales", "odoo.accounting"]
@@ -9,11 +186,13 @@ agents:
       - ODOO_BASE_URL=${ODOO_BASE_URL}
       - ODOO_BOT_TOKEN=${ODOO_BOT_TOKEN}
     outputs: ["tool_call","dryrun_report"]
+    uses_skills: [automation_executor]
     safety:
       require_dry_run: true
       max_batch: 5
 
   - name: git-specialist
+    type: automation
     file: agents/git_specialist/agent.yaml
     role: "Git/PR automation (draft only)"
     scopes: ["repo.read","repo.write","pr.create"]
@@ -22,32 +201,69 @@ agents:
       - GITHUB_REPO_SLUG=${GITHUB_REPO_SLUG}
       - GITHUB_DEFAULT_BRANCH=${GITHUB_DEFAULT_BRANCH}
     outputs: ["branch","pr"]
+    uses_skills: [git_specialist]
     safety:
       allow_force_push: false
       mode: "plan-only"
 
   - name: automation-gap-analyzer
+    type: automation
     file: agents/automation_gap_analyzer/agent.yaml
     role: "Repo automation scanner"
     scopes: ["repo.read","plan.compose"]
     outputs: ["gap_report","gap_plan"]
+    uses_skills: [automation_gap_analyzer]
     routes_to: ["git-specialist"]
 
   - name: conflict-manager
+    type: automation
     file: agents/conflict_manager/agent.yaml
     role: "Detect & plan fixes for stack conflicts"
     scopes: ["repo.read","plan.compose"]
     outputs: ["conflict_report","fix_plan"]
+    uses_skills: [conflict_manager]
     routes_to: ["git-specialist"]
 
+# ══════════════════════════════════════════════════════════════
+# AGENT ORCHESTRATION GRAPH
+# ══════════════════════════════════════════════════════════════
+
 graph:
-  entrypoint: "/ingest → collector → fixer"
-  routes:
-    - when: "diff|spec_gap"            -> git-specialist
-    - when: "issue(domain=odoo)"       -> automation-executor
-    - when: "gap_request|repo_state"   -> automation-gap-analyzer
-    - when: "conflict signals"         -> conflict-manager
+  # SuperClaude parallel workflow
+  superclaude:
+    entrypoint: "bootstrap → build_full_stack"
+    workflows:
+      - bootstrap: [architect, ai-engineer, doc-writer, devops]
+      - build_full_stack: [ai-engineer, devops, doc-writer, qa-engineer, architect]
+      - build_ai_infrastructure: [ai-engineer, devops, doc-writer]
+
+  # Automation agents routing
+  automation:
+    entrypoint: "/ingest → collector → fixer"
+    routes:
+      - condition: "diff|spec_gap"
+        target: git-specialist
+      - condition: "issue(domain=odoo)"
+        target: automation-executor
+      - condition: "gap_request|repo_state"
+        target: automation-gap-analyzer
+      - condition: "conflict signals"
+        target: conflict-manager
+
+# ══════════════════════════════════════════════════════════════
+# OBSERVABILITY & TELEMETRY
+# ══════════════════════════════════════════════════════════════
 
 otel:
   exporter: ${OTEL_EXPORTER_OTLP_ENDPOINT}
   traceparent: true
+  service_name: ${OTEL_SERVICE_NAME:-odoo-spark-agents}
+
+# ══════════════════════════════════════════════════════════════
+# SUMMARY
+# ══════════════════════════════════════════════════════════════
+# Total Agents: 11 (7 SuperClaude + 4 Automation)
+# Total Skills: 47 Claude Code skills + 4 automation skills
+# Agent Types:
+#   - superclaude: Meta-orchestration for parallel development
+#   - automation: Runtime automation for Odoo/Git operations
