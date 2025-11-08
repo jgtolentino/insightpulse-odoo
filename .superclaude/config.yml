@@ -37,6 +37,7 @@ agents:
 
     # Reference documentation
     reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
 
     # Capabilities
@@ -48,6 +49,7 @@ agents:
       - Review code architecture
       - Plan technical roadmap
       - Design database upgrade strategies
+      - Design Odoo module architecture
 
     # Tools this agent prefers
     preferred_tools:
@@ -78,6 +80,10 @@ agents:
         - neon-database-architect
         - librarian-indexer
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+
     capabilities:
       - Build prompt templates
       - Design RAG pipelines
@@ -85,6 +91,7 @@ agents:
       - Setup vector databases
       - Integrate LLM APIs
       - Build AI workflows
+      - Integrate AI with Odoo modules
 
     preferred_tools:
       - Read
@@ -110,6 +117,7 @@ agents:
 
     # Reference documentation
     reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
 
     capabilities:
@@ -120,6 +128,7 @@ agents:
       - Configure load balancers
       - Manage secrets
       - Execute Odoo database upgrades
+      - Deploy Odoo modules and addons
 
     preferred_tools:
       - Bash
@@ -145,6 +154,10 @@ agents:
         - drawio-diagrams-enhanced
         - pmbok-project-management
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+
     capabilities:
       - Write technical documentation
       - Create runbooks
@@ -152,6 +165,7 @@ agents:
       - Generate API docs
       - Write user guides
       - Create training materials
+      - Document Odoo modules and customizations
 
     preferred_tools:
       - Write
@@ -176,6 +190,7 @@ agents:
 
     # Reference documentation
     reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
 
     capabilities:
@@ -186,6 +201,7 @@ agents:
       - Generate test reports
       - Define quality gates
       - Test database upgrade procedures
+      - Test Odoo modules and customizations
 
     preferred_tools:
       - Write
@@ -212,6 +228,7 @@ agents:
 
     # Reference documentation
     reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
       - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
 
     capabilities:
@@ -222,6 +239,7 @@ agents:
       - Tax compliance validation
       - Expense automation
       - Upgrade Finance SSC custom modules
+      - Develop custom Odoo financial modules
 
     preferred_tools:
       - Read
@@ -248,6 +266,10 @@ agents:
         - neon-database-architect
         - database-optimizer
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+
     capabilities:
       - Design Superset dashboards
       - Optimize SQL queries
@@ -255,6 +277,7 @@ agents:
       - Build analytics views
       - Setup RLS policies
       - Generate chart configurations
+      - Query Odoo database for BI analytics
 
     preferred_tools:
       - Read
