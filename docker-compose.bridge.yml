@@ -1,0 +1,31 @@
+version: "3.8"
+
+services:
+  bridge_api:
+    build:
+      context: ./bridge_api
+      dockerfile: Dockerfile
+    container_name: insightpulse-bridge-api
+    restart: unless-stopped
+    environment:
+      - BRIDGE_HMAC_SECRET=${BRIDGE_HMAC_SECRET}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - ODOO_BASE_URL=${ODOO_BASE_URL}
+      - ODOO_API_TOKEN=${ODOO_API_TOKEN}
+      - ODOO_HMAC_SECRET=${ODOO_HMAC_SECRET}
+      - BRIDGE_LOG_LEVEL=${BRIDGE_LOG_LEVEL:-INFO}
+    ports:
+      - "8787:8787"
+    networks:
+      - bridge-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  bridge-network:
+    driver: bridge

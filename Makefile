@@ -1200,3 +1200,122 @@ chat-tls: ## Configure Nginx + TLS for Mattermost
 	@echo "✅ Nginx configured!"
 	@echo ""
 	@echo "Run certbot: sudo certbot --nginx -d chat.insightpulseai.net"
+
+# ══════════════════════════════════════════════════════════════
+# 🌉 ODOO-SUPABASE EVENT BRIDGE
+# ══════════════════════════════════════════════════════════════
+
+export $(shell sed -e '/^#/d' env/.bridge.env.example 2>/dev/null | xargs)
+
+.PHONY: bridge-up bridge-down bridge-sql bridge-deploy-fn bridge-ingest-test bridge-push-test bridge-replay bridge-test bridge-lint bridge-help
+
+bridge-up: ## Start bridge API service
+	@echo "🌉 Starting Odoo-Supabase bridge..."
+	@docker compose -f docker-compose.bridge.yml up -d --build
+	@echo "✅ Bridge API running on http://localhost:8787"
+
+bridge-down: ## Stop bridge API service
+	@echo "🛑 Stopping bridge..."
+	@docker compose -f docker-compose.bridge.yml down -v
+
+bridge-sql: ## Apply Supabase SQL schema
+	@echo "📊 Applying Supabase schema..."
+	@psql "$(SUPABASE_URL)" -f supabase/sql/000_init.sql || echo "Run via Supabase SQL editor: supabase/sql/000_init.sql"
+
+bridge-deploy-fn: ## Deploy Supabase Edge Functions
+	@echo "📤 Deploying Edge Functions..."
+	@echo "Deploy with: supabase functions deploy odoo_event_ingest && supabase functions deploy push_to_odoo"
+	@echo "Or use Supabase dashboard to paste function code"
+
+bridge-ingest-test: ## Test Odoo → Supabase event ingestion
+	@echo "🧪 Testing event ingestion..."
+	@curl -s -X POST "$${SUPABASE_URL}/functions/v1/odoo_event_ingest" \
+		-H "Authorization: Bearer $${SUPABASE_SERVICE_ROLE_KEY}" \
+		-H "x-signature: dummy" \
+		-H "content-type: application/json" \
+		-d '{"event_type":"res.partner.updated","resource_id":42,"payload":{"name":"Acme"},"ts":"$$(date -u +%FT%TZ)"}' | jq .
+
+bridge-push-test: ## Test Supabase → Odoo action push
+	@echo "🧪 Testing action push..."
+	@curl -s -X POST "$${SUPABASE_URL}/functions/v1/push_to_odoo" \
+		-H "Authorization: Bearer $${SUPABASE_SERVICE_ROLE_KEY}" \
+		-H "content-type: application/json" \
+		-d '{"action":"account.move.post","args":{"id":1234}}' | jq .
+
+bridge-replay: ## Start bridge API for replay/dev
+	@echo "🔄 Starting bridge replay API..."
+	@cd bridge_api && uvicorn app.main:app --reload --port 8787
+
+bridge-test: ## Run bridge tests
+	@echo "🧪 Running bridge tests..."
+	@pytest bridge_api/tests/ -q || echo "⚠️  pytest not found or no tests"
+
+bridge-lint: ## Lint bridge code
+	@echo "🔍 Linting bridge code..."
+	@python -m pyflakes bridge_api || echo "⚠️  pyflakes not installed"
+
+bridge-help: ## Show bridge commands
+	@echo "🌉 Odoo-Supabase Event Bridge Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Setup:"
+	@echo "  1. Configure env/.bridge.env.example with your secrets"
+	@echo "  2. make bridge-sql              # Apply Supabase schema"
+	@echo "  3. make bridge-deploy-fn        # Deploy Edge Functions"
+	@echo "  4. Install Odoo addon:          # odoo_addons/ip_event_bus"
+	@echo ""
+	@echo "Development:"
+	@echo "  make bridge-up                  # Start bridge API"
+	@echo "  make bridge-replay              # Run dev replay server"
+	@echo "  make bridge-down                # Stop bridge"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make bridge-ingest-test         # Test Odoo → Supabase"
+	@echo "  make bridge-push-test           # Test Supabase → Odoo"
+	@echo "  make bridge-test                # Run test suite"
+	@echo "  make bridge-lint                # Lint code"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  docs/BRIDGE.md                  # Architecture & flows"
+	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🔧 CLAUDE CONFIG SYNC (CI/CD Integration)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: claude:ci-local claude:pr claude:release-patch claude:sync-check claude:sync-write claude:validate
+
+claude:validate: ## Validate Claude configuration
+	@echo "🔍 Validating Claude configuration..."
+	@python scripts/validate-claude-config.py
+
+claude:sync-check: ## Check Section 19 drift (read-only)
+	@echo "🔍 Checking Section 19 drift..."
+	@chmod +x scripts/skillsmith_sync.py
+	@./scripts/skillsmith_sync.py --check
+
+claude:sync-write: ## Update Section 19 from skills inventory (write mode)
+	@echo "✍️  Updating Section 19..."
+	@chmod +x scripts/skillsmith_sync.py
+	@./scripts/skillsmith_sync.py --write
+
+claude:ci-local: ## Run validator + drift check locally (fast)
+	@echo "🚀 Running local CI checks..."
+	@python scripts/validate-claude-config.py
+	@chmod +x scripts/ci/assert-clean-section19.sh
+	@bash scripts/ci/assert-clean-section19.sh
+
+claude:pr: ## Open or update drift PR (uses gh)
+	@echo "📤 Creating/updating Section 19 sync PR..."
+	@CLAUDE_SYNC_WRITE=true bash scripts/ci/open-pr-on-drift.sh
+
+claude:release-patch: ## Tag a patch release after successful sync
+	@VER=$$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0"); \
+	N=$$(python3 - <<'EOF' $${VER} | sed 's/.* //' \
+import sys; \
+v=sys.argv[1].lstrip('v'); \
+maj,minor,patch=map(int,v.split('.')); \
+print(f"v{maj}.{minor}.{patch+1}") \
+EOF ); \
+	echo "Tagging $$N"; \
+	git tag "$$N" && git push origin "$$N"
