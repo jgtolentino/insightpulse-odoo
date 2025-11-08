@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InsightPulse AI - Finance SSC Automation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 0.1em;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #2F5BFF 0%, #1E44E0 100%);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .card-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+        }
+
+        .card-body {
+            padding: 2.5rem;
+        }
+
+        /* Login Form */
+        .login-section {
+            max-width: 400px;
+            margin: 0 auto 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #CED4DA;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #2F5BFF;
+            box-shadow: 0 0 0 3px #E8EEFF;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 0.875rem;
+            background: #2F5BFF;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary:hover {
+            background: #1E44E0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(47, 91, 255, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #FEE;
+            color: #DC3545;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .success-message {
+            background: #D4EDDA;
+            color: #28A745;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        /* Services Grid */
+        .services-divider {
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .services-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #E9ECEF;
+        }
+
+        .services-divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #6C757D;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .services-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .service-card {
+            background: #F8F9FA;
+            border: 2px solid #E9ECEF;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .service-card:hover {
+            border-color: #2F5BFF;
+            background: white;
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(47, 91, 255, 0.15);
+        }
+
+        .service-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .service-name {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #212529;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-description {
+            font-size: 0.875rem;
+            color: #6C757D;
+            line-height: 1.5;
+        }
+
+        .service-card.locked {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .service-card.locked:hover {
+            transform: none;
+            border-color: #E9ECEF;
+            box-shadow: none;
+        }
+
+        .lock-icon {
+            display: inline-block;
+            margin-left: 0.25rem;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.875rem;
+        }
+
+        .footer a {
+            color: white;
+            text-decoration: none;
+            margin: 0 0.5rem;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .services-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .card-body {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Loading State */
+        .btn-primary.loading {
+            position: relative;
+            color: transparent;
+        }
+
+        .btn-primary.loading::after {
+            content: '';
+            position: absolute;
+            width: 1rem;
+            height: 1rem;
+            top: 50%;
+            left: 50%;
+            margin-left: -0.5rem;
+            margin-top: -0.5rem;
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">InsightPulse AI</div>
+            <div class="tagline">FINANCE SSC AUTOMATION</div>
+        </div>
+
+        <div class="main-card">
+            <div class="card-header">
+                <h1>Sign In</h1>
+                <p>Access all services with unified authentication</p>
+            </div>
+
+            <div class="card-body">
+                <div class="login-section">
+                    <div class="error-message" id="errorMessage">
+                        ✗ Authentication failed. Please check your credentials.
+                    </div>
+
+                    <div class="success-message" id="successMessage">
+                        ✓ Authentication successful! Redirecting...
+                    </div>
+
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label class="form-label" for="username">Username</label>
+                            <input
+                                type="text"
+                                id="username"
+                                name="username"
+                                class="form-input"
+                                placeholder="admin"
+                                autocomplete="username"
+                                required
+                            >
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="password">Password</label>
+                            <input
+                                type="password"
+                                id="password"
+                                name="password"
+                                class="form-input"
+                                placeholder="••••••••"
+                                autocomplete="current-password"
+                                required
+                            >
+                        </div>
+
+                        <button type="submit" class="btn-primary" id="submitBtn">
+                            Sign In to All Services
+                        </button>
+                    </form>
+                </div>
+
+                <div class="services-divider">
+                    <span>Available Services</span>
+                </div>
+
+                <div class="services-grid">
+                    <a href="https://erp.insightpulseai.net" class="service-card locked" id="erpCard">
+                        <div class="service-icon">📊</div>
+                        <div class="service-name">
+                            Odoo ERP
+                            <span class="lock-icon">🔒</span>
+                        </div>
+                        <div class="service-description">
+                            Enterprise Resource Planning & Finance Management
+                        </div>
+                    </a>
+
+                    <a href="https://chat.insightpulseai.net" class="service-card locked" id="chatCard">
+                        <div class="service-icon">💬</div>
+                        <div class="service-name">
+                            Mattermost
+                            <span class="lock-icon">🔒</span>
+                        </div>
+                        <div class="service-description">
+                            Team Communication & Collaboration
+                        </div>
+                    </a>
+
+                    <a href="https://superset.insightpulseai.net" class="service-card locked" id="supersetCard">
+                        <div class="service-icon">📈</div>
+                        <div class="service-name">
+                            Apache Superset
+                            <span class="lock-icon">🔒</span>
+                        </div>
+                        <div class="service-description">
+                            Business Intelligence & Analytics
+                        </div>
+                    </a>
+
+                    <a href="https://n8n.insightpulseai.net" class="service-card locked" id="n8nCard">
+                        <div class="service-icon">⚙️</div>
+                        <div class="service-name">
+                            n8n
+                            <span class="lock-icon">🔒</span>
+                        </div>
+                        <div class="service-description">
+                            Workflow Automation & Integration
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2025 InsightPulse AI. All rights reserved.</p>
+            <div>
+                <a href="/about">About</a>
+                <a href="/privacy">Privacy</a>
+                <a href="/terms">Terms</a>
+                <a href="/help">Help</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMessage = document.getElementById('errorMessage');
+        const successMessage = document.getElementById('successMessage');
+        const serviceCards = {
+            erp: document.getElementById('erpCard'),
+            chat: document.getElementById('chatCard'),
+            superset: document.getElementById('supersetCard'),
+            n8n: document.getElementById('n8nCard')
+        };
+
+        // Check if already authenticated
+        async function checkAuth() {
+            try {
+                const response = await fetch('/web/session/get_session_info', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include'
+                });
+
+                const data = await response.json();
+
+                if (data.result && data.result.uid) {
+                    // Already authenticated
+                    unlockServices();
+                }
+            } catch (error) {
+                console.log('Not authenticated');
+            }
+        }
+
+        // Handle login form submission
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            // Clear messages
+            errorMessage.classList.remove('show');
+            successMessage.classList.remove('show');
+
+            // Show loading state
+            submitBtn.classList.add('loading');
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('/web/session/authenticate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        method: 'call',
+                        params: {
+                            db: 'odoo19',
+                            login: username,
+                            password: password
+                        },
+                        id: Math.random()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.result && data.result.uid) {
+                    // Success
+                    successMessage.classList.add('show');
+                    unlockServices();
+
+                    // Redirect to ERP after 1 second
+                    setTimeout(() => {
+                        window.location.href = 'https://erp.insightpulseai.net';
+                    }, 1000);
+                } else {
+                    // Failed
+                    errorMessage.classList.add('show');
+                    submitBtn.classList.remove('loading');
+                    submitBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error('Authentication error:', error);
+                errorMessage.textContent = '✗ Connection error. Please try again.';
+                errorMessage.classList.add('show');
+                submitBtn.classList.remove('loading');
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Unlock service cards after successful authentication
+        function unlockServices() {
+            Object.values(serviceCards).forEach(card => {
+                card.classList.remove('locked');
+                const lockIcon = card.querySelector('.lock-icon');
+                if (lockIcon) {
+                    lockIcon.textContent = '✓';
+                }
+            });
+        }
+
+        // Check authentication on page load
+        checkAuth();
+    </script>
+</body>
+</html>
