@@ -135,3 +135,8 @@ Desktop.ini
 # Claude docs (organized in .claudedocs/ instead)
 .claudedocs/
 
+
+# Auto-merge test artifacts
+*.backup
+auto-merge-audit.json
+auto-merge-audit-final.json
