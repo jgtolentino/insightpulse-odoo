@@ -1,0 +1,353 @@
+/**
+ * InsightPulseAI Custom Theme for Odoo 18
+ *
+ * Applies unified branding colors and design tokens
+ * Matches Mattermost, Superset, and n8n visual appearance
+ *
+ * Branding Specification: /config/branding_theme.json
+ * Desired State: /config/odoo18_desired_state.json
+ */
+
+:root {
+    /* Primary Brand Colors */
+    --insightpulse-primary: #1455C7;
+    --insightpulse-primary-dark: #0F3F92;
+    --insightpulse-primary-light: #3B7BE8;
+
+    /* Secondary Colors */
+    --insightpulse-secondary: #111827;
+    --insightpulse-secondary-light: #374151;
+
+    /* Accent Colors */
+    --insightpulse-accent: #F97316;
+    --insightpulse-accent-dark: #C2590C;
+
+    /* Background Colors */
+    --insightpulse-bg-main: #F3F4F6;
+    --insightpulse-bg-card: #FFFFFF;
+    --insightpulse-bg-elevated: #FAFAFA;
+
+    /* Text Colors */
+    --insightpulse-text-primary: #111827;
+    --insightpulse-text-secondary: #374151;
+    --insightpulse-text-muted: #6B7280;
+
+    /* Border Colors */
+    --insightpulse-border-subtle: #E5E7EB;
+    --insightpulse-border-default: #D1D5DB;
+
+    /* Status Colors */
+    --insightpulse-success: #10B981;
+    --insightpulse-warning: #F59E0B;
+    --insightpulse-error: #EF4444;
+    --insightpulse-info: #3B82F6;
+
+    /* Border Radius */
+    --insightpulse-radius-sm: 4px;
+    --insightpulse-radius-md: 8px;
+    --insightpulse-radius-lg: 12px;
+
+    /* Shadows */
+    --insightpulse-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --insightpulse-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --insightpulse-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Override Odoo 18 default primary color */
+.btn-primary,
+.o_button_primary,
+.btn-primary:not(:disabled):not(.disabled):active,
+.btn-primary:not(:disabled):not(.disabled).active {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary) !important;
+    color: white !important;
+}
+
+.btn-primary:hover,
+.o_button_primary:hover {
+    background-color: var(--insightpulse-primary-dark) !important;
+    border-color: var(--insightpulse-primary-dark) !important;
+}
+
+/* Links and anchors */
+a,
+a:hover,
+a:focus,
+.o_form_uri,
+.oe_kanban_colorpicker a {
+    color: var(--insightpulse-primary) !important;
+}
+
+a:hover {
+    color: var(--insightpulse-primary-dark) !important;
+}
+
+/* Navigation bar */
+.o_navbar_apps_menu,
+.o_main_navbar {
+    background-color: var(--insightpulse-secondary) !important;
+    border-bottom: 2px solid var(--insightpulse-primary) !important;
+}
+
+.o_navbar_apps_menu .dropdown-toggle,
+.o_main_navbar .dropdown-toggle,
+.o_main_navbar .o_menu_sections a {
+    color: white !important;
+}
+
+.o_navbar_apps_menu .dropdown-toggle:hover,
+.o_main_navbar .dropdown-toggle:hover,
+.o_main_navbar .o_menu_sections a:hover {
+    background-color: var(--insightpulse-secondary-light) !important;
+}
+
+/* Active menu items */
+.o_menu_sections .show .dropdown-toggle,
+.o_menu_sections .active > a {
+    background-color: var(--insightpulse-primary) !important;
+    color: white !important;
+}
+
+/* Form view headers */
+.o_form_view .o_form_statusbar {
+    background-color: var(--insightpulse-bg-elevated) !important;
+    border-bottom: 1px solid var(--insightpulse-border-default) !important;
+}
+
+.o_form_statusbar .o_arrow_button.btn-primary,
+.o_form_statusbar .o_arrow_button.btn-primary:hover {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary) !important;
+}
+
+/* Kanban view */
+.o_kanban_view .o_kanban_record {
+    border-radius: var(--insightpulse-radius-lg) !important;
+    box-shadow: var(--insightpulse-shadow-sm) !important;
+}
+
+.o_kanban_view .o_kanban_record:hover {
+    box-shadow: var(--insightpulse-shadow-md) !important;
+}
+
+/* Chatter/mail thread */
+.o_Chatter,
+.o_mail_thread {
+    background-color: var(--insightpulse-bg-main) !important;
+}
+
+.o_Message {
+    background-color: var(--insightpulse-bg-card) !important;
+    border-radius: var(--insightpulse-radius-md) !important;
+    box-shadow: var(--insightpulse-shadow-sm) !important;
+}
+
+/* Search panel */
+.o_search_panel {
+    background-color: var(--insightpulse-bg-elevated) !important;
+    border-right: 1px solid var(--insightpulse-border-subtle) !important;
+}
+
+.o_search_panel_section .o_search_panel_category_value.active {
+    background-color: var(--insightpulse-primary) !important;
+    color: white !important;
+}
+
+/* Control panel */
+.o_control_panel {
+    background-color: white !important;
+    border-bottom: 1px solid var(--insightpulse-border-subtle) !important;
+}
+
+/* Badges and tags */
+.badge-primary,
+.o_tag {
+    background-color: var(--insightpulse-primary) !important;
+    color: white !important;
+}
+
+.badge-success {
+    background-color: var(--insightpulse-success) !important;
+}
+
+.badge-warning {
+    background-color: var(--insightpulse-warning) !important;
+}
+
+.badge-danger {
+    background-color: var(--insightpulse-error) !important;
+}
+
+.badge-info {
+    background-color: var(--insightpulse-info) !important;
+}
+
+/* Action buttons */
+.o_statusbar_buttons .btn-secondary {
+    background-color: var(--insightpulse-bg-elevated) !important;
+    border-color: var(--insightpulse-border-default) !important;
+    color: var(--insightpulse-text-primary) !important;
+}
+
+.o_statusbar_buttons .btn-secondary:hover {
+    background-color: var(--insightpulse-bg-main) !important;
+}
+
+/* Tabs */
+.nav-tabs .nav-link.active {
+    border-bottom-color: var(--insightpulse-primary) !important;
+    color: var(--insightpulse-primary) !important;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--insightpulse-primary-dark) !important;
+}
+
+/* Modal dialogs */
+.modal-header {
+    background-color: var(--insightpulse-secondary) !important;
+    color: white !important;
+}
+
+.modal-footer .btn-primary {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary) !important;
+}
+
+/* Form inputs focus state */
+.form-control:focus,
+.o_input:focus {
+    border-color: var(--insightpulse-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(20, 85, 199, 0.25) !important;
+}
+
+/* Checkboxes and radio buttons */
+.custom-checkbox .custom-control-input:checked ~ .custom-control-label::before,
+.custom-radio .custom-control-input:checked ~ .custom-control-label::before {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary) !important;
+}
+
+/* Progress bars */
+.progress-bar {
+    background-color: var(--insightpulse-primary) !important;
+}
+
+/* Notification alerts */
+.alert-success {
+    background-color: rgba(16, 185, 129, 0.1) !important;
+    border-color: var(--insightpulse-success) !important;
+    color: var(--insightpulse-success) !important;
+}
+
+.alert-warning {
+    background-color: rgba(245, 158, 11, 0.1) !important;
+    border-color: var(--insightpulse-warning) !important;
+    color: var(--insightpulse-warning) !important;
+}
+
+.alert-danger {
+    background-color: rgba(239, 68, 68, 0.1) !important;
+    border-color: var(--insightpulse-error) !important;
+    color: var(--insightpulse-error) !important;
+}
+
+.alert-info {
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-color: var(--insightpulse-info) !important;
+    color: var(--insightpulse-info) !important;
+}
+
+/* Portal/Website frontend */
+body.o_portal,
+body.o_website {
+    background-color: var(--insightpulse-bg-main) !important;
+}
+
+.o_portal_sidebar,
+.o_website_sidebar {
+    background-color: var(--insightpulse-bg-card) !important;
+    border-right: 1px solid var(--insightpulse-border-subtle) !important;
+}
+
+/* Cards and panels */
+.card,
+.o_kanban_card,
+.o_form_sheet_bg {
+    background-color: var(--insightpulse-bg-card) !important;
+    border-radius: var(--insightpulse-radius-lg) !important;
+    box-shadow: var(--insightpulse-shadow-sm) !important;
+}
+
+/* Dropdown menus */
+.dropdown-menu {
+    border-radius: var(--insightpulse-radius-md) !important;
+    box-shadow: var(--insightpulse-shadow-lg) !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background-color: var(--insightpulse-bg-main) !important;
+}
+
+/* Loading spinners */
+.o_loading {
+    color: var(--insightpulse-primary) !important;
+}
+
+/* Scrollbar styling (webkit browsers) */
+::-webkit-scrollbar-thumb {
+    background-color: var(--insightpulse-border-default) !important;
+    border-radius: var(--insightpulse-radius-sm) !important;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background-color: var(--insightpulse-text-muted) !important;
+}
+
+/* Calendar view */
+.o_calendar_view .fc-event {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary-dark) !important;
+}
+
+/* Gantt view */
+.o_gantt_row_sidebar {
+    background-color: var(--insightpulse-bg-elevated) !important;
+}
+
+.o_gantt_pill {
+    background-color: var(--insightpulse-primary) !important;
+}
+
+/* Dashboard tiles */
+.o_dashboard .o_dashboard_action {
+    border-radius: var(--insightpulse-radius-lg) !important;
+    box-shadow: var(--insightpulse-shadow-md) !important;
+}
+
+.o_dashboard .o_dashboard_action:hover {
+    box-shadow: var(--insightpulse-shadow-lg) !important;
+    transform: translateY(-2px);
+    transition: all 0.3s ease;
+}
+
+/* Website builder */
+.o_website_builder .btn-primary {
+    background-color: var(--insightpulse-primary) !important;
+    border-color: var(--insightpulse-primary) !important;
+}
+
+/* Footer branding */
+.o_footer {
+    background-color: var(--insightpulse-secondary) !important;
+    color: white !important;
+}
+
+.o_footer a {
+    color: var(--insightpulse-primary-light) !important;
+}
+
+.o_footer a:hover {
+    color: white !important;
+}

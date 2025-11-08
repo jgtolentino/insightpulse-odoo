@@ -1,0 +1,227 @@
+{
+  "instance": {
+    "name": "InsightPulse ERP Prod",
+    "url": "https://erp.insightpulseai.net",
+    "version": "18.0",
+    "edition": "community"
+  },
+  "company": {
+    "name": "InsightPulseAI",
+    "country": "PH",
+    "currency": "PHP",
+    "timezone": "Asia/Manila",
+    "multi_company": false
+  },
+  "users": {
+    "max_users": 25,
+    "default_new_user_groups": [
+      "base.group_user",
+      "account.group_account_user"
+    ],
+    "customer_portal": {
+      "mode": "on_invitation",
+      "password_reset_enabled": true
+    },
+    "two_factor_auth": {
+      "enforce": "employees_only",
+      "methods": [
+        "email"
+      ]
+    }
+  },
+  "languages": {
+    "installed": [
+      "en_US"
+    ],
+    "default": "en_US"
+  },
+  "document_layout": {
+    "template": "modern",
+    "primary_color": "#1455C7",
+    "secondary_color": "#111827",
+    "logo_file": "ENV:ODOO_LOGO_PATH",
+    "footer_text": "InsightPulseAI • Philippine Operations • VAT Registered"
+  },
+  "apps": {
+    "install": [
+      "sale_management",
+      "account",
+      "purchase",
+      "stock",
+      "project",
+      "hr",
+      "hr_expense",
+      "hr_skills",
+      "crm",
+      "website",
+      "knowledge",
+      "hr_timesheet",
+      "im_livechat"
+    ],
+    "keep_uninstalled": [
+      "pos_restaurant",
+      "point_of_sale",
+      "website_sale",
+      "mass_mailing",
+      "marketing_automation",
+      "sms",
+      "website_hr_recruitment",
+      "sale_amazon",
+      "mrp",
+      "mrp_subcontracting"
+    ]
+  },
+  "units_of_measure": {
+    "weight": {
+      "default": "kg",
+      "options": [
+        "kg",
+        "lb"
+      ]
+    },
+    "volume": {
+      "default": "m3",
+      "options": [
+        "m3",
+        "ft3"
+      ]
+    }
+  },
+  "email": {
+    "use_custom_email_servers": true,
+    "outgoing_server": {
+      "host": "ENV:SMTP_HOST",
+      "port": 587,
+      "encryption": "starttls",
+      "username": "ENV:SMTP_USER",
+      "password_env": "ENV:SMTP_PASSWORD",
+      "from_email": "no-reply@insightpulseai.net",
+      "from_name": "InsightPulse ERP"
+    },
+    "incoming_server": {
+      "enabled": true,
+      "type": "imap",
+      "host": "ENV:IMAP_HOST",
+      "port": 993,
+      "encryption": "ssl",
+      "username": "ENV:IMAP_USER",
+      "password_env": "ENV:IMAP_PASSWORD"
+    },
+    "alias_domain": "insightpulseai.net",
+    "digest_email": {
+      "enabled": true,
+      "template_name": "Your Odoo Periodic Digest",
+      "frequency": "weekly"
+    },
+    "restrict_template_rendering": true
+  },
+  "discuss": {
+    "activities": {
+      "default_types": [
+        "call",
+        "email",
+        "meeting",
+        "todo"
+      ]
+    },
+    "calls": {
+      "twilio": {
+        "use_custom_ice_server": false,
+        "twilio_account_sid_env": "ENV:TWILIO_ACCOUNT_SID",
+        "twilio_api_key_env": "ENV:TWILIO_API_KEY"
+      },
+      "custom_sfu": {
+        "enabled": false,
+        "url": ""
+      },
+      "custom_ice_servers": {
+        "enabled": false,
+        "urls": []
+      }
+    },
+    "tenor_gif": {
+      "enabled": false,
+      "api_key_env": "ENV:TENOR_API_KEY"
+    },
+    "message_translation": {
+      "enabled": false,
+      "google_api_key_env": "ENV:GOOGLE_TRANSLATE_API_KEY"
+    }
+  },
+  "contacts": {
+    "send_sms": {
+      "enabled": false,
+      "provider": "",
+      "api_key_env": ""
+    },
+    "partner_autocomplete": {
+      "enabled": false
+    },
+    "geolocation": {
+      "enabled": true,
+      "provider": "google",
+      "google_api_key_env": "ENV:GOOGLE_MAPS_API_KEY"
+    },
+    "google_address_autocomplete": {
+      "enabled": true,
+      "google_places_api_key_env": "ENV:GOOGLE_PLACES_API_KEY"
+    }
+  },
+  "iap": {
+    "enabled": false
+  },
+  "security": {
+    "customer_login": {
+      "mode": "on_invitation"
+    },
+    "password_reset": {
+      "enabled": true
+    },
+    "api_keys": {
+      "enabled": true
+    }
+  },
+  "integrations": {
+    "mail_plugin": {
+      "enabled": false
+    },
+    "oauth": {
+      "enabled": true,
+      "providers": [
+        {
+          "name": "Google",
+          "client_id_env": "ENV:GOOGLE_OAUTH_CLIENT_ID",
+          "client_secret_env": "ENV:GOOGLE_OAUTH_CLIENT_SECRET"
+        }
+      ]
+    },
+    "ldap": {
+      "enabled": false
+    },
+    "unsplash": {
+      "enabled": true,
+      "access_key_env": "ENV:UNSPLASH_ACCESS_KEY",
+      "application_id_env": "ENV:UNSPLASH_APP_ID"
+    },
+    "recaptcha": {
+      "enabled": false,
+      "site_key_env": "ENV:RECAPTCHA_SITE_KEY",
+      "secret_key_env": "ENV:RECAPTCHA_SECRET_KEY"
+    },
+    "cloudflare_turnstile": {
+      "enabled": true,
+      "site_key_env": "ENV:TURNSTILE_SITE_KEY",
+      "secret_key_env": "ENV:TURNSTILE_SECRET_KEY"
+    }
+  },
+  "developer_tools": {
+    "mode": "off",
+    "allow_with_assets": false,
+    "allow_with_test_assets": false
+  },
+  "logging_monitoring": {
+    "log_level": "info",
+    "structured_logging": true,
+    "forward_to_syslog": true
+  }
+}

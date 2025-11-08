@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Custom branding metadata -->
+        <record id="custom_theme_branding" model="ir.ui.view">
+            <field name="name">InsightPulseAI Custom Theme</field>
+            <field name="type">qweb</field>
+            <field name="key">custom_theme.branding</field>
+        </record>
+
+        <!-- Inject CSS variables into web client -->
+        <template id="assets_backend" inherit_id="web.assets_backend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" type="text/css" href="/custom_theme/static/src/css/odoo_custom_theme.css"/>
+            </xpath>
+        </template>
+
+        <!-- Inject CSS variables into portal/website -->
+        <template id="assets_frontend" inherit_id="web.assets_frontend">
+            <xpath expr="." position="inside">
+                <link rel="stylesheet" type="text/css" href="/custom_theme/static/src/css/odoo_custom_theme.css"/>
+            </xpath>
+        </template>
+    </data>
+</odoo>
