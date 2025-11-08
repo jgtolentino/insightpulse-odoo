@@ -1,0 +1,13 @@
+version: 1
+error:
+  id: {type: string}           # unique key, e.g., ODOO-LONGPOLL-STALL
+  service: {type: string}      # supabase|superset|odoo|docker|do
+  severity: {enum: [P0,P1,P2]}
+  symptoms: [string]
+  causes: [string]
+  signals: [string]            # metrics/logs/trace names
+  queries: [string]            # promql/sql/logql
+  auto_heal: [string]          # handler script names
+  guardrails: [string]         # things to prevent regressions
+  verify: [string]             # post-heal checks
+  runbook: {type: string}      # docs link

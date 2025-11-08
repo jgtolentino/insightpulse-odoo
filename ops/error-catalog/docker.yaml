@@ -1,0 +1,52 @@
+- id: DOCKER-DISK-PRESSURE
+  service: docker
+  severity: P0
+  symptoms: ["Container start failures", "Image pull failures", "Build errors"]
+  causes: ["Disk full", "Too many unused images/volumes", "Large log files"]
+  signals: ["node_filesystem_avail_bytes / node_filesystem_size_bytes < 0.15"]
+  queries:
+    - "node_filesystem_avail_bytes{fstype!~'tmpfs|overlay'} / node_filesystem_size_bytes < 0.15"
+  auto_heal: ["prune_docker.sh", "prune_logs.sh"]
+  guardrails: ["regular prune schedule", "log rotation", "volume lifecycle policies"]
+  verify: ["disk usage <80% for 30m", "containers healthy"]
+  runbook: "docs/runbooks/docker.md#disk-pressure"
+
+- id: DOCKER-OOM-KILL
+  service: docker
+  severity: P1
+  symptoms: ["Container restarts", "OOMKilled status", "Application crashes"]
+  causes: ["Memory limit too low", "Memory leak", "Spike in traffic"]
+  signals: ["container_oom_kill_total increasing", "container_memory_usage near limit"]
+  queries:
+    - "rate(container_oom_kill_total[10m]) > 0"
+    - "container_memory_usage_bytes / container_spec_memory_limit_bytes > 0.95"
+  auto_heal: ["restart_container.sh", "increase_memory_limit.sh"]
+  guardrails: ["set appropriate memory limits", "monitor memory trends", "implement backpressure"]
+  verify: ["no OOM kills in 1h", "memory <85%"]
+  runbook: "docs/runbooks/docker.md#oom-kill"
+
+- id: DOCKER-NETWORK-ISOLATION
+  service: docker
+  severity: P2
+  symptoms: ["Containers can't communicate", "DNS resolution failures", "Connection timeouts"]
+  causes: ["Network misconfiguration", "Bridge network issues", "Firewall rules"]
+  signals: ["container_network_receive_errors increasing", "DNS lookup failures"]
+  queries:
+    - "rate(container_network_receive_errors_total[5m]) > 0"
+  auto_heal: ["restart_docker_network.sh"]
+  guardrails: ["use explicit networks", "test inter-container connectivity", "DNS configuration"]
+  verify: ["containers can ping each other", "DNS resolves"]
+  runbook: "docs/runbooks/docker.md#network-isolation"
+
+- id: DOCKER-IMAGE-PULL-RATE-LIMIT
+  service: docker
+  severity: P2
+  symptoms: ["Pull failures with 429 errors", "Cannot start new containers", "Deploy blocked"]
+  causes: ["Docker Hub rate limits", "Anonymous pulls", "Too many pulls"]
+  signals: ["image_pull_errors matching 'rate limit'"]
+  queries:
+    - "sum(rate(image_pull_errors_total{error=~'.*rate limit.*'}[5m]))"
+  auto_heal: []
+  guardrails: ["authenticate pulls", "use image cache/mirror", "reduce pull frequency"]
+  verify: ["successful pulls", "no rate limit errors"]
+  runbook: "docs/runbooks/docker.md#image-pull-rate-limit"

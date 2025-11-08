@@ -1,0 +1,75 @@
+name: assistant-guard
+on:
+  pull_request:
+    paths:
+      - ".cursorrules"
+      - "claude.md"
+      - "TASKS.md"
+      - "PLANNING.md"
+      - "ARCHITECTURE.md"
+      - ".claude/**"
+      - ".github/**"
+  push:
+    branches: [ main ]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - name: Run assistant validator
+        run: |
+          python3 - <<'PY'
+import re, sys, json, pathlib
+missing=[]
+for f in [".cursorrules","claude.md","TASKS.md","PLANNING.md","ARCHITECTURE.md",".claude/commands/scaffold-odoo.md",".claude/commands/review-pr.md"]:
+    if not pathlib.Path(f).exists(): missing.append(f)
+if missing:
+    print("❌ Missing required files:", ", ".join(missing)); sys.exit(1)
+
+# Enforce Odoo 18 CE (not 19, not Enterprise)
+cr = pathlib.Path(".cursorrules").read_text(errors="ignore")
+if not re.search(r"\bOdoo\s*18\b.*\bCE\b", cr, re.I):
+    print("❌ .cursorrules must explicitly enforce 'Odoo 18 CE'"); sys.exit(1)
+if re.search(r"\bOdoo\s*19\b|\bEnterprise\b", cr, re.I):
+    print("❌ .cursorrules must not allow Odoo 19 or Enterprise"); sys.exit(1)
+
+# Minimal sanity: TASKS/PLANNING headings
+for f in ["TASKS.md","PLANNING.md","ARCHITECTURE.md"]:
+    t = pathlib.Path(f).read_text(errors="ignore")
+    if not re.search(r"^#\s+", t, re.M):
+        print(f"❌ {f} missing H1"); sys.exit(1)
+
+# Claude commands visible
+for c in pathlib.Path(".claude/commands").glob("*.md"):
+    if c.stat().st_size == 0:
+        print(f"❌ Empty command file: {c}"); sys.exit(1)
+
+# Docs drift check: ARCHITECTURE.md module list vs actual modules
+arch = pathlib.Path("ARCHITECTURE.md").read_text(errors="ignore")
+actual_modules = set()
+for addon_dir in ["addons/insightpulse/finance", "addons/insightpulse/ai", "addons/custom"]:
+    addon_path = pathlib.Path(addon_dir)
+    if addon_path.exists():
+        for module in addon_path.iterdir():
+            if module.is_dir() and not module.name.startswith('.') and not module.name.startswith('_'):
+                actual_modules.add(module.name)
+
+# Extract modules from ARCHITECTURE.md (look for ipai_* patterns)
+doc_modules = set(re.findall(r'\bipai_\w+\b', arch))
+
+# Warn if drift detected (but don't fail - just warn)
+missing_in_doc = actual_modules - doc_modules
+extra_in_doc = doc_modules - actual_modules
+if missing_in_doc or extra_in_doc:
+    print("⚠️  ARCHITECTURE.md drift detected:")
+    if missing_in_doc:
+        print(f"  Modules missing in ARCHITECTURE.md: {', '.join(sorted(missing_in_doc))}")
+    if extra_in_doc:
+        print(f"  Modules in ARCHITECTURE.md but not in addons/: {', '.join(sorted(extra_in_doc))}")
+    print("  Consider updating ARCHITECTURE.md to match current module structure")
+
+print("✅ Assistant guard OK")
+PY

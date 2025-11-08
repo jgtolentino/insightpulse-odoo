@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-07T17:20:41.826815+00:00Z
+Generated: 2025-11-08T04:02:20.430932+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -7,7 +7,7 @@ Generated: 2025-11-07T17:20:41.826815+00:00Z
 | finance_ssc_closing | Custom | 19.0.1.0.0 | unknown | Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center | base,account,account_accountant,project,mail,hr,web | addons/custom/finance_ssc_closing |
 | github_integration | Custom | 1.0.0 | unknown | GitHub webhook and OAuth integration via pulser-hub app | base,project,web | addons/insightpulse/ops/github_integration |
 | insightpulse_app_sources | Custom | 19.0.1.0.0 | unknown | Display addon sources (OCA, Custom, Community) in Apps list | base | addons/insightpulse/insightpulse_app_sources |
-| ip_expense_mvp | Custom | 0.1.0 | unknown | Mobile receipt upload → OCR → admin review | hr_expense,web | addons/ip_expense_mvp |
+| ip_expense_mvp | Custom |  | unknown |  |  | addons/ip_expense_mvp |
 | ip_expense_mvp | Custom | 0.1.0 | unknown | Mobile receipt capture + OCR, cash advance/liquidation scaffolds, admin dashboard | base,web,hr,hr_expense | custom_addons/ip_expense_mvp |
 | ipai_agent | Custom | 1.0.0 | unknown | AI-powered chatbot for Odoo Discuss with automation capabilities | base,mail,hr_expense,account | addons/ipai_agent |
 | ipai_agent_hybrid | Custom | 19.0.1.0.0 | unknown | Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration | base,web,mail,project,calendar | addons/ipai_agent_hybrid |
@@ -25,6 +25,7 @@ Generated: 2025-11-07T17:20:41.826815+00:00Z
 | ipai_expense | Custom | 19.0.20251026.1 | unknown | Cash advance lifecycle, expense policy, OCR audit | base,mail,hr,hr_expense,account,report_xlsx,queue_job,server_environment | addons/custom/ipai_expense |
 | ipai_files_spaces | Custom | 19.0.1.0.0 | unknown | S3/DigitalOcean Spaces integration for large files | base | odoo_addons/ipai_files_spaces |
 | ipai_huddles_webrtc | Custom | 19.0.1.0.0 | unknown | Jitsi integration for audio/video calls and huddles | ipai_chat_core | odoo_addons/ipai_huddles_webrtc |
+| ipai_mattermost_bridge | Custom | 1.0.0 | unknown | Webhook ingestion for GitHub/Jira/ServiceNow into Odoo | base | custom_addons/ipai_mattermost_bridge |
 | ipai_ppm | Custom | 19.0.1.0.0 | unknown | Program/Project/Budget/Risk Management | ipai_core,project,account | addons/insightpulse/finance/ipai_ppm |
 | ipai_ppm_costsheet | Custom | 19.0.1.0.0 | unknown | Vendor-Privacy Cost Sheets - Epic 2 (Clarity PPM + SAP Ariba Parity) | ipai_core,project,hr,analytic,queue_job | addons/custom/ipai_ppm_costsheet |
 | ipai_procure | Custom | 19.0.20251026.1 | unknown | PR → RFQ → PO → GRN → 3WM with approvals, catalogs, rounds | base,mail,purchase,stock,account,product,uom,queue_job,base_tier_validation,report_xlsx,server_environment | addons/custom/ipai_procure |

@@ -1,0 +1,21 @@
+server:
+  host: 0.0.0.0
+  port: 8081
+  # WARNING: open access (no API key). Restrict via VPC/IP allowlist if exposed.
+  auth: none
+  health_endpoints:
+    - /healthz
+    - /readyz
+
+access:
+  allowlist_enabled: false
+  # set true and list CIDRs below when needed
+  allowlist_cidrs: []
+
+providers:
+  vscode:
+    config_path: ${MCP_CFG:-mcp/vscode-mcp-config.json}
+  # Add other tools/providers here
+
+logging:
+  level: info

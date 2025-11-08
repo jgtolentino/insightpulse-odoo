@@ -1,0 +1,52 @@
+- id: SUPABASE-DB-CONNECTION-SATURATION
+  service: supabase
+  severity: P0
+  symptoms: ["Connection refused errors", "Timeouts on new connections", "504 Gateway Timeout"]
+  causes: ["Connection pool exhausted", "Too many idle connections", "PgBouncer misconfiguration"]
+  signals: ["pg_stat_activity_count / pg_max_connections > 0.9"]
+  queries:
+    - "pg_stat_activity_count / pg_max_connections"
+    - "SELECT count(*) FROM pg_stat_activity WHERE state='idle'"
+  auto_heal: ["kill_idle_connections.sh"]
+  guardrails: ["tune PgBouncer pool_mode", "set connection limits per service", "implement connection retry"]
+  verify: ["connections <80% for 10m", "no connection errors"]
+  runbook: "docs/runbooks/supabase.md#db-connection-saturation"
+
+- id: SUPABASE-STORAGE-FULL
+  service: supabase
+  severity: P0
+  symptoms: ["Write errors", "Unable to upload files", "Backup failures"]
+  causes: ["Storage quota exceeded", "Orphaned files", "Large attachments"]
+  signals: ["storage_usage_bytes / storage_quota_bytes > 0.95"]
+  queries:
+    - "sum(storage_usage_bytes) by (bucket) / sum(storage_quota_bytes) > 0.95"
+  auto_heal: ["prune_old_storage.sh"]
+  guardrails: ["lifecycle policies for old files", "file size limits", "quota monitoring"]
+  verify: ["storage usage <85%", "writes succeed"]
+  runbook: "docs/runbooks/supabase.md#storage-full"
+
+- id: SUPABASE-RLS-POLICY-LEAK
+  service: supabase
+  severity: P1
+  symptoms: ["Unauthorized data access", "Users seeing others' data", "Security audit failures"]
+  causes: ["Missing RLS policies", "Overly permissive policies", "service_role bypassing RLS"]
+  signals: ["audit log entries with policy violations"]
+  queries:
+    - "SELECT count(*) FROM audit_logs WHERE event_type='rls_violation'"
+  auto_heal: []
+  guardrails: ["enable RLS on all tables", "test policies per role", "never expose service_role key"]
+  verify: ["no RLS violations in last 24h", "policy tests passing"]
+  runbook: "docs/runbooks/supabase.md#rls-policy-leak"
+
+- id: SUPABASE-EDGE-FUNCTION-TIMEOUT
+  service: supabase
+  severity: P2
+  symptoms: ["Function timeouts after 60s", "Incomplete processing", "Client-side errors"]
+  causes: ["Long-running queries", "External API timeouts", "CPU-intensive operations"]
+  signals: ["edge_function_duration_seconds > 55", "timeout_errors_total increasing"]
+  queries:
+    - "histogram_quantile(0.95, sum(rate(edge_function_duration_seconds_bucket[5m])) by (function, le)) > 55"
+  auto_heal: ["restart_edge_function.sh"]
+  guardrails: ["break work into chunks", "use async background jobs", "set client timeout expectations"]
+  verify: ["p95 duration <30s", "no timeouts in 10m"]
+  runbook: "docs/runbooks/supabase.md#edge-function-timeout"

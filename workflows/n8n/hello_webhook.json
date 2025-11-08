@@ -1,0 +1,31 @@
+{
+  "name": "hello_webhook",
+  "active": true,
+  "nodes": [
+    {
+      "parameters": {
+        "path": "hello",
+        "options": {}
+      },
+      "id": "Webhook1",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [ 260, 300 ],
+      "webhookId": ""
+    },
+    {
+      "parameters": {
+        "options": {},
+        "responseBody": "Hello from InsightPulse n8n!",
+        "responseCode": 200
+      },
+      "id": "Respond1",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [ 540, 300 ]
+    }
+  ],
+  "connections": { "Webhook1": { "main": [ [ { "node": "Respond1", "type": "main", "index": 0 } ] ] } }
+}

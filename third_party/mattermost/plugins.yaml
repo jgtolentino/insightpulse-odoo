@@ -1,0 +1,22 @@
+# Declarative list of marketplace plugins to install/enable
+# Install uses id+version via /api/v4/plugins/marketplace
+plugins:
+  - id: github
+    version: "2.5.0"
+    enabled: true
+  - id: mattermost-plugin-metrics
+    version: "0.7.0"
+    enabled: true
+  - id: mattermost-plugin-user-survey
+    version: "1.1.1"
+    enabled: true
+  # Optional (uncomment if licensed/configured)
+  # - id: jira
+  #   version: "4.4.0"
+  #   enabled: true
+  # - id: confluence
+  #   version: "1.6.0"
+  #   enabled: true
+  # - id: mattermost-plugin-calls
+  #   version: "1.10.0"
+  #   enabled: true
