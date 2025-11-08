@@ -1,0 +1,13 @@
+metadata:
+  title: Odoo Error Catalog - Production
+  description: Auto-synced from Skillsmith error signatures
+  last_updated: '2025-11-08T02:31:22.664362Z'
+  version: 1.0.0
+categories:
+  database: Database errors (SQL, ORM, constraints)
+  validation: Data validation errors
+  permission: Access control and permissions
+  integration: External integrations and APIs
+  business_logic: Business rule violations
+  system: System-level errors
+errors: {}
