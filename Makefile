@@ -293,6 +293,80 @@ fix-permissions: ## Fix file permissions
 	@echo "✅ Permissions fixed!"
 
 # ══════════════════════════════════════════════════════════════
+# 🚀 MVP DEPLOY BUNDLE (Mattermost + n8n)
+# ══════════════════════════════════════════════════════════════
+
+# Required env (export or put in .env.mvp):
+# DOMAIN_BASE=insightpulseai.net
+# ERP_HOST=165.227.10.178
+# N8N_BASE_URL=https://n8n.$(DOMAIN_BASE)
+# N8N_BASIC_AUTH_USER=admin
+# N8N_BASIC_AUTH_PASSWORD=CHANGEME
+# N8N_API_KEY= # optional (preferred if set)
+# MM_BASE_URL=https://chat.$(DOMAIN_BASE)
+# MM_ADMIN_TOKEN=mm-personal-access-token
+
+SHELL := /bin/bash
+.ONESHELL:
+
+_exports := \
+    DOMAIN_BASE \
+    ERP_HOST \
+    N8N_BASE_URL \
+    N8N_BASIC_AUTH_USER \
+    N8N_BASIC_AUTH_PASSWORD \
+    N8N_API_KEY \
+    MM_BASE_URL \
+    MM_ADMIN_TOKEN
+
+export $(_exports)
+
+.PHONY: mvp-up mvp-tls mvp-seed mvp-verify mvp-status chat-up chat-tls n8n-up
+
+mvp-up: chat-up n8n-up ## Start Mattermost+n8n on ERP host
+	@echo "MVP services started."
+
+chat-up: ## Launch Mattermost (compose file expected at infra/mattermost/compose.yml)
+	@if [ -f infra/mattermost/compose.yml ]; then \
+	  docker compose -f infra/mattermost/compose.yml up -d; \
+	else echo "Missing infra/mattermost/compose.yml"; exit 1; fi
+
+chat-tls: ## Issue TLS for chat subdomain via certbot+nginx
+	@sudo certbot --nginx -d chat.$(DOMAIN_BASE) --non-interactive --agree-tos -m admin@$(DOMAIN_BASE) || true
+
+n8n-up: ## Launch n8n (compose file expected at infra/n8n/compose.yml)
+	@if [ -f infra/n8n/compose.yml ]; then \
+	  docker compose -f infra/n8n/compose.yml up -d; \
+	else echo "Missing infra/n8n/compose.yml"; exit 1; fi
+
+mvp-tls: ## Issue TLS for both services
+	@sudo certbot --nginx -d chat.$(DOMAIN_BASE) -d n8n.$(DOMAIN_BASE) --non-interactive --agree-tos -m admin@$(DOMAIN_BASE) || true
+
+mvp-seed: ## Seed n8n workflows + Mattermost bootstrap
+	@bash scripts/mvp/seed_n8n.sh
+	@bash scripts/mvp/seed_mattermost.sh
+
+mvp-verify: ## Verify DNS + TLS + endpoints
+	@echo "== DNS check =="
+	@dig chat.$(DOMAIN_BASE) +short
+	@dig n8n.$(DOMAIN_BASE) +short
+	@echo "== HTTPS check =="
+	@curl -sI $(MM_BASE_URL) | head -n1
+	@curl -sI $(N8N_BASE_URL) | head -n1
+	@echo "== n8n /rest/ping =="
+	@curl -sS $(N8N_BASE_URL)/rest/ping || true
+
+mvp-status: ## Quick status
+	@echo "Mattermost containers:"
+	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -i mattermost || true
+	@echo "n8n containers:"
+	@docker ps --format "table {{.Names}}\t{{.Status}}" | grep -i n8n || true
+
+.PHONY: mvp-quickstart
+mvp-quickstart: ## Generate .env.mvp with secure defaults, bring services up, optional TLS, seed if token present
+	@bash scripts/mvp/quickstart.sh
+
+# ══════════════════════════════════════════════════════════════
 # ✅ VALIDATION & VERIFICATION
 # ══════════════════════════════════════════════════════════════
 

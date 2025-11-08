@@ -1,0 +1,38 @@
+name: MVP Smoke
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, master, claude/**, mvp/** ]
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tools
+        run: sudo apt-get update && sudo apt-get install -y jq curl dnsutils
+
+      - name: DNS checks
+        env:
+          DOMAIN_BASE: insightpulseai.net
+        run: |
+          set -eux
+          dig +short chat.${DOMAIN_BASE}
+          dig +short n8n.${DOMAIN_BASE}
+
+      - name: HTTPS checks
+        env:
+          MM_BASE_URL: https://chat.insightpulseai.net
+          N8N_BASE_URL: https://n8n.insightpulseai.net
+        run: |
+          set -eux
+          curl -I $MM_BASE_URL | head -n1
+          curl -I $N8N_BASE_URL | head -n1
+
+      - name: n8n ping
+        env:
+          N8N_BASE_URL: https://n8n.insightpulseai.net
+        run: |
+          set -eux
+          curl -sS ${N8N_BASE_URL}/rest/ping || true
