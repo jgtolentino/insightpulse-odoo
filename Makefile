@@ -1,7 +1,7 @@
 # Makefile for InsightPulse Odoo
 # Enterprise SaaS Replacement Suite
 
-.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health validate validate-structure validate-makefile health-report
+.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health validate validate-structure validate-makefile health-report auto-merge auto-merge-preview auto-merge-rollback auto-merge-audit auto-merge-test auto-merge-install auto-merge-help
 
 # Default target
 .DEFAULT_GOAL := help
@@ -1091,4 +1091,90 @@ ops-help: ## Show ops hardening commands
 	@echo "  Runbooks:          docs/runbooks/"
 	@echo "  Prometheus Alerts: monitoring/prometheus/"
 	@echo "  Auto-heal Scripts: auto-healing/handlers/"
+	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🤖 AI-POWERED AUTO-MERGE
+# ══════════════════════════════════════════════════════════════
+
+auto-merge: ## Resolve merge conflicts with AI
+	@echo "🤖 AI-Powered Auto-Merge Resolution"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@if [ -z "$$ANTHROPIC_API_KEY" ]; then \
+		echo "❌ Error: ANTHROPIC_API_KEY not set"; \
+		echo "Set it with: export ANTHROPIC_API_KEY='your-key'"; \
+		exit 1; \
+	fi
+	@python3 auto-merge/auto_merge.py --apply --audit auto-merge-audit.json
+	@echo "✅ Auto-merge complete! Review auto-merge-audit.json"
+
+auto-merge-preview: ## Preview auto-merge without applying
+	@echo "🔍 Previewing Auto-Merge Resolution"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@python3 auto-merge/auto_merge.py --audit auto-merge-audit.json
+	@echo ""
+	@echo "Preview complete! Review auto-merge-audit.json"
+	@echo "To apply: make auto-merge"
+
+auto-merge-rollback: ## Rollback auto-merge changes
+	@echo "🔄 Rolling back Auto-Merge Changes"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@./auto-merge/rollback.sh
+
+auto-merge-audit: ## View auto-merge audit trail
+	@if [ -f auto-merge-audit.json ]; then \
+		echo "📊 Auto-Merge Audit Trail"; \
+		echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"; \
+		cat auto-merge-audit.json | python3 -m json.tool; \
+	else \
+		echo "ℹ️  No audit trail found (auto-merge-audit.json)"; \
+	fi
+
+auto-merge-test: ## Run auto-merge test suite
+	@echo "🧪 Running Auto-Merge Tests"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@cd auto-merge && python3 -m pytest tests/ -v --cov=auto_merge --cov-report=term-missing
+
+auto-merge-install: ## Install auto-merge dependencies
+	@echo "📦 Installing Auto-Merge Dependencies"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@pip install -r auto-merge/requirements.txt
+	@echo "✅ Dependencies installed!"
+
+auto-merge-help: ## Show auto-merge usage guide
+	@echo "🤖 AI-Powered Auto-Merge - Usage Guide"
+	@echo "╔══════════════════════════════════════════════════════════════╗"
+	@echo "║  Three-Tier Resolution Strategy                              ║"
+	@echo "╚══════════════════════════════════════════════════════════════╝"
+	@echo ""
+	@echo "Tier 1 (95%): Pattern-based safe auto-merge"
+	@echo "  - Non-overlapping sections (Makefile targets, configs)"
+	@echo "  - Formatting-only conflicts"
+	@echo "  - Documentation updates"
+	@echo ""
+	@echo "Tier 2 (4%): LLM-assisted semantic resolution"
+	@echo "  - Claude Sonnet 4 semantic analysis"
+	@echo "  - Context-aware merging"
+	@echo "  - Confidence scoring"
+	@echo ""
+	@echo "Tier 3 (1%): Human review required"
+	@echo "  - High-risk files (SQL, auth, security)"
+	@echo "  - Low confidence (<0.70)"
+	@echo "  - Logic conflicts"
+	@echo ""
+	@echo "Commands:"
+	@echo "  auto-merge             Resolve and apply conflicts"
+	@echo "  auto-merge-preview     Preview without applying"
+	@echo "  auto-merge-rollback    Rollback changes"
+	@echo "  auto-merge-audit       View audit trail"
+	@echo "  auto-merge-test        Run test suite"
+	@echo "  auto-merge-install     Install dependencies"
+	@echo ""
+	@echo "Setup:"
+	@echo "  1. export ANTHROPIC_API_KEY='your-key'"
+	@echo "  2. make auto-merge-install"
+	@echo "  3. make auto-merge-test"
+	@echo "  4. make auto-merge"
+	@echo ""
+	@echo "Documentation: auto-merge/README.md"
 	@echo ""

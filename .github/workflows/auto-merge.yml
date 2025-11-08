@@ -1,0 +1,187 @@
+name: AI Auto-Merge Conflict Resolution
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to resolve conflicts for'
+        required: false
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Resolve Merge Conflicts
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for merge operations
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install -r auto-merge/requirements.txt
+
+      - name: Configure Git
+        run: |
+          git config user.name "InsightPulse AI Bot"
+          git config user.email "bot@insightpulseai.net"
+
+      - name: Check for merge conflicts
+        id: check-conflicts
+        run: |
+          # Try to merge main into current branch
+          git fetch origin main
+
+          if git merge origin/main --no-commit --no-ff 2>&1 | grep -q "CONFLICT"; then
+            echo "has_conflicts=true" >> $GITHUB_OUTPUT
+            echo "Found merge conflicts!"
+          else
+            echo "has_conflicts=false" >> $GITHUB_OUTPUT
+            echo "No merge conflicts"
+            git merge --abort 2>/dev/null || true
+          fi
+
+      - name: Resolve conflicts with AI
+        if: steps.check-conflicts.outputs.has_conflicts == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          # Run auto-merge resolver
+          python3 auto-merge/auto_merge.py --apply --audit auto-merge-audit.json
+
+          # Check if resolution was successful
+          if [ $? -eq 0 ]; then
+            echo "✅ Auto-merge successful!"
+
+            # Stage resolved files
+            git add -u
+
+            # Commit resolution
+            git commit -m "🤖 Auto-resolve merge conflicts with AI
+
+Resolved by: InsightPulse AI Auto-Merge System
+Tier strategy: Pattern-based + Claude Sonnet 4
+Audit trail: See auto-merge-audit.json
+
+[skip ci]"
+
+            # Push to PR branch
+            git push origin HEAD
+
+            echo "✅ Changes pushed successfully"
+          else
+            echo "❌ Auto-merge failed - requires human review"
+            exit 1
+          fi
+
+      - name: Upload audit trail
+        if: always() && steps.check-conflicts.outputs.has_conflicts == 'true'
+        uses: actions/upload-artifact@v3
+        with:
+          name: auto-merge-audit
+          path: auto-merge-audit.json
+          retention-days: 30
+
+      - name: Comment on PR
+        if: steps.check-conflicts.outputs.has_conflicts == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            let auditData = {};
+            try {
+              const auditContent = fs.readFileSync('auto-merge-audit.json', 'utf8');
+              auditData = JSON.parse(auditContent);
+            } catch (e) {
+              console.log('No audit trail found');
+            }
+
+            const conflictsResolved = auditData.filter(r => r.success).length;
+            const totalConflicts = auditData.length;
+            const successRate = totalConflicts > 0
+              ? ((conflictsResolved / totalConflicts) * 100).toFixed(1)
+              : 0;
+
+            const tier1 = auditData.filter(r => r.tier === 'tier1_safe_auto').length;
+            const tier2 = auditData.filter(r => r.tier === 'tier2_llm_assisted').length;
+            const tier3 = auditData.filter(r => r.tier === 'tier3_human_review').length;
+
+            let comment = `## 🤖 AI Auto-Merge Report\n\n`;
+
+            if (conflictsResolved === totalConflicts && totalConflicts > 0) {
+              comment += `✅ **All merge conflicts resolved automatically!**\n\n`;
+            } else if (conflictsResolved > 0) {
+              comment += `⚠️ **Partial resolution** - some conflicts require human review\n\n`;
+            } else {
+              comment += `❌ **Auto-merge failed** - manual resolution required\n\n`;
+            }
+
+            comment += `### Summary\n\n`;
+            comment += `- **Total conflicts**: ${totalConflicts}\n`;
+            comment += `- **Auto-resolved**: ${conflictsResolved}\n`;
+            comment += `- **Success rate**: ${successRate}%\n\n`;
+
+            comment += `### Resolution Breakdown\n\n`;
+            comment += `- 🟢 **Tier 1** (Pattern-based): ${tier1}\n`;
+            comment += `- 🟡 **Tier 2** (AI-assisted): ${tier2}\n`;
+            comment += `- 🔴 **Tier 3** (Human review): ${tier3}\n\n`;
+
+            if (auditData.length > 0) {
+              comment += `### Detailed Results\n\n`;
+              comment += `| File | Tier | Confidence | Status |\n`;
+              comment += `|------|------|-----------|--------|\n`;
+
+              auditData.forEach(result => {
+                const tierBadge = result.tier === 'tier1_safe_auto' ? '🟢'
+                                : result.tier === 'tier2_llm_assisted' ? '🟡'
+                                : '🔴';
+                const status = result.success ? '✅' : '❌';
+                const confidence = (result.confidence * 100).toFixed(0);
+
+                comment += `| ${result.file_path} | ${tierBadge} ${result.tier} | ${confidence}% | ${status} |\n`;
+              });
+            }
+
+            comment += `\n---\n`;
+            comment += `*Powered by Claude Sonnet 4 | [View audit trail](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})*`;
+
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto-Merge Summary" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f auto-merge-audit.json ]; then
+            echo "✅ Auto-merge processing completed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Audit Trail" >> $GITHUB_STEP_SUMMARY
+            echo '```json' >> $GITHUB_STEP_SUMMARY
+            cat auto-merge-audit.json >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          else
+            echo "ℹ️ No merge conflicts detected" >> $GITHUB_STEP_SUMMARY
+          fi
