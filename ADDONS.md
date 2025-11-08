@@ -6,7 +6,7 @@
 | `finance_ssc_closing` | 19.0.1.0.0 | Accounting/Finance | Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center |  |
 | `github_integration` | 1.0.0 | Operations | GitHub webhook and OAuth integration via pulser-hub app | jgtolentino |
 | `insightpulse_app_sources` | 19.0.1.0.0 | Tools | Display addon sources (OCA, Custom, Community) in Apps list |  |
-| `ip_expense_mvp` | 0.1.0 | Accounting/Expenses | Mobile receipt upload → OCR → admin review |  |
+| `ip_expense_mvp` | ? | Uncategorized | No summary |  |
 | `ipai_agent` | 1.0.0 | Productivity | AI-powered chatbot for Odoo Discuss with automation capabilities |  |
 | `ipai_agent_hybrid` | 19.0.1.0.0 | Productivity/AI | Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration |  |
 | `ipai_approvals` | 19.0.1.0.0 | Human Resources | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) |  |
