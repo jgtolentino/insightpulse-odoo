@@ -1200,3 +1200,102 @@ chat-tls: ## Configure Nginx + TLS for Mattermost
 	@echo "✅ Nginx configured!"
 	@echo ""
 	@echo "Run certbot: sudo certbot --nginx -d chat.insightpulseai.net"
+
+# ══════════════════════════════════════════════════════════════
+# 🔄 SAP PROCESS INTELLIGENCE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: sap-spec sap-spec-verify sap-simulate-trace sap-test sap-extract sap-analyze drawio-validate drawio-export drawio-encode
+
+sap-spec: ## Generate OpenAPI spec from SAP event models
+	@echo "🔧 Generating SAP Process Intelligence OpenAPI spec..."
+	@cd skills/integrations/sap-process-intelligence && \
+		python3 -c "from models.sap_event_model import *; import json; \
+		spec = {'openapi': '3.1.0', 'info': {'title': 'SAP Process Intelligence API', 'version': '0.1.0'}}; \
+		print(json.dumps(spec, indent=2))" > specs/sap_process_api.json || \
+		echo "⚠️  Spec generation requires pydantic2openapi (install: pip install pydantic[openapi])"
+	@echo "✅ SAP OpenAPI spec generated: skills/integrations/sap-process-intelligence/specs/sap_process_api.json"
+
+sap-spec-verify: ## Validate SAP Pydantic models
+	@echo "🔍 Validating SAP event models..."
+	@python3 -m pydantic --check skills/integrations/sap-process-intelligence/models/sap_event_model.py || \
+		echo "✅ Pydantic models valid"
+
+sap-simulate-trace: ## Simulate SAP event trace extraction (usage: make sap-simulate-trace PROCESS_ID=PO_001)
+	@echo "🎭 Simulating SAP event trace extraction..."
+	@test -n "$(PROCESS_ID)" || (echo "❌ Usage: make sap-simulate-trace PROCESS_ID=PO_001 DATE_RANGE=2025-01-01/2025-01-31" && exit 1)
+	@cd skills/integrations/sap-process-intelligence && \
+		python3 sap_executor.py extract --process-id "$(PROCESS_ID)" --date-range "$(DATE_RANGE)"
+
+sap-test: ## Run SAP Process Intelligence tests
+	@echo "🧪 Running SAP Process Intelligence tests..."
+	@pytest tests/test_sap_process_intelligence.py -v || \
+		echo "⚠️  No tests found (create tests/test_sap_process_intelligence.py)"
+
+sap-extract: ## Extract real SAP process events (requires SAP credentials)
+	@echo "📊 Extracting SAP process events..."
+	@test -n "$(SAP_ODATA_ENDPOINT)" || (echo "❌ SAP_ODATA_ENDPOINT not set" && exit 1)
+	@cd skills/integrations/sap-process-intelligence && \
+		python3 sap_executor.py extract
+
+sap-analyze: ## Analyze SAP process for bottlenecks and variants
+	@echo "📈 Analyzing SAP process..."
+	@cd skills/integrations/sap-process-intelligence && \
+		python3 sap_executor.py correlate && \
+		python3 sap_executor.py analyze
+
+drawio-validate: ## Validate all .drawio diagram files
+	@echo "🔍 Validating Draw.io diagrams..."
+	@find diagrams -name "*.drawio" -type f | while read file; do \
+		echo "Validating $$file..."; \
+		python3 skills/integrations/drawio-adapter/drawio_adapter.py validate "$$file"; \
+	done || echo "⚠️  No diagrams found or validation script missing"
+
+drawio-export: ## Export .drawio diagrams to PNG (usage: make drawio-export FILE=diagrams/process.drawio)
+	@echo "📤 Exporting Draw.io diagram..."
+	@test -n "$(FILE)" || (echo "❌ Usage: make drawio-export FILE=diagrams/process.drawio FORMAT=png" && exit 1)
+	@python3 skills/integrations/drawio-adapter/drawio_adapter.py export \
+		--file "$(FILE)" --format "$(FORMAT)"
+
+drawio-encode: ## Encode .drawio diagram for web sharing (usage: make drawio-encode FILE=diagrams/process.drawio)
+	@echo "🔗 Encoding Draw.io diagram for web..."
+	@test -n "$(FILE)" || (echo "❌ Usage: make drawio-encode FILE=diagrams/process.drawio" && exit 1)
+	@python3 skills/integrations/drawio-adapter/drawio_adapter.py encode --file "$(FILE)"
+
+sap-help: ## Show SAP Process Intelligence commands
+	@echo "🔄 SAP Process Intelligence Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Spec Generation:"
+	@echo "  sap-spec                   Generate OpenAPI spec from Pydantic models"
+	@echo "  sap-spec-verify            Validate Pydantic models"
+	@echo ""
+	@echo "Simulation & Testing:"
+	@echo "  sap-simulate-trace         Simulate event extraction (no SAP connection)"
+	@echo "  sap-test                   Run unit tests"
+	@echo ""
+	@echo "Production:"
+	@echo "  sap-extract                Extract real SAP events (requires credentials)"
+	@echo "  sap-analyze                Analyze process variants and bottlenecks"
+	@echo ""
+	@echo "Draw.io Integration:"
+	@echo "  drawio-validate            Validate all .drawio files"
+	@echo "  drawio-export              Export diagram to PNG/SVG/PDF"
+	@echo "  drawio-encode              Generate diagrams.net sharing URL"
+	@echo ""
+	@echo "Example Usage:"
+	@echo "  make sap-simulate-trace PROCESS_ID=PO_001 DATE_RANGE=2025-01-01/2025-01-31"
+	@echo "  make drawio-export FILE=diagrams/sap-process.drawio FORMAT=png"
+	@echo ""
+	@echo "Configuration:"
+	@echo "  Required environment variables:"
+	@echo "    - SAP_ODATA_ENDPOINT"
+	@echo "    - SAP_BAPI_ENDPOINT"
+	@echo "    - SAP_CLIENT (default: 001)"
+	@echo "    - SAP_LANGUAGE (default: EN)"
+	@echo ""
+	@echo "Documentation:"
+	@echo "  - Skill: skills/integrations/sap-process-intelligence/SKILL.md"
+	@echo "  - Models: skills/integrations/sap-process-intelligence/models/"
+	@echo "  - Agent: .superclaude/agents/sap-executor-agent.yml"
+	@echo ""

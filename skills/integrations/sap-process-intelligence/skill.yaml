@@ -1,0 +1,140 @@
+name: sap_process_intelligence
+version: 0.1.0
+category: integrations
+description: >
+  SAP Process Intelligence skills for extracting, correlating, and predicting process KPIs
+  across SAP S/4HANA and integrated ERP systems. Implements neurosymbolic skill graphs for
+  process mining with perceptual AI capabilities for SAP GUI and Fiori interfaces.
+
+metadata:
+  author: InsightPulse AI
+  tags: [sap, process-mining, erp, s4hana, predictive-analytics, neurosymbolic]
+  compliance: [SOC2, GDPR]
+  updated: "2025-11-08"
+
+entrypoints:
+  - name: extract_process_events
+    description: Pull event logs from SAP via OData/BAPI with transactional safety
+    inputs:
+      - name: process_id
+        type: string
+        required: true
+        description: SAP process instance identifier (e.g., PO number, SO number)
+      - name: date_range
+        type: string
+        required: true
+        description: ISO 8601 date range (e.g., "2025-01-01/2025-01-31")
+      - name: system_id
+        type: string
+        required: false
+        default: "SAP_PROD"
+        description: SAP system identifier
+    outputs:
+      - name: events
+        type: array
+        schema: EventTrace[]
+        description: Ordered list of process events with timestamps and metadata
+
+  - name: correlate_variants
+    description: Identify process variants and deviations using conformance checking
+    inputs:
+      - name: events
+        type: array
+        schema: EventTrace[]
+        required: true
+        description: Process event traces to analyze
+      - name: reference_model
+        type: string
+        required: false
+        description: Optional BPMN/Petri net reference model for conformance
+    outputs:
+      - name: variant_summary
+        type: object
+        description: Process variant analysis with frequency, duration, and deviations
+      - name: deviations
+        type: array
+        description: List of process deviations from expected behavior
+
+  - name: predict_kpi
+    description: Predict throughput, delay, or anomaly risk using quantized local model
+    inputs:
+      - name: variant_summary
+        type: object
+        required: true
+        description: Process variant analysis output
+      - name: kpi_type
+        type: string
+        enum: [throughput, delay, anomaly_risk, cost]
+        required: true
+        description: Type of KPI to predict
+    outputs:
+      - name: kpi_forecast
+        type: object
+        description: KPI prediction with confidence intervals and risk factors
+      - name: recommendations
+        type: array
+        description: Actionable recommendations to optimize the process
+
+  - name: analyze_bottlenecks
+    description: Identify process bottlenecks and resource constraints
+    inputs:
+      - name: events
+        type: array
+        schema: EventTrace[]
+        required: true
+      - name: threshold_percentile
+        type: number
+        default: 90
+        description: Percentile threshold for bottleneck detection (e.g., 90 for P90)
+    outputs:
+      - name: bottlenecks
+        type: array
+        description: Identified bottlenecks with activity, wait time, and impact
+      - name: resource_utilization
+        type: object
+        description: Resource utilization metrics by activity and user
+
+  - name: generate_process_map
+    description: Generate visual process map from event traces
+    inputs:
+      - name: events
+        type: array
+        schema: EventTrace[]
+        required: true
+      - name: output_format
+        type: string
+        enum: [mermaid, bpmn, drawio, json]
+        default: mermaid
+    outputs:
+      - name: process_map
+        type: string
+        description: Visual process map in requested format
+      - name: statistics
+        type: object
+        description: Process statistics (activities, transitions, frequencies)
+
+security:
+  mode: local
+  auth: sap_bot_user
+  compliance: SOC2
+  data_residency: true
+  encryption: AES-256
+  audit_logging: true
+
+dependencies:
+  - odoo_xmlrpc_client
+  - supabase_storage
+  - opentelemetry_tracer
+
+configuration:
+  SAP_ODATA_ENDPOINT: "${SAP_ODATA_ENDPOINT}"
+  SAP_BAPI_ENDPOINT: "${SAP_BAPI_ENDPOINT}"
+  SAP_CLIENT: "${SAP_CLIENT:-001}"
+  SAP_LANGUAGE: "${SAP_LANGUAGE:-EN}"
+  SUPABASE_URL: "${SUPABASE_URL}"
+  SUPABASE_KEY: "${SUPABASE_SERVICE_ROLE_KEY}"
+
+examples:
+  - extract_po_events.json
+  - predict_so_delay.json
+  - analyze_procure_to_pay.json

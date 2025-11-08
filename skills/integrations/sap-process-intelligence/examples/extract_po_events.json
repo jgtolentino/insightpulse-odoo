@@ -1,0 +1,160 @@
+{
+  "description": "Extract Purchase Order events from SAP S/4HANA",
+  "request": {
+    "process_id": "PO_4500012345",
+    "date_range": "2025-01-01/2025-01-31",
+    "system_id": "SAP_PRD_100",
+    "process_type": "PROCURE_TO_PAY"
+  },
+  "expected_output": {
+    "events": [
+      {
+        "event_id": "EVT_2025_001_00001",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Create Purchase Requisition",
+        "timestamp": "2025-01-05T09:00:00Z",
+        "user_id": "PURCHASER_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "plant": "1000",
+          "company_code": "1010",
+          "material": "MAT_00123",
+          "quantity": 100,
+          "currency": "USD"
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00002",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Approve Purchase Requisition",
+        "timestamp": "2025-01-05T14:30:00Z",
+        "user_id": "MANAGER_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "approval_level": "L1",
+          "decision": "approved"
+        },
+        "duration_seconds": 19800,
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00003",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Create Purchase Order",
+        "timestamp": "2025-01-06T10:00:00Z",
+        "user_id": "PURCHASER_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "vendor": "VENDOR_001",
+          "amount": 15000.00,
+          "currency": "USD",
+          "payment_terms": "NET30"
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00004",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Send PO to Vendor",
+        "timestamp": "2025-01-06T11:00:00Z",
+        "user_id": "SYSTEM_AUTO",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "transmission_method": "EDI",
+          "vendor_ack_required": true
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00005",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Receive Goods",
+        "timestamp": "2025-01-15T13:00:00Z",
+        "user_id": "WAREHOUSE_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "goods_receipt": "GR_2025_001",
+          "quantity_received": 100,
+          "storage_location": "WH01"
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00006",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Receive Invoice",
+        "timestamp": "2025-01-20T10:00:00Z",
+        "user_id": "AP_CLERK_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "invoice_number": "INV_2025_001",
+          "invoice_amount": 15000.00,
+          "invoice_date": "2025-01-18"
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00007",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Three-Way Match",
+        "timestamp": "2025-01-20T11:00:00Z",
+        "user_id": "SYSTEM_AUTO",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "match_status": "success",
+          "po_amount": 15000.00,
+          "gr_amount": 15000.00,
+          "invoice_amount": 15000.00
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00008",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Post Invoice",
+        "timestamp": "2025-01-20T12:00:00Z",
+        "user_id": "AP_CLERK_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "accounting_document": "AC_2025_001",
+          "posting_date": "2025-01-20"
+        },
+        "lifecycle": "complete"
+      },
+      {
+        "event_id": "EVT_2025_001_00009",
+        "process_id": "PO_4500012345",
+        "case_id": "CASE_PO_2025_001",
+        "activity": "Schedule Payment",
+        "timestamp": "2025-01-25T09:00:00Z",
+        "user_id": "AP_MANAGER_001",
+        "system": "S4HANA",
+        "system_id": "SAP_PRD_100",
+        "metadata": {
+          "payment_run": "PAY_2025_W04",
+          "due_date": "2025-02-19"
+        },
+        "lifecycle": "complete"
+      }
+    ],
+    "total_events": 9,
+    "extraction_timestamp": "2025-01-26T10:00:00Z"
+  }
+}
