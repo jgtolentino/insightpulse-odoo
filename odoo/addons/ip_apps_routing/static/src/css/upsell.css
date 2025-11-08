@@ -1,0 +1,17 @@
+/* Non-invasive UI hide for upsell prompts */
+/* This only hides visual elements, does not bypass any licensing */
+
+.o_Upgrade,
+.o_enterprise_badge,
+a[href*="odoo.com/app/"],
+a[href*="//odoo.com/app/"],
+.o_web_settings_dashboard .o_web_settings_dashboard_enterprise,
+.o_web_settings_dashboard .o_web_settings_dashboard_upsell {
+    display: none !important;
+}
+
+/* Hide upgrade banners */
+.o_notification.o_notification_enterprise_upgrade,
+.o_notification.o_notification_upsell {
+    display: none !important;
+}

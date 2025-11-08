@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Hide "Upgrade"/upsell pills/buttons in backend (visual only; no license bypass) -->
+    <template id="assets_backend" name="Apps Routing Assets" inherit_id="web.assets_backend">
+        <xpath expr="." position="inside">
+            <link rel="stylesheet" type="text/css" href="/ip_apps_routing/static/src/css/upsell.css"/>
+        </xpath>
+    </template>
+</odoo>

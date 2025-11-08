@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <data>
+        <!-- Apps Portal Domain - where to redirect odoo.com app store links -->
+        <record id="param_apps_portal_domain" model="ir.config_parameter">
+            <field name="key">ip.apps_portal_domain</field>
+            <field name="value">erp.insightpulseai.net</field>
+        </record>
+
+        <!-- Public Domain - base URL for this Odoo instance -->
+        <record id="param_base_url" model="ir.config_parameter">
+            <field name="key">web.base.url</field>
+            <field name="value">https://erp.insightpulseai.net</field>
+        </record>
+    </data>
+</odoo>
