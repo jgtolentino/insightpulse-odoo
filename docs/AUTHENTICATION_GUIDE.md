@@ -4,16 +4,25 @@
 
 ---
 
-## 🔑 Current Login Credentials
+## 🔑 Unified Login (Landing Page Only)
 
-### Odoo ERP (https://erp.insightpulseai.net)
+**⚠️ IMPORTANT:** Direct login pages are disabled for security. All authentication must go through:
+- **Landing Page:** https://insightpulseai.net
+
+Direct URLs will redirect to landing page:
+- ~~https://erp.insightpulseai.net/web/login~~ → https://insightpulseai.net
+- ~~https://superset.insightpulseai.net/login~~ → https://insightpulseai.net
+
+---
+
+## 🔑 Service Credentials
+
+### Odoo ERP
 
 **Admin User:**
 - **Username:** `admin`
 - **Password:** `admin`
 - **Email:** `admin@insightpulseai.net` (default)
-
-**Login URL:** https://erp.insightpulseai.net/web/login
 
 ### n8n Workflow Automation (https://n8n.insightpulseai.net)
 
