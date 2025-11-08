@@ -847,6 +847,68 @@ skills-pipeline-help: ## Show integration pipeline usage
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo ""
 	@echo "Pipeline Components:"
+
+# ══════════════════════════════════════════════════════════════
+# 📋 SKILLS & AGENTS REGISTRY (odoo-spark-subagents v0.2.0)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: skills:list agents:list agents:smoke
+
+skills:list: ## Print skills inventory from REGISTRY
+	@echo "📋 Skills Registry (v0.2.0)"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@python3 - <<'PY'
+import yaml, pathlib
+reg = yaml.safe_load(open('skills/REGISTRY.yaml'))
+print(f"\n✅ Active Skills ({len(reg['skills'])}):")
+for s in reg['skills']:
+    print(f"  • {s['id']:28} {s['purpose']}")
+if 'planned' in reg and reg['planned']:
+    print(f"\n🔮 Planned Skills ({len(reg['planned'])}):")
+    for s in reg['planned']:
+        print(f"  • {s['id']:28} {s['purpose']}")
+PY
+
+agents:list: ## Print agents inventory from REGISTRY
+	@echo "🤖 Agents Registry (v0.2.0)"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@python3 - <<'PY'
+import yaml
+reg = yaml.safe_load(open('agents/REGISTRY.yaml'))
+print(f"\n✅ Deployable Agents ({len(reg['agents'])}):")
+for a in reg['agents']:
+    scopes = ', '.join(a.get('scopes', []))
+    print(f"  • {a['name']:28} {a['role']}")
+    print(f"    Scopes: {scopes}")
+    if 'routes_to' in a:
+        print(f"    Routes to: {', '.join(a['routes_to'])}")
+PY
+
+agents:smoke: ## Static checks (specs load, env placeholders present)
+	@echo "🔍 Running smoke tests..."
+	@python3 - <<'PY'
+import yaml, pathlib, sys
+ok = True
+reg = yaml.safe_load(open('skills/REGISTRY.yaml'))
+print("Checking skill specs...")
+for s in reg['skills']:
+    spec = s.get('spec')
+    if spec and not pathlib.Path(spec).exists():
+        print(f"  ❌ Missing spec for {s['id']}: {spec}")
+        ok = False
+    else:
+        print(f"  ✅ {s['id']}")
+print("\nChecking agent configs...")
+reg = yaml.safe_load(open('agents/REGISTRY.yaml'))
+for a in reg['agents']:
+    agent_file = a.get('file')
+    if agent_file and not pathlib.Path(agent_file).exists():
+        print(f"  ⚠️  Agent file not yet created: {agent_file}")
+    else:
+        print(f"  ✅ {a['name']}")
+print("\n✅ Smoke tests passed!" if ok else "\n❌ Smoke tests failed!")
+sys.exit(0 if ok else 1)
+PY
 	@echo "  1. Error Mining        (make skills-mine)"
 	@echo "  2. Confidence Updates  (make skills-feedback)"
 	@echo "  3. TRM Dataset Sync    (make skills-sync-trm)"

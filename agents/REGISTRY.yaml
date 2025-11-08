@@ -1,0 +1,53 @@
+version: 0.2.0
+updated: 2025-11-08T00:00:00Z
+agents:
+  - name: automation-executor
+    file: agents/automation_executor/agent.yaml
+    role: "OpenAPI-first Odoo tool invoker"
+    scopes: ["odoo.sales", "odoo.accounting"]
+    env:
+      - ODOO_BASE_URL=${ODOO_BASE_URL}
+      - ODOO_BOT_TOKEN=${ODOO_BOT_TOKEN}
+    outputs: ["tool_call","dryrun_report"]
+    safety:
+      require_dry_run: true
+      max_batch: 5
+
+  - name: git-specialist
+    file: agents/git_specialist/agent.yaml
+    role: "Git/PR automation (draft only)"
+    scopes: ["repo.read","repo.write","pr.create"]
+    env:
+      - GITHUB_TOKEN=${GITHUB_TOKEN}
+      - GITHUB_REPO_SLUG=${GITHUB_REPO_SLUG}
+      - GITHUB_DEFAULT_BRANCH=${GITHUB_DEFAULT_BRANCH}
+    outputs: ["branch","pr"]
+    safety:
+      allow_force_push: false
+      mode: "plan-only"
+
+  - name: automation-gap-analyzer
+    file: agents/automation_gap_analyzer/agent.yaml
+    role: "Repo automation scanner"
+    scopes: ["repo.read","plan.compose"]
+    outputs: ["gap_report","gap_plan"]
+    routes_to: ["git-specialist"]
+
+  - name: conflict-manager
+    file: agents/conflict_manager/agent.yaml
+    role: "Detect & plan fixes for stack conflicts"
+    scopes: ["repo.read","plan.compose"]
+    outputs: ["conflict_report","fix_plan"]
+    routes_to: ["git-specialist"]
+
+graph:
+  entrypoint: "/ingest → collector → fixer"
+  routes:
+    - when: "diff|spec_gap"            -> git-specialist
+    - when: "issue(domain=odoo)"       -> automation-executor
+    - when: "gap_request|repo_state"   -> automation-gap-analyzer
+    - when: "conflict signals"         -> conflict-manager
+
+otel:
+  exporter: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+  traceparent: true

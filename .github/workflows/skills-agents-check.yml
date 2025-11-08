@@ -1,0 +1,93 @@
+name: Skills & Agents Inventory Check
+
+on:
+  pull_request:
+    paths:
+      - 'skills/**'
+      - 'agents/**'
+      - 'Makefile'
+  push:
+    branches:
+      - main
+      - 'claude/**'
+  workflow_dispatch:
+
+concurrency:
+  group: skills-agents-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate-registry:
+    name: Validate Skills & Agents Registry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: List Skills
+        run: make skills:list
+
+      - name: List Agents
+        run: make agents:list
+
+      - name: Smoke Tests (spec files present)
+        run: make agents:smoke
+
+      - name: Validate YAML syntax
+        run: |
+          python3 - <<'PY'
+          import yaml, sys
+          try:
+              yaml.safe_load(open('skills/REGISTRY.yaml'))
+              yaml.safe_load(open('agents/REGISTRY.yaml'))
+              print("✅ YAML syntax valid")
+          except Exception as e:
+              print(f"❌ YAML syntax error: {e}")
+              sys.exit(1)
+          PY
+
+      - name: Check required fields
+        run: |
+          python3 - <<'PY'
+          import yaml, sys
+          ok = True
+
+          # Check skills registry
+          skills = yaml.safe_load(open('skills/REGISTRY.yaml'))
+          for s in skills.get('skills', []):
+              if not all(k in s for k in ['id', 'path', 'purpose']):
+                  print(f"❌ Skill missing required fields: {s.get('id', 'unknown')}")
+                  ok = False
+
+          # Check agents registry
+          agents = yaml.safe_load(open('agents/REGISTRY.yaml'))
+          for a in agents.get('agents', []):
+              if not all(k in a for k in ['name', 'role', 'scopes']):
+                  print(f"❌ Agent missing required fields: {a.get('name', 'unknown')}")
+                  ok = False
+
+          if ok:
+              print("✅ All required fields present")
+          else:
+              sys.exit(1)
+          PY
+
+      - name: Report Summary
+        if: always()
+        run: |
+          echo "## Skills & Agents Registry Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Skills" >> $GITHUB_STEP_SUMMARY
+          make skills:list | tail -n +3 >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Agents" >> $GITHUB_STEP_SUMMARY
+          make agents:list | tail -n +3 >> $GITHUB_STEP_SUMMARY
