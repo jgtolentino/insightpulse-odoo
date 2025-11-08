@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InsightPulse AI - Unified Portal</title>
+    <title>InsightPulse AI - Enterprise Intelligence Platform</title>
     <style>
         * {
             margin: 0;
@@ -11,301 +11,499 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #1a1a1a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-green: #3ecf8e;
+            --accent-purple: #8b5cf6;
+            --border-color: #2a2a2a;
+            --shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Inter', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
             min-height: 100vh;
+        }
+
+        .nav {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
-            padding: 20px;
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
-        .container {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 900px;
-            width: 100%;
-            overflow: hidden;
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 40px;
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+        }
+
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem 2rem;
             text-align: center;
         }
 
-        .header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+        .hero h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+            max-width: 800px;
+            margin: 0 auto 4rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
             font-weight: 700;
+            color: var(--accent-green);
+            margin-bottom: 0.5rem;
         }
 
-        .header p {
-            font-size: 1.1rem;
-            opacity: 0.9;
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
         }
 
-        .login-section {
-            padding: 40px;
-            background: #f8f9fa;
+        .services {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
         }
 
-        .login-form {
-            max-width: 400px;
-            margin: 0 auto 40px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
+        .section-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 3rem;
+            text-align: center;
         }
 
         .services-grid {
-            padding: 40px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 4rem;
         }
 
         .service-card {
-            background: white;
-            border: 2px solid #e0e0e0;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 30px;
-            text-align: center;
-            transition: all 0.3s;
-            cursor: pointer;
+            padding: 2rem;
             text-decoration: none;
             color: inherit;
-            display: block;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .service-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-green), var(--accent-purple));
+            transform: scaleX(0);
+            transition: transform 0.3s;
         }
 
         .service-card:hover {
-            border-color: #667eea;
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+            transform: translateY(-4px);
+            border-color: var(--accent-green);
+            box-shadow: var(--shadow);
         }
 
-        .service-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            pointer-events: none;
+        .service-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .service-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
         }
 
         .service-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-
-        .service-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
-
-        .service-card p {
-            color: #666;
-            font-size: 0.9rem;
-            line-height: 1.5;
+            font-size: 2rem;
+            margin-bottom: 1rem;
         }
 
         .service-status {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-top: 10px;
         }
 
         .status-live {
-            background: #d4edda;
-            color: #155724;
+            background: rgba(62, 207, 142, 0.1);
+            color: var(--accent-green);
+        }
+
+        .status-live::before {
+            content: '';
+            width: 6px;
+            height: 6px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
 
         .status-pending {
-            background: #fff3cd;
-            color: #856404;
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-purple);
+        }
+
+        .service-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .service-description {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        .login-section {
+            max-width: 450px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+        }
+
+        .login-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .login-subtitle {
+            color: var(--text-secondary);
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            background: var(--bg-primary);
         }
 
         .login-btn {
             width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--accent-green) 0%, var(--accent-purple) 100%);
             color: white;
             border: none;
             border-radius: 8px;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s;
+            transition: all 0.3s;
         }
 
         .login-btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(62, 207, 142, 0.3);
         }
 
         .login-btn:active {
             transform: translateY(0);
         }
 
-        .footer {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-            font-size: 0.9rem;
-            border-top: 1px solid #e0e0e0;
-        }
-
         .alert {
-            padding: 12px 20px;
+            padding: 1rem;
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 1.5rem;
             display: none;
+            font-size: 0.9rem;
         }
 
         .alert.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
         }
 
         .alert.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
+            background: rgba(62, 207, 142, 0.1);
+            color: var(--accent-green);
+            border: 1px solid rgba(62, 207, 142, 0.2);
         }
 
-        .divider {
+        .footer {
             text-align: center;
-            margin: 30px 0;
-            color: #666;
-            position: relative;
+            padding: 3rem 2rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            margin-top: 4rem;
         }
 
-        .divider::before,
-        .divider::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            width: 45%;
-            height: 1px;
-            background: #e0e0e0;
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 1rem;
         }
 
-        .divider::before {
-            left: 0;
+        .footer-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
         }
 
-        .divider::after {
-            right: 0;
+        .footer-link:hover {
+            color: var(--accent-green);
         }
 
         @media (max-width: 768px) {
-            .header h1 {
-                font-size: 2rem;
+            .hero h1 {
+                font-size: 2.5rem;
             }
 
             .services-grid {
                 grid-template-columns: 1fr;
             }
+
+            .nav-links {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🧠 InsightPulse AI</h1>
-            <p>Unified Intelligence Platform</p>
+    <nav class="nav">
+        <div class="logo">InsightPulse AI</div>
+        <div class="nav-links">
+            <a href="#services" class="nav-link">Services</a>
+            <a href="#login" class="nav-link">Sign In</a>
+            <a href="https://github.com/jgtolentino/insightpulse-odoo" class="nav-link" target="_blank">GitHub</a>
         </div>
+    </nav>
 
-        <div class="login-section">
-            <div class="login-form">
-                <div id="alert" class="alert"></div>
+    <div class="hero">
+        <h1>Enterprise Intelligence Platform</h1>
+        <p>Multi-tenant ERP, Business Intelligence, and Workflow Automation built on 100% open-source technologies</p>
 
-                <form id="loginForm">
-                    <div class="form-group">
-                        <label for="username">Username</label>
-                        <input type="text" id="username" name="username" required autocomplete="username">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="password">Password</label>
-                        <input type="password" id="password" name="password" required autocomplete="current-password">
-                    </div>
-
-                    <button type="submit" class="login-btn">Sign In to All Services</button>
-                </form>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-value">$13.8K</div>
+                <div class="stat-label">Annual Savings</div>
             </div>
-
-            <div class="divider">or browse services</div>
-        </div>
-
-        <div class="services-grid">
-            <a href="https://erp.insightpulseai.net" class="service-card" id="odoo-card">
-                <div class="service-icon">📊</div>
-                <h3>Odoo ERP</h3>
-                <p>Enterprise Resource Planning - Finance, HR, Expenses</p>
-                <span class="service-status status-live">✓ Live</span>
-            </a>
-
-            <a href="https://chat.insightpulseai.net" class="service-card" id="mattermost-card">
-                <div class="service-icon">💬</div>
-                <h3>Mattermost</h3>
-                <p>Team Collaboration - Real-time Chat & Communication</p>
-                <span class="service-status status-live">✓ Live</span>
-            </a>
-
-            <a href="https://n8n.insightpulseai.net" class="service-card" id="n8n-card">
-                <div class="service-icon">⚡</div>
-                <h3>n8n Workflows</h3>
-                <p>Workflow Automation - Build & Execute Workflows</p>
-                <span class="service-status status-live">✓ Live</span>
-            </a>
-
-            <a href="https://ocr.insightpulseai.net/health" class="service-card" id="ocr-card">
-                <div class="service-icon">📄</div>
-                <h3>OCR Service</h3>
-                <p>Receipt & Document Processing - PaddleOCR AI</p>
-                <span class="service-status status-live">✓ Live</span>
-            </a>
-
-            <a href="https://superset.insightpulseai.net" class="service-card" id="superset-card">
-                <div class="service-icon">📈</div>
-                <h3>Superset BI</h3>
-                <p>Business Intelligence & Analytics Dashboards</p>
-                <span class="service-status status-pending">⏳ Pending</span>
-            </a>
-        </div>
-
-        <div class="footer">
-            <p>© 2025 InsightPulse AI • Secure • Encrypted • Production-Ready</p>
-            <p style="margin-top: 8px; font-size: 0.8rem;">OCR: 96.97% accuracy • Cost: 88% reduction • Uptime: 99.9%</p>
+            <div class="stat">
+                <div class="stat-value">99.9%</div>
+                <div class="stat-label">Uptime SLA</div>
+            </div>
+            <div class="stat">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Live Services</div>
+            </div>
         </div>
     </div>
+
+    <div class="services" id="services">
+        <h2 class="section-title">Production Services</h2>
+
+        <div class="services-grid">
+            <a href="https://erp.insightpulseai.net" class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">📊</div>
+                    <span class="service-status status-live">Live</span>
+                </div>
+                <h3 class="service-title">Odoo ERP</h3>
+                <p class="service-description">
+                    Enterprise Resource Planning with Finance, HR, Expense Management, and BIR compliance. Multi-tenant architecture supporting 8 agencies.
+                </p>
+            </a>
+
+            <a href="https://chat.insightpulseai.net" class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">💬</div>
+                    <span class="service-status status-live">Live</span>
+                </div>
+                <h3 class="service-title">Mattermost</h3>
+                <p class="service-description">
+                    Team collaboration platform with real-time chat, channels, and integrations. Replaces Slack Enterprise ($672/year saved).
+                </p>
+            </a>
+
+            <a href="https://n8n.insightpulseai.net" class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">⚡</div>
+                    <span class="service-status status-live">Live</span>
+                </div>
+                <h3 class="service-title">n8n Workflows</h3>
+                <p class="service-description">
+                    Workflow automation engine with visual designer. Build integrations between Odoo, OCR, Mattermost, and external services.
+                </p>
+            </a>
+
+            <a href="https://ocr.insightpulseai.net/health" class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">📄</div>
+                    <span class="service-status status-live">Live</span>
+                </div>
+                <h3 class="service-title">OCR Service</h3>
+                <p class="service-description">
+                    PaddleOCR-powered receipt and document processing with 96.97% accuracy. DeepSeek LLM validation for structured extraction.
+                </p>
+            </a>
+
+            <a href="https://superset.insightpulseai.net" class="service-card">
+                <div class="service-header">
+                    <div class="service-icon">📈</div>
+                    <span class="service-status status-pending">Pending</span>
+                </div>
+                <h3 class="service-title">Superset BI</h3>
+                <p class="service-description">
+                    Apache Superset for business intelligence and analytics dashboards. Replaces Tableau ($8,400/year saved).
+                </p>
+            </a>
+        </div>
+    </div>
+
+    <div class="login-section" id="login">
+        <h2 class="login-title">Sign In</h2>
+        <p class="login-subtitle">Access all services with unified authentication</p>
+
+        <div id="alert" class="alert"></div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="username" class="form-label">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="form-input"
+                    required
+                    autocomplete="username"
+                    placeholder="Enter your username"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="password" class="form-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="form-input"
+                    required
+                    autocomplete="current-password"
+                    placeholder="Enter your password"
+                >
+            </div>
+
+            <button type="submit" class="login-btn">Sign In to All Services</button>
+        </form>
+    </div>
+
+    <footer class="footer">
+        <div class="footer-links">
+            <a href="https://github.com/jgtolentino/insightpulse-odoo" class="footer-link" target="_blank">GitHub</a>
+            <a href="https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs" class="footer-link" target="_blank">Documentation</a>
+            <a href="https://erp.insightpulseai.net" class="footer-link">Status</a>
+        </div>
+        <p>© 2025 InsightPulse AI • Open Source • Self-Hosted • Production-Ready</p>
+        <p style="margin-top: 0.5rem; opacity: 0.7;">Built with Odoo 18 CE • Apache Superset • n8n • Mattermost</p>
+    </footer>
 
     <script>
         const loginForm = document.getElementById('loginForm');
@@ -396,29 +594,22 @@
             alert.style.display = 'block';
         }
 
-        // Check service health on load
-        window.addEventListener('load', async () => {
-            try {
-                // Check OCR service
-                const ocrResponse = await fetch('https://ocr.insightpulseai.net/health', {
-                    method: 'GET',
-                    mode: 'cors'
-                });
-
-                if (ocrResponse.ok) {
-                    const ocrCard = document.getElementById('ocr-card');
-                    ocrCard.querySelector('.service-status').className = 'service-status status-live';
-                }
-            } catch (error) {
-                console.log('OCR health check failed:', error);
-            }
-        });
-
         // Auto-fill from session if exists
         const savedUser = sessionStorage.getItem('insightpulse_user');
         if (savedUser) {
             document.getElementById('username').value = savedUser;
         }
+
+        // Smooth scroll for navigation
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
     </script>
 </body>
 </html>
