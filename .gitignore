@@ -140,3 +140,4 @@ Desktop.ini
 *.backup
 auto-merge-audit.json
 auto-merge-audit-final.json
+.env.mvp

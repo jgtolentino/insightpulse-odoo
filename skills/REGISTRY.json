@@ -1,0 +1,145 @@
+{
+  "version": "0.2.0",
+  "generated_at": "2025-11-08T04:27:22.306159Z",
+  "skill_count": 9,
+  "skills": [
+    {
+      "skill_id": "automation-devops-expert",
+      "version": "1.0.0",
+      "category": "Automation, DevOps, CI/CD",
+      "expertise_level": "Expert",
+      "path": "skills/core/automation-devops-expert",
+      "file": "skills/core/automation-devops-expert/SKILL.md",
+      "purpose": "This skill enables an AI agent to design and implement comprehensive automation strategies, including CI/CD pipelines, automated deployment, infrastructure as code, and DevOps best practices.",
+      "capabilities": [
+        "GitHub Actions workflow automation",
+        "Multi-environment deployment strategies",
+        "Infrastructure as Code (Terraform, Ansible)",
+        "Automated testing and quality gates",
+        "Self-healing and auto-remediation"
+      ]
+    },
+    {
+      "skill_id": "repo-architect-ai-engineer",
+      "version": "1.0.0",
+      "category": "Infrastructure, AI/LLM Engineering, DevOps",
+      "expertise_level": "Expert (10+ years equivalent)",
+      "path": "skills/core/repo-architect-ai-engineer",
+      "file": "skills/core/repo-architect-ai-engineer/SKILL.md",
+      "purpose": "This skill enables an AI agent to design, architect, and implement enterprise-grade repository structures with comprehensive AI/LLM engineering capabilities, including:",
+      "capabilities": []
+    },
+    {
+      "skill_id": "testing-expert",
+      "version": "1.0.0",
+      "category": "Testing, QA, Quality Assurance",
+      "expertise_level": "Expert",
+      "path": "skills/core/testing-expert",
+      "file": "skills/core/testing-expert/SKILL.md",
+      "purpose": "This skill enables an AI agent to design and implement comprehensive testing strategies, including unit tests, integration tests, end-to-end tests, performance benchmarks, and test automation frameworks.",
+      "capabilities": [
+        "Multi-layered test pyramid implementation",
+        "Test-driven development (TDD) practices",
+        "Continuous testing in CI/CD",
+        "Performance and load testing",
+        "Test coverage analysis and reporting"
+      ]
+    },
+    {
+      "skill_id": "validation-expert",
+      "version": "1.0.0",
+      "category": "Quality Assurance, Testing, Validation",
+      "expertise_level": "Expert",
+      "path": "skills/core/validation-expert",
+      "file": "skills/core/validation-expert/SKILL.md",
+      "purpose": "This skill enables an AI agent to design, implement, and maintain comprehensive repository validation frameworks, including structure validation, code quality checks, automated testing, and health monitoring.",
+      "capabilities": [
+        "Multi-level validation pyramids (static, functional, integration, metrics)",
+        "Health scoring and grading systems",
+        "Automated remediation and self-healing",
+        "Continuous validation in CI/CD pipelines",
+        "Metrics-driven quality improvement"
+      ]
+    },
+    {
+      "skill_id": "draxlr_integration",
+      "version": "1.0.0",
+      "category": "Analytics, Business Intelligence",
+      "expertise_level": "Intermediate",
+      "path": "skills/integrations/draxlr",
+      "file": "skills/integrations/draxlr/SKILL.md",
+      "purpose": "This skill enables low-lift analytics and BI integration using Draxlr, a lightweight alternative to traditional BI tools like Tableau or Power BI. Draxlr provides instant SQL-to-dashboard capabilities with minimal setup.",
+      "capabilities": [
+        "Quick dataset configuration from PostgreSQL/Supabase",
+        "SQL-based chart and dashboard creation",
+        "Embedded analytics for web applications",
+        "Real-time data visualization",
+        "Shareable dashboards and reports"
+      ]
+    },
+    {
+      "skill_id": "github-actions-workflows",
+      "version": "1.0.0",
+      "category": "GitHub Developer Program, CI/CD, Automation",
+      "expertise_level": "Expert",
+      "path": "skills/proposed/github-actions-workflows",
+      "file": "skills/proposed/github-actions-workflows/SKILL.md",
+      "purpose": "This skill enables AI agents to design and implement production-grade GitHub Actions workflows for CI/CD, automation, and DevOps tasks, following best practices for performance, security, and maintainability.",
+      "capabilities": [
+        "Multi-job workflow orchestration",
+        "Matrix builds and parallel execution",
+        "Reusable workflows and composite actions",
+        "Custom actions development (Docker, JavaScript, Composite)",
+        "Secrets and environment management"
+      ]
+    },
+    {
+      "skill_id": "github-api-integration",
+      "version": "1.0.0",
+      "category": "GitHub Developer Program, API Integration",
+      "expertise_level": "Expert",
+      "path": "skills/proposed/github-api-integration",
+      "file": "skills/proposed/github-api-integration/SKILL.md",
+      "purpose": "This skill enables AI agents to build robust integrations with GitHub's REST and GraphQL APIs, following GitHub Developer Program best practices for authentication, rate limiting, pagination, and error handling.",
+      "capabilities": [
+        "GitHub REST API v3 integration",
+        "GitHub GraphQL API v4 queries and mutations",
+        "OAuth App and GitHub App authentication",
+        "Rate limiting and pagination handling",
+        "Webhook payload processing"
+      ]
+    },
+    {
+      "skill_id": "github-apps-development",
+      "version": "1.0.0",
+      "category": "GitHub Developer Program, Application Development",
+      "expertise_level": "Expert",
+      "path": "skills/proposed/github-apps-development",
+      "file": "skills/proposed/github-apps-development/SKILL.md",
+      "purpose": "This skill enables AI agents to design, build, and deploy production-grade GitHub Apps that integrate seamlessly with GitHub's ecosystem, following best practices for authentication, permissions, and user experience.",
+      "capabilities": [
+        "GitHub App creation and configuration",
+        "Installation and authorization flows",
+        "Fine-grained permissions management",
+        "Probot framework for Node.js apps",
+        "FastAPI-based GitHub Apps in Python"
+      ]
+    },
+    {
+      "skill_id": "github-webhooks-integration",
+      "version": "1.0.0",
+      "category": "GitHub Developer Program, Event-Driven Architecture",
+      "expertise_level": "Expert",
+      "path": "skills/proposed/github-webhooks-integration",
+      "file": "skills/proposed/github-webhooks-integration/SKILL.md",
+      "purpose": "This skill enables AI agents to build robust, event-driven integrations with GitHub using webhooks, handling real-time events with proper security, reliability, and scalability.",
+      "capabilities": [
+        "Webhook endpoint creation and security",
+        "Event payload validation and signature verification",
+        "Event routing and processing",
+        "Retry logic and idempotency handling",
+        "Rate limiting and backpressure management"
+      ]
+    }
+  ]
+}

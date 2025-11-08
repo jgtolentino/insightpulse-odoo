@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-08T02:15:05.953270+00:00Z
+Generated: 2025-11-08T04:02:20.430932+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -25,6 +25,7 @@ Generated: 2025-11-08T02:15:05.953270+00:00Z
 | ipai_expense | Custom | 19.0.20251026.1 | unknown | Cash advance lifecycle, expense policy, OCR audit | base,mail,hr,hr_expense,account,report_xlsx,queue_job,server_environment | addons/custom/ipai_expense |
 | ipai_files_spaces | Custom | 19.0.1.0.0 | unknown | S3/DigitalOcean Spaces integration for large files | base | odoo_addons/ipai_files_spaces |
 | ipai_huddles_webrtc | Custom | 19.0.1.0.0 | unknown | Jitsi integration for audio/video calls and huddles | ipai_chat_core | odoo_addons/ipai_huddles_webrtc |
+| ipai_mattermost_bridge | Custom | 1.0.0 | unknown | Webhook ingestion for GitHub/Jira/ServiceNow into Odoo | base | custom_addons/ipai_mattermost_bridge |
 | ipai_ppm | Custom | 19.0.1.0.0 | unknown | Program/Project/Budget/Risk Management | ipai_core,project,account | addons/insightpulse/finance/ipai_ppm |
 | ipai_ppm_costsheet | Custom | 19.0.1.0.0 | unknown | Vendor-Privacy Cost Sheets - Epic 2 (Clarity PPM + SAP Ariba Parity) | ipai_core,project,hr,analytic,queue_job | addons/custom/ipai_ppm_costsheet |
 | ipai_procure | Custom | 19.0.20251026.1 | unknown | PR → RFQ → PO → GRN → 3WM with approvals, catalogs, rounds | base,mail,purchase,stock,account,product,uom,queue_job,base_tier_validation,report_xlsx,server_environment | addons/custom/ipai_procure |

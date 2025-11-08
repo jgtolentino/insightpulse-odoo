@@ -1,0 +1,72 @@
+{
+  "version": "0.2.0",
+  "generated_at": "2025-11-08T04:27:22.306438Z",
+  "mcp_mappings": {
+    "automation-devops-expert": {
+      "mcp_service": "odoo",
+      "actions": [
+        "module_install",
+        "api_call",
+        "workflow_execute"
+      ]
+    },
+    "repo-architect-ai-engineer": {
+      "mcp_service": "generic",
+      "actions": [
+        "execute"
+      ]
+    },
+    "testing-expert": {
+      "mcp_service": "generic",
+      "actions": [
+        "execute"
+      ]
+    },
+    "validation-expert": {
+      "mcp_service": "generic",
+      "actions": [
+        "execute"
+      ]
+    },
+    "draxlr_integration": {
+      "mcp_service": "draxlr",
+      "actions": [
+        "dataset_create",
+        "chart_create",
+        "dashboard_embed"
+      ]
+    },
+    "github-actions-workflows": {
+      "mcp_service": "github",
+      "actions": [
+        "api_call",
+        "webhook_handle",
+        "workflow_trigger"
+      ]
+    },
+    "github-api-integration": {
+      "mcp_service": "github",
+      "actions": [
+        "api_call",
+        "webhook_handle",
+        "workflow_trigger"
+      ]
+    },
+    "github-apps-development": {
+      "mcp_service": "github",
+      "actions": [
+        "api_call",
+        "webhook_handle",
+        "workflow_trigger"
+      ]
+    },
+    "github-webhooks-integration": {
+      "mcp_service": "github",
+      "actions": [
+        "api_call",
+        "webhook_handle",
+        "workflow_trigger"
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "dashboard_title": "T&E Audit Dashboard",
+  "description": "Audit trail and compliance monitoring",
+  "position_json": "{}",
+  "metadata": {
+    "refresh_frequency": 900
+  }
+}

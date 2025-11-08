@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_expense_policy_tree" model="ir.ui.view">
+        <field name="name">ip.expense.policy.tree</field>
+        <field name="model">ip.expense.policy</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="amount_limit"/>
+                <field name="per_diem"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_expense_policy" model="ir.actions.act_window">
+        <field name="name">Expense Policies</field>
+        <field name="res_model">ip.expense.policy</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_expense_policy"
+              name="Policies"
+              parent="hr_expense.menu_hr_expense_root"
+              action="action_expense_policy"
+              sequence="20"/>
+</odoo>

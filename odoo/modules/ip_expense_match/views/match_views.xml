@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_expense_match_tree" model="ir.ui.view">
+        <field name="name">ip.expense.match.tree</field>
+        <field name="model">ip.expense.match</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="expense_id"/>
+                <field name="invoice_id"/>
+                <field name="match_score"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_expense_match" model="ir.actions.act_window">
+        <field name="name">Expense Matching</field>
+        <field name="res_model">ip.expense.match</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_expense_match"
+              name="Matching"
+              parent="hr_expense.menu_hr_expense_root"
+              action="action_expense_match"
+              sequence="30"/>
+</odoo>

@@ -1,0 +1,51 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Expense Intake API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/ip/expense/intake": {
+      "post": {
+        "x-atomic": true,
+        "x-role-scopes": ["employee", "erp.bot.expense"],
+        "operationId": "intakeExpense",
+        "summary": "Create expense from OCR data",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "merchant": {"type": "string"},
+                  "total": {"type": "number"},
+                  "category": {"type": "string"},
+                  "conf": {"type": "number"},
+                  "idempotency_key": {"type": "string"}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {"type": "boolean"},
+                    "expense_id": {"type": "integer"},
+                    "idempotent": {"type": "boolean"}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

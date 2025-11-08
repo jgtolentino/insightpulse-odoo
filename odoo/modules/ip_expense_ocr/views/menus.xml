@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_ip_expense_ocr"
+              name="OCR Expense Intake"
+              parent="hr_expense.menu_hr_expense_root"
+              sequence="10"/>
+</odoo>

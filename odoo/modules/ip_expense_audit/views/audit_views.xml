@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_expense_audit_tree" model="ir.ui.view">
+        <field name="name">ip.expense.audit.tree</field>
+        <field name="model">ip.expense.audit</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="expense_id"/>
+                <field name="audit_date"/>
+                <field name="auditor_id"/>
+                <field name="result"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="action_expense_audit" model="ir.actions.act_window">
+        <field name="name">Expense Audits</field>
+        <field name="res_model">ip.expense.audit</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <menuitem id="menu_expense_audit"
+              name="Audit Trail"
+              parent="hr_expense.menu_hr_expense_root"
+              action="action_expense_audit"
+              sequence="40"/>
+</odoo>

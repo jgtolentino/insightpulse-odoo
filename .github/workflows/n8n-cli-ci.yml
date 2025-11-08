@@ -1,0 +1,49 @@
+name: n8n CLI CI
+
+on:
+  push:
+    paths:
+      - 'tools/ip-n8n/**'
+  pull_request:
+    paths:
+      - 'tools/ip-n8n/**'
+  workflow_dispatch:
+
+jobs:
+  cli-smoke:
+    name: Test n8n CLI
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install requests
+
+      - name: Test CLI help
+        run: |
+          python3 tools/ip-n8n/ip_n8n.py --help
+
+      - name: Test subcommands help
+        run: |
+          python3 tools/ip-n8n/ip_n8n.py login --help
+          python3 tools/ip-n8n/ip_n8n.py list --help
+          python3 tools/ip-n8n/ip_n8n.py run --help
+
+      - name: Verify CLI is executable
+        run: |
+          chmod +x tools/ip-n8n/ip_n8n.py
+          ./tools/ip-n8n/ip_n8n.py --help
+
+      - name: Test config file creation
+        run: |
+          python3 tools/ip-n8n/ip_n8n.py login --base http://test.example.com --key test_key
+          test -f ~/.config/ip-n8n/config.json
+          echo "✅ Config file created successfully"
