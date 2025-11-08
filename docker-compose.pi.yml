@@ -1,0 +1,34 @@
+# Process Intelligence API Service
+# Override file for SAP Process Intelligence integration
+version: '3.8'
+
+services:
+  process-intel-api:
+    build:
+      context: ./services/process-intel-api
+      dockerfile: Dockerfile
+    container_name: ipai-process-intel-api
+    env_file:
+      - .env.sap
+    environment:
+      - PORT=8090
+      - PI_EXPORT_DIR=/opt/insightpulse-odoo/exports/process-intel
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./skills:/app/skills:ro
+      - ./exports/process-intel:/opt/insightpulse-odoo/exports/process-intel
+    ports:
+      - "8090:8090"
+    networks:
+      - ipai-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8090/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  ipai-network:
+    external: true

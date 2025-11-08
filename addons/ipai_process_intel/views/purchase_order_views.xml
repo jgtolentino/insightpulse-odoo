@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Purchase Order Form View Extension -->
+    <record id="view_purchase_order_form_pi" model="ir.ui.view">
+        <field name="name">purchase.order.form.pi</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_form"/>
+        <field name="arch" type="xml">
+
+            <!-- Add Process Intelligence button -->
+            <xpath expr="//header/button[@name='button_confirm']" position="after">
+                <button name="action_analyze_process_intelligence"
+                        string="Analyze P2P Process"
+                        type="object"
+                        class="btn-primary"
+                        icon="fa-chart-line"
+                        attrs="{'invisible': [('state', 'in', ['draft', 'sent'])]}"/>
+                <button name="action_view_process_diagram"
+                        string="View Process Diagram"
+                        type="object"
+                        class="btn-secondary"
+                        icon="fa-project-diagram"
+                        attrs="{'invisible': [('x_pi_diagram_url', '=', False)]}"/>
+            </xpath>
+
+            <!-- Add Process Intelligence tab -->
+            <xpath expr="//notebook" position="inside">
+                <page string="Process Intelligence" name="process_intelligence">
+                    <group>
+                        <group string="Analysis Results">
+                            <field name="x_pi_last_analysis"/>
+                            <field name="x_pi_conformance_rate" widget="percentage"/>
+                            <field name="x_pi_top_bottleneck"/>
+                            <field name="x_pi_bottleneck_wait_hours"/>
+                        </group>
+                        <group string="Diagram">
+                            <field name="x_pi_diagram_url" widget="url"/>
+                        </group>
+                    </group>
+                    <group string="Full Analysis Data">
+                        <field name="x_pi_analysis_data" widget="ace" options="{'mode': 'json'}"/>
+                    </group>
+                </page>
+            </xpath>
+
+        </field>
+    </record>
+
+    <!-- Purchase Order Tree View Extension -->
+    <record id="view_purchase_order_tree_pi" model="ir.ui.view">
+        <field name="name">purchase.order.tree.pi</field>
+        <field name="model">purchase.order</field>
+        <field name="inherit_id" ref="purchase.purchase_order_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//tree" position="attributes">
+                <attribute name="decoration-success">x_pi_conformance_rate &gt;= 90.0</attribute>
+                <attribute name="decoration-warning">x_pi_conformance_rate &gt;= 70.0 and x_pi_conformance_rate &lt; 90.0</attribute>
+                <attribute name="decoration-danger">x_pi_conformance_rate &gt; 0.0 and x_pi_conformance_rate &lt; 70.0</attribute>
+            </xpath>
+            <xpath expr="//field[@name='amount_total']" position="after">
+                <field name="x_pi_conformance_rate" string="Conformance %" optional="hide"/>
+                <field name="x_pi_top_bottleneck" string="Top Bottleneck" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

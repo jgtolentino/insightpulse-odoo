@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Process Intelligence Menu -->
+    <menuitem id="menu_process_intelligence_root"
+              name="Process Intelligence"
+              sequence="100"
+              web_icon="ipai_process_intel,static/description/icon.png"/>
+
+    <menuitem id="menu_process_intelligence_analytics"
+              name="Analytics"
+              parent="menu_process_intelligence_root"
+              sequence="10"/>
+
+    <!-- P2P Analysis Menu -->
+    <record id="action_purchase_order_pi" model="ir.actions.act_window">
+        <field name="name">Procure-to-Pay Analysis</field>
+        <field name="res_model">purchase.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('x_pi_last_analysis', '!=', False)]</field>
+        <field name="context">{
+            'search_default_filter_analyzed': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No analyzed purchase orders yet
+            </p>
+            <p>
+                Click on a purchase order and use the "Analyze P2P Process" button
+                to trigger process intelligence analysis.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_purchase_order_pi"
+              name="Procure-to-Pay"
+              parent="menu_process_intelligence_analytics"
+              action="action_purchase_order_pi"
+              sequence="10"/>
+
+    <!-- O2C Analysis Menu -->
+    <record id="action_sale_order_pi" model="ir.actions.act_window">
+        <field name="name">Order-to-Cash Analysis</field>
+        <field name="res_model">sale.order</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('x_pi_last_analysis', '!=', False)]</field>
+        <field name="context">{
+            'search_default_filter_analyzed': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No analyzed sales orders yet
+            </p>
+            <p>
+                Click on a sales order and use the "Analyze O2C Process" button
+                to trigger process intelligence analysis.
+            </p>
+        </field>
+    </record>
+
+    <menuitem id="menu_sale_order_pi"
+              name="Order-to-Cash"
+              parent="menu_process_intelligence_analytics"
+              action="action_sale_order_pi"
+              sequence="20"/>
+
+    <!-- Configuration Menu -->
+    <menuitem id="menu_process_intelligence_config"
+              name="Configuration"
+              parent="menu_process_intelligence_root"
+              sequence="90"
+              groups="base.group_system"/>
+
+</odoo>

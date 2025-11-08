@@ -1299,3 +1299,54 @@ sap-help: ## Show SAP Process Intelligence commands
 	@echo "  - Models: skills/integrations/sap-process-intelligence/models/"
 	@echo "  - Agent: .superclaude/agents/sap-executor-agent.yml"
 	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 🔌 PROCESS INTELLIGENCE SERVICE MANAGEMENT
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: pi-env pi-up pi-down pi-test pi-demo pi-db-setup pi-db-refresh pi-status
+
+pi-env: ## Validate .env.sap configuration
+	@test -f .env.sap || (echo "❌ .env.sap not found. Create it first:" && \
+		echo "   cp .env.sap.example .env.sap" && exit 1)
+	@echo "✅ .env.sap found"
+
+pi-up: pi-env ## Start Process Intelligence API service
+	@echo "🚀 Starting Process Intelligence API..."
+	@docker compose -f docker-compose.pi.yml up -d
+	@echo "✅ Process Intelligence API started on port 8090"
+
+pi-down: ## Stop Process Intelligence API service
+	@echo "🛑 Stopping Process Intelligence API..."
+	@docker compose -f docker-compose.pi.yml down
+	@echo "✅ Service stopped"
+
+pi-test: ## Test PI API health endpoint
+	@echo "🏥 Testing Process Intelligence API..."
+	@curl -fsS http://localhost:8090/health && echo "\n✅ Health check passed" || \
+		(echo "❌ Health check failed. Is the service running?" && exit 1)
+
+pi-demo: ## Run demo P2P extraction
+	@echo "🎭 Running demo P2P extraction..."
+	@curl -fsS -X POST http://localhost:8090/pi/extract \
+		-H 'content-type: application/json' \
+		-d '{"process_id":"PO_DEMO","date_range":"2025-01-01/2025-01-31","process_type":"PROCURE_TO_PAY"}' \
+		| jq -r 'if .events then "✅ Extracted \(.total_events) events" else "❌ \(.detail)" end'
+
+pi-db-setup: ## Initialize Supabase Process Intelligence schema
+	@echo "🗄️  Initializing Process Intelligence schema in Supabase..."
+	@test -n "$(SUPABASE_DB_URL)" || (echo "❌ SUPABASE_DB_URL not set" && exit 1)
+	@psql "$(SUPABASE_DB_URL)" -f sql/process_intelligence_schema.sql
+	@echo "✅ Schema initialized"
+
+pi-db-refresh: ## Refresh materialized views
+	@echo "🔄 Refreshing Process Intelligence materialized views..."
+	@psql "$(SUPABASE_DB_URL)" -c "SELECT pi.refresh_materialized_views();"
+	@echo "✅ Views refreshed"
+
+pi-status: ## Show Process Intelligence service status
+	@echo "📊 Process Intelligence Status:"
+	@docker compose -f docker-compose.pi.yml ps
+	@echo ""
+	@echo "🏥 Health:"
+	@make pi-test 2>/dev/null || echo "❌ Service not responding"

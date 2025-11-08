@@ -1,0 +1,190 @@
+{
+  "dashboard_title": "Process Intelligence - SAP Analytics",
+  "description": "SAP S/4HANA process mining analytics - P2P conformance, bottleneck detection, and KPI forecasts",
+  "css": "",
+  "slug": "process-intelligence-sap",
+  "certified_by": "InsightPulse AI",
+  "certification_details": "Production-ready SAP process intelligence dashboard",
+  "published": true,
+  "position_json": "{\"DASHBOARD_VERSION_KEY\":\"v2\",\"ROOT_ID\":{\"type\":\"ROOT\",\"id\":\"ROOT_ID\",\"children\":[\"GRID_ID\"]},\"GRID_ID\":{\"type\":\"GRID\",\"id\":\"GRID_ID\",\"children\":[\"ROW-1\",\"ROW-2\",\"ROW-3\"],\"parents\":[\"ROOT_ID\"]},\"HEADER_ID\":{\"id\":\"HEADER_ID\",\"type\":\"HEADER\",\"meta\":{\"text\":\"Process Intelligence - SAP Analytics\"}}}",
+  "metadata": {
+    "timed_refresh_immune_slices": [],
+    "expanded_slices": {},
+    "refresh_frequency": 0,
+    "default_filters": "{}",
+    "color_scheme": "supersetColors",
+    "label_colors": {},
+    "shared_label_colors": {},
+    "color_scheme_domain": [],
+    "cross_filters_enabled": true
+  },
+  "slices": [
+    {
+      "slice_name": "P2P Conformance Rate Trend",
+      "viz_type": "line",
+      "params": {
+        "datasource": "pi.mv_p2p_conformance_trend",
+        "viz_type": "line",
+        "x_axis": "date",
+        "metrics": ["avg_conformance_rate"],
+        "groupby": [],
+        "adhoc_filters": [],
+        "row_limit": 90,
+        "order_desc": true,
+        "rich_tooltip": true,
+        "show_legend": true,
+        "show_markers": true,
+        "line_interpolation": "linear",
+        "color_scheme": "supersetColors",
+        "x_axis_label": "Date",
+        "y_axis_label": "Conformance Rate (%)",
+        "y_axis_format": ".1f"
+      },
+      "query_context": {
+        "datasource": {
+          "id": 1,
+          "type": "table"
+        },
+        "queries": [
+          {
+            "metrics": ["avg_conformance_rate"],
+            "orderby": [["date", false]],
+            "row_limit": 90
+          }
+        ]
+      },
+      "description": "P2P process conformance rate trend over time"
+    },
+    {
+      "slice_name": "Top Bottlenecks by Impact",
+      "viz_type": "table",
+      "params": {
+        "datasource": "pi.mv_bottleneck_hotspots",
+        "viz_type": "table",
+        "groupby": ["activity", "process_type"],
+        "metrics": ["avg_impact_score", "avg_p90_wait", "occurrence_count"],
+        "all_columns": [],
+        "order_by_cols": ["[\"avg_impact_score\", false]"],
+        "row_limit": 20,
+        "table_timestamp_format": "smart_date",
+        "show_cell_bars": true,
+        "color_pn": true
+      },
+      "description": "Activities with highest bottleneck impact scores"
+    },
+    {
+      "slice_name": "Process Variant Distribution",
+      "viz_type": "pie",
+      "params": {
+        "datasource": "pi.variants",
+        "viz_type": "pie",
+        "groupby": ["process_type"],
+        "metric": "total_variants",
+        "adhoc_filters": [],
+        "row_limit": 10,
+        "color_scheme": "supersetColors",
+        "show_labels": true,
+        "labels_outside": true,
+        "show_legend": true,
+        "donut": false,
+        "number_format": ",d"
+      },
+      "description": "Distribution of process variants by type"
+    },
+    {
+      "slice_name": "KPI Forecast - Delay Risk",
+      "viz_type": "big_number_total",
+      "params": {
+        "datasource": "pi.kpi_forecasts",
+        "viz_type": "big_number_total",
+        "metric": "AVG(predicted_value)",
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "comparator": "delay",
+            "expressionType": "SIMPLE",
+            "operator": "==",
+            "subject": "kpi_type"
+          }
+        ],
+        "subheader": "Average Predicted Delay (hours)",
+        "y_axis_format": ".1f"
+      },
+      "description": "Average predicted delay across all P2P processes"
+    },
+    {
+      "slice_name": "Resource Utilization Heatmap",
+      "viz_type": "heatmap",
+      "params": {
+        "datasource": "pi.resource_utilization",
+        "viz_type": "heatmap",
+        "all_columns_x": "resource_id",
+        "all_columns_y": "process_type",
+        "metric": "AVG(utilization_percentage)",
+        "linear_color_scheme": "blue_white_yellow",
+        "xscale_interval": 1,
+        "yscale_interval": 1,
+        "canvas_image_rendering": "pixelated",
+        "normalize_across": "heatmap",
+        "left_margin": "auto",
+        "bottom_margin": "auto",
+        "show_legend": true,
+        "show_perc": true,
+        "sort_x_axis": "alpha_asc",
+        "sort_y_axis": "alpha_asc"
+      },
+      "description": "Resource utilization by process type"
+    },
+    {
+      "slice_name": "Event Volume by Activity",
+      "viz_type": "dist_bar",
+      "params": {
+        "datasource": "pi.events",
+        "viz_type": "dist_bar",
+        "groupby": ["activity"],
+        "columns": ["process_type"],
+        "metrics": ["COUNT(*)"],
+        "adhoc_filters": [],
+        "row_limit": 50,
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "show_bar_value": false,
+        "bar_stacked": false,
+        "order_bars": true,
+        "y_axis_format": ",d",
+        "y_axis_label": "Event Count",
+        "bottom_margin": "auto",
+        "x_axis_label": "Activity"
+      },
+      "description": "Event volume distribution by activity and process type"
+    }
+  ],
+  "filters": [
+    {
+      "filter_name": "Date Range",
+      "targets": [
+        {
+          "datasetId": 1,
+          "column": {
+            "name": "computed_at"
+          }
+        }
+      ],
+      "filterType": "filter_timerange",
+      "defaultValue": "Last 30 days"
+    },
+    {
+      "filter_name": "Process Type",
+      "targets": [
+        {
+          "datasetId": 1,
+          "column": {
+            "name": "process_type"
+          }
+        }
+      ],
+      "filterType": "filter_select",
+      "defaultValue": ["PROCURE_TO_PAY"]
+    }
+  ]
+}

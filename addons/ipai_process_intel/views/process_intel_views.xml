@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Configuration Settings -->
+    <record id="view_process_intel_config_settings" model="ir.ui.view">
+        <field name="name">process.intel.config.settings</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data_key="ipai_process_intel">
+                    <h2>Process Intelligence</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="ipai_pi_api_base"/>
+                                <div class="text-muted">
+                                    Process Intelligence API endpoint
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="ipai_pi_api_base"
+                                               placeholder="http://process-intel-api:8090"
+                                               class="oe_inline"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="ipai_agent_gateway_base"/>
+                                <div class="text-muted">
+                                    Agent Gateway endpoint
+                                </div>
+                                <div class="content-group">
+                                    <div class="mt16">
+                                        <field name="ipai_agent_gateway_base"
+                                               placeholder="http://agent-gateway:8080"
+                                               class="oe_inline"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="action_process_intel_config" model="ir.actions.act_window">
+        <field name="name">Process Intelligence Settings</field>
+        <field name="res_model">res.config.settings</field>
+        <field name="view_mode">form</field>
+        <field name="target">inline</field>
+        <field name="context">{'module': 'ipai_process_intel'}</field>
+    </record>
+
+    <menuitem id="menu_process_intel_config_settings"
+              name="Settings"
+              parent="menu_process_intelligence_config"
+              action="action_process_intel_config"
+              sequence="10"/>
+
+</odoo>
