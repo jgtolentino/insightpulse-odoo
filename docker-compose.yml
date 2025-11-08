@@ -16,6 +16,8 @@ services:
       - PASSWORD=odoo
     volumes:
       - ./custom_addons:/mnt/custom-addons:ro
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - odoo_data:/var/lib/odoo
 
   postgres:
     image: postgres:15
@@ -28,3 +30,4 @@ services:
 
 volumes:
   postgres_data:
+  odoo_data:
