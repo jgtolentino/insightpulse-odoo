@@ -182,9 +182,9 @@ jobs:
 
   notify:
     name: Notify on Failure
-    needs: [public-health, origin-health]
+    needs: [public-health]
     runs-on: ubuntu-latest
-    if: failure()
+    if: needs.public-health.result == 'failure'
 
     steps:
       - name: Send Slack Notification
@@ -216,10 +216,6 @@ jobs:
                     {
                       "type": "mrkdwn",
                       "text": "*Public Health:*\n${{ needs.public-health.result }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Origin Health:*\n${{ needs.origin-health.result }}"
                     }
                   ]
                 },
@@ -263,11 +259,6 @@ jobs:
                     "name": "Public Health",
                     "value": "${{ needs.public-health.result }}",
                     "inline": true
-                  },
-                  {
-                    "name": "Origin Health",
-                    "value": "${{ needs.origin-health.result }}",
-                    "inline": true
                   }
                 ],
                 "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
@@ -290,7 +281,6 @@ jobs:
                 "timestamp": "'"$(date -u +%Y-%m-%dT%H:%M:%SZ)"'",
                 "custom_details": {
                   "public_health": "${{ needs.public-health.result }}",
-                  "origin_health": "${{ needs.origin-health.result }}",
                   "workflow_run": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                 }
               }
@@ -300,7 +290,6 @@ jobs:
         run: |
           echo "::warning::Health check failed for one or more services"
           echo "Public health status: ${{ needs.public-health.result }}"
-          echo "Origin health status: ${{ needs.origin-health.result }}"
           echo "Real-time notifications sent (if configured)"
 
       - name: Create or Update GitHub Issue
@@ -323,7 +312,7 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: latestIssue.number,
-                body: `🔄 **Health check still failing** - ${new Date().toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}\n**Origin Health**: ${{ needs.origin-health.result }}`
+                body: `🔄 **Health check still failing** - ${new Date().toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}`
               });
               console.log(`Updated existing issue #${latestIssue.number}`);
               return;
@@ -337,18 +326,17 @@ jobs:
             **Timestamp**: ${new Date().toISOString()}
 
             **Public Health**: ${{ needs.public-health.result }}
-            **Origin Health**: ${{ needs.origin-health.result }}
 
             ### Diagnosis
-            - If public health fails but origin succeeds: **Cloudflare WAF/CDN issue**
-            - If both fail: **Origin server issue**
+            One or more public-facing services are not responding correctly.
 
             ### Next Steps
-            1. Check origin health directly: \`ssh root@165.227.10.178\`
+            1. Check service health endpoints directly
             2. Review Cloudflare WAF logs
             3. Check service logs: \`docker logs <container>\`
             4. Verify DNS configuration
             5. Run manual smoke test: \`./scripts/smoke_test_production.sh\`
+            6. Check origin health: Run health monitor workflow with origin checks enabled
 
             **Contact**: jgtolentino_rn@yahoo.com or support@insightpulseai.com
 
@@ -366,9 +354,9 @@ jobs:
 
   close-resolved-issues:
     name: Close Resolved Health Issues
-    needs: [public-health, origin-health]
+    needs: [public-health]
     runs-on: ubuntu-latest
-    if: success()
+    if: needs.public-health.result == 'success'
 
     steps:
       - name: Send Slack Success Notification
