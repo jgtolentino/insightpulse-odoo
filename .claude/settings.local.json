@@ -136,7 +136,10 @@
       "Bash(docker network:*)",
       "Bash(netstat:*)",
       "Bash(sudo ls:*)",
-      "Bash(nginx:*)"
+      "Bash(nginx:*)",
+      "Bash(sudo systemctl status:*)",
+      "Bash(/tmp/setup_oauth.sh)",
+      "Bash(/Users/tbwa/insightpulse-odoo/scripts/verify_oauth.sh:*)"
     ],
     "deny": [],
     "ask": []
