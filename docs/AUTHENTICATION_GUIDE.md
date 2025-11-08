@@ -18,7 +18,7 @@ Direct URLs will redirect to landing page:
 **Landing Page (insightpulseai.net):**
 - **Username:** `admin`
 - **Password:** `admin`
-- **Database:** `odoo` (auto-selected)
+- **Database:** `odoo19` (auto-selected)
 
 After login, you'll have access to all services (Odoo ERP, Superset, n8n, Chat).
 

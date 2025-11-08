@@ -1,1 +1,0 @@
-# InsightPulse Superset Integration
