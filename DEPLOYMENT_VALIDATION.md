@@ -22,29 +22,24 @@
 
 ---
 
-## ⚠️ **Version Discrepancy Detected**
+## ✅ **Odoo Version CONFIRMED**
 
-### Issue:
-**Repository Configuration** vs **Running Instance** mismatch
+### Actual System State:
+**Production is running Odoo 19.0** (verified from Apps UI)
 
 | Location | Odoo Version | Source |
 |----------|--------------|--------|
-| **docker-compose.yml:8** | `odoo:19.0` | Repository config |
-| **Running Container** | `Odoo 18.0` | Health check output |
+| **docker-compose.yml:8** | `odoo:19.0` | Repository config ✅ |
+| **Running Container** | `Odoo 19.0` | Apps UI (verified) ✅ |
+| **Apps URL** | https://erp.insightpulseai.net/odoo/apps | Confirmed working |
 
-### Possible Causes:
-1. Production droplet running older deployment
-2. Manual override on production server
-3. Health check reading from different instance
-
-### Recommendation:
-**Clarify which version you want to run:**
-- ✅ **Option 1**: Stay on **Odoo 18.0** → Update `docker-compose.yml` to `image: odoo:18.0`
-- ✅ **Option 2**: Upgrade to **Odoo 19.0** → Deploy latest docker-compose.yml
+All official apps show version 19.0.x.x - system is correctly configured.
 
 **For DMS compatibility** (from earlier discussion):
 - **Odoo 18.0** = ✅ Full OCA/dms support (7 modules)
 - **Odoo 19.0** = ❌ Empty/not migrated yet
+
+**Decision**: Stay on Odoo 19.0, wait for OCA/dms migration or use alternative
 
 ---
 
@@ -117,12 +112,15 @@ custom_addons/
 ```
 
 ### Installation Status
-**Need to verify on production**:
-- [ ] Are custom modules visible in Apps UI?
-- [ ] Are modules installed?
-- [ ] Can users access expense MVP features?
+**CONFIRMED**: ❌ **Custom modules NOT visible in Apps UI**
 
-**Verification URL**: https://erp.insightpulseai.net/web#action=base.open_module_tree
+**Verified at**: https://erp.insightpulseai.net/odoo/apps?view_type=list
+- ❌ Only official Odoo S.A. apps showing (54 apps)
+- ❌ InsightPulse custom modules NOT appearing
+- ❌ Cannot install modules (not in list)
+
+**Root Cause**: Odoo not loading `/mnt/custom-addons` path
+**Status**: Fix ready to deploy (`./scripts/fix-odoo-apps.sh`)
 
 ---
 
