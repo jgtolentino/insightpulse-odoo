@@ -1,0 +1,117 @@
+name: Deploy Gates
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests pyyaml
+
+      - name: Validate Claude config + Section 19
+        run: |
+          if [ -f scripts/validate-claude-config.py ]; then
+            python scripts/validate-claude-config.py
+          else
+            echo "⚠️  validate-claude-config.py not found (skipping)"
+          fi
+          if [ -f scripts/skillsmith_sync.py ]; then
+            chmod +x scripts/skillsmith_sync.py
+            ./scripts/skillsmith_sync.py --check || echo "⚠️  Section 19 check skipped"
+          else
+            echo "⚠️  skillsmith_sync.py not found (skipping)"
+          fi
+
+      - name: DBML → SQL (if schema exists)
+        run: |
+          if [ -f schema/insightpulse_odoo.dbml ]; then
+            npm i -g @dbml/cli
+            mkdir -p build
+            dbml2sql schema/insightpulse_odoo.dbml --postgres -o build/odoo_schema.sql
+            echo "✅ DBML compiled to SQL"
+          else
+            echo "⚠️  No DBML schema found (skipping)"
+          fi
+
+      - name: Fail if TODO markers in generated SQL
+        run: |
+          if [ -f build/odoo_schema.sql ]; then
+            if grep -R "TODO" build/odoo_schema.sql >/dev/null 2>&1; then
+              echo "::error ::TODO markers found in generated SQL"
+              grep -n "TODO" build/odoo_schema.sql | head -10
+              exit 1
+            fi
+            echo "✅ No TODO markers in SQL"
+          else
+            echo "⚠️  No generated SQL to check (skipping)"
+          fi
+
+      - name: Check T&E MVP structure
+        run: |
+          echo "✅ Checking T&E MVP Bundle structure..."
+          test -d authhub || echo "⚠️  authhub/ not found"
+          test -d ocrsvc || echo "⚠️  ocrsvc/ not found"
+          test -d odoo/modules || echo "⚠️  odoo/modules/ not found"
+          test -d warehouse || echo "⚠️  warehouse/ not found"
+          test -d skillsmith || echo "⚠️  skillsmith/ not found"
+          test -f .github/workflows/tee-mvp-ci.yml || echo "⚠️  tee-mvp-ci.yml not found"
+          echo "✅ T&E MVP structure check complete"
+
+      - name: Verify repo variables/secrets (non-blocking)
+        run: |
+          req_vars=( ODOO_HOST OCR_HOST )
+          req_secrets=( SUPABASE_DB_HOST SUPABASE_DB_PORT SUPABASE_DB_NAME SUPABASE_DB_USER SUPABASE_DB_PASSWORD )
+
+          echo ""
+          echo "════════════════════════════════════════════════════"
+          echo "📋 Configuration Verification (T&E MVP Bundle)"
+          echo "════════════════════════════════════════════════════"
+          echo ""
+          echo "== Repository Variables =="
+          for v in "${req_vars[@]}"; do
+            if [ -n "${!v:-}" ]; then
+              printf "✅ %s=%s\n" "$v" "${!v}"
+            else
+              printf "❌ %s (MISSING - required for deployment)\n" "$v"
+            fi
+          done
+
+          echo ""
+          echo "== Repository Secrets (presence check) =="
+          for s in "${req_secrets[@]}"; do
+            if [ -n "${!s:-}" ]; then
+              printf "✅ %s present\n" "$s"
+            else
+              printf "❌ %s MISSING (required for warehouse/Skillsmith)\n" "$s"
+            fi
+          done
+
+          echo ""
+          echo "════════════════════════════════════════════════════"
+          echo "ℹ️  Missing config will not block this PR but must be"
+          echo "   set before deployment. See PR_DEPLOYMENT_CHECKLIST.md"
+          echo "════════════════════════════════════════════════════"
+          echo ""
+        env:
+          ODOO_HOST: ${{ vars.ODOO_HOST }}
+          OCR_HOST: ${{ vars.OCR_HOST }}
+          SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
+          SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
+          SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
+          SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}

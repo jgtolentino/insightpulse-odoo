@@ -1,0 +1,17 @@
+# DigitalOcean App Platform runtime configuration
+name: ocr-service
+region: sgp1
+services:
+  - name: ocr
+    dockerfile_path: ocrsvc/Dockerfile
+    source_dir: /
+    github:
+      branch: main
+      deploy_on_push: true
+    health_check:
+      http_path: /health
+    http_port: 8080
+    instance_count: 1
+    instance_size_slug: basic-xxs
+    routes:
+      - path: /

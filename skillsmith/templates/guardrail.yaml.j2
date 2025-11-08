@@ -1,0 +1,16 @@
+id: {{ id }}
+title: "{{ title }}"
+type: guardrail
+component: {{ component }}
+fingerprint: {{ fingerprint }}
+pattern: "{{ pattern }}"
+check:
+  - name: validate_before_deploy
+    condition: |
+      # Add validation logic here
+      pass
+remediation:
+  - Verify configuration
+  - Check dependencies
+  - Review error pattern
+auto_fix: false

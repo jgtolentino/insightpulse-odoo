@@ -1,0 +1,8 @@
+{
+  "dashboard_title": "T&E Overview",
+  "description": "Travel & Expense overview dashboard showing key metrics and trends",
+  "position_json": "{}",
+  "metadata": {
+    "refresh_frequency": 300
+  }
+}

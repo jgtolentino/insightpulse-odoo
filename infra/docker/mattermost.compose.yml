@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  mm-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=mattermost
+      - POSTGRES_USER=mmuser
+      - POSTGRES_PASSWORD=${MM_DB_PASSWORD:-mm_pass}
+    volumes:
+      - mm-db:/var/lib/postgresql/data
+    networks:
+      - mattermost
+
+  mattermost:
+    image: mattermost/mattermost-team-edition:9
+    restart: unless-stopped
+    depends_on:
+      - mm-db
+    environment:
+      - MM_CONFIG=/mattermost/config/config.json
+      - MM_SQLSETTINGS_DRIVERNAME=postgres
+      - MM_SQLSETTINGS_DATASOURCE=postgres://mmuser:${MM_DB_PASSWORD:-mm_pass}@mm-db:5432/mattermost?sslmode=disable&connect_timeout=10
+      - MM_SERVICESETTINGS_SITEURL=https://chat.insightpulseai.net
+    ports:
+      - "8065:8065"
+    volumes:
+      - mm-app:/mattermost
+    networks:
+      - mattermost
+
+volumes:
+  mm-db:
+  mm-app:
+
+networks:
+  mattermost:
+    driver: bridge
