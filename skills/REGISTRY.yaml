@@ -1,0 +1,50 @@
+version: 0.2.0
+updated: 2025-11-08T00:00:00Z
+skills:
+  - id: automation_executor
+    path: skills/automation_executor
+    spec: skills/automation_executor/openapi.yaml
+    purpose: "Invoke atomic Odoo tools via OpenAPI with idempotency + dry_run"
+    inputs: ["Idempotency-Key (header)", "JSON payload"]
+    outputs: ["tool_call", "dryrun_report"]
+    deps: ["ODOO_BASE_URL", "ODOO_BOT_TOKEN"]
+    examples:
+      - skills/automation_executor/examples/create_sales_order.json
+      - skills/automation_executor/examples/validate_journal_entry.json
+
+  - id: git_specialist
+    path: skills/git_specialist
+    purpose: "Prepare branches/commits and open draft PRs with RL confidence"
+    inputs: ["diff/plan json", "repo slug from env"]
+    outputs: ["branch", "pr"]
+    deps: ["GITHUB_TOKEN", "GITHUB_REPO_SLUG", "GITHUB_DEFAULT_BRANCH"]
+
+  - id: automation_gap_analyzer
+    path: skills/automation_gap_analyzer
+    spec: skills/automation_gap_analyzer/rules.yaml
+    purpose: "Scan repo for CI/CD gaps and emit a patch plan"
+    inputs: ["lang", "kind"]
+    outputs: ["gap_report", "gap_plan"]
+    deps: []
+
+  - id: conflict_manager
+    path: skills/conflict_manager
+    spec: skills/conflict_manager/rules.yaml
+    purpose: "Detect OCA/deps/migration/docker conflicts and emit fix_plan"
+    inputs: ["signal", "repo signals"]
+    outputs: ["conflict_report", "fix_plan"]
+    deps: []
+
+# Planned skills for future implementation
+planned:
+  - id: bir-vat-validation
+    purpose: "Pre-validate 2550Q payloads before filing; attach results to DMS"
+    inputs: ["2550Q draft payload", "DMS attachment API"]
+    outputs: ["validation_report", "dms_attachment_id"]
+    deps: ["BIR_EFPS_API_KEY", "DMS_BASE_URL"]
+
+  - id: bir-form-drafter
+    purpose: "Generate eFPS/eBIR XML/PDF drafts (1601-C, 0619-E, 1601-EQ, 2550Q, 1702Q)"
+    inputs: ["form_type", "tax_period", "company_tin", "transactions[]"]
+    outputs: ["xml_draft", "pdf_preview", "validation_errors[]"]
+    deps: ["BIR_TEMPLATES_PATH", "BIR_VALIDATION_RULES"]
