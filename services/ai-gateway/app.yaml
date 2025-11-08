@@ -1,0 +1,89 @@
+# DigitalOcean App Platform spec for AI Gateway
+
+name: ai-gateway
+
+services:
+  - name: api
+    source_dir: services/ai-gateway
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+
+    build_command: pip install -r requirements.txt
+    run_command: uvicorn main:app --host 0.0.0.0 --port 8080 --workers 2
+
+    http_port: 8080
+
+    instance_count: 2
+    instance_size_slug: basic-xs
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    routes:
+      - path: /
+
+    envs:
+      # API Keys (SECRETS - set in DO dashboard)
+      - key: API_KEY_CHATGPT
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: API_KEY_CLAUDE
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: API_KEY_INTERNAL
+        scope: RUN_TIME
+        type: SECRET
+
+      # Backend Services
+      - key: ODOO_URL
+        scope: RUN_TIME
+        value: "https://erp.insightpulseai.net"
+
+      - key: ODOO_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: SUPABASE_URL
+        scope: RUN_TIME
+        value: "https://spdtwktxdalcfigzeqrz.supabase.co"
+
+      - key: SUPABASE_SERVICE_KEY
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: N8N_URL
+        scope: RUN_TIME
+        value: "https://n8n.insightpulseai.net"
+
+      - key: VECTOR_API_URL
+        scope: RUN_TIME
+        value: "https://mcp.insightpulseai.net/vector"
+
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+
+      - key: PORT
+        scope: RUN_TIME
+        value: "8080"
+
+domains:
+  - domain: api.insightpulseai.net
+    type: PRIMARY
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+
+# Auto-deploy on push to main
+# Add secrets via DO dashboard or doctl:
+#   doctl apps update <app-id> --set-env API_KEY_CHATGPT=xxx

@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "finserv-odoo": {
+      "url": "https://api.insightpulseai.net/mcp/odoo",
+      "description": "Odoo ERP operations (sales, expenses, invoices, tasks)"
+    },
+    "finserv-close": {
+      "url": "https://api.insightpulseai.net/mcp/close",
+      "description": "Month-end close operations (status, checklists, exceptions, metrics)"
+    },
+    "finserv-policy": {
+      "url": "https://api.insightpulseai.net/mcp/policy",
+      "description": "Policy & compliance Q&A with RAG (SOPs, policies, BIR guides)"
+    }
+  }
+}
