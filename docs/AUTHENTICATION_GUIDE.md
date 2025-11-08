@@ -25,6 +25,34 @@
 - **Signup URL:** https://chat.insightpulseai.net/signup_user_complete/
 - First user automatically becomes admin
 
+### Apache Superset (https://superset.insightpulseai.net)
+
+**Default Credentials:**
+```
+Username: admin
+Password: admin
+
+⚠️ CHANGE THIS PASSWORD IMMEDIATELY!
+```
+
+**If default credentials don't work, create admin user:**
+```bash
+# Via DigitalOcean App Platform Console
+doctl apps console 73af11cb-dab2-4cb1-9770-291c536531e6
+
+# Then run inside container:
+superset fab create-admin \
+    --username admin \
+    --firstname Admin \
+    --lastname User \
+    --email admin@insightpulseai.net \
+    --password admin
+
+# Initialize database (if needed)
+superset db upgrade
+superset init
+```
+
 ---
 
 ## 🔐 Unified Single Sign-On (SSO)
