@@ -13,16 +13,25 @@ Direct URLs will redirect to landing page:
 - ~~https://erp.insightpulseai.net/web/login~~ → https://insightpulseai.net
 - ~~https://superset.insightpulseai.net/login~~ → https://insightpulseai.net
 
+### Unified Login Credentials
+
+**Landing Page (insightpulseai.net):**
+- **Username:** `admin`
+- **Password:** `admin`
+- **Database:** `odoo` (auto-selected)
+
+After login, you'll have access to all services (Odoo ERP, Superset, n8n, Chat).
+
 ---
 
-## 🔑 Service Credentials
+## 🔑 Service-Specific Credentials
 
-### Odoo ERP
+### Odoo ERP (via landing page only)
 
 **Admin User:**
 - **Username:** `admin`
 - **Password:** `admin`
-- **Email:** `admin@insightpulseai.net` (default)
+- **Database:** `odoo_prod` (when accessing directly via ERP menu)
 
 ### n8n Workflow Automation (https://n8n.insightpulseai.net)
 
