@@ -1,7 +1,7 @@
 # Makefile for InsightPulse Odoo
 # Enterprise SaaS Replacement Suite
 
-.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health validate validate-structure validate-makefile health-report auto-merge auto-merge-preview auto-merge-rollback auto-merge-audit auto-merge-test auto-merge-install auto-merge-help
+.PHONY: help init dev prod stop down logs test lint deploy-prod backup restore update-oca create-module shell psql clean up restart health validate validate-structure validate-makefile health-report auto-merge auto-merge-preview auto-merge-rollback auto-merge-audit auto-merge-test auto-merge-install auto-merge-help mm-plugins mm-health odoo-bridge-install mm-webhooks-test
 
 # Default target
 .DEFAULT_GOAL := help
@@ -1246,3 +1246,42 @@ auto-merge-help: ## Show auto-merge usage guide
 	@echo ""
 	@echo "Documentation: auto-merge/README.md"
 	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 💬 MATTERMOST INTEGRATION
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: mm-plugins mm-health odoo-bridge-install mm-webhooks-test
+
+mm-plugins: ## Install/enable Mattermost plugins from plugins.yaml
+	@bash scripts/mattermost/install_plugins.sh
+
+mm-health: ## Check Mattermost health and active plugins
+	@bash scripts/mattermost/health.sh
+
+odoo-bridge-install: ## Install/update the Odoo Mattermost bridge module
+	@echo "Installing/upgrading ipai_mattermost_bridge..."
+	@if command -v docker compose >/dev/null 2>&1 && [ -f docker-compose.yml ]; then \
+		docker compose exec -T odoo bash -lc "odoo -d \$$ODOO_DB --stop-after-init -i ipai_mattermost_bridge || true"; \
+	else \
+		echo "⚠️  Docker Compose not available or docker-compose.yml not found"; \
+		echo "    Install manually: odoo -d YOUR_DB -i ipai_mattermost_bridge"; \
+	fi
+	@echo "✅ Module installed/updated!"
+	@echo "💡 Set system parameter: ipai.mm_webhook_secret to a shared secret"
+
+mm-webhooks-test: ## Send sample webhook payloads to Odoo (requires MM_WEBHOOK_SECRET)
+	@test -n "$(MM_WEBHOOK_SECRET)" || (echo "❌ Set MM_WEBHOOK_SECRET environment variable" && exit 1)
+	@test -n "$(ODOO_BASE_URL)" || (echo "❌ Set ODOO_BASE_URL environment variable" && exit 1)
+	@echo "Testing Mattermost webhooks..."
+	@echo "-> GitHub sample"
+	@curl -fsS -X POST -H "Content-Type: application/json" \
+	  -H "X-IPAI-Webhook-Secret: $(MM_WEBHOOK_SECRET)" \
+	  -d '{"action":"opened","pull_request":{"number":1,"title":"Test PR"}}' \
+	  $(ODOO_BASE_URL)/ipai/mattermost/github | jq .
+	@echo "-> Jira sample"
+	@curl -fsS -X POST -H "Content-Type: application/json" \
+	  -H "X-IPAI-Webhook-Secret: $(MM_WEBHOOK_SECRET)" \
+	  -d '{"issue":{"key":"IPAI-123"},"webhookEvent":"jira:issue_created"}' \
+	  $(ODOO_BASE_URL)/ipai/mattermost/jira | jq .
+	@echo "✅ Webhook tests complete!"
