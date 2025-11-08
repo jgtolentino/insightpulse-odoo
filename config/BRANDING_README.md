@@ -18,9 +18,12 @@ This directory contains the unified branding specification and implementation fi
 ## Brand Colors
 
 ```
-Primary:   #1455C7 (InsightPulse Blue)
-Secondary: #111827 (Dark Gray)
-Accent:    #F97316 (Orange)
+Primary:   #2F5BFF (InsightPulse Blue - extracted from Mattermost)
+Grays:     #212529 to #F8F9FA (Neutral gray scale)
+Success:   #28A745 (Green)
+Warning:   #FFC107 (Yellow)
+Error:     #DC3545 (Red)
+Info:      #17A2B8 (Cyan)
 ```
 
 ---
@@ -71,19 +74,21 @@ docker-compose restart odoo
 
 **Step 3: Verify Theme Applied**
 
-- Check navbar is dark gray (#111827)
-- Check primary buttons are blue (#1455C7)
-- Check links are blue (#1455C7)
+- Check navbar is dark gray (#212529)
+- Check primary buttons are blue (#2F5BFF)
+- Check links are blue (#2F5BFF)
+- Check font is Inter (Google Fonts)
 
 **Step 4: Configure Document Layout (Optional)**
 
 Navigate to **Settings → General Settings → Companies → Document Layout**:
 
 ```
-Primary Color:   #1455C7
-Secondary Color: #111827
+Primary Color:   #2F5BFF
+Secondary Color: #212529
 Logo:            Upload InsightPulseAI logo
 Footer Text:     InsightPulseAI • Philippine Operations • VAT Registered
+Font:            Inter (auto-loaded via CSS)
 ```
 
 ---
@@ -106,9 +111,10 @@ Footer Text:     InsightPulseAI • Philippine Operations • VAT Registered
 4. Click **Save**
 
 **Verification:**
-- Sidebar should be dark gray (#111827)
-- Links should be blue (#1455C7)
-- Online indicators should be green (#10B981)
+- Sidebar should be dark gray (#212529)
+- Links should be blue (#2F5BFF)
+- Online indicators should be green (#28A745)
+- Mention highlights should be light blue (#E8EEFF)
 
 ---
 
