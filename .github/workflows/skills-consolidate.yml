@@ -1,0 +1,111 @@
+name: Skills Consolidation
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'skills/**'
+      - 'scripts/skills/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'skills/**'
+      - 'scripts/skills/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  consolidate:
+    name: Generate Skills Registry
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run skills consolidation
+        run: |
+          python3 scripts/skills/consolidate.py
+
+      - name: Verify registry files
+        run: |
+          test -f skills/REGISTRY.json || exit 1
+          test -f skills/REGISTRY.mcp.json || exit 1
+          test -f docs/claude-code-skills/Section19.generated.md || exit 1
+
+          echo "✅ All registry files generated successfully"
+
+          # Show skill count
+          python3 -c "import json; data=json.load(open('skills/REGISTRY.json')); print(f'📊 Total Skills: {data[\"skill_count\"]}')"
+
+      - name: Upload registry artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: skills-registry
+          path: |
+            skills/REGISTRY.json
+            skills/REGISTRY.mcp.json
+            docs/claude-code-skills/Section19.generated.md
+          retention-days: 30
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code skills/REGISTRY.json || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --exit-code skills/REGISTRY.mcp.json || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --exit-code docs/claude-code-skills/Section19.generated.md || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push registry updates
+        if: github.event_name == 'push' && steps.git-check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add skills/REGISTRY.json skills/REGISTRY.mcp.json docs/claude-code-skills/Section19.generated.md
+          git commit -m "chore: Update skills registry [skip ci]"
+          git push
+
+      - name: Comment on PR with skill count
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const registry = JSON.parse(fs.readFileSync('skills/REGISTRY.json', 'utf8'));
+
+            const comment = `## 📚 Skills Registry Update
+
+            **Total Skills:** ${registry.skill_count}
+
+            ### Skills by Category
+            ${Object.entries(registry.skills.reduce((acc, skill) => {
+              const cat = skill.category || 'Uncategorized';
+              acc[cat] = (acc[cat] || 0) + 1;
+              return acc;
+            }, {})).map(([cat, count]) => `- **${cat}**: ${count}`).join('\n')}
+
+            <details>
+            <summary>View all skills</summary>
+
+            ${registry.skills.map(s => `- \`${s.skill_id}\` (v${s.version}) - ${s.category}`).join('\n')}
+
+            </details>
+
+            ---
+            *Registry files have been regenerated and are attached as artifacts.*
+            `;
+
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });

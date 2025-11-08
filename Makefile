@@ -1110,3 +1110,93 @@ ops-help: ## Show ops hardening commands
 	@echo "  Prometheus Alerts: monitoring/prometheus/"
 	@echo "  Auto-heal Scripts: auto-healing/handlers/"
 	@echo ""
+
+# ══════════════════════════════════════════════════════════════
+# 📚 SKILLS CONSOLIDATION (v0.2.0)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: skills-consolidate skills-open skills-validate
+
+skills-consolidate: ## Generate skills registry (REGISTRY.json, MCP map, Section19)
+	@echo "📚 Consolidating skills registry..."
+	@python3 scripts/skills/consolidate.py
+	@echo "✅ Registry files generated:"
+	@echo "   - skills/REGISTRY.json"
+	@echo "   - skills/REGISTRY.mcp.json"
+	@echo "   - docs/claude-code-skills/Section19.generated.md"
+
+skills-open: skills-consolidate ## Show skill count
+	@echo ""
+	@python3 -c "import json; data=json.load(open('skills/REGISTRY.json')); print(f'📊 Total Skills: {data[\"skill_count\"]}')"
+
+skills-validate: ## Validate all SKILL.md files have required metadata
+	@echo "🔍 Validating skill files..."
+	@python3 -c "import pathlib; \
+		skills = list(pathlib.Path('skills').rglob('SKILL.md')); \
+		missing = [s for s in skills if '**Skill ID:**' not in s.read_text()]; \
+		print(f'✅ Validated {len(skills)} skills'); \
+		[print(f'⚠️  Missing metadata: {s}') for s in missing]; \
+		exit(len(missing))"
+
+# ══════════════════════════════════════════════════════════════
+# 🔧 n8n CLI
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: n8n-cli n8n-list n8n-import n8n-run
+
+N8N_API ?= https://n8n.insightpulseai.net
+N8N_KEY ?=
+
+n8n-cli: ## Install ip-n8n locally
+	@echo "🔧 Setting up ip-n8n CLI..."
+	@python3 -m pip install -q requests || echo "⚠️  pip install failed"
+	@chmod +x tools/ip-n8n/ip_n8n.py
+	@ln -sf $(PWD)/tools/ip-n8n/ip_n8n.py $(PWD)/ip-n8n 2>/dev/null || true
+	@echo "✅ ip-n8n ready!"
+	@echo ""
+	@echo "Configure: ./ip-n8n login --base $(N8N_API) --key \$$N8N_KEY"
+	@echo "Usage:     ./ip-n8n list"
+	@echo "           ./ip-n8n run <workflow-id>"
+
+n8n-list: ## List n8n workflows
+	@./ip-n8n list
+
+n8n-run: ## Run n8n workflow (usage: make n8n-run ID=12)
+	@test -n "$(ID)" || (echo "❌ Usage: make n8n-run ID=<workflow-id>"; exit 1)
+	@./ip-n8n run $(ID)
+
+n8n-import: ## Import n8n workflow (usage: make n8n-import FILE=path/to/workflow.json)
+	@test -n "$(FILE)" || (echo "❌ Usage: make n8n-import FILE=<path>"; exit 1)
+	@./ip-n8n import $(FILE)
+
+# ══════════════════════════════════════════════════════════════
+# 💬 CHAT (Mattermost - Slack Alternative)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: chat-up chat-down chat-logs chat-tls
+
+chat-up: ## Start Mattermost
+	@echo "💬 Starting Mattermost..."
+	@docker compose -f infra/docker/mattermost.compose.yml up -d
+	@echo "✅ Mattermost started!"
+	@echo ""
+	@echo "🌐 Local:  http://localhost:8065"
+	@echo "🌐 Remote: https://chat.insightpulseai.net"
+	@echo ""
+	@echo "First run: Create admin user via web UI"
+
+chat-down: ## Stop Mattermost
+	@echo "🛑 Stopping Mattermost..."
+	@docker compose -f infra/docker/mattermost.compose.yml down
+
+chat-logs: ## View Mattermost logs
+	@docker compose -f infra/docker/mattermost.compose.yml logs -f
+
+chat-tls: ## Configure Nginx + TLS for Mattermost
+	@echo "🔐 Configuring Nginx for chat.insightpulseai.net..."
+	@sudo ln -sf $(PWD)/infra/nginx/chat.insightpulseai.net.conf /etc/nginx/sites-enabled/chat.insightpulseai.net.conf
+	@sudo nginx -t
+	@sudo systemctl reload nginx
+	@echo "✅ Nginx configured!"
+	@echo ""
+	@echo "Run certbot: sudo certbot --nginx -d chat.insightpulseai.net"
