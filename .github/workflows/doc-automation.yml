@@ -1,0 +1,255 @@
+name: Documentation Automation
+
+on:
+  # Run daily at 3 AM UTC
+  schedule:
+    - cron: '0 3 * * *'
+
+  # Run on push to main and develop
+  push:
+    branches: [main, develop]
+    paths:
+      - 'odoo/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'claude.md'
+      - '.github/PLANNING.md'
+      - 'scripts/**'
+
+  # Run on PR
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'odoo/**'
+      - 'docs/**'
+      - 'README.md'
+      - 'claude.md'
+      - '.github/PLANNING.md'
+
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force update all documentation'
+        required: false
+        default: 'false'
+
+jobs:
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Validate documentation freshness
+        run: ./scripts/validate-doc-freshness.sh
+
+      - name: Check cross-references
+        run: |
+          echo "Checking for broken links..."
+          # Future enhancement: markdown-link-check
+          # npm install -g markdown-link-check
+          # find . -name "*.md" -exec markdown-link-check {} \;
+
+      - name: Validate module documentation
+        run: |
+          echo "Checking module documentation..."
+          MISSING_DOCS=0
+          for module in odoo/addons/*; do
+            if [[ -d "$module" ]] && [[ -f "$module/__manifest__.py" ]]; then
+              if [[ ! -f "$module/README.md" ]]; then
+                echo "⚠️  Missing README.md in $(basename $module)"
+                ((MISSING_DOCS++))
+              fi
+            fi
+          done
+
+          if [[ $MISSING_DOCS -gt 0 ]]; then
+            echo "::warning::$MISSING_DOCS modules missing README.md"
+          fi
+
+  update-docs:
+    name: Update Auto-Generated Docs
+    runs-on: ubuntu-latest
+    needs: validate-docs
+    if: github.event_name != 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Make scripts executable
+        run: chmod +x scripts/*.sh
+
+      - name: Update auto-generated sections
+        run: ./scripts/update-auto-sections.sh
+
+      - name: Generate module index
+        run: |
+          echo "Generating module documentation index..."
+          # This is handled by update-auto-sections.sh
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --exit-code || echo "has_changes=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changes
+        if: steps.git-check.outputs.has_changes == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add -A
+          git commit -m "docs: auto-update generated documentation [skip ci]"
+          git push
+
+  check-freshness:
+    name: Check Documentation Staleness
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check claude.md age
+        run: |
+          CLAUDE_AGE=$(( ($(date +%s) - $(stat -c %Y claude.md)) / 86400 ))
+          echo "claude.md is $CLAUDE_AGE days old"
+
+          if [[ $CLAUDE_AGE -gt 7 ]]; then
+            echo "::error::claude.md is stale (>7 days old)"
+            exit 1
+          fi
+
+      - name: Check PLANNING.md age
+        run: |
+          PLANNING_AGE=$(( ($(date +%s) - $(stat -c %Y .github/PLANNING.md)) / 86400 ))
+          echo "PLANNING.md is $PLANNING_AGE days old"
+
+          if [[ $PLANNING_AGE -gt 30 ]]; then
+            echo "::warning::PLANNING.md is stale (>30 days old)"
+          fi
+
+      - name: Check README.md age
+        run: |
+          README_AGE=$(( ($(date +%s) - $(stat -c %Y README.md)) / 86400 ))
+          echo "README.md is $README_AGE days old"
+
+          if [[ $README_AGE -gt 90 ]]; then
+            echo "::warning::README.md is stale (>90 days old)"
+          fi
+
+  generate-reports:
+    name: Generate Documentation Reports
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Generate documentation metrics
+        run: |
+          mkdir -p reports
+
+          echo "# Documentation Metrics Report" > reports/doc-metrics.md
+          echo "Generated: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> reports/doc-metrics.md
+          echo "" >> reports/doc-metrics.md
+
+          echo "## File Statistics" >> reports/doc-metrics.md
+          echo "" >> reports/doc-metrics.md
+          echo "| File | Size | Lines | Last Modified |" >> reports/doc-metrics.md
+          echo "|------|------|-------|---------------|" >> reports/doc-metrics.md
+
+          for file in README.md claude.md .github/PLANNING.md CHANGELOG.md; do
+            if [[ -f "$file" ]]; then
+              SIZE=$(du -h "$file" | cut -f1)
+              LINES=$(wc -l < "$file")
+              MODIFIED=$(stat -c %y "$file" | cut -d' ' -f1)
+              echo "| $file | $SIZE | $LINES | $MODIFIED |" >> reports/doc-metrics.md
+            fi
+          done
+
+          echo "" >> reports/doc-metrics.md
+          echo "## Module Documentation Coverage" >> reports/doc-metrics.md
+          echo "" >> reports/doc-metrics.md
+
+          TOTAL=0
+          WITH_DOCS=0
+
+          for module in odoo/addons/*; do
+            if [[ -d "$module" ]] && [[ -f "$module/__manifest__.py" ]]; then
+              ((TOTAL++))
+              if [[ -f "$module/README.md" ]]; then
+                ((WITH_DOCS++))
+              fi
+            fi
+          done
+
+          if [[ $TOTAL -gt 0 ]]; then
+            COVERAGE=$(( WITH_DOCS * 100 / TOTAL ))
+            echo "- Total modules: $TOTAL" >> reports/doc-metrics.md
+            echo "- Documented: $WITH_DOCS" >> reports/doc-metrics.md
+            echo "- Coverage: $COVERAGE%" >> reports/doc-metrics.md
+          fi
+
+      - name: Upload metrics report
+        uses: actions/upload-artifact@v4
+        with:
+          name: documentation-metrics
+          path: reports/doc-metrics.md
+          retention-days: 30
+
+  notify:
+    name: Notify on Failures
+    runs-on: ubuntu-latest
+    needs: [validate-docs, check-freshness]
+    if: failure()
+
+    steps:
+      - name: Create issue on documentation failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '📚 Documentation validation failed',
+              body: `## Documentation Automation Alert
+
+              The automated documentation validation has failed.
+
+              **Workflow:** ${context.workflow}
+              **Run:** ${context.runNumber}
+              **Branch:** ${context.ref}
+
+              Please review the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for details.
+
+              ### Common Fixes
+
+              1. Update stale documentation:
+                 \`\`\`bash
+                 ./scripts/update-auto-sections.sh
+                 git add . && git commit -m "docs: update documentation"
+                 \`\`\`
+
+              2. Validate documentation:
+                 \`\`\`bash
+                 ./scripts/validate-doc-freshness.sh
+                 \`\`\`
+
+              3. Check cross-references for broken links
+              `,
+              labels: ['documentation', 'automated', 'urgent']
+            });

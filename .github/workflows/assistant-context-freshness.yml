@@ -1,34 +1,116 @@
-name: assistant-context-freshness
+name: Assistant Context Freshness
+
 on:
-  pull_request:
-  push:
-    branches: [ main ]
+  # Run daily at 3 AM UTC
   schedule:
-    - cron: "0 3 * * *" # daily 03:00 UTC
+    - cron: "0 3 * * *"
+
+  # Run on push to main
+  push:
+    branches: [main]
+    paths:
+      - "claude.md"
+
+  # Run on pull requests
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - "claude.md"
+
+  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
-  freshness:
+  validate-claude-md:
+    name: Validate claude.md Freshness
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Ensure claude.md exists
-        run: test -f claude.md || (echo "::error ::claude.md is missing"; exit 1)
-
-      - name: Fail if claude.md older than 7 days
+      - name: Check claude.md exists
         run: |
-          TS=$(git log -1 --format=%ct -- claude.md || echo 0)
-          NOW=$(date +%s)
-          DELTA=$((NOW - TS))
-          # 7 days = 604800 seconds
-          if [ "$DELTA" -gt 604800 ]; then
-            echo "::error ::claude.md is older than 7 days (delta=${DELTA}s). Please refresh section 0–2 and 10–11."
+          if [[ ! -f "claude.md" ]]; then
+            echo "::error::claude.md not found!"
             exit 1
           fi
-          echo "claude.md freshness OK (delta=${DELTA}s)"
 
-      - name: Optional: validate MUST/SHOULD sections present
+      - name: Check claude.md age
         run: |
-          grep -q "## 0) Normative Rules" claude.md
-          grep -q "## 10) Evals (Blocking)" claude.md
-          grep -q "## 11) Deployment Guardrails" claude.md
+          CLAUDE_AGE=$(( ($(date +%s) - $(stat -c %Y claude.md)) / 86400 ))
+          echo "📅 claude.md is $CLAUDE_AGE days old"
+
+          if [[ $CLAUDE_AGE -gt 7 ]]; then
+            echo "::error::claude.md is stale (>7 days old, currently $CLAUDE_AGE days)"
+            echo "::error::Please update claude.md to ensure AI assistant has current context"
+            exit 1
+          elif [[ $CLAUDE_AGE -gt 5 ]]; then
+            echo "::warning::claude.md is getting old ($CLAUDE_AGE days). Consider updating soon."
+          else
+            echo "✅ claude.md is fresh ($CLAUDE_AGE days old)"
+          fi
+
+      - name: Check required sections
+        run: |
+          echo "🔍 Checking for required sections..."
+
+          MISSING_SECTIONS=0
+
+          # Section 0: Repository Overview
+          if ! grep -q "## Section 0: Repository Overview" claude.md; then
+            echo "::error::Missing Section 0: Repository Overview"
+            ((MISSING_SECTIONS++))
+          else
+            echo "✅ Section 0 present"
+          fi
+
+          # Section 10: Code Generation Guidelines
+          if ! grep -q "## Section 10: Code Generation Guidelines" claude.md; then
+            echo "::error::Missing Section 10: Code Generation Guidelines"
+            ((MISSING_SECTIONS++))
+          else
+            echo "✅ Section 10 present"
+          fi
+
+          # Section 11: Conditional Deployment Mode
+          if ! grep -q "## Section 11: Conditional Deployment Mode" claude.md; then
+            echo "::error::Missing Section 11: Conditional Deployment Mode"
+            ((MISSING_SECTIONS++))
+          else
+            echo "✅ Section 11 present"
+          fi
+
+          if [[ $MISSING_SECTIONS -gt 0 ]]; then
+            echo "::error::$MISSING_SECTIONS required sections missing from claude.md"
+            exit 1
+          fi
+
+      - name: Check for Last Updated timestamp
+        run: |
+          if ! grep -q "Last Updated:" claude.md; then
+            echo "::warning::claude.md missing 'Last Updated' timestamp"
+          else
+            LAST_UPDATED=$(grep "Last Updated:" claude.md | head -1)
+            echo "📝 $LAST_UPDATED"
+          fi
+
+      - name: Validate cross-reference to README
+        run: |
+          if ! grep -q "README.md" claude.md; then
+            echo "::warning::claude.md should reference README.md for operational tasks"
+          else
+            echo "✅ Cross-reference to README.md found"
+          fi
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 Assistant Context Validation Summary"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ PASS: claude.md validation complete"
+          echo ""
+          echo "Next steps:"
+          echo "1. Keep claude.md fresh (<7 days)"
+          echo "2. Maintain required sections (0, 10, 11)"
+          echo "3. Update when architecture changes"

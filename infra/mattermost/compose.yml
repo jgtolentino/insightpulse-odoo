@@ -1,0 +1,62 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mmuser
+      POSTGRES_PASSWORD: ${MM_POSTGRES_PASSWORD:-mmuser_password}
+      POSTGRES_DB: mattermost
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - mattermost
+
+  mattermost:
+    image: mattermost/mattermost-team-edition:latest
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      # Database
+      MM_SQLSETTINGS_DRIVERNAME: postgres
+      MM_SQLSETTINGS_DATASOURCE: postgres://mmuser:${MM_POSTGRES_PASSWORD:-mmuser_password}@postgres:5432/mattermost?sslmode=disable&connect_timeout=10
+
+      # Site URL
+      MM_SERVICESETTINGS_SITEURL: ${MM_BASE_URL:-https://chat.insightpulseai.net}
+
+      # Email (optional - configure later)
+      MM_EMAILSETTINGS_ENABLESMTPAUTH: false
+      MM_EMAILSETTINGS_SMTPSERVER: localhost
+      MM_EMAILSETTINGS_SMTPPORT: "25"
+
+      # File storage
+      MM_FILESETTINGS_DIRECTORY: /mattermost/data
+
+      # Performance
+      MM_SQLSETTINGS_MAXIDLECONNS: 20
+      MM_SQLSETTINGS_MAXOPENCONNS: 300
+
+    ports:
+      - "8065:8065"
+    volumes:
+      - mattermost_data:/mattermost/data
+      - mattermost_config:/mattermost/config
+      - mattermost_logs:/mattermost/logs
+      - mattermost_plugins:/mattermost/plugins
+      - mattermost_client_plugins:/mattermost/client/plugins
+    networks:
+      - mattermost
+
+volumes:
+  postgres_data:
+  mattermost_data:
+  mattermost_config:
+  mattermost_logs:
+  mattermost_plugins:
+  mattermost_client_plugins:
+
+networks:
+  mattermost:
+    driver: bridge
