@@ -1350,3 +1350,95 @@ pi-status: ## Show Process Intelligence service status
 	@echo ""
 	@echo "🏥 Health:"
 	@make pi-test 2>/dev/null || echo "❌ Service not responding"
+
+# ══════════════════════════════════════════════════════════════
+# 🇵🇭 PHILIPPINE TAX & COMPLIANCE
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: ph-tax-seed ph-tax-ingest ph-tax-agent-up ph-tax-agent-down ph-tax-test ph-tax-canary
+
+ph-tax-seed: ## Initialize PH tax schema in Supabase
+	@echo "🗄️  Initializing Philippine tax compliance schema..."
+	@test -n "$(DATABASE_URL)" || (echo "❌ DATABASE_URL not set" && exit 1)
+	@psql "$(DATABASE_URL)" -f supabase/migrations/003_ph_tax_compliance.sql
+	@echo "✅ Schema initialized with 2025 calendar and holidays"
+
+ph-tax-ingest: ## Ingest BIR documents (forms, guides, RMCs)
+	@echo "📥 Ingesting BIR documents..."
+	@test -d .venv || python3 -m venv .venv
+	@. .venv/bin/activate && \
+		pip install -q requests beautifulsoup4 PyPDF2 sentence-transformers psycopg2-binary python-dotenv && \
+		python3 scripts/ph-compliance/ingest_bir.py
+	@echo "✅ BIR documents ingested into ph_tax.docs"
+
+ph-tax-agent-up: ## Start Agent Gateway (PH Tax Q&A)
+	@echo "🚀 Starting Agent Gateway for PH Tax..."
+	@docker compose -f docker-compose.yml -f docker-compose.agent-gateway.yml up -d agent-gateway
+	@echo "✅ Agent Gateway started on port 8081"
+
+ph-tax-agent-down: ## Stop Agent Gateway
+	@echo "🛑 Stopping Agent Gateway..."
+	@docker compose -f docker-compose.yml -f docker-compose.agent-gateway.yml down agent-gateway
+	@echo "✅ Service stopped"
+
+ph-tax-test: ## Test Agent Gateway Q&A endpoints
+	@echo "🧪 Testing PH Tax Agent Gateway..."
+	@echo ""
+	@echo "1. Testing Monthly VAT question..."
+	@curl -fsS -X POST http://localhost:8081/agent/tax/ph/qa \
+		-H "Content-Type: application/json" \
+		-d '{"question":"Do we still file monthly VAT (2550M)?","top_k":3}' | jq -r '.answer'
+	@echo ""
+	@echo "2. Testing Filing Calendar..."
+	@curl -fsS -X POST http://localhost:8081/agent/tax/ph/calendar \
+		-H "Content-Type: application/json" \
+		-d '{"window_days":30,"entity":"ALL"}' | jq -r '.entries[] | "\(.form_code): Due \(.due_date_adjusted) (\(.days_until_due) days)"'
+	@echo ""
+	@echo "✅ Tests complete"
+
+ph-tax-canary: ## Run canary checks (production validation)
+	@echo "🐦 Running PH Tax canary checks..."
+	@test -n "$(GATEWAY_BASE_URL)" || (echo "❌ GATEWAY_BASE_URL not set (use http://localhost:8081 for local)" && exit 1)
+	@echo "Testing against: $(GATEWAY_BASE_URL)"
+	@echo ""
+	@RESPONSE=$$(curl -fsS -X POST "$(GATEWAY_BASE_URL)/agent/tax/ph/qa" \
+		-H "Content-Type: application/json" \
+		-d '{"question":"Do we still file monthly VAT (2550M) in 2025?","top_k":3}') && \
+	if echo "$$RESPONSE" | jq -e '.answer | contains("No")' > /dev/null && \
+	   echo "$$RESPONSE" | jq -e '.sources[] | select(contains("RMC") and contains("5-2023"))' > /dev/null; then \
+		echo "✅ PASS: Monthly VAT question answered correctly with RMC 5-2023 citation"; \
+	else \
+		echo "❌ FAIL: Incorrect answer or missing RMC 5-2023 citation"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "🎉 Canary checks passed!"
+
+ph-tax-help: ## Show PH Tax compliance commands
+	@echo "🇵🇭 Philippine Tax & Compliance Commands"
+	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+	@echo ""
+	@echo "Setup:"
+	@echo "  ph-tax-seed                Initialize Supabase schema"
+	@echo "  ph-tax-ingest              Ingest BIR documents (RAG corpus)"
+	@echo ""
+	@echo "Service Management:"
+	@echo "  ph-tax-agent-up            Start Agent Gateway"
+	@echo "  ph-tax-agent-down          Stop Agent Gateway"
+	@echo "  ph-tax-test                Test Q&A endpoints"
+	@echo "  ph-tax-canary              Run production canary checks"
+	@echo ""
+	@echo "Example Usage:"
+	@echo "  export DATABASE_URL='postgres://...'"
+	@echo "  make ph-tax-seed"
+	@echo "  make ph-tax-ingest"
+	@echo "  make ph-tax-agent-up"
+	@echo "  make ph-tax-test"
+	@echo ""
+	@echo "ChatOps (Mattermost):"
+	@echo "  /agent tax ph calendar 30d"
+	@echo "  /agent tax ph \"Do we still file 2550M monthly?\""
+	@echo ""
+	@echo "Canary (Production):"
+	@echo "  GATEWAY_BASE_URL=https://mcp.insightpulseai.net make ph-tax-canary"
+	@echo ""

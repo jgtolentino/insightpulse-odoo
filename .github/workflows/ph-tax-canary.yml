@@ -1,0 +1,114 @@
+name: PH Tax Compliance Canary
+
+on:
+  schedule:
+    # Daily at 9:25 AM Manila time (1:25 AM UTC)
+    - cron: '25 1 * * *'
+  workflow_dispatch:
+  push:
+    paths:
+      - 'services/agent-gateway/**'
+      - 'supabase/migrations/003_ph_tax_compliance.sql'
+      - 'scripts/ph-compliance/ingest_bir.py'
+
+jobs:
+  canary:
+    name: Production PH Tax Q&A Canary
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test Monthly VAT Question (RMC 5-2023)
+        id: vat_question
+        run: |
+          RESPONSE=$(curl -fsS -X POST "${{ secrets.GATEWAY_BASE_URL }}/agent/tax/ph/qa" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"Do we still file monthly VAT (2550M) in 2025?","top_k":3}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if answer contains "No"
+          if ! echo "$RESPONSE" | jq -e '.answer | contains("No")' > /dev/null; then
+            echo "❌ FAIL: Answer should contain 'No' (monthly VAT discontinued)"
+            exit 1
+          fi
+
+          # Check if citations include RMC 5-2023
+          if ! echo "$RESPONSE" | jq -e '.sources[] | select(contains("RMC") and contains("5-2023"))' > /dev/null; then
+            echo "❌ FAIL: Citations must include RMC 5-2023"
+            exit 1
+          fi
+
+          echo "✅ PASS: Monthly VAT question answered correctly with RMC 5-2023 citation"
+
+      - name: Test Expanded Withholding Question
+        id: wht_question
+        run: |
+          RESPONSE=$(curl -fsS -X POST "${{ secrets.GATEWAY_BASE_URL }}/agent/tax/ph/qa" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"What form is used to file expanded withholding tax?","top_k":3}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if answer mentions 1601-EQ or 1601EQ
+          if ! echo "$RESPONSE" | jq -e '.answer | test("1601-?EQ"; "i")' > /dev/null; then
+            echo "❌ FAIL: Answer should mention Form 1601-EQ"
+            exit 1
+          fi
+
+          echo "✅ PASS: Expanded withholding question answered correctly"
+
+      - name: Test Filing Calendar Endpoint
+        id: calendar_test
+        run: |
+          RESPONSE=$(curl -fsS -X POST "${{ secrets.GATEWAY_BASE_URL }}/agent/tax/ph/calendar" \
+            -H "Content-Type: application/json" \
+            -d '{"window_days":90,"entity":"ALL"}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if response has entries
+          ENTRY_COUNT=$(echo "$RESPONSE" | jq -r '.total_entries')
+          if [ "$ENTRY_COUNT" -eq 0 ]; then
+            echo "⚠️  WARNING: No upcoming filing deadlines found"
+          else
+            echo "✅ PASS: Found $ENTRY_COUNT upcoming filing deadlines"
+          fi
+
+      - name: Notify on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 PH Tax Canary Failed',
+              body: `The daily PH tax compliance canary has failed.
+
+              **Failed Steps:**
+              - VAT Question: ${{ steps.vat_question.outcome }}
+              - WHT Question: ${{ steps.wht_question.outcome }}
+              - Calendar Test: ${{ steps.calendar_test.outcome }}
+
+              **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+              **Action Required:**
+              1. Check Agent Gateway logs
+              2. Verify database connectivity
+              3. Ensure BIR documents are ingested
+              4. Review RMC 5-2023 citation logic
+
+              cc: @jgtolentino`,
+              labels: ['bug', 'ph-tax', 'canary-failure']
+            })
+
+      - name: Success Summary
+        if: success()
+        run: |
+          echo "🎉 All PH Tax canary checks passed!"
+          echo "✅ Monthly VAT question (RMC 5-2023) - PASS"
+          echo "✅ Expanded withholding question - PASS"
+          echo "✅ Filing calendar endpoint - PASS"
