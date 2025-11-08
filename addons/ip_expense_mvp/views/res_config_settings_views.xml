@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.ip.expense.mvp</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="base.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[hasclass('settings')]" position="inside">
+                <div class="app_settings_block" data-string="InsightPulse Expense MVP"
+                     string="InsightPulse Expense MVP" data-key="ip_expense_mvp">
+                    <h2>AI OCR Configuration</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="ip_ai_ocr_url"/>
+                                <div class="text-muted">
+                                    AI Inference Hub OCR endpoint URL
+                                </div>
+                                <field name="ip_ai_ocr_url"
+                                       placeholder="http://127.0.0.1:8100/v1/ocr/receipt"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2>Supabase Analytics Sink</h2>
+                    <div class="row mt16 o_settings_container">
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="ip_supabase_url"/>
+                                <div class="text-muted">
+                                    Supabase project URL (e.g., https://xxx.supabase.co)
+                                </div>
+                                <field name="ip_supabase_url"
+                                       placeholder="https://xxx.supabase.co"/>
+                            </div>
+                        </div>
+                        <div class="col-12 col-lg-6 o_setting_box">
+                            <div class="o_setting_left_pane"/>
+                            <div class="o_setting_right_pane">
+                                <label for="ip_supabase_service_key"/>
+                                <div class="text-muted">
+                                    Service role key (server-side only, NEVER expose to client)
+                                </div>
+                                <field name="ip_supabase_service_key"
+                                       password="True"
+                                       placeholder="eyJhbGciOi..."/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+</odoo>
