@@ -35,6 +35,10 @@ agents:
         - drawio-diagrams-enhanced
         - pmbok-project-management
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+
     # Capabilities
     capabilities:
       - Design repository structure
@@ -43,6 +47,7 @@ agents:
       - Define technical standards
       - Review code architecture
       - Plan technical roadmap
+      - Design database upgrade strategies
 
     # Tools this agent prefers
     preferred_tools:
@@ -103,6 +108,10 @@ agents:
       secondary:
         - supabase-automation
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+
     capabilities:
       - Write IaC (Terraform, Docker)
       - Build CI/CD pipelines
@@ -110,6 +119,7 @@ agents:
       - Implement auto-healing
       - Configure load balancers
       - Manage secrets
+      - Execute Odoo database upgrades
 
     preferred_tools:
       - Bash
@@ -164,6 +174,10 @@ agents:
       secondary:
         - odoo-agile-scrum-devops
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+
     capabilities:
       - Write unit tests
       - Create integration tests
@@ -171,6 +185,7 @@ agents:
       - Setup CI testing
       - Generate test reports
       - Define quality gates
+      - Test database upgrade procedures
 
     preferred_tools:
       - Write
@@ -195,6 +210,10 @@ agents:
         - multi-agency-orchestrator
         - procurement-sourcing
 
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+
     capabilities:
       - BIR form automation (1601-C, 2550Q, 1702-RT)
       - Month-end closing workflows
@@ -202,6 +221,7 @@ agents:
       - Financial reporting
       - Tax compliance validation
       - Expense automation
+      - Upgrade Finance SSC custom modules
 
     preferred_tools:
       - Read
