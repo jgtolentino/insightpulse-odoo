@@ -15,7 +15,7 @@ The Five Stages:
 5. Automated Testing - Generate unit tests from acceptance criteria
 
 Usage:
-    python ticket-to-module.py --ticket-id NOTION-123 --output addons/custom/
+    python ticket-to-module.py --ticket-id NOTION-123 --output odoo/modules/
 """
 
 import argparse
@@ -496,7 +496,7 @@ def main():
     parser = argparse.ArgumentParser(description="Generate Odoo module from ticket")
     parser.add_argument("--ticket-id", help="Notion ticket ID")
     parser.add_argument("--ticket-json", help="Path to ticket JSON file")
-    parser.add_argument("--output", default="addons/custom/", help="Output directory")
+    parser.add_argument("--output", default="odoo/modules/", help="Output directory")
 
     args = parser.parse_args()
 

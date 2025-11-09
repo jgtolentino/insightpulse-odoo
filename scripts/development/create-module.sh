@@ -5,7 +5,7 @@
 set -e
 
 MODULE_NAME=$1
-MODULE_PATH="custom/$MODULE_NAME"
+MODULE_PATH="odoo/modules/$MODULE_NAME"
 
 # Colors for output
 RED='\033[0;31m'
@@ -187,7 +187,7 @@ make shell
 
 \`\`\`bash
 # Run module tests
-python -m pytest custom/$MODULE_NAME/tests/ -v
+python -m pytest odoo/modules/$MODULE_NAME/tests/ -v
 \`\`\`
 
 ## Known Issues

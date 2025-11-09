@@ -61,7 +61,7 @@ else
     log_info "Would create $OCA_TARGET_DIR"
 fi
 
-# Find OCA repos in addons directory (exclude custom/)
+# Find OCA repos in addons directory (exclude custom modules)
 log_info "Scanning for OCA repositories in $BASE_DIR/addons..."
 echo ""
 
