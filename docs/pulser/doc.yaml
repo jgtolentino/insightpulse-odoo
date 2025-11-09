@@ -1,0 +1,511 @@
+# Spec-Kit Compliant Documentation Metadata
+# Pulser v4.0.0 Multi-Agent Orchestrator Documentation Suite
+
+---
+metadata:
+  title: "Pulser v4.0.0 Multi-Agent Orchestrator"
+  subtitle: "Documentation Suite for AI-Powered Task Orchestration Runtime"
+  version: "4.0.0"
+  status: "planning"  # planning | development | production | deprecated
+  classification: "internal"  # public | internal | confidential
+  last_updated: "2025-11-09"
+  created_date: "2025-11-09"
+
+project:
+  name: "InsightPulse Odoo"
+  repository: "https://github.com/jgtolentino/insightpulse-odoo"
+  license: "AGPL-3.0"
+  parent_project: "InsightPulse AI Finance SSC Platform"
+
+documentation_suite:
+  name: "Pulser Documentation Suite"
+  version: "4.0.0"
+  base_path: "docs/pulser/"
+  files:
+    - name: "PRD_PULSER.md"
+      type: "Product Requirements Document"
+      status: "complete"
+      purpose: "Product vision, agent specifications, functional requirements, API contract"
+      sections: 8
+      lines: 600
+
+    - name: "tasks.md"
+      type: "Task Manifest"
+      status: "complete"
+      purpose: "Agent-specific task tracking (PLS-001 through PLS-025), dependencies, metrics"
+      sections: 12
+      tasks: 25
+
+    - name: "planning.md"
+      type: "Sprint Planning & Milestones"
+      status: "complete"
+      purpose: "Sprint timeline, milestones, KPIs, resource allocation, risks"
+      sprints: 4
+      milestones: 4
+
+    - name: "CHANGELOG_PULSER.md"
+      type: "Version History"
+      status: "complete"
+      purpose: "Semantic versioning history, migration notes, known issues"
+      format: "Keep a Changelog 1.1.0"
+      versioning: "Semantic Versioning 2.0.0"
+
+    - name: "doc.yaml"
+      type: "Spec-Kit Metadata"
+      status: "complete"
+      purpose: "Structured metadata for documentation suite compliance"
+      format: "YAML 1.2"
+
+spec_kit_compliance:
+  standard: "Spec-Kit v2.0"
+  compliant: true
+  sections_required:
+    - "0: Executive Summary"
+    - "1: Product Overview"
+    - "2: Agent Specifications"
+    - "3: Functional Requirements"
+    - "4: Non-Functional Requirements"
+    - "5: MCP Server Integration"
+    - "6: API Specification"
+    - "7: Deployment Strategy"
+    - "8: Success Metrics"
+  sections_present: 8
+  cross_references: true
+  glossary: true
+
+authors:
+  - name: "Arkie"
+    role: "Solutions Architect"
+    email: "arkie@insightpulseai.net"
+    contributions:
+      - "System design and architecture"
+      - "Infrastructure and deployment strategy"
+      - "DigitalOcean App Platform integration"
+
+  - name: "Maya"
+    role: "Documentation Specialist"
+    email: "maya@insightpulseai.net"
+    contributions:
+      - "Documentation suite creation (5 files)"
+      - "Spec-Kit compliance validation"
+      - "Cross-reference management"
+
+  - name: "Data Fabcon"
+    role: "Data Engineer"
+    email: "data.fabcon@insightpulseai.net"
+    contributions:
+      - "Supabase context bus schema design"
+      - "Database migration planning"
+
+  - name: "Echo"
+    role: "QA Engineer"
+    email: "echo@insightpulseai.net"
+    contributions:
+      - "Testing strategy and acceptance criteria"
+      - "Quality gates definition"
+
+  - name: "Dash"
+    role: "BI Architect"
+    email: "dash@insightpulseai.net"
+    contributions:
+      - "Agent telemetry dashboard design"
+      - "KPI definition and metrics"
+
+maintainers:
+  primary: "InsightPulse AI Team (Pulser Orchestration Division)"
+  contact: "jgtolentino_rn@yahoo.com"
+  slack_channel: "#pulser-dev"
+
+agents:
+  total_count: 7
+  agents:
+    - name: "Dash"
+      role: "BI Architect"
+      responsibilities: "Superset dashboards, SQL optimization, analytics"
+      capacity: "40 hrs/week"
+      mcp_servers: ["superset", "github", "supabase"]
+
+    - name: "Maya"
+      role: "Documentation Specialist"
+      responsibilities: "Technical writing, API docs, user guides"
+      capacity: "40 hrs/week"
+      mcp_servers: ["github", "supabase"]
+
+    - name: "Echo"
+      role: "QA Engineer"
+      responsibilities: "Test automation, quality gates, CI/CD"
+      capacity: "40 hrs/week"
+      mcp_servers: ["github", "kubernetes", "docker"]
+
+    - name: "Data Fabcon"
+      role: "Data Engineer"
+      responsibilities: "ETL pipelines, Supabase migrations, data quality"
+      capacity: "40 hrs/week"
+      mcp_servers: ["supabase", "github"]
+
+    - name: "Arkie"
+      role: "Solutions Architect"
+      responsibilities: "System design, infrastructure, deployment"
+      capacity: "40 hrs/week"
+      mcp_servers: ["digitalocean", "kubernetes", "docker", "github"]
+
+    - name: "LearnBot"
+      role: "Knowledge Manager"
+      responsibilities: "Skills mining, error analysis, documentation"
+      capacity: "20 hrs/week"
+      mcp_servers: ["github", "supabase"]
+
+    - name: "Pulser"
+      role: "Orchestrator"
+      responsibilities: "Agent coordination, task routing, monitoring"
+      capacity: "24/7 runtime"
+      mcp_servers: ["all"]
+
+mcp_servers:
+  total_count: 7
+  total_tools: 98
+  servers:
+    - name: "pulser-hub"
+      purpose: "Odoo and ecosystem integration"
+      tools: 5
+      status: "deployed"
+      do_app_id: "60a13dec-1b31-4daf-b4c3-bfe8ca0dbfc8"
+
+    - name: "digitalocean"
+      purpose: "App Platform infrastructure management"
+      tools: 3
+      status: "active"
+
+    - name: "kubernetes"
+      purpose: "Cluster operations"
+      tools: 22
+      status: "active"
+      cluster: "do-nyc3-superset-ai-cluster"
+
+    - name: "docker"
+      purpose: "Container management"
+      tools: 1
+      status: "active"
+
+    - name: "github"
+      purpose: "Repository management"
+      tools: 40
+      status: "active"
+
+    - name: "superset"
+      purpose: "Apache Superset analytics"
+      tools: 3
+      status: "active"
+      url: "https://insightpulseai.net/odoo/superset"
+      app_id: "bc1764a5-b48e-4bec-aa72-8a22cab141bc"
+
+    - name: "supabase"
+      purpose: "Database operations and context bus"
+      tools: 24
+      status: "active"
+      project_ref: "spdtwktxdalcfigzeqrz"
+
+technology_stack:
+  backend:
+    - name: "FastAPI"
+      version: "0.104+"
+      purpose: "Async web framework for API endpoints"
+
+    - name: "Celery"
+      version: "5.3+"
+      purpose: "Distributed task queue"
+
+    - name: "Redis"
+      version: "7.2+"
+      purpose: "Message broker and result backend"
+
+    - name: "Python"
+      version: "3.11+"
+      purpose: "Runtime environment"
+
+  database:
+    - name: "Supabase PostgreSQL"
+      version: "15.6"
+      purpose: "Context bus with pgvector"
+      extensions: ["pgvector", "uuid-ossp"]
+
+  infrastructure:
+    - name: "DigitalOcean App Platform"
+      region: "sgp"
+      purpose: "Production deployment"
+      scaling: "2-4 instances"
+
+    - name: "GitHub Actions"
+      purpose: "CI/CD automation"
+      status: "active"
+
+sprints:
+  current: "Sprint 5"
+  duration: "7 days"
+  start_date: "2025-11-09"
+  end_date: "2025-11-15"
+  sprints:
+    - number: 5
+      name: "Foundation"
+      duration: "Nov 9-15, 2025"
+      goal: "Create core Pulser orchestrator with FastAPI + Celery + Redis + Supabase"
+      tasks: 10
+      status: "in_progress"
+
+    - number: 6
+      name: "Enhancements"
+      duration: "Nov 16-22, 2025"
+      goal: "Add agent memory, learning, performance benchmarks"
+      tasks: 5
+      status: "planned"
+
+    - number: 7
+      name: "Scalability"
+      duration: "Nov 23-29, 2025"
+      goal: "Implement horizontal scaling, autoscaling, ML prioritization"
+      tasks: 5
+      status: "planned"
+
+    - number: 8
+      name: "Production Hardening"
+      duration: "Nov 30 - Dec 6, 2025"
+      goal: "Error handling, circuit breakers, security, audit logging"
+      tasks: 5
+      status: "planned"
+
+milestones:
+  - id: 1
+    name: "Foundation Complete"
+    date: "2025-11-15"
+    deliverables:
+      - "FastAPI app deployed"
+      - "Celery workers processing tasks"
+      - "Supabase context bus operational"
+      - "Agent health checks running"
+      - "MCP coordinator managing 7 servers"
+      - "Task routing end-to-end"
+      - "Telemetry dashboard live"
+      - "Integration tests passing (>80% coverage)"
+
+  - id: 2
+    name: "Enhanced Capabilities"
+    date: "2025-11-22"
+    deliverables:
+      - "Agent memory persistence with pgvector"
+      - "Learning model improving routing accuracy"
+      - "Performance benchmarks established"
+      - "Workload prediction model deployed"
+
+  - id: 3
+    name: "Production Scale"
+    date: "2025-11-29"
+    deliverables:
+      - "Horizontal scaling (4-8 instances)"
+      - "Task queue sharding"
+      - "Redis memory optimized"
+      - "Agent autoscaling triggered"
+      - "ML task prioritization"
+
+  - id: 4
+    name: "Production Ready"
+    date: "2025-12-06"
+    deliverables:
+      - "Comprehensive error handling"
+      - "Circuit breakers active"
+      - "Rate limiting enforced"
+      - "Audit logging complete"
+      - "OWASP Top 10 vulnerabilities resolved"
+
+kpis:
+  business:
+    - metric: "Agent Utilization"
+      target: ">70%"
+      unit: "percentage"
+
+    - metric: "Task Throughput"
+      target: ">500 tasks/hour"
+      unit: "tasks per hour"
+
+    - metric: "Task Success Rate"
+      target: ">95%"
+      unit: "percentage"
+
+    - metric: "Agent Response Time"
+      target: "<30 seconds"
+      percentile: "P95"
+
+    - metric: "Cost per Task"
+      target: "<$0.10"
+      unit: "USD"
+
+  technical:
+    - metric: "API Response Time"
+      target: "<200ms"
+      percentile: "P95"
+
+    - metric: "Test Coverage"
+      target: ">80%"
+      unit: "percentage"
+
+    - metric: "Deployment Frequency"
+      target: "Daily"
+
+    - metric: "MTTR"
+      target: "<30 minutes"
+      unit: "minutes"
+
+budget:
+  monthly_cost: 30
+  currency: "USD"
+  breakdown:
+    - category: "DigitalOcean App Platform (compute)"
+      cost: 10
+
+    - category: "Redis (managed)"
+      cost: 15
+
+    - category: "OpenAI API (embeddings)"
+      cost: 5
+
+    - category: "Supabase (PostgreSQL + pgvector)"
+      cost: 0
+      tier: "free"
+
+    - category: "GitHub Actions (CI/CD)"
+      cost: 0
+      tier: "free"
+
+related_documents:
+  pulser_suite:
+    - path: "docs/pulser/PRD_PULSER.md"
+      title: "Pulser Product Requirements Document"
+      type: "PRD"
+
+    - path: "docs/pulser/tasks.md"
+      title: "Pulser Task Manifest"
+      type: "Task Tracking"
+
+    - path: "docs/pulser/planning.md"
+      title: "Pulser Sprint Planning & Milestones"
+      type: "Planning"
+
+    - path: "docs/pulser/CHANGELOG_PULSER.md"
+      title: "Pulser Version History"
+      type: "Changelog"
+
+  main_project:
+    - path: "PRD.md"
+      title: "InsightPulse Odoo Platform PRD"
+      type: "PRD"
+
+    - path: "TASKS.md"
+      title: "Project-Wide Task Tracking"
+      type: "Task Tracking"
+
+    - path: "PLANNING.md"
+      title: "Wave 1-9 Milestones and KPIs"
+      type: "Planning"
+
+    - path: "CHANGELOG.md"
+      title: "Platform Version History"
+      type: "Changelog"
+
+    - path: "CLAUDE.md"
+      title: "AI Assistant Operating Contract"
+      type: "AI Context"
+
+  technical:
+    - path: "docs/SUPERCLAUDE_ARCHITECTURE.md"
+      title: "SuperClaude Multi-Agent Architecture"
+      type: "Architecture"
+
+    - path: "mcp/vscode-mcp-config.json"
+      title: "MCP Server Definitions (7 servers)"
+      type: "Configuration"
+
+    - path: "infra/do/pulser-orchestrator.yaml"
+      title: "DigitalOcean App Platform Spec"
+      type: "Infrastructure"
+      status: "pending"
+
+keywords:
+  - "multi-agent orchestration"
+  - "FastAPI"
+  - "Celery"
+  - "Redis"
+  - "Supabase"
+  - "pgvector"
+  - "MCP servers"
+  - "agent coordination"
+  - "task routing"
+  - "telemetry"
+  - "AI automation"
+  - "DigitalOcean"
+  - "Odoo integration"
+  - "Apache Superset"
+  - "Kubernetes"
+  - "Docker"
+  - "GitHub Actions"
+
+tags:
+  project:
+    - "insightpulse-odoo"
+    - "pulser-orchestrator"
+    - "multi-agent-system"
+
+  technology:
+    - "fastapi"
+    - "celery"
+    - "redis"
+    - "postgresql"
+    - "pgvector"
+    - "python"
+
+  infrastructure:
+    - "digitalocean"
+    - "kubernetes"
+    - "docker"
+    - "github-actions"
+
+  domain:
+    - "ai-orchestration"
+    - "task-automation"
+    - "agent-coordination"
+    - "bi-analytics"
+
+compliance:
+  spec_kit: true
+  semantic_versioning: true
+  keep_a_changelog: true
+  agpl_3_0_license: true
+
+audit:
+  last_review: "2025-11-09"
+  reviewer: "Maya (Documentation Specialist)"
+  next_review: "2025-11-16"
+  review_frequency: "weekly"
+
+versioning:
+  format: "Semantic Versioning 2.0.0"
+  current_version: "4.0.0"
+  changelog_format: "Keep a Changelog 1.1.0"
+
+changelog_history:
+  - version: "4.0.0"
+    date: "2025-11-09"
+    type: "Planning"
+    summary: "Initial planning release with comprehensive documentation suite"
+
+  - version: "Unreleased"
+    date: "TBD"
+    type: "Development"
+    summary: "Sprint 5 development in progress (0% deployed)"
+
+update_history:
+  - date: "2025-11-09"
+    author: "Maya"
+    changes: "Initial doc.yaml creation with Spec-Kit compliance metadata"
+    version: "4.0.0"
+
+---
+# End of Spec-Kit Compliant Documentation Metadata

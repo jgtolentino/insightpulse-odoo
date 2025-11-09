@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 ###############################################################################
-# Master Deployment Script for Odoo 19
+# Pull-Based Deployment Script for Odoo Production
 #
-# This script orchestrates the complete deployment process from a fresh
-# Ubuntu droplet to a fully configured Odoo 19 production instance.
+# This script performs fast pull-based upgrades by pulling the latest
+# container images and restarting services, instead of rebuilding on droplet.
 #
 # Usage:
-#   bash deploy-all.sh
+#   bash deploy-all.sh [--skip-git-pull]
 #
-# Run as: root
+# Run from: /opt/odoo (or repo root directory on droplet)
+#
+# Prerequisites:
+#   - Docker and Docker Compose installed
+#   - Repository cloned to /opt/odoo
+#   - Services defined in docker-compose.yml (or override file)
 ###############################################################################
 
 set -euo pipefail
@@ -36,103 +41,108 @@ log_step() {
     echo -e "${BLUE}[STEP]${NC} $1"
 }
 
-# Check if running as root
-if [[ $EUID -ne 0 ]]; then
-   log_error "This script must be run as root"
-   exit 1
-fi
+# Parse arguments
+SKIP_GIT_PULL=false
+for arg in "$@"; do
+    case $arg in
+        --skip-git-pull)
+        SKIP_GIT_PULL=true
+        shift
+        ;;
+    esac
+done
 
 # Get script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 
 log_info "============================================"
-log_info "  Odoo 19 Production Deployment"
+log_info "  Pull-Based Production Deployment"
 log_info "  InsightPulse AI"
 log_info "============================================"
 echo ""
 
-# Gather configuration
-log_info "Deployment Configuration"
+log_info "Repository: $REPO_ROOT"
 echo ""
 
-read -p "Domain name (e.g., erp.insightpulseai.net): " DOMAIN
-read -p "Email for Let's Encrypt: " EMAIL
-read -p "IPAI modules repository URL [https://github.com/jgtolentino/insightpulse-odoo.git]: " IPAI_REPO
-IPAI_REPO=${IPAI_REPO:-https://github.com/jgtolentino/insightpulse-odoo.git}
+# Step 1: Git pull (unless skipped)
+if [ "$SKIP_GIT_PULL" = false ]; then
+    log_step "Step 1/3: Pulling latest code from Git"
+    cd "$REPO_ROOT"
 
-echo ""
-log_info "Configuration:"
-log_info "  Domain: $DOMAIN"
-log_info "  Email: $EMAIL"
-log_info "  Repository: $IPAI_REPO"
-echo ""
+    # Check if there are uncommitted changes
+    if ! git diff-index --quiet HEAD --; then
+        log_warn "Uncommitted changes detected. Stashing them..."
+        git stash
+    fi
 
-read -p "Continue with deployment? (y/n) " -n 1 -r
-echo
-if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    log_info "Deployment cancelled"
-    exit 0
+    # Pull latest changes
+    log_info "Pulling from $(git remote get-url origin)..."
+    git pull || {
+        log_error "Git pull failed"
+        exit 1
+    }
+
+    log_info "✅ Git pull complete"
+    echo ""
+else
+    log_warn "Skipping git pull (--skip-git-pull flag set)"
+    echo ""
 fi
 
-echo ""
-log_step "Step 1/6: Initial Server Setup"
-bash "$SCRIPT_DIR/01-server-setup.sh"
+# Step 2: Docker Compose pull
+log_step "Step 2/3: Pulling latest container images"
+cd "$REPO_ROOT"
 
-echo ""
-log_step "Step 2/6: PostgreSQL Setup"
-bash "$SCRIPT_DIR/02-postgres-setup.sh"
-ODOO_DB_PASSWORD=$(cat /root/odoo_db_password.txt)
+# Check if docker-compose.yml exists
+if [ ! -f "docker-compose.yml" ]; then
+    log_error "docker-compose.yml not found in $REPO_ROOT"
+    exit 1
+fi
 
-echo ""
-log_step "Step 3/6: Odoo Installation (as odoo user)"
-sudo -u odoo bash "$SCRIPT_DIR/03-odoo-install.sh"
+log_info "Pulling images defined in docker-compose.yml..."
+docker compose pull || {
+    log_error "docker compose pull failed"
+    exit 1
+}
 
+log_info "✅ Image pull complete"
 echo ""
-log_step "Step 4/6: Odoo Configuration (as odoo user)"
-sudo -u odoo ODOO_DB_PASSWORD="$ODOO_DB_PASSWORD" bash "$SCRIPT_DIR/04-odoo-configure.sh"
-ODOO_MASTER_PASSWORD=$(cat /home/odoo/master_password.txt)
 
-echo ""
-log_step "Step 5/6: Systemd Service Setup"
-bash "$SCRIPT_DIR/05-systemd-setup.sh"
+# Step 3: Docker Compose up
+log_step "Step 3/3: Restarting services with latest images"
 
-echo ""
-log_step "Step 6/6: Nginx and SSL Setup"
-DOMAIN="$DOMAIN" EMAIL="$EMAIL" bash "$SCRIPT_DIR/06-nginx-setup.sh"
+log_info "Starting services with docker compose up -d --remove-orphans..."
+docker compose up -d --remove-orphans || {
+    log_error "docker compose up failed"
+    exit 1
+}
 
+log_info "✅ Services restarted"
 echo ""
+
+# Wait for services to stabilize
+log_info "Waiting 10 seconds for services to stabilize..."
+sleep 10
+
+# Show running containers
+log_info "Running containers:"
+docker compose ps
+echo ""
+
 log_info "============================================"
 log_info "  Deployment Complete!"
 log_info "============================================"
 echo ""
-log_info "Your Odoo instance is ready at:"
-log_info "  URL: https://$DOMAIN"
-echo ""
-log_info "Important Credentials (save securely):"
-log_info "  Database Password: $ODOO_DB_PASSWORD"
-log_info "  Master Password: $ODOO_MASTER_PASSWORD"
-echo ""
-log_info "Password files saved to:"
-log_info "  Database: /root/odoo_db_password.txt"
-log_info "  Master:   /home/odoo/master_password.txt"
-echo ""
-log_info "Next Steps:"
-log_info "  1. Create database via web interface at https://$DOMAIN"
-log_info "  2. Install custom modules:"
-log_info "     sudo su - odoo"
-log_info "     bash $SCRIPT_DIR/07-install-modules.sh"
-log_info "  3. Install IPAI modules (after creating database):"
-log_info "     sudo su - odoo"
-log_info "     bash $SCRIPT_DIR/08-install-ipai-modules.sh <database_name>"
-log_info "  4. Configure backups (add to crontab):"
-log_info "     15 2 * * * $SCRIPT_DIR/backup-odoo.sh <database_name> [s3_bucket]"
-echo ""
+
 log_info "Service Management:"
-log_info "  Status:  systemctl status odoo19"
-log_info "  Restart: systemctl restart odoo19"
-log_info "  Logs:    journalctl -u odoo19 -f"
+log_info "  View logs:    docker compose logs -f"
+log_info "  Check status: docker compose ps"
+log_info "  Restart:      docker compose restart [service]"
 echo ""
-log_warn "IMPORTANT: Change default passwords before going live!"
+
+log_info "Next Step: Run smoke test to verify deployment"
+log_info "  curl -s -o /dev/null -w \"%{http_code}\" https://erp.insightpulseai.net/web/login"
 echo ""
 
 exit 0
