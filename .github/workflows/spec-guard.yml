@@ -1,0 +1,50 @@
+name: Spec Guard
+
+on:
+  pull_request:
+    paths:
+      - 'spec/**'
+      - 'docs/**'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'spec/**'
+      - 'docs/**'
+      - '.github/workflows/**'
+
+jobs:
+  validate-spec:
+    runs-on: ubuntu-latest
+    name: Validate Platform Specification
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install jsonschema
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+
+      - name: Run spec validation
+        run: |
+          python scripts/validate_spec.py
+
+      - name: Report status
+        if: success()
+        run: |
+          echo "✅ Platform spec validation passed"
+
+      - name: Report failure
+        if: failure()
+        run: |
+          echo "❌ Platform spec validation failed"
+          echo "See logs above for details"
+          exit 1

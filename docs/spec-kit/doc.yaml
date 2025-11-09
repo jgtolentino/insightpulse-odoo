@@ -1,0 +1,97 @@
+---
+# Platform Spec-Kit Metadata
+# This file describes the spec-kit documentation structure
+
+platform:
+  name: "InsightPulse Odoo Platform"
+  version: "1.0.0"
+  spec_state: "desired_end_state"
+  repository: "https://github.com/jgtolentino/insightpulse-odoo"
+  base_domain: "https://insightpulseai.net"
+
+documents:
+  - id: "prd"
+    title: "Product Requirements Document"
+    file: "PRD_PLATFORM.md"
+    description: "Product requirements for InsightPulse Odoo platform"
+    status: "draft"
+    owner: "Jake Tolentino"
+    
+  - id: "planning"
+    title: "Planning Document"
+    file: "planning.md"
+    description: "Milestones, phases, and KPIs"
+    status: "draft"
+    owner: "Jake Tolentino"
+    
+  - id: "tasks"
+    title: "Tasks Document"
+    file: "tasks.md"
+    description: "Detailed task breakdown with story points"
+    status: "active"
+    owner: "Jake Tolentino"
+    
+  - id: "changelog"
+    title: "Changelog"
+    file: "CHANGELOG.md"
+    description: "Version history following Keep a Changelog format"
+    status: "active"
+    owner: "Jake Tolentino"
+    
+  - id: "meta"
+    title: "Metadata"
+    file: "doc.yaml"
+    description: "Spec-kit metadata (this file)"
+    status: "active"
+    owner: "Jake Tolentino"
+
+governance:
+  semver: true
+  required_docs:
+    - "PRD"
+    - "planning"
+    - "tasks"
+    - "CHANGELOG"
+    - "doc.yaml"
+  review_rules:
+    require_docs_update: true
+    require_ci_green: true
+    min_reviewers: 2
+
+compliance:
+  odoo_sh_policy: "reference_only"
+  bir_compliance: true
+  multi_tenancy: true
+  oauth_sso: "google"
+
+infrastructure:
+  primary_mode: "self_hosted"
+  providers:
+    - "digitalocean"
+  orchestration:
+    - "docker"
+    - "github-actions"
+
+ci_cd:
+  provider: "github-actions"
+  spec_guard: ".github/workflows/spec-guard.yml"
+  validation_script: "scripts/validate_spec.py"
+  exit_codes:
+    success: 0
+    schema_fail: 1
+    missing_files: 2
+    json_parse_error: 3
+
+references:
+  canonical_spec: "../../spec/platform_spec.json"
+  architecture: "../architecture.md"
+  deployment: "../deployments/overview.md"
+  pulser: "../pulser/PRD_PULSER.md"
+
+changelog:
+  format: "keep-a-changelog"
+  versioning: "semver"
+  latest: "1.0.0"
+  unreleased_changes: true
+
+last_updated: "2025-11-09"

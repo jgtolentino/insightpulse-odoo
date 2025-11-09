@@ -1,0 +1,138 @@
+name: CD - Odoo Production
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'odoo/**'
+      - 'scripts/deploy/**'
+      - 'docker-compose*.yml'
+
+jobs:
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy Odoo to Production
+    environment: production
+
+    steps:
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H 165.227.10.178 >> ~/.ssh/known_hosts
+
+      - name: Deploy to production droplet
+        run: |
+          ssh -o StrictHostKeyChecking=no root@165.227.10.178 << 'EOF'
+            set -euo pipefail
+
+            echo "🚀 Starting production deployment..."
+
+            # Navigate to repository
+            cd /opt/odoo || {
+              echo "❌ ERROR: /opt/odoo directory not found"
+              exit 1
+            }
+
+            # Pull latest code
+            echo "📥 Pulling latest code from Git..."
+            git pull || {
+              echo "❌ ERROR: Git pull failed"
+              exit 1
+            }
+
+            # Pull latest images
+            echo "📦 Pulling latest Docker images..."
+            docker compose pull || {
+              echo "❌ ERROR: docker compose pull failed"
+              exit 1
+            }
+
+            # Restart services
+            echo "🔄 Restarting services with latest images..."
+            docker compose up -d --remove-orphans || {
+              echo "❌ ERROR: docker compose up failed"
+              exit 1
+            }
+
+            echo "⏳ Waiting 15 seconds for services to stabilize..."
+            sleep 15
+
+            echo "✅ Docker deployment complete"
+            echo ""
+            echo "📊 Running containers:"
+            docker compose ps
+
+            # Deploy unified portal (SSO landing page)
+            echo ""
+            echo "🌐 Deploying unified portal..."
+
+            # Set portal file permissions
+            chmod 755 portal/
+            chmod 644 portal/index.html portal/login.html
+            chmod -R 755 portal/static/
+
+            # Update nginx configuration
+            echo "📝 Updating nginx configuration..."
+            sudo cp infra/nginx/insightpulseai.net.conf /etc/nginx/sites-available/insightpulseai.net
+
+            # Test nginx configuration
+            sudo nginx -t || {
+              echo "❌ ERROR: nginx configuration test failed"
+              exit 1
+            }
+
+            # Reload nginx
+            echo "🔄 Reloading nginx..."
+            sudo systemctl reload nginx
+
+            echo "✅ Portal deployment complete"
+          EOF
+
+      - name: Smoke test - ERP service
+        run: |
+          echo "🔍 Testing ERP service at https://erp.insightpulseai.net/web/login"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://erp.insightpulseai.net/web/login)
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ ERP smoke test passed - HTTP $HTTP_CODE"
+          else
+            echo "❌ ERP smoke test failed - HTTP $HTTP_CODE (expected 200)"
+            exit 1
+          fi
+
+      - name: Smoke test - Unified portal
+        run: |
+          echo "🔍 Testing unified portal at https://insightpulseai.net"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://insightpulseai.net)
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Portal smoke test passed - HTTP $HTTP_CODE"
+          else
+            echo "❌ Portal smoke test failed - HTTP $HTTP_CODE (expected 200)"
+            exit 1
+          fi
+
+      - name: Smoke test - Portal authentication
+        run: |
+          echo "🔍 Testing portal authentication endpoint"
+
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://insightpulseai.net/web/database/list \
+            -H "Content-Type: application/json" \
+            -d '{"jsonrpc":"2.0","method":"call","params":{},"id":1}')
+
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Authentication endpoint test passed - HTTP $HTTP_CODE"
+          else
+            echo "❌ Authentication endpoint test failed - HTTP $HTTP_CODE (expected 200)"
+            exit 1
+          fi
+
+      - name: Cleanup SSH key
+        if: always()
+        run: |
+          rm -f ~/.ssh/id_rsa

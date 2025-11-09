@@ -1,0 +1,366 @@
+{
+  "spec_state": "desired_end_state",
+  "spec_version": "1.0.0",
+  "app": {
+    "name": "InsightPulse Odoo Platform",
+    "version": "1.0.0",
+    "repository": "https://github.com/jgtolentino/insightpulse-odoo",
+    "base_domain": "https://insightpulseai.net",
+    "core_services": [
+      {
+        "id": "odoo",
+        "name": "Odoo CE 19",
+        "type": "erp",
+        "public_url": "https://erp.insightpulseai.net",
+        "docker_service": "odoo",
+        "internal_port": 8069,
+        "depends_on": ["postgres-odoo"],
+        "addons_paths": [
+          "/opt/odoo/odoo/addons",
+          "/opt/odoo/custom/addons",
+          "/opt/odoo/oca"
+        ],
+        "custom_addons_dirs": [
+          "/opt/odoo/custom/addons"
+        ],
+        "oca_addons_dirs": [
+          "/opt/odoo/oca/web",
+          "/opt/odoo/oca/server-tools",
+          "/opt/odoo/oca/account-financial-tools",
+          "/opt/odoo/oca/project",
+          "/opt/odoo/oca/hr"
+        ]
+      },
+      {
+        "id": "postgres-odoo",
+        "name": "Odoo Database",
+        "type": "postgres",
+        "docker_service": "postgres-odoo"
+      },
+      {
+        "id": "supabase",
+        "name": "Supabase Core",
+        "type": "postgres+api",
+        "public_url": null,
+        "docker_service": "supabase-db",
+        "schema_dir": "supabase/schema",
+        "migrations_dir": "supabase/migrations"
+      },
+      {
+        "id": "superset",
+        "name": "Superset Analytics",
+        "type": "analytics",
+        "public_url": "https://superset.insightpulseai.net",
+        "app_platform_app": "superset-analytics",
+        "dashboards_dir": "apps/superset/dashboards"
+      },
+      {
+        "id": "mcp",
+        "name": "MCP Coordinator",
+        "type": "mcp-coordinator",
+        "public_url": "https://mcp.insightpulseai.net",
+        "app_platform_app": "mcp-coordinator"
+      },
+      {
+        "id": "pulser",
+        "name": "Pulser Orchestrator",
+        "type": "ai-orchestrator",
+        "service_dir": "services/pulser",
+        "agents_dir": "agents"
+      }
+    ],
+    "environments": [
+      {
+        "name": "dev",
+        "entrypoints": ["make dev", "docker compose up -d"],
+        "compose_file": "docker-compose.yml",
+        "domain_pattern": "localhost / 127.0.0.1"
+      },
+      {
+        "name": "prod",
+        "entrypoints": [
+          "GitHub Actions .github/workflows/cd-odoo-prod.yml",
+          "scripts/deploy/deploy-all.sh"
+        ],
+        "provider": "digitalocean",
+        "droplets": [
+          {
+            "name": "ipai-odoo-erp",
+            "region": "SFO2",
+            "public_ip": "165.227.10.178",
+            "role": "erp-core"
+          },
+          {
+            "name": "ocr-service-droplet",
+            "region": "SGP1",
+            "public_ip": "188.166.237.231",
+            "role": "ocr-service"
+          }
+        ],
+        "app_platform_apps": [
+          "odoo-saas-platform",
+          "superset-analytics",
+          "mcp-coordinator"
+        ]
+      }
+    ]
+  },
+
+  "hosting": {
+    "primary_mode": "self_hosted",
+    "providers": ["digitalocean"],
+    "orchestration": ["docker", "github-actions"],
+    "domains": {
+      "root": "insightpulseai.net",
+      "erp": "erp.insightpulseai.net",
+      "superset": "superset.insightpulseai.net",
+      "mcp": "mcp.insightpulseai.net",
+      "bkn": "bkn.insightpulseai.net",
+      "chat": "chat.insightpulseai.net"
+    },
+    "reverse_proxy": {
+      "type": "nginx-or-equivalent",
+      "odoo_upstream": "http://127.0.0.1:8069",
+      "https_required": true
+    },
+    "odoo_sh": {
+      "usage": "reference_only",
+      "docs": {
+        "base": "https://www.odoo.com/documentation/19.0/",
+        "create_project": "https://www.odoo.com/documentation/19.0/administration/odoo_sh/getting_started/create.html",
+        "containers": "https://www.odoo.com/documentation/19.0/administration/odoo_sh/advanced/containers.html",
+        "submodules": "https://www.odoo.com/documentation/19.0/administration/odoo_sh/advanced/submodules.html",
+        "faq_technical": "https://www.odoo.com/documentation/19.0/administration/odoo_sh/advanced/frequent_technical_questions.html"
+      },
+      "allowed_topics": [
+        "high_level_overview",
+        "constraints",
+        "limitations",
+        "migration_considerations",
+        "architecture_comparison"
+      ],
+      "forbidden_topics": [
+        "step_by_step_deployment_instructions",
+        "wizard_like_setup_guides",
+        "full_migration_playbooks",
+        "copy_paste_shell_scripts_for_odoo_sh"
+      ]
+    }
+  },
+
+  "oauth": {
+    "provider": "google",
+    "project": "claude-mcp-bridge",
+    "client_id": "YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com",
+    "authorized_origins": [
+      "https://insightpulseai.net",
+      "https://erp.insightpulseai.net",
+      "https://superset.insightpulseai.net",
+      "https://mcp.insightpulseai.net",
+      "https://bkn.insightpulseai.net",
+      "https://chat.insightpulseai.net"
+    ],
+    "authorized_redirect_uris": [
+      "https://erp.insightpulseai.net/auth_oauth/signin",
+      "https://insightpulseai.net/auth_oauth/signin",
+      "https://erp.insightpulseai.net/web/login"
+    ],
+    "apps": [
+      {
+        "id": "odoo",
+        "type": "oauth-provider",
+        "redirect_uri": "https://erp.insightpulseai.net/auth_oauth/signin",
+        "scopes": ["openid", "email", "profile"]
+      },
+      {
+        "id": "portal_root",
+        "type": "auth-portal",
+        "redirect_uri": "https://insightpulseai.net/auth_oauth/signin",
+        "scopes": ["openid", "email", "profile"]
+      },
+      {
+        "id": "superset",
+        "type": "analytics",
+        "redirect_uri": "https://superset.insightpulseai.net/oauth-authorized/google",
+        "scopes": ["openid", "email", "profile"],
+        "status": "planned"
+      },
+      {
+        "id": "mcp",
+        "type": "mcp-coordinator",
+        "redirect_uri": "https://mcp.insightpulseai.net/auth/google/callback",
+        "scopes": ["openid", "email", "profile"],
+        "status": "planned"
+      }
+    ]
+  },
+
+  "docs_platform": {
+    "url": "https://jgtolentino.github.io/insightpulse-odoo/",
+    "root_dir": "docs",
+    "config_file": "docs/_config.yml",
+    "index_files": ["docs/index.md", "docs/INDEX.md"],
+    "sections": [
+      {
+        "id": "core",
+        "title": "Core Docs",
+        "pages": [
+          "docs/getting-started.md",
+          "docs/architecture.md"
+        ]
+      },
+      {
+        "id": "guides",
+        "title": "Guides",
+        "dir": "docs/guides",
+        "pages": [
+          "docs/guides/workflows-ci-cd.md",
+          "docs/guides/docker-compose.md",
+          "docs/guides/odoo-addons-structure.md",
+          "docs/guides/troubleshooting.md",
+          "docs/guides/hosting-policy.md"
+        ]
+      },
+      {
+        "id": "deployments",
+        "title": "Deployments",
+        "dir": "docs/deployments",
+        "pages": [
+          "docs/deployments/overview.md",
+          "docs/deployments/digitalocean.md"
+        ]
+      },
+      {
+        "id": "platform_spec",
+        "title": "Platform Spec-Kit",
+        "dir": "docs/spec-kit",
+        "documents": [
+          "docs/spec-kit/PRD_PLATFORM.md",
+          "docs/spec-kit/planning.md",
+          "docs/spec-kit/tasks.md",
+          "docs/spec-kit/CHANGELOG.md",
+          "docs/spec-kit/doc.yaml"
+        ]
+      },
+      {
+        "id": "pulser_spec",
+        "title": "Pulser Spec-Kit",
+        "dir": "docs/pulser",
+        "documents": [
+          "docs/pulser/PRD_PULSER.md",
+          "docs/pulser/planning.md",
+          "docs/pulser/tasks.md",
+          "docs/pulser/CHANGELOG_PULSER.md",
+          "docs/pulser/doc.yaml"
+        ]
+      },
+      {
+        "id": "history",
+        "title": "History",
+        "dir": "docs/history",
+        "index": "docs/history/index.md"
+      }
+    ]
+  },
+
+  "ai_orchestration": {
+    "runtime": "Pulser v4.0.0",
+    "entry_doc": "docs/pulser/PRD_PULSER.md",
+    "claude_context_doc": "CLAUDE.md",
+    "skills_file": "skills.md",
+    "agents": [
+      {
+        "name": "Dash",
+        "role": "Dashboard Engineer",
+        "skills_scope": ["superset", "analytics", "supabase"],
+        "spec_docs": [
+          "docs/pulser/PRD_PULSER.md",
+          "docs/deployments/overview.md"
+        ]
+      },
+      {
+        "name": "Maya",
+        "role": "UX / Docs Designer",
+        "skills_scope": ["docs_platform", "guides", "spec-kit"],
+        "spec_docs": [
+          "docs/spec-kit/PRD_PLATFORM.md",
+          "docs/spec-kit/tasks.md"
+        ]
+      },
+      {
+        "name": "Echo",
+        "role": "Signal Extractor",
+        "skills_scope": ["supabase", "logs", "metrics"],
+        "spec_docs": [
+          "docs/pulser/PRD_PULSER.md"
+        ]
+      }
+    ],
+    "ai_policy": {
+      "deployment_guidance": {
+        "preferred_targets": ["digitalocean", "docker", "this_repo"],
+        "avoid_targets": ["odoo_sh"],
+        "odoo_sh_handling": "summarise_and_link_only"
+      }
+    }
+  },
+
+  "ci_cd": {
+    "provider": "github-actions",
+    "workflows": [
+      {
+        "id": "ci-odoo",
+        "file": ".github/workflows/ci-odoo.yml",
+        "triggers": ["pull_request", "push:main"],
+        "responsibility": "build+test Odoo Docker image and run tests"
+      },
+      {
+        "id": "ci-supabase",
+        "file": ".github/workflows/ci-supabase.yml",
+        "triggers": ["pull_request"],
+        "responsibility": "apply Supabase migrations against ephemeral DB"
+      },
+      {
+        "id": "ci-superset",
+        "file": ".github/workflows/ci-superset.yml",
+        "triggers": ["pull_request"],
+        "responsibility": "import dashboards and validate Superset config"
+      },
+      {
+        "id": "cd-odoo-prod",
+        "file": ".github/workflows/cd-odoo-prod.yml",
+        "triggers": ["push:main"],
+        "responsibility": "pull-based production deployment: SSH to droplet, git pull, docker compose pull/up, deploy unified portal (insightpulseai.net), update nginx config, smoke tests (ERP + portal + auth)"
+      },
+      {
+        "id": "docs-ci",
+        "file": ".github/workflows/docs-ci.yml",
+        "triggers": ["push:main", "pull_request"],
+        "responsibility": "validate docs links and structure"
+      },
+      {
+        "id": "pages-deploy",
+        "file": ".github/workflows/pages-deploy.yml",
+        "triggers": ["push:main"],
+        "responsibility": "build and deploy GitHub Pages site from docs"
+      }
+    ]
+  },
+
+  "governance": {
+    "spec_kit": true,
+    "semver": true,
+    "required_docs": [
+      "PRD",
+      "planning",
+      "tasks",
+      "CHANGELOG",
+      "doc.yaml"
+    ],
+    "review_rules": {
+      "require_docs_update": true,
+      "require_ci_green": true,
+      "min_reviewers": 2
+    }
+  }
+}
