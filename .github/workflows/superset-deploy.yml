@@ -1,20 +1,125 @@
-name: Superset Deployment
+# GitHub Actions Workflow for Apache Superset Production Deployment
+# Implements: Build → Push → Deploy → Health Check with Celery workers
+
+name: Build and Deploy Apache Superset
 
 on:
   push:
     branches:
       - main
+      - production
     paths:
+      - 'superset/**'
       - 'infra/superset/**'
+      - 'docker-compose.superset.yml'
+      - '.github/workflows/superset-deploy.yml'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 env:
+  REGISTRY: registry.digitalocean.com/insightpulse
+  IMAGE_NAME: superset
+  SUPERSET_VERSION: '4.0.0'
   DO_APP_ID_SUPERSET: 73af11cb-dab2-4cb1-9770-291c536531e6
 
 jobs:
-  deploy:
+  build-custom-superset:
+    name: Build Custom Superset Image
     runs-on: ubuntu-latest
-    name: Deploy Superset to DigitalOcean
+    if: github.event_name != 'pull_request'
+
+    outputs:
+      image_tags: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Log in to DigitalOcean Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: registry.digitalocean.com
+          username: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          password: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Build and push Superset image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: ./superset
+          file: ./superset/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+          provenance: true
+          sbom: true
+          build-args: |
+            SUPERSET_VERSION=${{ env.SUPERSET_VERSION }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: spdx-json
+          output-file: sbom-superset.spdx.json
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom-superset
+          path: sbom-superset.spdx.json
+
+  security-scan:
+    name: Security Vulnerability Scan
+    needs: build-custom-superset
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          format: 'sarif'
+          output: 'trivy-results-superset.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results-superset.sarif'
+
+  deploy-superset-app-platform:
+    name: Deploy Superset to DigitalOcean App Platform
+    needs: [build-custom-superset, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && contains(github.event.head_commit.message, '[app-platform]')
 
     steps:
       - name: Checkout
@@ -28,7 +133,9 @@ jobs:
       - name: Update App Spec
         run: |
           echo "📝 Updating Superset app spec..."
-          doctl apps update ${{ env.DO_APP_ID_SUPERSET }} --spec infra/superset/superset-simple.yaml
+          if [ -f infra/superset/superset-simple.yaml ]; then
+            doctl apps update ${{ env.DO_APP_ID_SUPERSET }} --spec infra/superset/superset-simple.yaml
+          fi
 
       - name: Create Deployment
         run: |
@@ -60,24 +167,9 @@ jobs:
           echo "❌ Deployment timeout after 10 minutes"
           exit 1
 
-      - name: Run Database Migration
-        run: |
-          echo "🔄 Running Superset database migration..."
-
-          # Note: The run_command in superset-simple.yaml already includes:
-          # superset db upgrade && superset fab create-admin ... && superset init
-          # This step is just verification
-
-          echo "Migration is handled by run_command in app spec"
-          echo "Verifying deployment logs..."
-
-          doctl apps logs ${{ env.DO_APP_ID_SUPERSET }} --type run --tail 100 | grep -E "(upgrade|init|migration)" || true
-
       - name: Verify Health
         run: |
           echo "🏥 Verifying Superset health..."
-
-          # Wait for app to be fully ready
           sleep 30
 
           HEALTH_URL="https://superset.insightpulseai.net/health"
@@ -94,43 +186,108 @@ jobs:
           echo "❌ Health check failed"
           exit 1
 
-      - name: Verify PostgreSQL Backend
+  deploy-superset-droplet:
+    name: Deploy Superset to Production Droplet
+    needs: [build-custom-superset, security-scan]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/production'
+    environment:
+      name: production-bi
+      url: https://bi.insightpulseai.net
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Authenticate with DigitalOcean Registry
+        run: doctl registry login
+
+      - name: Deploy Superset Stack
+        env:
+          DROPLET_ID: ${{ secrets.PRODUCTION_DROPLET_ID }}
+          SSH_PRIVATE_KEY: ${{ secrets.DROPLET_SSH_KEY }}
         run: |
-          echo "🔍 Final verification: PostgreSQL backend check..."
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
-          # Get deployment logs
-          doctl apps logs ${{ env.DO_APP_ID_SUPERSET }} --type run --tail 200 > deployment.log
+          DROPLET_IP=$(doctl compute droplet get $DROPLET_ID --format PublicIPv4 --no-header)
+          echo "Deploying Superset to droplet: $DROPLET_IP"
 
-          # Check for SQLite references (should be none)
-          if grep -i "sqlite" deployment.log; then
-            echo "⚠️  WARNING: SQLite references found in logs"
-            grep -i "sqlite" deployment.log
-          else
-            echo "✅ No SQLite references found"
-          fi
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key root@$DROPLET_IP << 'ENDSSH'
+            set -e
+            cd /opt/superset || { echo "Directory /opt/superset not found"; exit 1; }
 
-          # Check for PostgreSQL connection
-          if grep -i "postgresql" deployment.log; then
-            echo "✅ PostgreSQL connection confirmed"
-            grep -i "postgresql" deployment.log | head -5
-          else
-            echo "⚠️  WARNING: PostgreSQL connection not found in logs"
-          fi
+            docker compose exec -T postgres pg_dump -U superset superset > backup-superset-$(date +%Y%m%d-%H%M%S).sql || true
 
-      - name: Cleanup SQLite Database File
+            docker compose pull
+            docker compose up -d --no-deps superset superset-worker superset-beat
+
+            sleep 15
+
+            docker compose exec -T superset superset db upgrade
+            docker compose exec -T superset superset init || true
+
+            if [ -f /opt/superset/config/odoo-datasource.yaml ]; then
+              docker compose exec -T superset superset import-datasources -p /app/config/odoo-datasource.yaml || true
+            fi
+          ENDSSH
+
+      - name: Health Check
         run: |
-          echo "🧹 Cleaning up any SQLite database files..."
+          sleep 30
 
-          # Note: This requires console access which may not be available
-          # The run_command should prevent SQLite from being created
-          echo "SQLite cleanup is handled by PostgreSQL-only configuration"
+          for i in {1..5}; do
+            HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://bi.insightpulseai.net/health || echo "000")
 
-      - name: Deployment Summary
+            if [ "$HEALTH_CHECK" = "200" ]; then
+              echo "✅ Superset health check passed"
+              exit 0
+            fi
+
+            echo "Health check attempt $i/5 failed with status: $HEALTH_CHECK"
+            sleep 10
+          done
+
+          echo "❌ Superset health check failed"
+          exit 1
+
+      - name: Update Notion Deployment Log
         if: always()
+        env:
+          INSIGHTPULSE_API_KEY: ${{ secrets.INSIGHTPULSE_API_KEY }}
         run: |
-          echo "📊 Deployment Summary"
-          echo "===================="
-          echo "App ID: ${{ env.DO_APP_ID_SUPERSET }}"
-          echo "Deployment ID: ${{ env.DEPLOYMENT_ID }}"
-          echo "Health URL: https://superset.insightpulseai.net/health"
-          echo "Superset URL: https://superset.insightpulseai.net"
+          curl -X POST https://insightpulseai.net/api/notion/deployment-log \
+            -H "Content-Type: application/json" \
+            -H "X-API-Key: $INSIGHTPULSE_API_KEY" \
+            -d "{
+              \"service\": \"Apache Superset\",
+              \"commit_sha\": \"${{ github.sha }}\",
+              \"deployer\": \"${{ github.actor }}\",
+              \"status\": \"${{ job.status }}\",
+              \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"
+            }" || echo "Failed to update Notion"
+
+  cleanup:
+    name: Cleanup Old Images
+    needs: [deploy-superset-app-platform, deploy-superset-droplet]
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+
+      - name: Clean up old images
+        run: |
+          doctl registry repository list-tags $IMAGE_NAME --format Tag,UpdatedAt \
+            | tail -n +6 \
+            | awk '{print $1}' \
+            | xargs -I {} doctl registry repository delete-tag $IMAGE_NAME {} --force || true
