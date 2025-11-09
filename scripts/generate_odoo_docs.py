@@ -88,54 +88,64 @@ class OdooDocsGenerator:
         }
 
     def scan_modules(self) -> List[OdooModule]:
-        """Scan custom-addons for Odoo modules"""
-        addons_path = self.repo_path / "custom-addons"
+        """Scan Odoo module directories for modules"""
+        # Updated paths after migration from custom/ to odoo/
+        module_paths = [
+            self.repo_path / "odoo" / "modules",
+            self.repo_path / "odoo" / "addons",
+            self.repo_path / "odoo" / "custom-addons",
+        ]
 
-        if not addons_path.exists():
-            print(f"⚠️  custom-addons directory not found at {addons_path}")
-            # Also check addons/custom
-            addons_path = self.repo_path / "addons" / "custom"
-            if not addons_path.exists():
-                print("❌ No custom addons found")
-                return []
+        # Filter to existing paths
+        existing_paths = [p for p in module_paths if p.exists()]
 
-        print(f"📂 Scanning modules in {addons_path}")
+        if not existing_paths:
+            print(f"❌ No module directories found. Checked:")
+            for p in module_paths:
+                print(f"   - {p}")
+            return []
 
-        for module_dir in addons_path.iterdir():
-            if not module_dir.is_dir() or module_dir.name.startswith('.'):
-                continue
+        print(f"📂 Scanning modules in {len(existing_paths)} directories:")
+        for p in existing_paths:
+            print(f"   - {p}")
 
-            manifest = module_dir / "__manifest__.py"
-            if not manifest.exists():
-                continue
+        # Scan all existing module paths
+        for addons_path in existing_paths:
+            for module_dir in addons_path.iterdir():
+                if not module_dir.is_dir() or module_dir.name.startswith('.'):
+                    continue
 
-            try:
-                module_info = self.parse_manifest(manifest)
-                module_info.models = self.extract_models(module_dir / "models")
-                module_info.views = self.extract_views(module_dir / "views")
-                module_info.security_files = self.extract_security(module_dir / "security")
-                module_info.data_files = self.extract_data_files(module_dir / "data")
+                manifest = module_dir / "__manifest__.py"
+                if not manifest.exists():
+                    continue
 
-                self.modules.append(module_info)
+                try:
+                    module_info = self.parse_manifest(manifest)
+                    module_info.models = self.extract_models(module_dir / "models")
+                    module_info.views = self.extract_views(module_dir / "views")
+                    module_info.security_files = self.extract_security(module_dir / "security")
+                    module_info.data_files = self.extract_data_files(module_dir / "data")
 
-                # Update stats
-                self.stats['total_modules'] += 1
-                self.stats['total_models'] += len(module_info.models)
-                self.stats['total_views'] += len(module_info.views)
+                    self.modules.append(module_info)
 
-                for model in module_info.models:
-                    self.stats['total_fields'] += len(model.fields)
+                    # Update stats
+                    self.stats['total_modules'] += 1
+                    self.stats['total_models'] += len(module_info.models)
+                    self.stats['total_views'] += len(module_info.views)
 
-                # Detect BIR/Finance modules
-                if 'bir' in module_info.name.lower():
-                    self.stats['bir_modules'] += 1
-                if 'finance' in module_info.category.lower() or 'account' in module_info.category.lower():
-                    self.stats['finance_modules'] += 1
+                    for model in module_info.models:
+                        self.stats['total_fields'] += len(model.fields)
 
-                print(f"  ✅ {module_info.name} v{module_info.version}")
+                    # Detect BIR/Finance modules
+                    if 'bir' in module_info.name.lower():
+                        self.stats['bir_modules'] += 1
+                    if 'finance' in module_info.category.lower() or 'account' in module_info.category.lower():
+                        self.stats['finance_modules'] += 1
 
-            except Exception as e:
-                print(f"  ⚠️  Error parsing {module_dir.name}: {e}")
+                    print(f"  ✅ {module_info.name} v{module_info.version}")
+
+                except Exception as e:
+                    print(f"  ⚠️  Error parsing {module_dir.name}: {e}")
 
         return self.modules
 

@@ -1,0 +1,172 @@
+name: Documentation Health Check
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'odoo/modules/**/__manifest__.py'
+      - 'odoo/addons/**/__manifest__.py'
+      - 'odoo/custom-addons/**/__manifest__.py'
+      - 'scripts/generate_odoo_docs.py'
+      - '.github/workflows/docs-health-check.yml'
+      - '.github/workflows/generate-docs.yml'
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'odoo/modules/**/__manifest__.py'
+      - 'odoo/addons/**/__manifest__.py'
+      - 'odoo/custom-addons/**/__manifest__.py'
+      - 'scripts/generate_odoo_docs.py'
+
+jobs:
+  docs-health:
+    runs-on: ubuntu-latest
+    name: Validate Documentation Build
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          pip install markdown
+
+      - name: Validate module paths exist
+        run: |
+          echo "🔍 Validating module paths..."
+
+          # Check that at least one module directory exists
+          if [ ! -d "odoo/modules" ] && [ ! -d "odoo/addons" ] && [ ! -d "odoo/custom-addons" ]; then
+            echo "❌ No module directories found!"
+            echo "Expected at least one of: odoo/modules/, odoo/addons/, odoo/custom-addons/"
+            exit 1
+          fi
+
+          # List what we found
+          for dir in odoo/modules odoo/addons odoo/custom-addons; do
+            if [ -d "$dir" ]; then
+              module_count=$(find "$dir" -maxdepth 2 -name "__manifest__.py" 2>/dev/null | wc -l)
+              echo "✅ $dir: $module_count modules"
+            else
+              echo "⚠️  $dir: not found (this is OK if modules are in other directories)"
+            fi
+          done
+
+      - name: Test documentation generation
+        run: |
+          echo "📚 Testing documentation generation..."
+          python scripts/generate_odoo_docs.py --format all
+
+      - name: Validate generated files
+        run: |
+          echo "🔍 Validating generated documentation files..."
+
+          required_files=(
+            "docs/GENERATED_ODOO_DOCS.md"
+            "docs/GENERATED_ODOO_DOCS.html"
+            "docs/GENERATED_ODOO_DOCS.json"
+          )
+
+          all_exist=true
+          for file in "${required_files[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Missing: $file"
+              all_exist=false
+            else
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file")
+              echo "✅ $file (${size} bytes)"
+            fi
+          done
+
+          if [ "$all_exist" = false ]; then
+            echo "❌ Documentation generation incomplete"
+            exit 1
+          fi
+
+      - name: Validate JSON structure
+        run: |
+          echo "🔍 Validating JSON documentation structure..."
+          python3 -c "
+          import json
+          import sys
+
+          with open('docs/GENERATED_ODOO_DOCS.json', 'r') as f:
+              data = json.load(f)
+
+          # Validate required keys
+          required_keys = ['generated', 'stats', 'modules']
+          missing = [k for k in required_keys if k not in data]
+
+          if missing:
+              print(f'❌ Missing required keys in JSON: {missing}')
+              sys.exit(1)
+
+          # Validate stats
+          stats = data['stats']
+          print(f\"📊 Documentation Stats:\")
+          print(f\"   - Modules: {stats.get('total_modules', 0)}\")
+          print(f\"   - Models: {stats.get('total_models', 0)}\")
+          print(f\"   - Fields: {stats.get('total_fields', 0)}\")
+          print(f\"   - Views: {stats.get('total_views', 0)}\")
+
+          if stats.get('total_modules', 0) == 0:
+              print('⚠️  Warning: No modules found')
+          else:
+              print('✅ JSON documentation structure valid')
+          "
+
+      - name: Check documentation structure
+        run: |
+          echo "🔍 Validating documentation structure..."
+
+          required_docs=(
+            "docs/_config.yml"
+            "docs/index.md"
+            "scripts/generate_odoo_docs.py"
+          )
+
+          for file in "${required_docs[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ $file"
+            else
+              echo "❌ Missing: $file"
+              exit 1
+            fi
+          done
+
+      - name: Upload documentation artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-docs
+          path: |
+            docs/GENERATED_ODOO_DOCS.md
+            docs/GENERATED_ODOO_DOCS.html
+            docs/GENERATED_ODOO_DOCS.json
+          retention-days: 7
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📚 Documentation Health Check Complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+
+          if [ -f "docs/GENERATED_ODOO_DOCS.json" ]; then
+            python3 -c "
+          import json
+          with open('docs/GENERATED_ODOO_DOCS.json', 'r') as f:
+              stats = json.load(f)['stats']
+          print(f\"Modules: {stats.get('total_modules', 0)}\")
+          print(f\"Models: {stats.get('total_models', 0)}\")
+          print(f\"Fields: {stats.get('total_fields', 0)}\")
+            "
+          fi
+
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
