@@ -12,7 +12,7 @@ Required Environment Variables:
     NOTION_BIR_DB_ID - Notion database ID for BIR compliance
 
 External ID Format:
-    bir_{FormCode}_{Agency}_{Year}_{Month}
+    bir_{FormCode}_{CompanyCode}_{Year}_{Month}
     Example: bir_1601-C_RIM_2025_01
 """
 
@@ -48,22 +48,22 @@ class BIRNotionSync:
         self.database_id = database_id
         logger.info(f"Initialized BIR sync for database: {database_id}")
 
-    def generate_external_id(self, form_code: str, agency: str, deadline: str) -> str:
+    def generate_external_id(self, form_code: str, company_code: str, deadline: str) -> str:
         """
         Generate External ID for BIR entry.
 
         Args:
             form_code: BIR form code (1601-C, 2550Q, etc.)
-            agency: Agency code (RIM, CKVC, etc.)
+            company_code: Company code (RIM, CKVC, BOM, etc.)
             deadline: Deadline date (YYYY-MM-DD)
 
         Returns:
-            External ID string (bir_{form}_{agency}_{year}_{month})
+            External ID string (bir_{form}_{company_code}_{year}_{month})
         """
         date_obj = datetime.fromisoformat(deadline)
         year = date_obj.year
         month = f"{date_obj.month:02d}"
-        return f"bir_{form_code}_{agency}_{year}_{month}"
+        return f"bir_{form_code}_{company_code}_{year}_{month}"
 
     def sync_entry(self, entry: dict) -> str:
         """
@@ -77,13 +77,13 @@ class BIRNotionSync:
         """
         external_id = self.generate_external_id(
             form_code=entry['form'],
-            agency=entry['agency'],
+            company_code=entry['company'],
             deadline=entry['deadline']
         )
 
         properties = {
             'Form Code': create_notion_property('title', f"{entry['form']} - {entry['name']}"),
-            'Agency': create_notion_property('select', entry['agency']),
+            'Company': create_notion_property('select', entry['company']),
             'Deadline': create_notion_property('date', entry['deadline']),
             'Reminder Date': create_notion_property('date', entry['reminder_date']),
             'Status': create_notion_property('select', 'Pending'),
@@ -135,7 +135,7 @@ class BIRNotionSync:
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": "File copy in agency folder"}}],
+                    "rich_text": [{"type": "text", "text": {"content": "File copy in company folder"}}],
                     "checked": False
                 }
             }
@@ -148,7 +148,7 @@ class BIRNotionSync:
             children=children
         )
 
-        logger.info(f"Synced: {entry['form']} - {entry['agency']} → {page_id}")
+        logger.info(f"Synced: {entry['form']} - {entry['company']} → {page_id}")
         return page_id
 
     def sync_calendar(self, calendar_file: str) -> dict:
@@ -177,7 +177,7 @@ class BIRNotionSync:
                 page_id = self.sync_entry(entry)
                 page_ids.append(page_id)
             except Exception as e:
-                logger.error(f"Error syncing entry {entry.get('form')} - {entry.get('agency')}: {e}")
+                logger.error(f"Error syncing entry {entry.get('form')} - {entry.get('company')}: {e}")
                 errors.append({'entry': entry, 'error': str(e)})
 
         stats = {
