@@ -144,14 +144,18 @@ def extract_skill_names(sections: Dict[int, str]) -> Set[str]:
     return skills
 
 
-def validate_mcp_config(claude_mcp_servers: Set[str], project_root: Path) -> List[str]:
-    """Validate MCP configuration against vscode-mcp-config.json"""
+def validate_mcp_config(claude_mcp_servers: Set[str], project_root: Path) -> Tuple[List[str], List[str]]:
+    """Validate MCP configuration against vscode-mcp-config.json
+
+    Returns: (errors, warnings) tuple
+    """
     errors = []
+    warnings = []
     mcp_config_path = project_root / "mcp" / "vscode-mcp-config.json"
 
     if not mcp_config_path.exists():
         errors.append(f"MCP config file not found: {mcp_config_path}")
-        return errors
+        return errors, warnings
 
     try:
         with open(mcp_config_path, "r", encoding="utf-8") as f:
@@ -164,25 +168,29 @@ def validate_mcp_config(claude_mcp_servers: Set[str], project_root: Path) -> Lis
         extra_in_config = actual_servers - claude_mcp_servers
 
         if missing_in_config:
-            errors.append(f"MCP servers in claude.md but NOT in config: {missing_in_config}")
+            warnings.append(f"MCP servers in claude.md but NOT in config: {missing_in_config}")
 
         if extra_in_config:
-            errors.append(f"MCP servers in config but NOT in claude.md: {extra_in_config}")
+            warnings.append(f"MCP servers in config but NOT in claude.md: {extra_in_config}")
 
     except json.JSONDecodeError as e:
         errors.append(f"Failed to parse MCP config: {e}")
 
-    return errors
+    return errors, warnings
 
 
-def validate_agent_files(claude_agents: Set[str]) -> List[str]:
-    """Validate agent files against ~/.claude/superclaude/agents/"""
+def validate_agent_files(claude_agents: Set[str]) -> Tuple[List[str], List[str]]:
+    """Validate agent files against ~/.claude/superclaude/agents/
+
+    Returns: (errors, warnings) tuple
+    """
     errors = []
+    warnings = []
     agent_dir = Path.home() / ".claude" / "superclaude" / "agents" / "domain"
 
     if not agent_dir.exists():
-        errors.append(f"Agent directory not found: {agent_dir}")
-        return errors
+        warnings.append(f"Agent directory not found: {agent_dir}")
+        return errors, warnings
 
     # Find all agent YAML files
     actual_agents = set()
@@ -195,22 +203,26 @@ def validate_agent_files(claude_agents: Set[str]) -> List[str]:
     extra_agents = actual_agents - claude_agents
 
     if missing_agents:
-        errors.append(f"Agents in claude.md but missing files: {missing_agents}")
+        warnings.append(f"Agents in claude.md but missing files: {missing_agents}")
 
     if extra_agents:
-        errors.append(f"Agent files exist but not documented in claude.md: {extra_agents}")
+        warnings.append(f"Agent files exist but not documented in claude.md: {extra_agents}")
 
-    return errors
+    return errors, warnings
 
 
-def validate_skill_directories(claude_skills: Set[str], project_root: Path) -> List[str]:
-    """Validate skill directories against docs/claude-code-skills/"""
+def validate_skill_directories(claude_skills: Set[str], project_root: Path) -> Tuple[List[str], List[str]]:
+    """Validate skill directories against docs/claude-code-skills/
+
+    Returns: (errors, warnings) tuple
+    """
     errors = []
+    warnings = []
     skills_dir = project_root / "docs" / "claude-code-skills"
 
     if not skills_dir.exists():
         errors.append(f"Skills directory not found: {skills_dir}")
-        return errors
+        return errors, warnings
 
     # Find all skill directories
     actual_skills = set()
@@ -223,12 +235,12 @@ def validate_skill_directories(claude_skills: Set[str], project_root: Path) -> L
     extra_skills = actual_skills - claude_skills
 
     if missing_skills:
-        errors.append(f"Skills in claude.md but missing directories: {missing_skills}")
+        warnings.append(f"Skills in claude.md but missing directories: {missing_skills}")
 
     if extra_skills:
-        errors.append(f"Skill directories exist but not documented in claude.md: {extra_skills}")
+        warnings.append(f"Skill directories exist but not documented in claude.md: {extra_skills}")
 
-    return errors
+    return errors, warnings
 
 
 def validate_interface_hierarchy(project_root: Path) -> List[str]:
@@ -253,13 +265,18 @@ def validate_interface_hierarchy(project_root: Path) -> List[str]:
 
 def generate_report(
     project_root: Path,
-    validation_results: Dict[str, List[str]],
+    validation_results: Dict[str, Tuple[List[str], List[str]]],
     model_version: str,
 ) -> None:
-    """Generate validation report"""
+    """Generate validation report
+
+    Args:
+        validation_results: Dict mapping section name to (errors, warnings) tuples
+    """
     report_path = project_root / "docs" / "claude-config-validation.md"
 
-    total_errors = sum(len(errors) for errors in validation_results.values())
+    total_errors = sum(len(errors) for errors, _ in validation_results.values())
+    total_warnings = sum(len(warnings) for _, warnings in validation_results.values())
 
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("# Claude Configuration Validation Report\n\n")
@@ -269,18 +286,25 @@ def generate_report(
         f.write("---\n\n")
         f.write("## Summary\n\n")
         f.write(f"- **Total Errors**: {total_errors}\n")
+        f.write(f"- **Total Warnings**: {total_warnings}\n")
         f.write(f"- **Model Version**: {model_version or 'NOT FOUND'}\n\n")
         f.write("---\n\n")
         f.write("## Validation Results\n\n")
 
-        for section, errors in validation_results.items():
+        for section, (errors, warnings) in validation_results.items():
             f.write(f"### {section}\n\n")
             if errors:
+                f.write("**Errors:**\n")
                 for error in errors:
-                    f.write(f"❌ {error}\n")
-            else:
-                f.write("✅ No issues found\n")
-            f.write("\n")
+                    f.write(f"- ❌ {error}\n")
+                f.write("\n")
+            if warnings:
+                f.write("**Warnings:**\n")
+                for warning in warnings:
+                    f.write(f"- ⚠️  {warning}\n")
+                f.write("\n")
+            if not errors and not warnings:
+                f.write("✅ No issues found\n\n")
 
         f.write("---\n\n")
         f.write("## Recommendations\n\n")
@@ -290,6 +314,11 @@ def generate_report(
             f.write("2. **Update Documentation**: Ensure all sections are documented in claude.md\n")
             f.write("3. **Validate Files**: Check that all referenced files exist\n")
             f.write("4. **Run Sync Script**: Execute `scripts/sync-claude-configs.sh`\n")
+        elif total_warnings > 0:
+            f.write("⚠️  **Warnings detected** - Consider addressing these for better configuration consistency:\n\n")
+            f.write("1. **Document MCP Servers**: Add missing MCP servers to claude.md Section 17\n")
+            f.write("2. **Document Skills**: Add missing skills to claude.md Section 19\n")
+            f.write("3. **Update Agents**: Sync agent definitions with actual files\n")
         else:
             f.write("✅ No drift detected. Configuration is synchronized.\n")
 
@@ -351,34 +380,43 @@ def main():
     # Step 4: Validate MCP servers
     print("\n4. Validating MCP servers...")
     claude_mcp_servers = extract_mcp_servers(sections)
-    mcp_errors = validate_mcp_config(claude_mcp_servers, project_root)
+    mcp_errors, mcp_warnings = validate_mcp_config(claude_mcp_servers, project_root)
 
     if mcp_errors:
         for error in mcp_errors:
-            log_warning(error)
-    else:
+            log_error(error)
+    if mcp_warnings:
+        for warning in mcp_warnings:
+            log_warning(warning)
+    if not mcp_errors and not mcp_warnings:
         log_success("MCP server configuration matches claude.md")
 
     # Step 5: Validate agents
     print("\n5. Validating agent definitions...")
     claude_agents = extract_agent_names(sections)
-    agent_errors = validate_agent_files(claude_agents)
+    agent_errors, agent_warnings = validate_agent_files(claude_agents)
 
     if agent_errors:
         for error in agent_errors:
-            log_warning(error)
-    else:
+            log_error(error)
+    if agent_warnings:
+        for warning in agent_warnings:
+            log_warning(warning)
+    if not agent_errors and not agent_warnings:
         log_success("Agent definitions match claude.md")
 
     # Step 6: Validate skills
     print("\n6. Validating skills inventory...")
     claude_skills = extract_skill_names(sections)
-    skill_errors = validate_skill_directories(claude_skills, project_root)
+    skill_errors, skill_warnings = validate_skill_directories(claude_skills, project_root)
 
     if skill_errors:
         for error in skill_errors:
-            log_warning(error)
-    else:
+            log_error(error)
+    if skill_warnings:
+        for warning in skill_warnings:
+            log_warning(warning)
+    if not skill_errors and not skill_warnings:
         log_success("Skills inventory matches claude.md")
 
     # Step 7: Validate interface hierarchy
@@ -395,29 +433,35 @@ def main():
     print("\n8. Generating validation report...")
 
     validation_results = {
-        "Section Structure": structure_errors,
-        "MCP Servers": mcp_errors,
-        "Agent Definitions": agent_errors,
-        "Skills Inventory": skill_errors,
-        "Interface Hierarchy": hierarchy_errors,
+        "Section Structure": (structure_errors, []),
+        "MCP Servers": (mcp_errors, mcp_warnings),
+        "Agent Definitions": (agent_errors, agent_warnings),
+        "Skills Inventory": (skill_errors, skill_warnings),
+        "Interface Hierarchy": (hierarchy_errors, []),
     }
 
     generate_report(project_root, validation_results, model_version)
 
     # Summary
-    total_errors = sum(len(errors) for errors in validation_results.values())
+    total_errors = sum(len(errors) for errors, _ in validation_results.values())
+    total_warnings = sum(len(warnings) for _, warnings in validation_results.values())
 
     print("\n" + "=" * 50)
     print("Validation Summary")
     print("=" * 50)
     print(f"Total Errors: {total_errors}")
+    print(f"Total Warnings: {total_warnings}")
     print()
 
     if total_errors == 0:
-        log_success("Configuration is synchronized!")
+        if total_warnings > 0:
+            log_warning(f"Configuration has {total_warnings} warnings but no blocking errors.")
+            print("CI will pass, but consider addressing warnings for better consistency.")
+        else:
+            log_success("Configuration is synchronized!")
         sys.exit(0)
     else:
-        log_warning(f"Configuration drift detected. {total_errors} errors found.")
+        log_error(f"Configuration has {total_errors} blocking errors that must be fixed.")
         sys.exit(1)
 
 
