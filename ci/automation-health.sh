@@ -567,6 +567,13 @@ main() {
     echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
   else
     # JSON output
+    # Calculate pass rate safely (avoid division by zero)
+    if [ ${TOTAL_CHECKS} -gt 0 ]; then
+      PASS_RATE=$(( (PASSED_CHECKS * 100) / TOTAL_CHECKS ))
+    else
+      PASS_RATE=0
+    fi
+
     echo "{"
     echo "  \"timestamp\": \"$(date -u +"%Y-%m-%d %H:%M:%S UTC")\","
     echo "  \"layer\": \"${LAYER}\","
@@ -575,7 +582,7 @@ main() {
     echo "  \"passed\": ${PASSED_CHECKS},"
     echo "  \"failed\": ${FAILED_CHECKS},"
     echo "  \"warnings\": ${WARNING_CHECKS},"
-    echo "  \"pass_rate\": $(( (PASSED_CHECKS * 100) / TOTAL_CHECKS )),"
+    echo "  \"pass_rate\": ${PASS_RATE},"
     echo "  \"results\": ["
 
     first=true
