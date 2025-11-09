@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euo pipefail
+set -uo pipefail  # Removed -e to prevent early exit on check failures
 
 # Automation Health Check Script
 # Purpose: Validation Pyramid implementation for InsightPulse Odoo
