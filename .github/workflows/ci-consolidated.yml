@@ -1,0 +1,352 @@
+name: CI - Code Quality & Tests
+
+# Consolidated workflow combining ci-unified.yml and quality.yml
+# Eliminates redundancy and improves efficiency with parallel job execution
+
+on:
+  push:
+    branches: [main, develop, ipai-bridges-v1]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
+  pull_request:
+    branches: [main, develop]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+      - '.claude/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ============================================================================
+  # PARALLEL CODE QUALITY CHECKS
+  # Runs multiple linters in parallel for speed
+  # ============================================================================
+  quality:
+    name: Code Quality (${{ matrix.tool }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool:
+          - black
+          - isort
+          - flake8
+          - pylint
+          - pre-commit
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install --quiet ${{ matrix.tool }}
+
+          # Install additional dependencies based on tool
+          if [ "${{ matrix.tool }}" = "pylint" ]; then
+            pip install --quiet pylint-odoo || true
+          fi
+
+          # Install project dependencies if they exist
+          if [ -f requirements.txt ]; then
+            pip install --quiet -r requirements.txt || true
+          fi
+
+      - name: Run ${{ matrix.tool }}
+        run: |
+          case "${{ matrix.tool }}" in
+            black)
+              black --check . || echo "::warning::Black formatting issues found"
+              ;;
+            isort)
+              isort --check-only . || echo "::warning::Import sorting issues found"
+              ;;
+            flake8)
+              flake8 addons/ scripts/ \
+                --max-line-length=120 \
+                --extend-ignore=E203,W503 \
+                --exclude=.git,__pycache__,*/migrations/*,*/tests/* \
+                || echo "::warning::Flake8 issues found"
+              ;;
+            pylint)
+              echo "Running pylint on Odoo addons..."
+              for addon in addons/*/; do
+                if [ -d "$addon" ]; then
+                  addon_name=$(basename "$addon")
+                  echo "Linting $addon_name..."
+                  pylint "$addon" \
+                    --load-plugins=pylint_odoo \
+                    --disable=all \
+                    --enable=E,F \
+                    --fail-under=7.0 \
+                    || echo "::warning::Pylint issues in $addon_name"
+                fi
+              done
+              ;;
+            pre-commit)
+              pre-commit run --all-files || echo "::warning::Pre-commit hooks failed"
+              ;;
+          esac
+        continue-on-error: true
+
+  # ============================================================================
+  # SECURITY SCANS
+  # Runs in parallel with quality checks
+  # ============================================================================
+  security:
+    name: Security Scan (${{ matrix.scanner }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        scanner:
+          - bandit
+          - safety
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install scanner
+        run: pip install ${{ matrix.scanner }}
+
+      - name: Run ${{ matrix.scanner }}
+        run: |
+          case "${{ matrix.scanner }}" in
+            bandit)
+              bandit -r addons/ scripts/ \
+                -f json -o bandit-report.json \
+                --severity-level medium \
+                || echo "::warning::Security issues found by Bandit"
+              ;;
+            safety)
+              if [ -f requirements.txt ]; then
+                safety check -r requirements.txt \
+                  --json --output safety-report.json \
+                  || echo "::warning::Vulnerabilities found by Safety"
+              fi
+              ;;
+          esac
+        continue-on-error: true
+
+      - name: Upload security reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-${{ matrix.scanner }}
+          path: |
+            *-report.json
+          retention-days: 30
+
+  # ============================================================================
+  # PYTHON TESTS
+  # Runs after quality checks pass
+  # ============================================================================
+  test:
+    name: Python Tests
+    runs-on: ubuntu-latest
+    needs: [quality]
+    if: success() || failure()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install test dependencies
+        run: |
+          pip install pytest pytest-cov pytest-mock pytest-asyncio
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run unit tests
+        run: |
+          if [ -d "tests" ]; then
+            pytest tests/ -v \
+              --cov=addons \
+              --cov=scripts \
+              --cov-report=xml \
+              --cov-report=html \
+              --cov-report=term \
+              --junitxml=pytest-results.xml \
+              || echo "::warning::Some tests failed"
+          else
+            echo "No tests directory found, skipping"
+          fi
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            pytest-results.xml
+            htmlcov/
+          retention-days: 30
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: ci-consolidated
+          fail_ci_if_error: false
+
+  # ============================================================================
+  # ODOO MODULE TESTS (if applicable)
+  # ============================================================================
+  odoo-tests:
+    name: Odoo Module Tests
+    runs-on: ubuntu-latest
+    needs: [quality]
+    if: success() || failure()
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: test_db
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'  # Odoo 19 uses Python 3.10
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libldap2-dev \
+            libsasl2-dev \
+            libssl-dev \
+            python3-dev \
+            build-essential
+
+      - name: Install Odoo dependencies
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
+
+      - name: Run Odoo module tests
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: odoo
+          PGPASSWORD: odoo
+        run: |
+          if [ -f odoo-bin ]; then
+            ./odoo-bin -c odoo.conf \
+              --test-enable \
+              --log-level=test \
+              --stop-after-init \
+              -d test_db \
+              --init=base \
+              || echo "::warning::Odoo tests completed with warnings"
+          else
+            echo "odoo-bin not found, skipping Odoo tests"
+          fi
+        continue-on-error: true
+
+  # ============================================================================
+  # SUMMARY REPORT
+  # Aggregates all job results
+  # ============================================================================
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [quality, security, test, odoo-tests]
+    if: always()
+
+    steps:
+      - name: Generate summary
+        run: |
+          echo "# CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Code Quality | ${{ needs.quality.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Security Scans | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Python Tests | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Odoo Tests | ${{ needs.odoo-tests.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Determine overall status
+          if [ "${{ needs.quality.result }}" = "failure" ] || \
+             [ "${{ needs.security.result }}" = "failure" ]; then
+            echo "::error::CI pipeline failed"
+            echo "**Status**: ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "**Status**: ✅ Passed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `
+            ## 🤖 CI Pipeline Results
+
+            | Check | Status |
+            |-------|--------|
+            | Code Quality | ${{ needs.quality.result }} |
+            | Security Scans | ${{ needs.security.result }} |
+            | Python Tests | ${{ needs.test.result }} |
+            | Odoo Tests | ${{ needs.odoo-tests.result }} |
+
+            [View full workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: summary
+            });

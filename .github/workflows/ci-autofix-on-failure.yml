@@ -1,0 +1,224 @@
+name: CI Autofix on Failure
+
+on:
+  workflow_run:
+    workflows:
+      - "CI Unified"
+      - "Quality Checks"
+      - "Odoo Unified CI"
+      - "OCA Pre-commit"
+    types:
+      - completed
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  analyze-failure:
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Download workflow logs
+        id: download_logs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get the failed workflow run ID
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          REPO="${{ github.repository }}"
+
+          # Download logs using GitHub CLI
+          gh run view $RUN_ID --log-failed > workflow_logs.txt || echo "No failed logs found"
+
+          # Check if we got any logs
+          if [ -s workflow_logs.txt ]; then
+            echo "logs_available=true" >> $GITHUB_OUTPUT
+            echo "📥 Downloaded workflow logs ($(wc -l < workflow_logs.txt) lines)"
+          else
+            echo "logs_available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No workflow logs available"
+          fi
+
+      - name: Extract errors from logs
+        if: steps.download_logs.outputs.logs_available == 'true'
+        id: extract_errors
+        env:
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x scripts/ci-autofix-helper.py
+
+          # Extract errors (without generating fix yet)
+          python3 scripts/ci-autofix-helper.py workflow_logs.txt > errors.json
+
+          # Check if any errors were found
+          ERROR_COUNT=$(cat errors.json | grep -c '"type":' || echo "0")
+          echo "error_count=$ERROR_COUNT" >> $GITHUB_OUTPUT
+
+          if [ "$ERROR_COUNT" -gt 0 ]; then
+            echo "has_errors=true" >> $GITHUB_OUTPUT
+            echo "🔍 Found $ERROR_COUNT errors"
+          else
+            echo "has_errors=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No recognizable errors found in logs"
+          fi
+
+      - name: Generate fix suggestions
+        if: steps.extract_errors.outputs.has_errors == 'true' && env.OPENAI_API_KEY != ''
+        id: generate_fix
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GENERATE_FIX: 'true'
+        run: |
+          echo "🤖 Generating fix suggestions using OpenAI..."
+          python3 scripts/ci-autofix-helper.py workflow_logs.txt > fix_suggestions.txt
+
+          # Save fix to output
+          echo "fix_generated=true" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub issue with autofix suggestions
+        if: steps.extract_errors.outputs.has_errors == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          WORKFLOW_NAME="${{ github.event.workflow_run.name }}"
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          RUN_URL="${{ github.event.workflow_run.html_url }}"
+
+          # Check if fix was generated
+          if [ -f fix_suggestions.txt ]; then
+            FIX_CONTENT=$(cat fix_suggestions.txt)
+          else
+            FIX_CONTENT="⚠️ OpenAI API key not configured. Run \`gh secret set OPENAI_API_KEY\` to enable automatic fix suggestions."
+          fi
+
+          # Create issue body
+          cat > issue_body.md <<EOF
+          ## 🤖 CI Autofix Assistant
+
+          **Workflow**: ${WORKFLOW_NAME}
+          **Run ID**: ${RUN_ID}
+          **Run URL**: ${RUN_URL}
+          **Status**: ❌ Failed
+
+          ---
+
+          ## ❌ Errors Detected
+
+          \`\`\`json
+          $(cat errors.json)
+          \`\`\`
+
+          ---
+
+          ## 💡 Suggested Fix
+
+          ${FIX_CONTENT}
+
+          ---
+
+          ## 🔧 How to Apply
+
+          1. Review the suggested fixes above
+          2. Apply the changes manually or use the suggestions to create a PR
+          3. Re-run the workflow to verify the fix: \`gh workflow run "${WORKFLOW_NAME}"\`
+
+          ---
+
+          ## 🔗 Related Links
+
+          - [Failed Workflow Run](${RUN_URL})
+          - [CI/CD Audit](./docs/CI_CD_AUDIT_2025-11-04.md)
+          - [Secrets Setup Guide](./docs/SECRETS_SETUP_GUIDE.md)
+
+          ---
+
+          **Labels**: \`ci-failure\`, \`autofix\`, \`needs-review\`
+          **Created by**: CI Autofix Bot
+          **Auto-generated**: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          EOF
+
+          # Create the issue
+          gh issue create \
+            --title "🤖 CI Autofix: ${WORKFLOW_NAME} failed (Run #${RUN_ID})" \
+            --body-file issue_body.md \
+            --label "ci-failure,autofix,needs-review"
+
+          echo "✅ Created GitHub issue with autofix suggestions"
+
+      - name: Comment on existing PR if applicable
+        if: steps.extract_errors.outputs.has_errors == 'true' && github.event.workflow_run.pull_requests[0] != null
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUMBER="${{ github.event.workflow_run.pull_requests[0].number }}"
+
+          if [ -n "$PR_NUMBER" ]; then
+            # Check if fix was generated
+            if [ -f fix_suggestions.txt ]; then
+              FIX_CONTENT=$(cat fix_suggestions.txt)
+            else
+              FIX_CONTENT="⚠️ OpenAI API key not configured."
+            fi
+
+            # Comment on PR
+            cat > pr_comment.md <<EOF
+            ## 🤖 CI Autofix Assistant
+
+            The workflow **${{ github.event.workflow_run.name }}** failed.
+
+            ### ❌ Errors Found
+
+            \`\`\`json
+            $(cat errors.json | head -50)
+            \`\`\`
+
+            ### 💡 Suggested Fix
+
+            ${FIX_CONTENT}
+
+            ---
+
+            [View full workflow run](${{ github.event.workflow_run.html_url }})
+            EOF
+
+            gh pr comment $PR_NUMBER --body-file pr_comment.md
+            echo "✅ Commented on PR #${PR_NUMBER}"
+          fi
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: ci-autofix-analysis
+          path: |
+            workflow_logs.txt
+            errors.json
+            fix_suggestions.txt
+            issue_body.md
+          retention-days: 30
+
+  notify-on-success:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log success
+        run: |
+          echo "✅ Workflow ${{ github.event.workflow_run.name }} completed successfully"
+          echo "No autofix needed"
