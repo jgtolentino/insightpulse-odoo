@@ -1,0 +1,84 @@
+name: Generate Documentation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'custom-addons/**'
+      - 'addons/custom/**'
+      - 'workflows/**'
+      - 'scripts/generate_odoo_docs.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Weekly on Sunday
+
+jobs:
+  generate-docs:
+    name: Generate Odoo API Docs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install markdown
+
+      - name: Generate documentation
+        run: |
+          python scripts/generate_odoo_docs.py --format all
+
+      - name: Create docs artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: odoo-docs
+          path: |
+            docs/GENERATED_ODOO_DOCS.md
+            docs/GENERATED_ODOO_DOCS.html
+            docs/GENERATED_ODOO_DOCS.json
+          retention-days: 90
+
+      - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs
+          enable_jekyll: false
+          cname: docs.insightpulseai.net
+
+      - name: Create documentation summary
+        run: |
+          echo "# 📚 Odoo Documentation Generated" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Documentation has been generated and deployed." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ -f docs/GENERATED_ODOO_DOCS.json ]; then
+            MODULE_COUNT=$(jq '.stats.total_modules' docs/GENERATED_ODOO_DOCS.json)
+            MODEL_COUNT=$(jq '.stats.total_models' docs/GENERATED_ODOO_DOCS.json)
+            FIELD_COUNT=$(jq '.stats.total_fields' docs/GENERATED_ODOO_DOCS.json)
+
+            echo "## 📊 Statistics" >> $GITHUB_STEP_SUMMARY
+            echo "- **Modules**: $MODULE_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Models**: $MODEL_COUNT" >> $GITHUB_STEP_SUMMARY
+            echo "- **Fields**: $FIELD_COUNT" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [View HTML Docs](https://docs.insightpulseai.net/GENERATED_ODOO_DOCS.html)" >> $GITHUB_STEP_SUMMARY
+          echo "- [View Markdown Docs](https://docs.insightpulseai.net/GENERATED_ODOO_DOCS.md)" >> $GITHUB_STEP_SUMMARY
+          echo "- [Download JSON API](https://docs.insightpulseai.net/GENERATED_ODOO_DOCS.json)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Documentation generation failed"
