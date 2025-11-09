@@ -1,0 +1,26 @@
+name: CI - Superset Dashboards
+
+on:
+  pull_request:
+    paths:
+      - 'apps/superset/**'
+      - 'superset/**'
+
+jobs:
+  validate-dashboards:
+    runs-on: ubuntu-latest
+    name: Validate Superset Configuration
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Echo responsibility
+        run: |
+          echo "Responsibility: Import dashboards and validate Superset config"
+          echo "TODO: Implement Superset dashboard validation"
+          echo "Status: Skeleton workflow created per platform_spec.json"
+
+      - name: Placeholder validation
+        run: |
+          echo "✅ Skeleton workflow runs successfully"

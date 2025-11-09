@@ -1,0 +1,27 @@
+name: CD - GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    name: Build and Deploy GitHub Pages
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Echo responsibility
+        run: |
+          echo "Responsibility: Build and deploy GitHub Pages site from docs"
+          echo "TODO: Implement GitHub Pages build and deployment"
+          echo "Status: Skeleton workflow created per platform_spec.json"
+
+      - name: Placeholder validation
+        run: |
+          echo "✅ Skeleton workflow runs successfully"
