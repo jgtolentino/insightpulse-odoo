@@ -59,6 +59,62 @@ skills:
       - skills/integrations/drawio-adapter/templates/sap-odoo-orchestration.drawio
       - skills/integrations/drawio-adapter/templates/procure-to-pay-map.drawio
 
+  # DevOps Agent Skills (Phase 3 - Anthropic Model)
+  - id: iac-planner
+    path: docs/claude-code-skills/community/iac-planner
+    purpose: "Acts as Senior DevOps Engineer to generate Terraform HCL and execution plan (NEVER applies)"
+    inputs: ["infrastructure_request", "cloud_provider", "region", "sizing_params"]
+    outputs: ["terraform_plan", "cost_estimate", "resource_tags"]
+    deps: ["TERRAFORM_VERSION", "CLOUD_CREDENTIALS"]
+    category: "devops_agent"
+    safety: "PLANNING_ONLY"
+
+  - id: iac-security-auditor
+    path: docs/claude-code-skills/community/iac-security-auditor
+    purpose: "Acts as QA Agent to audit Terraform plans for security vulnerabilities and compliance"
+    inputs: ["terraform_plan_file", "compliance_policies"]
+    outputs: ["audit_report", "approval_status", "remediation_suggestions"]
+    deps: ["TFSEC_VERSION", "CHECKOV_VERSION"]
+    category: "devops_agent"
+    safety: "BLOCKS_ON_CRITICAL"
+
+  - id: iac-executor
+    path: docs/claude-code-skills/community/iac-executor
+    purpose: "Acts as automated deployment tool (ONLY after dual approval: auditor + human)"
+    inputs: ["terraform_plan_file", "auditor_approval", "human_approval"]
+    outputs: ["apply_result", "resource_ids", "audit_log"]
+    deps: ["TERRAFORM_VERSION", "CLOUD_CREDENTIALS"]
+    category: "devops_agent"
+    safety: "REQUIRES_DUAL_APPROVAL"
+
+  # SRE Maintenance Skills (Phase 3 - New)
+  - id: sre-cicd-gates-maintainer
+    path: docs/claude-code-skills/community/sre-cicd-gates-maintainer
+    purpose: "Maintain CI/CD pipeline health by fixing core gates, eliminating noise, ensuring predictability"
+    inputs: ["workflow_failure_logs", "repo_context", "platform_spec"]
+    outputs: ["root_cause_analysis", "fix_plan", "pull_request", "validation_report"]
+    deps: ["GH_TOKEN", "GITHUB_REPO"]
+    category: "sre_maintenance"
+    safety: "NEVER_DISABLE_CHECKS"
+
+  - id: sre-healthcheck-triage
+    path: docs/claude-code-skills/community/sre-healthcheck-triage
+    purpose: "Diagnose healthcheck failures, harden probes, reduce false positives, implement deduplication"
+    inputs: ["healthcheck_failure_logs", "deployment_metadata", "historical_incidents"]
+    outputs: ["incident_diagnosis", "hardened_config", "runbook", "alert_rules"]
+    deps: ["DEPLOYMENT_PLATFORM", "MONITORING_API"]
+    category: "sre_maintenance"
+    safety: "NEVER_SILENCE_CRITICAL"
+
+  - id: sre-context-engineering
+    path: docs/claude-code-skills/community/sre-context-engineering
+    purpose: "Apply Anthropic context engineering principles: filter noise, summarize logs, structure data"
+    inputs: ["raw_logs", "query_context", "token_budget"]
+    outputs: ["filtered_context", "structured_summary", "cache_strategy"]
+    deps: []
+    category: "sre_maintenance"
+    safety: "NEVER_LOSE_CRITICAL_INFO"
+
 # Planned skills for future implementation
 planned:
   - id: bir-vat-validation
@@ -72,3 +128,10 @@ planned:
     inputs: ["form_type", "tax_period", "company_tin", "transactions[]"]
     outputs: ["xml_draft", "pdf_preview", "validation_errors[]"]
     deps: ["BIR_TEMPLATES_PATH", "BIR_VALIDATION_RULES"]
+
+  - id: stack-kg-knowledge-agent
+    purpose: "Deep Researcher Knowledge Agent - builds lean knowledge graph from repo/docs for RAG"
+    inputs: ["codebase", "external_docs", "vendor_docs"]
+    outputs: ["knowledge_graph", "vector_store", "compliance_rules"]
+    deps: ["PINECONE_API_KEY", "OPENAI_API_KEY"]
+    category: "knowledge_management"
