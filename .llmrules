@@ -438,16 +438,22 @@ InsightPulse supports 8 agencies:
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    agency_code = fields.Selection([
-        ('RIM', 'Research Institute Manila'),
-        ('CKVC', 'Cristo Rey Vocational Center'),
-        ('BOM', 'Bureau of Management'),
-        ('JPAL', 'Justice and Peace Advocacy'),
-        ('JLI', 'Jesuit Leadership Institute'),
-        ('JAP', 'Jesuit Asia Pacific'),
-        ('LAS', 'Loyola Academy Scholars'),
-        ('RMQB', 'Regional Management QB'),
-    ], string='Agency Code', required=True)
+    manager_code = fields.Selection([
+        ('RIM', 'Rey Meran'),
+        ('CKVC', 'Khalil Veracruz'),
+        ('BOM', 'Beng Manalo'),
+        ('JPAL', 'Jinky Paladin'),
+        ('JLI', 'Jasmin Ignacio'),
+        ('JAP', 'Joana Maravillas'),
+        ('LAS', 'Amor Lasaga'),
+        ('RMQB', 'Sally Brillantes'),
+        ('JPL', 'Jerald Loterte'),
+        ('JI', 'Jasmin Ignacio'),
+        ('JO', 'Jhoee Oliva'),
+        ('JM', 'Joana Maravillas'),
+        ('CJD', 'Cliff Dejecacion'),
+        ('JT', 'Jake Tolentino'),
+    ], string='Project Manager Code', required=True, help='Employee code (initials) for project manager')
 ```
 
 ## Related Documentation

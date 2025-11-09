@@ -139,7 +139,7 @@ Bot: ✅ Starting deployment...
 ```
 User: @ipai-bot Generate 1601-C form for CKVC for October 2024
 Bot: 📄 Generating BIR Form 1601-C...
-     Agency: CKVC (Company ID: 2)
+     Company: CKVC (Company ID: 2)
      Period: October 2024
      ✅ Form generated and saved to Documents/BIR_Forms/
      Total tax: ₱45,230.00
@@ -158,10 +158,10 @@ Bot: 🔍 Searching expenses...
 
 ### Unique Capabilities
 
-**Multi-Agency Context Awareness:**
-- Automatically detects which agency based on channel name
+**Multi-Company Context Awareness:**
+- Automatically detects which company based on channel name
 - Filters data and permissions by company_id
-- Handles cross-agency operations (consolidation, transfers)
+- Handles cross-company operations (consolidation, transfers)
 
 **Infrastructure Automation:**
 - Deploy DigitalOcean apps
@@ -285,10 +285,10 @@ ipai config set api-url "https://agent.insightpulseai.net/chat"
 ipai deploy ade-ocr --env production --force-rebuild
 
 # BIR form generation
-ipai bir generate 1601-C --agency CKVC --period 2024-10
+ipai bir generate 1601-C --company CKVC --period 2024-10
 
 # Expense approval
-ipai expenses approve --agency RIM --max 500 --period this-week
+ipai expenses approve --company RIM --max 500 --period this-week
 
 # Natural language (same as @ipai-bot)
 ipai ask "What's the status of the OCR service?"
@@ -521,7 +521,7 @@ Bot: ✅ Deployed to staging, ready for QA
 
 ```bash
 # Mode 3 (API): Batch data collection
-ipai expenses report --agencies RIM,CKVC,BOM --period 2024-10
+ipai expenses report --companies RIM,CKVC,BOM --period 2024-10
 
 # Mode 1 (Discuss): Natural language summary
 User: @ipai-bot Summarize October expenses across all agencies
