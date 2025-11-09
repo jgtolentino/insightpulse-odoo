@@ -14,6 +14,9 @@ on:
       - 'oca-modules/**'
       - 'Dockerfile'
       - 'odoo.conf'
+      - 'portal/**'
+      - 'infra/nginx/**'
+      - 'scripts/deploy/**'
       - '.github/workflows/odoo-deploy.yml'
   pull_request:
     branches:
