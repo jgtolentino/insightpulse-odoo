@@ -1,0 +1,337 @@
+# Complete Production Stack for InsightPulse AI
+# Includes: Odoo 19 CE + OCA, Apache Superset, PostgreSQL, Redis, Nginx
+# Optimized for DigitalOcean Droplet deployment
+
+version: '3.9'
+
+services:
+  # PostgreSQL Database - Shared by Odoo and Superset
+  postgres:
+    image: postgres:16-alpine
+    container_name: insightpulse-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      POSTGRES_MULTIPLE_DATABASES: "odoo,superset"
+      # Performance tuning for production
+      POSTGRES_SHARED_BUFFERS: ${POSTGRES_SHARED_BUFFERS:-512MB}
+      POSTGRES_EFFECTIVE_CACHE_SIZE: ${POSTGRES_EFFECTIVE_CACHE_SIZE:-2GB}
+      POSTGRES_WORK_MEM: ${POSTGRES_WORK_MEM:-32MB}
+      POSTGRES_MAINTENANCE_WORK_MEM: ${POSTGRES_MAINTENANCE_WORK_MEM:-256MB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./postgres/init-multiple-dbs.sh:/docker-entrypoint-initdb.d/init-multiple-dbs.sh:ro
+      - ./backups:/backups
+    command:
+      - postgres
+      - -c
+      - max_connections=300
+      - -c
+      - shared_buffers=512MB
+      - -c
+      - effective_cache_size=2GB
+      - -c
+      - maintenance_work_mem=256MB
+      - -c
+      - checkpoint_completion_target=0.9
+      - -c
+      - wal_buffers=16MB
+      - -c
+      - default_statistics_target=100
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - effective_io_concurrency=200
+      - -c
+      - work_mem=32MB
+      - -c
+      - min_wal_size=2GB
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - max_worker_processes=8
+      - -c
+      - max_parallel_workers_per_gather=4
+      - -c
+      - max_parallel_workers=8
+      - -c
+      - max_parallel_maintenance_workers=4
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Redis - Cache for Odoo and Superset
+  redis:
+    image: redis:7-alpine
+    container_name: insightpulse-redis
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --maxmemory
+      - 512mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - "900 1"
+      - --save
+      - "300 10"
+      - --save
+      - "60 10000"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Odoo 19 CE + OCA Modules
+  odoo:
+    image: ${ODOO_IMAGE:-registry.digitalocean.com/insightpulse/odoo19-ce}:${ODOO_TAG:-latest}
+    container_name: insightpulse-odoo
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database connection
+      PGHOST: postgres
+      PGPORT: 5432
+      PGUSER: ${POSTGRES_USER:-postgres}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      PGDATABASE: odoo
+      # Odoo configuration
+      ODOO_ADMIN_PASSWORD: ${ODOO_ADMIN_PASSWORD:?ODOO_ADMIN_PASSWORD required}
+      ODOO_WORKERS: ${ODOO_WORKERS:-6}
+      ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-2}
+      ODOO_DB_MAXCONN: ${ODOO_DB_MAXCONN:-100}
+      # Memory limits
+      ODOO_LIMIT_MEMORY_HARD: ${ODOO_LIMIT_MEMORY_HARD:-2684354560}   # 2.5GB
+      ODOO_LIMIT_MEMORY_SOFT: ${ODOO_LIMIT_MEMORY_SOFT:-2147483648}   # 2GB
+      ODOO_LIMIT_TIME_CPU: ${ODOO_LIMIT_TIME_CPU:-120}
+      ODOO_LIMIT_TIME_REAL: ${ODOO_LIMIT_TIME_REAL:-240}
+      ODOO_LIMIT_TIME_REAL_CRON: ${ODOO_LIMIT_TIME_REAL_CRON:-3600}
+      # Security
+      ODOO_DB_FILTER: ${ODOO_DB_FILTER:-^%d$}
+      ODOO_PROXY_MODE: "True"
+      ODOO_LIST_DB: "False"
+      # Redis session store
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Supabase integration
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_KEY: ${SUPABASE_KEY:-}
+      # Anthropic API
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - odoo-web-data:/var/lib/odoo
+      - odoo-logs:/var/log/odoo
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./addons:/mnt/extra-addons:ro
+    ports:
+      - "127.0.0.1:8069:8069"
+      - "127.0.0.1:8072:8072"  # Longpolling
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 10
+      start_period: 120s
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Apache Superset - BI Platform
+  superset:
+    image: ${SUPERSET_IMAGE:-registry.digitalocean.com/insightpulse/superset}:${SUPERSET_TAG:-latest}
+    container_name: insightpulse-superset
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Superset configuration
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?SUPERSET_SECRET_KEY required}
+      SUPERSET_LOAD_EXAMPLES: "no"
+      # Database (metadata store)
+      DATABASE_DIALECT: postgresql
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: superset
+      # Redis cache
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      # Celery
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      # Security
+      WTF_CSRF_ENABLED: "True"
+      TALISMAN_ENABLED: "True"
+      # Odoo connection (pre-configured datasource)
+      ODOO_DATABASE_URI: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD}@postgres:5432/odoo
+    volumes:
+      - superset-home:/app/superset_home
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+      - ./superset/odoo-datasource.yaml:/app/config/odoo-datasource.yaml:ro
+    ports:
+      - "127.0.0.1:8088:8088"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8088/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Superset Celery Worker
+  superset-worker:
+    image: ${SUPERSET_IMAGE:-registry.digitalocean.com/insightpulse/superset}:${SUPERSET_TAG:-latest}
+    container_name: insightpulse-superset-worker
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?SUPERSET_SECRET_KEY required}
+      DATABASE_DIALECT: postgresql
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: superset
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - superset-home:/app/superset_home
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair -c 4
+    restart: unless-stopped
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Superset Celery Beat Scheduler
+  superset-beat:
+    image: ${SUPERSET_IMAGE:-registry.digitalocean.com/insightpulse/superset}:${SUPERSET_TAG:-latest}
+    container_name: insightpulse-superset-beat
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?SUPERSET_SECRET_KEY required}
+      DATABASE_DIALECT: postgresql
+      DATABASE_USER: ${POSTGRES_USER:-postgres}
+      DATABASE_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD required}
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_DB: superset
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    volumes:
+      - superset-home:/app/superset_home
+      - ./superset/superset_config.py:/app/pythonpath/superset_config.py:ro
+    command: celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid --schedule /tmp/celerybeat-schedule
+    restart: unless-stopped
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: insightpulse-nginx
+    depends_on:
+      - odoo
+      - superset
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - insightpulse
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  odoo-web-data:
+    driver: local
+  odoo-logs:
+    driver: local
+  superset-home:
+    driver: local
+
+networks:
+  insightpulse:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
