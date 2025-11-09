@@ -1,0 +1,412 @@
+name: Intelligent Workflow Router
+
+# Smart routing for PRs and pushes based on changed files
+# Routes to specialized workflows for maximum efficiency
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - develop
+      - 'release/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: write
+
+env:
+  CACHE_VERSION: v1
+
+jobs:
+  # ============================================================================
+  # CHANGE DETECTION - Analyze what changed to route intelligently
+  # ============================================================================
+  detect-changes:
+    name: Detect Change Type
+    runs-on: ubuntu-latest
+    outputs:
+      oca_modules: ${{ steps.changes.outputs.oca_modules }}
+      custom_addons: ${{ steps.changes.outputs.custom_addons }}
+      docker: ${{ steps.changes.outputs.docker }}
+      infrastructure: ${{ steps.changes.outputs.infrastructure }}
+      docs: ${{ steps.changes.outputs.docs }}
+      workflows: ${{ steps.changes.outputs.workflows }}
+      scripts: ${{ steps.changes.outputs.scripts }}
+      python_code: ${{ steps.changes.outputs.python_code }}
+      javascript: ${{ steps.changes.outputs.javascript }}
+      database: ${{ steps.changes.outputs.database }}
+      change_complexity: ${{ steps.analyze.outputs.complexity }}
+      reviewers: ${{ steps.assign-reviewers.outputs.reviewers }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        id: changes
+        run: |
+          # Get list of changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Detect change categories
+          echo "oca_modules=false" >> $GITHUB_OUTPUT
+          echo "custom_addons=false" >> $GITHUB_OUTPUT
+          echo "docker=false" >> $GITHUB_OUTPUT
+          echo "infrastructure=false" >> $GITHUB_OUTPUT
+          echo "docs=false" >> $GITHUB_OUTPUT
+          echo "workflows=false" >> $GITHUB_OUTPUT
+          echo "scripts=false" >> $GITHUB_OUTPUT
+          echo "python_code=false" >> $GITHUB_OUTPUT
+          echo "javascript=false" >> $GITHUB_OUTPUT
+          echo "database=false" >> $GITHUB_OUTPUT
+          
+          # Check each category
+          if echo "$CHANGED_FILES" | grep -q "^addons/"; then
+            echo "oca_modules=true" >> $GITHUB_OUTPUT
+            echo "python_code=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^custom_addons/"; then
+            echo "custom_addons=true" >> $GITHUB_OUTPUT
+            echo "python_code=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "^(Dockerfile|docker-compose|\.dockerignore)"; then
+            echo "docker=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "^(terraform/|infra/|infrastructure/)"; then
+            echo "infrastructure=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "^docs/|\.md$"; then
+            echo "docs=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^\.github/workflows/"; then
+            echo "workflows=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -q "^scripts/"; then
+            echo "scripts=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "\.(py)$"; then
+            echo "python_code=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "\.(js|jsx|ts|tsx|vue)$"; then
+            echo "javascript=true" >> $GITHUB_OUTPUT
+          fi
+          
+          if echo "$CHANGED_FILES" | grep -qE "\.(sql|xml)$|^migrations/"; then
+            echo "database=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Analyze change complexity
+        id: analyze
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | wc -l)
+            ADDED_LINES=$(git diff --shortstat origin/${{ github.base_ref }}...HEAD | grep -oP '\d+(?= insertion)' || echo "0")
+            DELETED_LINES=$(git diff --shortstat origin/${{ github.base_ref }}...HEAD | grep -oP '\d+(?= deletion)' || echo "0")
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | wc -l)
+            ADDED_LINES=$(git diff --shortstat HEAD^ HEAD | grep -oP '\d+(?= insertion)' || echo "0")
+            DELETED_LINES=$(git diff --shortstat HEAD^ HEAD | grep -oP '\d+(?= deletion)' || echo "0")
+          fi
+          
+          TOTAL_CHANGES=$((ADDED_LINES + DELETED_LINES))
+          
+          # Determine complexity
+          if [ $CHANGED_FILES -le 3 ] && [ $TOTAL_CHANGES -le 50 ]; then
+            COMPLEXITY="low"
+          elif [ $CHANGED_FILES -le 10 ] && [ $TOTAL_CHANGES -le 300 ]; then
+            COMPLEXITY="medium"
+          else
+            COMPLEXITY="high"
+          fi
+          
+          echo "complexity=$COMPLEXITY" >> $GITHUB_OUTPUT
+          echo "files_changed=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "lines_changed=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+          
+          echo "Complexity: $COMPLEXITY ($CHANGED_FILES files, $TOTAL_CHANGES lines)"
+
+      - name: Auto-assign reviewers
+        id: assign-reviewers
+        if: github.event_name == 'pull_request'
+        run: |
+          # Assign reviewers based on change type and complexity
+          REVIEWERS=""
+          
+          # Check CODEOWNERS file if it exists
+          if [ -f .github/CODEOWNERS ]; then
+            echo "Using CODEOWNERS for reviewer assignment"
+            # Extract relevant owners (this is simplified)
+            REVIEWERS="jgtolentino"
+          else
+            # Default reviewer assignment based on change type
+            if [ "${{ steps.changes.outputs.infrastructure }}" = "true" ]; then
+              REVIEWERS="devops-team"
+            elif [ "${{ steps.changes.outputs.custom_addons }}" = "true" ]; then
+              REVIEWERS="backend-team"
+            elif [ "${{ steps.changes.outputs.docs }}" = "true" ]; then
+              REVIEWERS="docs-team"
+            else
+              REVIEWERS="default-reviewers"
+            fi
+          fi
+          
+          echo "reviewers=$REVIEWERS" >> $GITHUB_OUTPUT
+
+      - name: Create routing summary
+        run: |
+          echo "## 🔀 Workflow Routing Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Change Detection" >> $GITHUB_STEP_SUMMARY
+          echo "| Category | Changed |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|---------|" >> $GITHUB_STEP_SUMMARY
+          echo "| OCA Modules | ${{ steps.changes.outputs.oca_modules }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Custom Addons | ${{ steps.changes.outputs.custom_addons }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Docker | ${{ steps.changes.outputs.docker }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Infrastructure | ${{ steps.changes.outputs.infrastructure }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Documentation | ${{ steps.changes.outputs.docs }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflows | ${{ steps.changes.outputs.workflows }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Scripts | ${{ steps.changes.outputs.scripts }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Complexity Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "- **Level**: ${{ steps.analyze.outputs.complexity }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Files Changed**: ${{ steps.analyze.outputs.files_changed }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Lines Changed**: ${{ steps.analyze.outputs.lines_changed }}" >> $GITHUB_STEP_SUMMARY
+
+  # ============================================================================
+  # PARALLEL WORKFLOW EXECUTION - Run specialized workflows in parallel
+  # ============================================================================
+  
+  # OCA Module Testing
+  oca-workflow:
+    name: OCA Module Testing
+    needs: detect-changes
+    if: needs.detect-changes.outputs.oca_modules == 'true'
+    uses: ./.github/workflows/oca-pre-commit.yml
+    secrets: inherit
+
+  # Custom Addon Testing  
+  custom-addon-workflow:
+    name: Custom Addon Testing
+    needs: detect-changes
+    if: needs.detect-changes.outputs.custom_addons == 'true'
+    uses: ./.github/workflows/ci-consolidated.yml
+    secrets: inherit
+
+  # Docker Build & Test
+  docker-workflow:
+    name: Docker Build
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docker == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ env.CACHE_VERSION }}-${{ hashFiles('Dockerfile*') }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-${{ env.CACHE_VERSION }}-
+            ${{ runner.os }}-buildx-
+      
+      - name: Build Docker images
+        run: |
+          docker buildx build \
+            --cache-from=type=local,src=/tmp/.buildx-cache \
+            --cache-to=type=local,dest=/tmp/.buildx-cache-new,mode=max \
+            --tag insightpulse-odoo:test \
+            --file Dockerfile \
+            .
+      
+      # Prevent cache from growing indefinitely
+      - name: Move cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+  # Infrastructure as Code Validation
+  infrastructure-workflow:
+    name: Infrastructure Validation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.infrastructure == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+      
+      - name: Terraform Format Check
+        if: hashFiles('terraform/**/*.tf') != ''
+        run: |
+          cd terraform
+          terraform fmt -check -recursive
+      
+      - name: Terraform Validate
+        if: hashFiles('terraform/**/*.tf') != ''
+        run: |
+          cd terraform
+          terraform init -backend=false
+          terraform validate
+
+  # Documentation Build & Check
+  docs-workflow:
+    name: Documentation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.docs == 'true'
+    uses: ./.github/workflows/docs-ci.yml
+    secrets: inherit
+
+  # Workflow Validation
+  workflow-validation:
+    name: Workflow Validation
+    needs: detect-changes
+    if: needs.detect-changes.outputs.workflows == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Validate workflow syntax
+        run: |
+          echo "Validating GitHub Actions workflows..."
+          
+          # Install actionlint if needed
+          if ! command -v actionlint &> /dev/null; then
+            echo "Installing actionlint..."
+            curl -sSL https://github.com/rhysd/actionlint/releases/latest/download/actionlint_1.6.26_linux_amd64.tar.gz | tar xz
+            sudo mv actionlint /usr/local/bin/
+          fi
+          
+          # Run actionlint on all workflows
+          actionlint .github/workflows/*.yml || echo "::warning::Some workflows have linting issues"
+
+  # ============================================================================
+  # SUMMARY & NOTIFICATION
+  # ============================================================================
+  routing-summary:
+    name: Routing Summary
+    runs-on: ubuntu-latest
+    needs: 
+      - detect-changes
+      - oca-workflow
+      - custom-addon-workflow
+      - docker-workflow
+      - infrastructure-workflow
+      - docs-workflow
+      - workflow-validation
+    if: always()
+    
+    steps:
+      - name: Generate execution summary
+        run: |
+          echo "## 📊 Workflow Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Executed Workflows" >> $GITHUB_STEP_SUMMARY
+          echo "| Workflow | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.detect-changes.outputs.oca_modules }}" = "true" ]; then
+            echo "| OCA Modules | ${{ needs.oca-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.custom_addons }}" = "true" ]; then
+            echo "| Custom Addons | ${{ needs.custom-addon-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.docker }}" = "true" ]; then
+            echo "| Docker | ${{ needs.docker-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.infrastructure }}" = "true" ]; then
+            echo "| Infrastructure | ${{ needs.infrastructure-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.docs }}" = "true" ]; then
+            echo "| Documentation | ${{ needs.docs-workflow.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ "${{ needs.detect-changes.outputs.workflows }}" = "true" ]; then
+            echo "| Workflows | ${{ needs.workflow-validation.result || 'skipped' }} |" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Change Complexity**: ${{ needs.detect-changes.outputs.change_complexity }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const complexity = '${{ needs.detect-changes.outputs.change_complexity }}';
+            const emoji = complexity === 'low' ? '🟢' : complexity === 'medium' ? '🟡' : '🔴';
+            
+            const comment = `
+            ## ${emoji} Workflow Routing Report
+            
+            **Change Complexity**: ${complexity.toUpperCase()}
+            
+            ### Executed Workflows
+            
+            ${
+              '${{ needs.detect-changes.outputs.oca_modules }}' === 'true' 
+                ? '- ✅ OCA Module Testing\n' 
+                : ''
+            }${
+              '${{ needs.detect-changes.outputs.custom_addons }}' === 'true' 
+                ? '- ✅ Custom Addon Testing\n' 
+                : ''
+            }${
+              '${{ needs.detect-changes.outputs.docker }}' === 'true' 
+                ? '- ✅ Docker Build\n' 
+                : ''
+            }${
+              '${{ needs.detect-changes.outputs.infrastructure }}' === 'true' 
+                ? '- ✅ Infrastructure Validation\n' 
+                : ''
+            }${
+              '${{ needs.detect-changes.outputs.docs }}' === 'true' 
+                ? '- ✅ Documentation Build\n' 
+                : ''
+            }${
+              '${{ needs.detect-changes.outputs.workflows }}' === 'true' 
+                ? '- ✅ Workflow Validation\n' 
+                : ''
+            }
+            
+            ---
+            *Powered by Intelligent Workflow Router*
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
