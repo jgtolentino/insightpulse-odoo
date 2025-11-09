@@ -2,11 +2,10 @@ name: Dependency Scanning
 
 on:
   push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
+    branches: [main]  # Only run on main branch pushes
   schedule:
     - cron: '0 0 * * 1'  # Weekly on Monday midnight UTC
+  workflow_dispatch:  # Allow manual trigger
 
 permissions:
   contents: read

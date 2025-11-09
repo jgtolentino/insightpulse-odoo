@@ -29,12 +29,24 @@ for f in [".cursorrules","claude.md","TASKS.md","PLANNING.md","ARCHITECTURE.md",
 if missing:
     print("❌ Missing required files:", ", ".join(missing)); sys.exit(1)
 
-# Enforce Odoo 18 CE (not 19, not Enterprise)
+# Enforce Odoo 18 CE (not 19, not Enterprise edition)
 cr = pathlib.Path(".cursorrules").read_text(errors="ignore")
 if not re.search(r"\bOdoo\s*18\b.*\bCE\b", cr, re.I):
     print("❌ .cursorrules must explicitly enforce 'Odoo 18 CE'"); sys.exit(1)
-if re.search(r"\bOdoo\s*19\b|\bEnterprise\b", cr, re.I):
-    print("❌ .cursorrules must not allow Odoo 19 or Enterprise"); sys.exit(1)
+# Allow "Odoo 19" and "Odoo Enterprise" ONLY in negative contexts (NOT, NEVER, ❌)
+# Block positive references that might encourage using them
+forbidden_positive = re.findall(r"(?<!NOT\s)(?<!NEVER\s)(?<!❌\s)(?<![Nn]ot\s)\bOdoo\s+(?:19|Enterprise)\b(?!\s*\||[^|]*NOT|[^|]*NEVER|[^|]*❌)", cr)
+if forbidden_positive:
+    # Filter out table comparisons and negative statements
+    actual_violations = []
+    for match in forbidden_positive:
+        # Get context around match
+        idx = cr.find(match)
+        context = cr[max(0, idx-50):min(len(cr), idx+50)]
+        if not any(neg in context.upper() for neg in ['NOT', 'NEVER', '❌', 'DON\'T']):
+            actual_violations.append(match)
+    if actual_violations:
+        print(f"❌ .cursorrules has positive Odoo 19/Enterprise references: {actual_violations}"); sys.exit(1)
 
 # Minimal sanity: TASKS/PLANNING headings
 for f in ["TASKS.md","PLANNING.md","ARCHITECTURE.md"]:

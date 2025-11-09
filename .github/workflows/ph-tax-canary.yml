@@ -4,13 +4,7 @@ on:
   schedule:
     # Daily at 09:00 UTC (5:00 PM Manila time)
     - cron: '0 9 * * *'
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/ph-tax-canary.yml'
-      - 'config/environments.yaml'
+  workflow_dispatch:  # Manual trigger only for testing
 
 env:
   AGENT_GATEWAY_URL: https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run
