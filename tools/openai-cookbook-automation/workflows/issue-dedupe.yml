@@ -1,0 +1,145 @@
+name: Issue Deduplication
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  check-duplicates:
+    name: Check for Duplicate Issues
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          pip install PyGithub
+
+      - name: Check for similar issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - << 'PYTHON_SCRIPT'
+          import os
+          import json
+          from github import Github
+
+          # Initialize GitHub client
+          gh = Github(os.environ["GITHUB_TOKEN"])
+          repo = gh.get_repo(os.environ["GITHUB_REPOSITORY"])
+
+          # Get the current issue
+          event_path = os.environ["GITHUB_EVENT_PATH"]
+          with open(event_path) as f:
+              event = json.load(f)
+
+          issue_number = event["issue"]["number"]
+          issue = repo.get_issue(number=issue_number)
+          title = issue.title.lower()
+          body = (issue.body or "").lower()
+
+          print(f"Checking for duplicates of issue #{issue_number}: {issue.title}")
+
+          # Search for similar issues
+          candidates = []
+
+          # Method 1: Search by title similarity
+          open_issues = repo.get_issues(state="open")
+          for candidate in open_issues:
+              if candidate.number == issue_number:
+                  continue
+
+              cand_title = candidate.title.lower()
+
+              # Simple similarity heuristic
+              if (title in cand_title or
+                  cand_title in title or
+                  (len(title.split()) > 3 and
+                   sum(word in cand_title for word in title.split()) > len(title.split()) * 0.6)):
+
+                  similarity_score = 0
+
+                  # Check title overlap
+                  if title in cand_title or cand_title in title:
+                      similarity_score += 3
+
+                  # Check word overlap
+                  title_words = set(title.split())
+                  cand_words = set(cand_title.split())
+                  overlap = len(title_words & cand_words)
+                  if overlap >= 3:
+                      similarity_score += overlap
+
+                  candidates.append((candidate, similarity_score))
+
+          # Sort by similarity score
+          candidates.sort(key=lambda x: x[1], reverse=True)
+
+          if not candidates:
+              print("No similar issues found.")
+              exit(0)
+
+          # Take top 5 most similar
+          top_matches = candidates[:5]
+
+          print(f"Found {len(top_matches)} similar issue(s):")
+          for cand, score in top_matches:
+              print(f"  - #{cand.number}: {cand.title} (score: {score})")
+
+          # Create comment with similar issues
+          comment_lines = [
+              "👋 Thank you for opening this issue!",
+              "",
+              "I found some similar open issues that might be related:",
+              ""
+          ]
+
+          for cand, score in top_matches:
+              # Truncate title if too long
+              cand_title = cand.title
+              if len(cand_title) > 80:
+                  cand_title = cand_title[:77] + "..."
+
+              comment_lines.append(f"- #{cand.number}: {cand_title}")
+
+          comment_lines.extend([
+              "",
+              "If this issue is a duplicate of one of the above, please consider:",
+              "- Adding your comments to the existing issue",
+              "- Closing this issue to avoid fragmentation",
+              "",
+              "If this is a distinct issue, no action needed! We'll review it soon.",
+              "",
+              "*This is an automated check to help reduce duplicate issues.*"
+          ])
+
+          comment_body = "\\n".join(comment_lines)
+
+          # Post comment
+          issue.create_comment(comment_body)
+
+          # Add label
+          try:
+              issue.add_to_labels("possible-duplicate")
+          except Exception as e:
+              print(f"Could not add label: {e}")
+
+          print(f"✅ Posted comment with {len(top_matches)} similar issue(s)")
+
+          PYTHON_SCRIPT
+
+      - name: Summary
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "✅ Duplicate check complete"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

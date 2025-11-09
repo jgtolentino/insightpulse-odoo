@@ -1,0 +1,27 @@
+# OpenAI Cookbook Automation Pack - Requirements
+
+# Core notebook handling
+nbformat>=5.9.0
+nbclient>=0.8.0
+jupyter>=1.0.0
+jupyterlab>=4.0.0
+
+# OpenAI SDK
+openai>=1.10.0
+
+# Code quality tools
+black>=23.0.0
+flake8>=6.0.0
+isort>=5.12.0
+pylint>=3.0.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+nbval>=0.10.0
+
+# GitHub integration
+PyGithub>=2.1.0
+
+# Utilities
+python-dotenv>=1.0.0

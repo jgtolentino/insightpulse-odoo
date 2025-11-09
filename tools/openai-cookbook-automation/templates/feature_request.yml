@@ -1,0 +1,142 @@
+name: "💡 Feature Request / Example Suggestion"
+description: "Suggest a new example or feature for the OpenAI Cookbook"
+title: "[Feature]: "
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Thank you for suggesting an improvement!**
+
+        Before submitting, please:
+        1. 🔍 **Search existing requests** to avoid duplicates
+        2. 📖 **Check existing examples** to see if it's already covered
+        3. 💬 **Be specific** about what you'd like to see
+
+  - type: dropdown
+    id: request-type
+    attributes:
+      label: Request Type
+      description: "What type of request is this?"
+      options:
+        - New example notebook
+        - Improvement to existing example
+        - New category/section
+        - Documentation improvement
+        - Tooling/Infrastructure
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: category
+    attributes:
+      label: Category / Area
+      description: "Which area does this relate to?"
+      placeholder: "e.g., Embeddings, Chat, Fine-tuning, RAG, Agents, Vision, etc."
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: "Clearly describe your suggestion"
+      placeholder: |
+        I would like to see an example that demonstrates...
+
+        This would be useful for...
+    validations:
+      required: true
+
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Use Case
+      description: "What problem does this solve? Who would benefit?"
+      placeholder: |
+        As a [developer/researcher/etc], I want to [do something] so that [benefit].
+
+        This would help with...
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed Solution / Example Outline
+      description: "If you have ideas for how this should work, share them here"
+      placeholder: |
+        The example could:
+        1. Start with...
+        2. Demonstrate...
+        3. Show best practices for...
+
+        Key code snippets:
+        ```python
+        # Example code here
+        ```
+
+  - type: dropdown
+    id: difficulty
+    attributes:
+      label: Suggested Difficulty Level
+      description: "If this becomes an example, what difficulty level would it be?"
+      options:
+        - Beginner (new to OpenAI APIs)
+        - Intermediate (familiar with basics)
+        - Advanced (complex use cases)
+        - Not sure
+
+  - type: input
+    id: models
+    attributes:
+      label: Relevant OpenAI Models
+      description: "Which OpenAI models would this use?"
+      placeholder: "e.g., GPT-4, text-embedding-ada-002, DALL-E 3"
+
+  - type: textarea
+    id: related-examples
+    attributes:
+      label: Related Examples / Resources
+      description: "Link to related examples, documentation, or external resources"
+      placeholder: |
+        - https://platform.openai.com/docs/...
+        - Similar example in another cookbook: ...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority / Impact
+      description: "How important is this to you?"
+      options:
+        - High (blocking my work)
+        - Medium (would be very helpful)
+        - Low (nice to have)
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Willing to Contribute?
+      description: "Would you be willing to create this example?"
+      options:
+        - label: I can write this example and submit a PR
+        - label: I can help review PRs for this
+        - label: I can provide feedback/testing
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: "Any other relevant information"
+      placeholder: "Add any other context, screenshots, or examples here"
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        **Next Steps:**
+        - The team will review your request
+        - Community members can upvote with 👍 reactions
+        - High-demand requests may be prioritized
+
+        Thank you for helping improve the OpenAI Cookbook! 🙏

@@ -1,0 +1,153 @@
+name: "🐛 Bug Report / Broken Example"
+description: "Report a bug or broken example in the OpenAI Cookbook"
+title: "[Bug]: "
+labels: ["bug", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Thank you for reporting an issue!**
+
+        Before submitting, please:
+        1. 🔍 **Search existing issues** to avoid duplicates
+        2. 📖 **Check the latest version** of the notebook
+        3. 🔑 **Verify your API key** is valid and has required permissions
+
+  - type: input
+    id: notebook-path
+    attributes:
+      label: Notebook Path
+      description: "Path to the affected notebook (e.g., `examples/chat/basic_completion.ipynb`)"
+      placeholder: "examples/.../notebook.ipynb"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: issue-type
+    attributes:
+      label: Issue Type
+      description: "What type of issue are you experiencing?"
+      options:
+        - Cell execution error
+        - API error / Invalid response
+        - Deprecated API usage
+        - Missing or incorrect documentation
+        - Incorrect output / Unexpected behavior
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What Happened?
+      description: |
+        Describe the problem clearly. Include:
+        - What you expected to happen
+        - What actually happened
+        - Any error messages (full traceback if available)
+      placeholder: |
+        I ran cell 5 in the notebook and got this error:
+        ```
+        OpenAIError: ...
+        ```
+
+        Expected: The cell should return a completion.
+        Actual: Got authentication error.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to Reproduce
+      description: "What steps should we follow to reproduce the issue?"
+      placeholder: |
+        1. Open notebook `examples/chat/basic_completion.ipynb`
+        2. Set `OPENAI_API_KEY` in environment
+        3. Run cell 5
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: "Your environment details"
+      placeholder: |
+        - OS: macOS 14.2
+        - Python version: 3.11.5
+        - openai SDK version: 1.10.0
+        - Jupyter version: 7.0.0
+      value: |
+        - OS:
+        - Python version:
+        - openai SDK version:
+        - Jupyter version:
+    validations:
+      required: true
+
+  - type: textarea
+    id: error-traceback
+    attributes:
+      label: Full Error Traceback (if applicable)
+      description: "Paste the complete error traceback here"
+      placeholder: |
+        ```python
+        Traceback (most recent call last):
+          File ...
+        ```
+      render: python
+
+  - type: dropdown
+    id: sdk-version
+    attributes:
+      label: OpenAI SDK Version
+      description: "Which version of the OpenAI Python SDK are you using?"
+      options:
+        - Latest (from PyPI)
+        - v1.x.x (specify in Additional Context)
+        - v0.x.x (legacy)
+        - Not sure
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: attempted-fixes
+    attributes:
+      label: What have you tried?
+      description: "Check all that apply"
+      options:
+        - label: Restarted Jupyter kernel
+        - label: Updated to latest openai SDK (`pip install --upgrade openai`)
+        - label: Verified API key is valid
+        - label: Checked OpenAI API status page
+        - label: Searched existing issues
+
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: "Any other relevant information, screenshots, or context"
+      placeholder: "Add any other context about the problem here"
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Willing to Contribute?
+      description: "Would you be willing to submit a PR to fix this issue?"
+      options:
+        - label: I can submit a PR to fix this issue
+
+  - type: markdown
+    attributes:
+      value: |
+        ---
+
+        **Next Steps:**
+        - Our team will review your report and may ask for additional information
+        - You can track progress in this issue
+        - Consider giving this repository a ⭐ star if it's helpful!
+
+        Thank you for helping improve the OpenAI Cookbook! 🙏

@@ -1,0 +1,91 @@
+{
+  "name": "OpenAI Cookbook Development",
+  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "lts"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "ms-toolsai.vscode-jupyter-cell-tags",
+        "ms-toolsai.vscode-jupyter-slideshow",
+        "charliermarsh.ruff",
+        "GitHub.copilot",
+        "GitHub.copilot-chat",
+        "eamodio.gitlens",
+        "yzhang.markdown-all-in-one"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": false,
+        "python.linting.flake8Enabled": true,
+        "python.formatting.provider": "black",
+        "python.formatting.blackArgs": [
+          "--line-length=100"
+        ],
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+          "source.organizeImports": "explicit"
+        },
+        "[python]": {
+          "editor.defaultFormatter": "ms-python.black-formatter",
+          "editor.formatOnSave": true,
+          "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+          }
+        },
+        "[json]": {
+          "editor.defaultFormatter": "vscode.json-language-features"
+        },
+        "jupyter.notebookFileRoot": "${workspaceFolder}",
+        "jupyter.interactiveWindow.textEditor.executeSelection": true,
+        "files.exclude": {
+          "**/.git": true,
+          "**/.DS_Store": true,
+          "**/__pycache__": true,
+          "**/*.pyc": true,
+          "**/.pytest_cache": true,
+          "**/.mypy_cache": true,
+          "**/.ipynb_checkpoints": true
+        }
+      }
+    }
+  },
+
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+
+  "forwardPorts": [8888, 8000],
+
+  "portsAttributes": {
+    "8888": {
+      "label": "Jupyter Notebook",
+      "onAutoForward": "notify"
+    },
+    "8000": {
+      "label": "HTTP Server",
+      "onAutoForward": "ignore"
+    }
+  },
+
+  "remoteEnv": {
+    "OPENAI_API_KEY": "${localEnv:OPENAI_API_KEY}",
+    "OPENAI_ORG_ID": "${localEnv:OPENAI_ORG_ID}"
+  },
+
+  "mounts": [
+    "source=${localEnv:HOME}/.openai,target=/home/vscode/.openai,type=bind,consistency=cached"
+  ],
+
+  "postAttachCommand": {
+    "server": "echo 'Development container ready! 🚀'"
+  }
+}
