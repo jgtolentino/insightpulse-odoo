@@ -2,8 +2,8 @@ name: Health Monitor (WAF-aware)
 
 on:
   schedule:
-    # Run every 5 minutes
-    - cron: '*/5 * * * *'
+    # Run every 30 minutes (reduced from 5 minutes to prevent issue spam)
+    - cron: '*/30 * * * *'
 
   workflow_dispatch:
     inputs:
@@ -308,17 +308,57 @@ jobs:
             // If there's already an open issue, just update it with a comment
             if (existingIssues.data.length > 0) {
               const latestIssue = existingIssues.data[0];
-              await github.rest.issues.createComment({
+
+              // Only add a comment if the last comment was more than 1 hour ago to prevent spam
+              const comments = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: latestIssue.number,
-                body: `🔄 **Health check still failing** - ${new Date().toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}`
+                per_page: 1,
+                sort: 'created',
+                direction: 'desc'
               });
-              console.log(`Updated existing issue #${latestIssue.number}`);
+
+              const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+              const lastCommentDate = comments.data.length > 0 ? new Date(comments.data[0].created_at) : new Date(0);
+
+              if (lastCommentDate < oneHourAgo) {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: latestIssue.number,
+                  body: `🔄 **Health check still failing** - ${new Date().toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}`
+                });
+                console.log(`Updated existing issue #${latestIssue.number} with new comment`);
+              } else {
+                console.log(`Skipping comment on issue #${latestIssue.number} - last comment was less than 1 hour ago`);
+              }
               return;
             }
 
-            // No existing issue, create a new one
+            // Check for recently closed issues (within last 24 hours) to prevent re-opening too quickly
+            const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+            const recentlyClosed = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'closed',
+              labels: 'health-check',
+              since: oneDayAgo,
+              per_page: 10
+            });
+
+            if (recentlyClosed.data.length > 0) {
+              const latestClosed = recentlyClosed.data[0];
+              const closedAt = new Date(latestClosed.closed_at);
+              const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+
+              if (closedAt > twoHoursAgo) {
+                console.log(`Not creating new issue - issue #${latestClosed.number} was closed less than 2 hours ago. Waiting for cooldown period.`);
+                return;
+              }
+            }
+
+            // No existing issue and cooldown period passed, create a new one
             const title = '🚨 Health Check Failed - ' + new Date().toISOString();
             const body = `
             ## Health Check Failure Report
@@ -342,6 +382,7 @@ jobs:
 
             ---
             *This issue will be automatically closed when health is restored.*
+            *Note: This workflow now runs every 30 minutes and includes deduplication logic to prevent spam.*
             `;
 
             await github.rest.issues.create({
