@@ -141,3 +141,18 @@ Desktop.ini
 auto-merge-audit.json
 auto-merge-audit-final.json
 .env.mvp
+
+# Workflow automation artifacts
+diagnostic-report.json
+health-metrics.json
+*-audit.json
+*-report.txt
+*-report.json
+performance-results.json
+weekly-health-report.md
+curl-format.txt
+
+# Remediation scripts (auto-generated)
+scripts/ci/remediation/restart-services.sh
+scripts/ci/remediation/clear-caches.sh
+
