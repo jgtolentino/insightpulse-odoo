@@ -309,29 +309,28 @@ jobs:
             if (existingIssues.data.length > 0) {
               const latestIssue = existingIssues.data[0];
 
-              // Only add a comment if the last comment was more than 1 hour ago to prevent spam
-              // Note: listComments returns in ascending order (oldest first), so fetch up to 100 and take the last
+              // Fetch up to 100 comments and look at the newest one
               const commentsResponse = await github.rest.issues.listComments({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 issue_number: latestIssue.number,
-                per_page: 100
+                per_page: 100,
               });
 
               const comments = commentsResponse.data;
+              const latestComment = comments[comments.length - 1]; // newest
+
               const now = new Date();
               let shouldComment = true;
 
-              if (comments.length > 0) {
-                const latestComment = comments[comments.length - 1]; // Get newest comment
+              if (latestComment) {
                 const lastCommentTime = new Date(latestComment.created_at);
                 const diffMs = now - lastCommentTime;
                 const diffHours = diffMs / (1000 * 60 * 60);
 
-                // Enforce 1-hour cooldown
+                // 1-hour cooldown
                 if (diffHours < 1) {
                   shouldComment = false;
-                  console.log(`Skipping comment on issue #${latestIssue.number} - last comment was ${diffHours.toFixed(2)} hours ago (< 1 hour cooldown)`);
                 }
               }
 
@@ -340,9 +339,11 @@ jobs:
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   issue_number: latestIssue.number,
-                  body: `🔄 **Health check still failing** - ${now.toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}`
+                  body: `🔄 **Health check still failing** - ${now.toISOString()}\n\n**Public Health**: ${{ needs.public-health.result }}`,
                 });
                 console.log(`Updated existing issue #${latestIssue.number} with new comment`);
+              } else {
+                console.log(`Skipping comment on issue #${latestIssue.number} - last comment was less than 1 hour ago`);
               }
               return;
             }
