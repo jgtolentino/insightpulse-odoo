@@ -6,7 +6,7 @@
 # Usage: ./scripts/demo-audit-skill.sh [module_path]
 #
 # Example:
-#   ./scripts/demo-audit-skill.sh addons/custom/ipai_expense
+#   ./scripts/demo-audit-skill.sh odoo/modules/ipai_expense
 
 set -euo pipefail
 
@@ -41,7 +41,7 @@ sanitize_number() {
 }
 
 # Module to audit (default to ipai_expense)
-MODULE_PATH="${1:-addons/custom/ipai_expense}"
+MODULE_PATH="${1:-odoo/modules/ipai_expense}"
 MODULE_NAME=$(basename "$MODULE_PATH")
 
 echo -e "${BLUE}╔════════════════════════════════════════════════════════════════╗${NC}"

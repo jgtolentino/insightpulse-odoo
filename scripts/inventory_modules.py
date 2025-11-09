@@ -37,11 +37,11 @@ def load_manifest(p):
 def category_for(path: Path):
     """Determine module category from path"""
     parts = str(path)
-    if "/custom/" in parts:
+    if "/modules/" in parts or "/custom-addons/" in parts:
         return "ipai_custom"
     if "/insightpulse/" in parts:
         return "insightpulse"
-    if "/oca/" in parts:
+    if "/oca/" in parts or "/addons/" in parts:
         return "oca"
     return "unknown"
 

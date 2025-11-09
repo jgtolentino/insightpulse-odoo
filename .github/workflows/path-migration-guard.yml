@@ -1,0 +1,193 @@
+name: Path Migration Guard
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+
+jobs:
+  validate-paths:
+    name: Validate Path Migration
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run path migration validation
+        id: validate
+        run: |
+          echo "🔍 Validating path migration..."
+          python3 scripts/validate-path-migration.py
+          EXIT_CODE=$?
+
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "✅ Path migration validation passed"
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "❌ Path migration validation failed"
+            exit 1
+          fi
+
+      - name: Check for custom/ directory references
+        run: |
+          echo "🔍 Checking for 'custom/' directory references in code..."
+
+          # Check critical files
+          FOUND=0
+
+          # Check scripts
+          if grep -r "custom/" scripts/*.sh scripts/*.py 2>/dev/null | grep -v "# " | grep -v migration; then
+            echo "❌ Found 'custom/' references in scripts"
+            FOUND=1
+          fi
+
+          # Check workflows
+          if grep -r "custom/" .github/workflows/*.yml 2>/dev/null | grep -v "# " | grep -v migration; then
+            echo "❌ Found 'custom/' references in workflows"
+            FOUND=1
+          fi
+
+          # Check Makefile
+          if grep "custom/" Makefile 2>/dev/null | grep -v "# " | grep -v migration; then
+            echo "❌ Found 'custom/' references in Makefile"
+            FOUND=1
+          fi
+
+          if [ $FOUND -eq 0 ]; then
+            echo "✅ No problematic 'custom/' references found"
+          else
+            echo "❌ Please update these references to use the new paths:"
+            echo "   - odoo/modules/ (for custom modules)"
+            echo "   - odoo/addons/ (for OCA addons)"
+            echo "   - odoo/custom-addons/ (for additional custom addons)"
+            exit 1
+          fi
+
+      - name: Verify directory structure
+        run: |
+          echo "🔍 Verifying new directory structure exists..."
+
+          MISSING=0
+
+          if [ ! -d "odoo" ]; then
+            echo "❌ Missing: odoo/"
+            MISSING=1
+          fi
+
+          if [ ! -d "odoo/modules" ]; then
+            echo "❌ Missing: odoo/modules/"
+            MISSING=1
+          fi
+
+          if [ ! -d "odoo/addons" ]; then
+            echo "❌ Missing: odoo/addons/"
+            MISSING=1
+          fi
+
+          if [ ! -d "odoo/custom-addons" ]; then
+            echo "❌ Missing: odoo/custom-addons/"
+            MISSING=1
+          fi
+
+          if [ $MISSING -eq 0 ]; then
+            echo "✅ All required directories exist"
+            echo "   - odoo/"
+            echo "   - odoo/modules/"
+            echo "   - odoo/addons/"
+            echo "   - odoo/custom-addons/"
+          else
+            echo "❌ Directory structure incomplete"
+            exit 1
+          fi
+
+      - name: Create validation summary
+        if: always()
+        run: |
+          echo "# 🔍 Path Migration Validation" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.validate.outputs.status }}" = "success" ]; then
+            echo "## ✅ Validation Passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "All path references have been correctly migrated from \`custom/\` to the new structure:" >> $GITHUB_STEP_SUMMARY
+            echo "- \`odoo/modules/\` - Custom modules" >> $GITHUB_STEP_SUMMARY
+            echo "- \`odoo/addons/\` - OCA addons" >> $GITHUB_STEP_SUMMARY
+            echo "- \`odoo/custom-addons/\` - Additional custom addons" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Validation Failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Found remaining \`custom/\` references that need to be updated." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Required Actions:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Update all \`custom/\` references to use new paths" >> $GITHUB_STEP_SUMMARY
+            echo "2. Run \`python3 scripts/validate-path-migration.py\` locally" >> $GITHUB_STEP_SUMMARY
+            echo "3. Fix any issues reported" >> $GITHUB_STEP_SUMMARY
+            echo "4. Commit and push changes" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Post PR comment on failure
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## ❌ Path Migration Validation Failed
+
+            This PR contains references to the old \`custom/\` path structure.
+
+            ### Required Changes:
+
+            Please update all \`custom/\` path references to use the new structure:
+
+            - ✅ \`odoo/modules/\` - For custom modules
+            - ✅ \`odoo/addons/\` - For OCA addons
+            - ✅ \`odoo/custom-addons/\` - For additional custom addons
+
+            ### How to Fix:
+
+            1. **Run the validation script locally:**
+               \`\`\`bash
+               python3 scripts/validate-path-migration.py
+               \`\`\`
+
+            2. **Update references in:**
+               - Shell scripts (\`scripts/**/*.sh\`)
+               - Python scripts (\`scripts/**/*.py\`)
+               - GitHub workflows (\`.github/workflows/*.yml\`)
+               - Makefile
+               - Config files (\`.flake8\`, \`.pre-commit-config.yaml\`)
+
+            3. **Test your changes:**
+               \`\`\`bash
+               # Verify paths are correct
+               make lint
+
+               # Test module creation
+               make create-module NAME=test_module
+               \`\`\`
+
+            4. **Commit and push:**
+               \`\`\`bash
+               git add .
+               git commit -m "fix: update remaining custom/ path references"
+               git push
+               \`\`\`
+
+            ---
+
+            🤖 This check is automated to ensure path consistency across the codebase.
+            `;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });

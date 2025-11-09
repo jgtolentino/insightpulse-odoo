@@ -86,7 +86,8 @@ shopt -s nullglob
 declare -A seen_modules
 
 for manifest_path in \
-    /mnt/extra-addons/custom/*/__manifest__.py \
+    /mnt/extra-addons/modules/*/__manifest__.py \
+    /mnt/extra-addons/custom-addons/*/__manifest__.py \
     /mnt/extra-addons/oca/*/*/__manifest__.py \
     /usr/lib/python3/dist-packages/odoo/addons/*/__manifest__.py \
     /mnt/extra-addons/*/*/__manifest__.py; do

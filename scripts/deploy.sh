@@ -49,7 +49,7 @@ ssh root@${DROPLET_IP} << 'ENDSSH'
 set -e
 
 # Check if addon exists
-if [ ! -d "/root/insightpulse-odoo/addons/custom/ipai_agent" ]; then
+if [ ! -d "/root/insightpulse-odoo/odoo/modules/ipai_agent" ]; then
     echo "ERROR: ipai_agent addon not found"
     exit 1
 fi

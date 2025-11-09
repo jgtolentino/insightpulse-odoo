@@ -61,7 +61,7 @@ discover_modules() {
     local modules=()
 
     # Find all modules in addons directories
-    for dir in /mnt/extra-addons/insightpulse/* /mnt/extra-addons/custom/*; do
+    for dir in /mnt/extra-addons/insightpulse/* /mnt/extra-addons/modules/* /mnt/extra-addons/custom-addons/*; do
         if [ -f "$dir/__manifest__.py" ]; then
             module_name=$(basename "$dir")
             modules+=("$module_name")

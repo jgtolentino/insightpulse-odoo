@@ -4,8 +4,9 @@ on:
   push:
     branches: [main, develop]
     paths:
-      - 'custom/**/*.py'
-      - 'addons/**/*.py'
+      - 'odoo/modules/**/*.py'
+      - 'odoo/addons/**/*.py'
+      - 'odoo/custom-addons/**/*.py'
       - 'packages/**/*.py'
 
   # Allow manual trigger
@@ -45,7 +46,7 @@ jobs:
         run: |
           echo "🔍 Analyzing codebase for skill opportunities..."
           python3 skills/core/librarian-indexer/suggest-skills.py \
-            --codebase custom/ \
+            --codebase odoo/modules/ \
             --threshold ${{ github.event.inputs.threshold || '500' }} \
             --output .superclaude/shared-context/skill-suggestions.txt \
             --verbose
