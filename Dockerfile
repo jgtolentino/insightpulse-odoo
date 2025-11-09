@@ -25,7 +25,24 @@ WORKDIR /opt/odoo
 COPY requirements.txt requirements-auto.txt ./
 RUN python -m pip install --upgrade pip wheel && \
     pip wheel --wheel-dir /wheels -r requirements.txt && \
-    pip wheel --wheel-dir /wheels -r requirements-auto.txt
+    pip wheel --wheel-dir /wheels -r requirements-auto.txt && \
+    # Additional AI/OCR dependencies
+    pip wheel --wheel-dir /wheels \
+        paddlepaddle==2.6.0 \
+        paddleocr==2.7.3 \
+        anthropic==0.7.8 \
+        openai==1.6.1 \
+        supabase==2.0.3 \
+        fastapi==0.109.0 \
+        uvicorn[standard]==0.27.0 \
+        pydantic==2.5.3 \
+        pillow==10.2.0 \
+        opencv-python-headless==4.9.0.80 \
+        pandas==2.1.4 \
+        numpy==1.24.3 \
+        openpyxl==3.1.2 \
+        prometheus-client==0.19.0 \
+        sentry-sdk==1.39.2
 
 # Install additional production dependencies
 RUN pip wheel --wheel-dir /wheels \
@@ -99,7 +116,28 @@ RUN apt-get update && apt-get install -y --no-install-recommends git && \
     git clone --depth 1 --branch 19.0 https://github.com/odoo/odoo.git /opt/odoo-src && \
     cd /opt/odoo-src && \
     pip install --no-cache-dir -e . && \
-    apt-get purge -y git && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+    rm -rf /var/lib/apt/lists/*
+
+# Clone OCA modules (production-ready versions)
+RUN mkdir -p /mnt/extra-addons/oca && \
+    cd /mnt/extra-addons/oca && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/server-auth.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/server-tools.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/server-backend.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/account-financial-reporting.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/account-financial-tools.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/account-invoicing.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/account-payment.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/account-reconcile.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/bank-payment.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/purchase-workflow.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/partner-contact.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/hr.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/queue.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/reporting-engine.git && \
+    git clone -b 19.0 --depth 1 https://github.com/OCA/web.git && \
+    git clone -b 16.0 --depth 1 https://github.com/OCA/rest-framework.git && \
+    chown -R odoo:odoo /mnt/extra-addons/oca
 
 # Copy application code (custom addons and scripts)
 WORKDIR /opt/odoo
@@ -107,7 +145,7 @@ COPY --chown=odoo:odoo --from=build /src/addons /mnt/extra-addons
 COPY --chown=odoo:odoo --from=build /src/scripts /opt/odoo/scripts
 
 # Copy OCA modules if they were built
-COPY --chown=odoo:odoo --from=build /oca-modules/* /mnt/oca-addons/ || true
+COPY --chown=odoo:odoo --from=build /oca-modules/ /mnt/oca-addons/ || true
 
 # Copy and setup entrypoint (must be before USER odoo)
 COPY --from=build /src/scripts/entrypoint-oca.sh /entrypoint.sh

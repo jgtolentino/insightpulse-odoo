@@ -139,7 +139,16 @@
       "Bash(nginx:*)",
       "Bash(sudo systemctl status:*)",
       "Bash(/tmp/setup_oauth.sh)",
-      "Bash(/Users/tbwa/insightpulse-odoo/scripts/verify_oauth.sh:*)"
+      "Bash(/Users/tbwa/insightpulse-odoo/scripts/verify_oauth.sh:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker run:*)",
+      "Bash(odoo:18.0 )",
+      "Bash(docker start:*)",
+      "Bash(for repo in */)",
+      "Bash(do echo 'Repository: $repo%/')",
+      "Bash(git -C $repo remote get-url origin)",
+      "Bash(git -C $repo branch:*)",
+      "Bash(git clone:*)"
     ],
     "deny": [],
     "ask": []

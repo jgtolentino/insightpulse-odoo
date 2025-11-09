@@ -1,0 +1,247 @@
+name: Odoo Module Discovery & Update
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'custom_addons/**'
+      - '.github/workflows/odoo-module-update.yml'
+  workflow_dispatch:
+    inputs:
+      force_update:
+        description: 'Force module list update'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Run daily at 2 AM UTC to catch any drift
+    - cron: '0 2 * * *'
+
+env:
+  ODOO_CONTAINER: insightpulse-odoo-odoo-1
+  ODOO_DB: odoo19
+  POSTGRES_CONTAINER: insightpulse-odoo-db-1
+
+jobs:
+  update-modules:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH for deployment
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.DO_SSH_KEY }}
+
+      - name: Update Odoo module list
+        run: |
+          echo "🔄 Updating Odoo module list..."
+
+          ssh -o StrictHostKeyChecking=no root@165.227.10.178 << 'ENDSSH'
+          cd /opt/insightpulse-odoo
+
+          # Stop Odoo
+          docker stop insightpulse-odoo-odoo-1 || true
+
+          # Run temporary container to update module list
+          docker run --rm \
+            --network insightpulse-odoo_default \
+            -v /opt/insightpulse-odoo/custom_addons:/mnt/extra-addons:ro \
+            -e POSTGRES_HOST=db \
+            -e POSTGRES_USER=odoo \
+            -e POSTGRES_PASSWORD=odoo \
+            -e POSTGRES_DB=odoo19 \
+            odoo:18.0 \
+            --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons \
+            --db_host=db \
+            -d odoo19 \
+            --update=base \
+            --stop-after-init \
+            --no-http
+
+          # Start Odoo
+          docker start insightpulse-odoo-odoo-1
+
+          # Wait for Odoo to be ready
+          echo "⏳ Waiting for Odoo to start..."
+          sleep 30
+
+          echo "✅ Module list updated successfully"
+          ENDSSH
+
+      - name: Verify custom modules
+        run: |
+          echo "🔍 Verifying custom modules in database..."
+
+          ssh -o StrictHostKeyChecking=no root@165.227.10.178 << 'ENDSSH'
+          docker exec insightpulse-odoo-db-1 psql -U odoo -d odoo19 -c "
+          SELECT
+            name,
+            shortdesc::json->>'en_US' as title,
+            author,
+            state,
+            application,
+            CASE
+              WHEN state = 'uninstalled' THEN '⏸️'
+              WHEN state = 'installed' THEN '✅'
+              WHEN state = 'to upgrade' THEN '🔄'
+              WHEN state = 'to install' THEN '📥'
+              ELSE state
+            END as status
+          FROM ir_module_module
+          WHERE name LIKE 'ip%' OR name LIKE 'ipai%' OR name LIKE 'pulser%'
+          ORDER BY name;
+          "
+          ENDSSH
+
+      - name: Check for missing dependencies
+        run: |
+          echo "🔍 Checking for modules with missing dependencies..."
+
+          ssh -o StrictHostKeyChecking=no root@165.227.10.178 << 'ENDSSH'
+          # Check Odoo logs for "not installable" warnings
+          docker logs insightpulse-odoo-odoo-1 2>&1 | grep "not installable" | tail -20
+          ENDSSH
+
+      - name: Create module status report
+        run: |
+          echo "📊 Generating module status report..."
+
+          cat > module-status-report.md << 'EOF'
+          # Odoo Custom Module Status Report
+
+          **Generated:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Workflow Run:** ${{ github.run_number }}
+          **Triggered By:** ${{ github.event_name }}
+
+          ## Module Discovery Results
+
+          See job logs for detailed module list query results.
+
+          ## Next Steps
+
+          1. Review module states in the query output above
+          2. For `uninstalled` modules, install via Odoo Apps UI or CLI
+          3. For `to upgrade` modules, run upgrade process
+          4. For missing modules, check:
+             - Module exists in `custom_addons/`
+             - `installable: True` in __manifest__.py
+             - All dependencies are installed
+             - addons_path includes `/mnt/extra-addons`
+
+          ## Manual Module Installation
+
+          ```bash
+          # Install a specific module
+          ssh root@165.227.10.178
+          cd /opt/insightpulse-odoo
+          docker exec insightpulse-odoo-odoo-1 \
+            odoo -d odoo19 -i module_name --stop-after-init --no-http
+          docker restart insightpulse-odoo-odoo-1
+          ```
+
+          ## Documentation
+
+          See [docs/ODOO_MODULE_VISIBILITY.md](../docs/ODOO_MODULE_VISIBILITY.md) for troubleshooting guide.
+
+          EOF
+
+          cat module-status-report.md
+
+      - name: Comment on PR (if triggered by PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('module-status-report.md', 'utf8');
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: report
+            });
+
+      - name: Upload module status artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: module-status-report
+          path: module-status-report.md
+          retention-days: 30
+
+  validate-modules:
+    runs-on: ubuntu-latest
+    needs: update-modules
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate module manifests
+        run: |
+          echo "🔍 Validating __manifest__.py files..."
+
+          for manifest in custom_addons/**/__manifest__.py; do
+            echo "Checking: $manifest"
+            python3 -m py_compile "$manifest" || exit 1
+          done
+
+          echo "✅ All manifests are valid Python files"
+
+      - name: Check module dependencies
+        run: |
+          echo "🔍 Checking module dependencies..."
+
+          python3 << 'EOF'
+          import os
+          import json
+          from pathlib import Path
+
+          custom_addons = Path("custom_addons")
+
+          for module_dir in custom_addons.iterdir():
+              if not module_dir.is_dir():
+                  continue
+
+              manifest_file = module_dir / "__manifest__.py"
+              if not manifest_file.exists():
+                  continue
+
+              # Read manifest
+              with open(manifest_file) as f:
+                  manifest_content = f.read()
+                  manifest = eval(manifest_content)
+
+              module_name = manifest.get("name", module_dir.name)
+              depends = manifest.get("depends", [])
+              installable = manifest.get("installable", True)
+
+              print(f"\nModule: {module_name}")
+              print(f"  Installable: {installable}")
+              print(f"  Dependencies: {', '.join(depends)}")
+
+              # Common Odoo core modules
+              core_modules = [
+                  "base", "web", "mail", "portal", "website",
+                  "account", "sale", "purchase", "stock", "mrp",
+                  "project", "hr", "crm", "contacts"
+              ]
+
+              missing_core = [dep for dep in depends if dep not in core_modules and dep not in ["sale_management"]]
+              if missing_core:
+                  print(f"  ⚠️  Non-core dependencies: {', '.join(missing_core)}")
+          EOF
+
+          echo "✅ Dependency check complete"
+
