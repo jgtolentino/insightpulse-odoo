@@ -7,8 +7,6 @@ on:
       - 'services/**'
       - 'ops/**'
       - 'infra/**'
-      - 'portal/**'
-      - 'scripts/deploy/**'
       - '.github/workflows/deploy-consolidated.yml'
   workflow_dispatch:
     inputs:
