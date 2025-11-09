@@ -2,10 +2,19 @@ name: CI/CD Metrics Collector
 
 on:
   workflow_run:
-    workflows: ["*"]
+    workflows:
+      - "CI Unified"
+      - "Odoo CI"
+      - "Automation Health Check"
+      - "Visual Parity"
     types: [completed]
   schedule:
     - cron: '0 */6 * * *'  # Every 6 hours
+
+# Prevent multiple concurrent runs and workflow spam
+concurrency:
+  group: ci-metrics-collector-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   actions: read
@@ -14,6 +23,8 @@ permissions:
 jobs:
   collect-metrics:
     runs-on: ubuntu-latest
+    # Only run on successful workflow completions (skip failed/cancelled)
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'schedule' }}
     steps:
       - uses: actions/checkout@v4
 
