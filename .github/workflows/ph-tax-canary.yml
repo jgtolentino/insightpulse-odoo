@@ -1,0 +1,146 @@
+name: PH Tax Compliance Canary
+
+on:
+  schedule:
+    # Daily at 09:00 UTC (5:00 PM Manila time)
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/ph-tax-canary.yml'
+      - 'config/environments.yaml'
+
+env:
+  AGENT_GATEWAY_URL: https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run
+
+jobs:
+  ph-tax-qa-canary:
+    name: Production PH Tax Q&A Canary
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Test VAT Question (RMC 5-2023)
+        id: vat_test
+        run: |
+          echo "🧪 Testing VAT question with Agent Gateway..."
+
+          RESPONSE=$(curl -fsS -X POST "${AGENT_GATEWAY_URL}/agent/tax/ph/qa" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"Do we still file monthly VAT (2550M) in 2025?","top_k":3}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if answer contains "No"
+          if ! echo "$RESPONSE" | jq -e '.answer | contains("No")' > /dev/null; then
+            echo "❌ FAIL: Answer should contain 'No' (monthly VAT discontinued)"
+            exit 1
+          fi
+
+          # Check if citations include RMC 5-2023
+          if ! echo "$RESPONSE" | jq -e '.sources[] | select(contains("RMC") and contains("5-2023"))' > /dev/null; then
+            echo "❌ FAIL: Citations must include RMC 5-2023"
+            exit 1
+          fi
+
+          echo "✅ PASS: Monthly VAT question answered correctly with RMC 5-2023 citation"
+
+      - name: Test Withholding Tax Question
+        id: wht_test
+        run: |
+          echo "🧪 Testing withholding tax question..."
+
+          RESPONSE=$(curl -fsS -X POST "${AGENT_GATEWAY_URL}/agent/tax/ph/qa" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"What is the withholding tax rate for professional fees in 2025?","top_k":3}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if answer contains rate information
+          if ! echo "$RESPONSE" | jq -e '.answer | (contains("10%") or contains("5%") or contains("15%"))' > /dev/null; then
+            echo "❌ FAIL: Answer should contain withholding tax rate percentage"
+            exit 1
+          fi
+
+          echo "✅ PASS: Withholding tax question answered with rate information"
+
+      - name: Test Tax Calendar
+        id: calendar_test
+        run: |
+          echo "🧪 Testing tax calendar knowledge..."
+
+          RESPONSE=$(curl -fsS -X POST "${AGENT_GATEWAY_URL}/agent/tax/ph/qa" \
+            -H "Content-Type: application/json" \
+            -d '{"question":"When is the quarterly VAT (2550Q) filing deadline for Q1 2025?","top_k":3}')
+
+          echo "Response: $RESPONSE"
+
+          # Check if answer mentions April deadline
+          if ! echo "$RESPONSE" | jq -e '.answer | (contains("April") or contains("25"))' > /dev/null; then
+            echo "❌ FAIL: Answer should mention April deadline for Q1"
+            exit 1
+          fi
+
+          echo "✅ PASS: Tax calendar question answered correctly"
+
+      - name: Report Results
+        if: always()
+        run: |
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📊 PH Tax Compliance Canary Results"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo ""
+          echo "VAT Test (RMC 5-2023): ${{ steps.vat_test.outcome }}"
+          echo "Withholding Tax Test: ${{ steps.wht_test.outcome }}"
+          echo "Tax Calendar Test: ${{ steps.calendar_test.outcome }}"
+          echo ""
+          echo "Agent Gateway: ${AGENT_GATEWAY_URL}"
+          echo "Timestamp: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+
+      - name: Create Issue on Failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const steps = {
+              'VAT Question': '${{ steps.vat_test.outcome }}',
+              'WHT Question': '${{ steps.wht_test.outcome }}',
+              'Calendar Test': '${{ steps.calendar_test.outcome }}'
+            };
+
+            const failedSteps = Object.entries(steps)
+              .filter(([_, outcome]) => outcome === 'failure')
+              .map(([step, _]) => `- ${step}: failure`)
+              .join('\n  ');
+
+            const skippedSteps = Object.entries(steps)
+              .filter(([_, outcome]) => outcome === 'skipped')
+              .map(([step, _]) => `- ${step}: skipped`)
+              .join('\n  ');
+
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 PH Tax Canary Failed',
+              body: `The daily PH tax compliance canary has failed.
+
+  **Failed Steps:**
+  ${failedSteps}
+  ${skippedSteps ? `\n  **Skipped Steps:**\n  ${skippedSteps}` : ''}
+
+  **Workflow Run:** ${context.payload.repository.html_url}/actions/runs/${context.runId}
+
+  **Action Required:**
+  1. Check Agent Gateway health: ${process.env.AGENT_GATEWAY_URL}
+  2. Verify database connectivity
+  3. Ensure BIR documents are ingested
+  4. Review citation logic for RMC 5-2023
+
+  cc: @jgtolentino`,
+              labels: ['bug', 'ph-tax', 'canary-failure']
+            })

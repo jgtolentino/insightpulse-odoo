@@ -1,0 +1,453 @@
+# Environment Configuration for InsightPulse AI
+# Supports: local, staging, production
+# Usage: Export ENV=production before running services
+
+---
+environments:
+  local:
+    name: "Local Development"
+    description: "Docker Compose local development environment"
+
+    services:
+      agent_gateway:
+        url: "http://localhost:8080"
+        model: "claude-3-5-sonnet-20241022"
+        tools_enabled: 13
+        timeout: 30
+
+      ocr_service:
+        url: "http://localhost:8081"
+        model: "paddleocr-vl-900m"
+        llm_enhancement: "openai:gpt-4o-mini"
+        confidence_threshold: 0.60
+        timeout: 60
+
+      mcp_coordinator:
+        url: "http://localhost:8082"
+        servers: ["pulser-hub", "github", "docker"]
+        max_concurrent_tools: 5
+
+      superset:
+        url: "http://localhost:8088"
+        username: "admin"
+        database: "postgresql://localhost:5432/superset"
+
+      odoo:
+        url: "http://localhost:8069"
+        database: "odoo_dev"
+        admin_password: "admin"
+        demo_data: true
+
+    databases:
+      primary:
+        type: "postgresql"
+        host: "localhost"
+        port: 5432
+        database: "insightpulse_dev"
+        pool_size: 10
+        ssl_mode: "disable"
+
+      supabase:
+        type: "postgresql"
+        host: "127.0.0.1"
+        port: 54322  # Supabase local dev port
+        database: "postgres"
+        pool_size: 5
+        ssl_mode: "disable"
+
+    features:
+      vector_search: true
+      embeddings_generation: true
+      ocr_processing: true
+      bir_compliance: false  # Disable BIR checks in local
+      multi_tenant: false    # Single tenant for development
+      email_notifications: false
+      slack_notifications: false
+
+    monitoring:
+      health_checks: false
+      metrics_collection: false
+      log_level: "DEBUG"
+
+  staging:
+    name: "Staging Environment"
+    description: "Pre-production testing environment"
+
+    services:
+      agent_gateway:
+        url: "https://staging-agent.insightpulseai.net"
+        model: "claude-3-5-sonnet-20241022"
+        tools_enabled: 13
+        timeout: 30
+
+      ocr_service:
+        url: "http://staging-ocr.insightpulseai.net"
+        model: "paddleocr-vl-900m"
+        llm_enhancement: "openai:gpt-4o-mini"
+        confidence_threshold: 0.60
+        timeout: 60
+
+      mcp_coordinator:
+        url: "https://staging-mcp.insightpulseai.net"
+        servers: ["pulser-hub", "digitalocean", "github", "docker", "superset"]
+        max_concurrent_tools: 10
+
+      superset:
+        url: "https://staging-superset.insightpulseai.net"
+        username: "admin"
+        database: "${SUPABASE_STAGING_URL}"
+
+      odoo:
+        url: "https://staging-erp.insightpulseai.net"
+        database: "odoo_staging"
+        demo_data: false
+
+    databases:
+      primary:
+        type: "postgresql"
+        host: "aws-1-us-east-1.pooler.supabase.com"
+        port: 6543  # Supabase pooler
+        database: "postgres"
+        pool_size: 20
+        ssl_mode: "require"
+        project_ref: "staging-project-ref"
+
+      supabase:
+        type: "postgresql"
+        host: "aws-1-us-east-1.pooler.supabase.com"
+        port: 6543
+        database: "postgres"
+        pool_size: 10
+        ssl_mode: "require"
+        project_ref: "staging-project-ref"
+
+    features:
+      vector_search: true
+      embeddings_generation: true
+      ocr_processing: true
+      bir_compliance: true
+      multi_tenant: true
+      email_notifications: true  # Send to test emails only
+      slack_notifications: false
+
+    monitoring:
+      health_checks: true
+      metrics_collection: true
+      log_level: "INFO"
+
+  production:
+    name: "Production Environment"
+    description: "Live production environment on DigitalOcean"
+
+    services:
+      agent_gateway:
+        url: "https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run"
+        model: "claude-3-5-sonnet-20241022"
+        tools_enabled: 13
+        timeout: 30
+        rate_limit: "100/minute"
+
+      ocr_service:
+        url: "http://188.166.237.231"
+        host: "188.166.237.231"  # Singapore SGP1 droplet
+        model: "paddleocr-vl-900m"
+        llm_enhancement: "openai:gpt-4o-mini"
+        confidence_threshold: 0.60
+        timeout: 60
+        rate_limit: "50/minute"
+
+      mcp_coordinator:
+        url: "https://mcp.insightpulseai.net"
+        servers: ["pulser-hub", "digitalocean", "kubernetes", "docker", "github", "superset"]
+        max_concurrent_tools: 15
+        timeout: 300
+
+      superset:
+        url: "https://superset.insightpulseai.net"
+        username: "admin"
+        database: "${SUPABASE_URL}"
+        app_id: "bc1764a5-b48e-4bec-aa72-8a22cab141bc"
+
+      odoo:
+        url: "https://erp.insightpulseai.net"
+        host: "165.227.10.178"  # San Francisco SFO2 droplet
+        database: "odoo"
+        demo_data: false
+        workers: 4
+        max_cron_threads: 2
+
+    databases:
+      primary:
+        type: "postgresql"
+        host: "aws-1-us-east-1.pooler.supabase.com"
+        port: 6543  # Supabase connection pooler
+        database: "postgres"
+        pool_size: 50
+        ssl_mode: "require"
+        project_ref: "spdtwktxdalcfigzeqrz"  # SpendFlow project
+        url: "${POSTGRES_URL}"
+
+      odoo:
+        type: "postgresql"
+        host: "aws-1-us-east-1.pooler.supabase.com"
+        port: 6543
+        database: "postgres"
+        pool_size: 30
+        ssl_mode: "require"
+        project_ref: "xkxyvboeubffxxbebsll"  # Odoo DB project
+        url: "${ODOO_DB_URL}"
+
+    features:
+      vector_search: true
+      embeddings_generation: true
+      ocr_processing: true
+      bir_compliance: true      # CRITICAL: Enable BIR validation
+      multi_tenant: true         # Multi-legal-entity isolation
+      email_notifications: true
+      slack_notifications: true
+      auto_approval: true        # Auto-approve expenses ≥85% confidence
+
+    monitoring:
+      health_checks: true
+      metrics_collection: true
+      log_level: "WARNING"
+      uptime_sla: 99.9
+      error_tracking: "sentry"
+
+    infrastructure:
+      digitalocean:
+        project_id: "29cde7a1-8280-46ad-9fdf-dea7b21a7825"
+        project_name: "fin-workspace"
+
+        droplets:
+          odoo:
+            id: "ipai-odoo-erp"
+            ip: "165.227.10.178"
+            region: "SFO2"
+            size: "4GB RAM / 120GB Disk"
+            purpose: "Odoo ERP Main Production"
+
+          ocr:
+            id: "ocr-service-droplet"
+            ip: "188.166.237.231"
+            region: "SGP1"
+            size: "8GB RAM / 80GB Disk"
+            purpose: "OCR Service (PaddleOCR-VL + OpenAI)"
+
+        apps:
+          odoo_saas:
+            name: "odoo-saas-platform"
+            status: "deployed"
+            url: "TBD"
+
+          superset:
+            name: "superset-analytics"
+            url: "superset.insightpulseai.net"
+            app_id: "bc1764a5-b48e-4bec-aa72-8a22cab141bc"
+
+          mcp:
+            name: "mcp-coordinator"
+            url: "mcp.insightpulseai.net"
+
+        agents:
+          agent_gateway:
+            name: "agent"
+            url: "https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run"
+            model: "Claude 3.5 Sonnet"
+            tools: 13
+
+        domains:
+          - name: "erp.insightpulseai.net"
+            records:
+              a: 1
+              ns: 3
+              soa: 1
+
+    sla:
+      uptime: "99.9%"  # 8.7 hours downtime/year
+      response_time:
+        api: "P95 <200ms"
+        ocr: "P95 <30s"
+        agent: "P95 <3s"
+      error_rate: "<0.1%"
+
+    costs:
+      monthly:
+        odoo_droplet: 24    # USD
+        ocr_droplet: 48     # USD
+        agent_gateway: 20   # Usage-based
+        supabase_spendflow: 0   # Free tier (<500MB)
+        supabase_odoo: 0        # Free tier (<500MB)
+        superset_app: 5     # App Platform
+        mcp_app: 5          # App Platform
+        total: 102          # USD/month
+
+      savings_vs_saas:
+        concur_replacement: 15000  # USD/year
+        tableau_replacement: 8400  # USD/year
+        total_savings: 23400       # USD/year
+
+---
+# Knowledge Base & Embeddings Configuration
+
+knowledge_base:
+  vector_storage:
+    provider: "supabase"
+    extension: "pgvector"
+    database: "spdtwktxdalcfigzeqrz"
+
+    schemas:
+      bir_documents:
+        table: "scout.bir_documents"
+        embedding_column: "embedding"
+        dimensions: 1536
+        index_type: "ivfflat"
+        index_lists: 100
+        similarity_metric: "cosine"
+
+      ocr_results:
+        table: "scout.ocr_results"
+        embedding_column: "embedding"
+        dimensions: 1536
+        index_type: "ivfflat"
+        index_lists: 100
+        similarity_metric: "cosine"
+
+      agent_memory:
+        table: "scout.agent_memory"
+        embedding_column: "embedding"
+        dimensions: 1536
+        index_type: "ivfflat"
+        index_lists: 100
+        similarity_metric: "cosine"
+
+  embedding_model:
+    provider: "openai"
+    model: "text-embedding-3-small"
+    dimensions: 1536
+    batch_size: 100
+    timeout: 30
+
+  rag_pipeline:
+    top_k: 3
+    similarity_threshold: 0.7
+    llm_model: "claude-3-5-sonnet-20241022"
+    max_context_tokens: 8000
+    citation_tracking: true
+
+  refresh_schedule:
+    bir_documents: "daily 02:00 UTC"
+    ocr_results: "on-demand"
+    agent_memory: "weekly"
+    full_reembedding: "monthly"
+
+---
+# Multi-Tenant Configuration (Legal Entities)
+
+agencies:
+  - code: "RIM"
+    name: "Reach Initiatives Management"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "CKVC"
+    name: "CK Ventures Corporation"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "BOM"
+    name: "Business Operations Management"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "JPAL"
+    name: "J-PAL Southeast Asia"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "JLI"
+    name: "JLI Corporation"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "JAP"
+    name: "JAP Enterprises"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "LAS"
+    name: "LAS Holdings"
+    tin: "TBD"
+    bir_district: "TBD"
+
+  - code: "RMQB"
+    name: "RMQB Corporation"
+    tin: "TBD"
+    bir_district: "TBD"
+
+---
+# BIR Compliance Configuration
+
+bir:
+  forms:
+    - code: "1601-C"
+      name: "Monthly Remittance Return of Income Taxes Withheld"
+      frequency: "monthly"
+      deadline: "10th of following month"
+
+    - code: "1702-RT"
+      name: "Annual Income Tax Return"
+      frequency: "yearly"
+      deadline: "April 15"
+
+    - code: "2550Q"
+      name: "Quarterly Value-Added Tax Return"
+      frequency: "quarterly"
+      deadlines:
+        Q1: "April 25"
+        Q2: "July 25"
+        Q3: "October 25"
+        Q4: "January 25 (following year)"
+
+    - code: "2550M"
+      name: "Monthly Value-Added Tax Declaration"
+      frequency: "monthly"
+      status: "DISCONTINUED"
+      effective_date: "2025-01-01"
+      replacement: "2550Q"
+      reference: "RMC 5-2023"
+
+    - code: "2307"
+      name: "Certificate of Creditable Tax Withheld at Source"
+      frequency: "as_needed"
+
+    - code: "2316"
+      name: "Certificate of Compensation Payment/Tax Withheld"
+      frequency: "yearly"
+      deadline: "January 31 (following year)"
+
+  rmcs:
+    - number: "RMC 5-2023"
+      title: "Discontinuation of Monthly VAT Filing"
+      effective_date: "2025-01-01"
+      summary: "Monthly VAT filing (Form 2550M) discontinued, quarterly filing (Form 2550Q) required"
+
+    - number: "RMC 16-2023"
+      title: "Revenue Regulations Updates"
+      effective_date: "2023-04-01"
+
+  e_invoicing:
+    status: "pending_bir_specs"
+    pilot_date: "TBD"
+    mandatory_date: "TBD"
+    connector: "pluggable"
+
+---
+# Version & Metadata
+
+version: "1.0.0"
+last_updated: "2025-11-09"
+maintainer: "InsightPulse AI Team"
+contact: "jgtolentino_rn@yahoo.com"
+repository: "https://github.com/jgtolentino/insightpulse-odoo"
+documentation: "docs/INFRASTRUCTURE.md"
