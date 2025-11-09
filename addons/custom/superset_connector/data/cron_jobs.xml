@@ -1,12 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data noupdate="1">
-        <!-- Cron Job: Cleanup Expired Superset Tokens -->
+        <!--
+        Cron Job: Cleanup Expired Superset Tokens
+
+        Odoo 19 CE Compatible
+
+        Purpose: Automatically removes expired authentication tokens for Superset integration
+        Frequency: Daily (every 24 hours)
+        Priority: 10 (higher priority = runs first)
+        -->
         <record id="ir_cron_cleanup_expired_tokens" model="ir.cron">
             <field name="name">Cleanup Expired Superset Tokens</field>
             <field name="model_id" ref="model_superset_token"/>
             <field name="state">code</field>
             <field name="code">model.cleanup_expired_tokens()</field>
+            <field name="user_id" ref="base.user_admin"/>
             <field name="interval_number">1</field>
             <field name="interval_type">days</field>
             <field name="numbercall">-1</field>

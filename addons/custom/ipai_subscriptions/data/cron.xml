@@ -1,12 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="cron_ipai_invoice" model="ir.cron">
-    <field name="name">IPAI Subscriptions Invoicing</field>
-    <field name="model_id" ref="model_ipai_subscription"/>
-    <field name="state">code</field>
-    <field name="code">model._cron_generate_invoices()</field>
-    <field name="interval_number">1</field>
-    <field name="interval_type">days</field>
-    <field name="numbercall">-1</field>
-    <field name="active">True</field>
-  </record>
+    <data noupdate="1">
+        <!--
+        Cron Job: IPAI Subscriptions Invoicing
+
+        Odoo 19 CE Compatible
+
+        Purpose: Automatically generates invoices for active subscriptions on their billing cycle
+                 Supports MRR/ARR tracking and recurring revenue management
+        Frequency: Daily (every 24 hours)
+        Priority: Default (not specified, runs with standard priority)
+        Dependencies: contract, contract_sale, contract_invoice, queue_job
+        -->
+        <record id="cron_ipai_invoice" model="ir.cron">
+            <field name="name">IPAI Subscriptions Invoicing</field>
+            <field name="model_id" ref="model_ipai_subscription"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_generate_invoices()</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
 </odoo>

@@ -1,11 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-  <record id="ir_cron_refresh_apps_index" model="ir.cron">
-    <field name="name">Refresh Apps Index</field>
-    <field name="model_id" ref="base.model_ir_module_module"/>
-    <field name="state">code</field>
-    <field name="code">model.update_list()</field>
-    <field name="interval_number">24</field>
-    <field name="interval_type">hours</field>
-    <field name="active">True</field>
-  </record>
+    <data noupdate="1">
+        <!--
+        Cron Job: Refresh Apps Index
+
+        Odoo 19 CE Compatible
+
+        Purpose: Updates the available apps/modules index from configured repositories
+                 Ensures Apps menu shows current module availability and metadata
+        Frequency: Every 24 hours
+        Priority: Default (not specified, runs with standard priority)
+        Note: Calls standard Odoo core method model.update_list()
+        -->
+        <record id="ir_cron_refresh_apps_index" model="ir.cron">
+            <field name="name">Refresh Apps Index</field>
+            <field name="model_id" ref="base.model_ir_module_module"/>
+            <field name="state">code</field>
+            <field name="code">model.update_list()</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="interval_number">24</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="doall" eval="False"/>
+            <field name="active" eval="True"/>
+        </record>
+    </data>
 </odoo>
