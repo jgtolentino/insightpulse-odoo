@@ -166,10 +166,10 @@ git push origin staging
 ### Creating Fields via XML
 
 ```xml
-<record id="field_bir_form_agency_code" model="ir.model.fields">
-    <field name="name">x_agency_code</field>
+<record id="field_bir_form_manager_code" model="ir.model.fields">
+    <field name="name">x_manager_code</field>
     <field name="model_id" ref="model_bir_form_1601c"/>
-    <field name="field_description">Agency Code</field>
+    <field name="field_description">Project Manager Code</field>
     <field name="ttype">selection</field>
     <field name="selection">
         [('RIM', 'RIM'), ('CKVC', 'CKVC'), ('BOM', 'BOM')]
@@ -188,7 +188,7 @@ git push origin staging
     <field name="inherit_id" ref="bir_tax_filing.view_bir_form_1601c_form"/>
     <field name="arch" type="xml">
         <xpath expr="//field[@name='filing_period']" position="after">
-            <field name="x_agency_code"/>
+            <field name="x_manager_code"/>
         </xpath>
     </field>
 </record>
@@ -237,7 +237,7 @@ git push origin staging
 # Convert Studio fields to proper model fields
 
 # Before (Studio):
-# x_agency_code (added via Studio)
+# x_manager_code (added via Studio)
 
 # After (Custom Module):
 class BIRForm(models.Model):
@@ -368,7 +368,7 @@ def create_scheduled_action(name, model, interval_days, code):
 **Studio fields:**
 - Prefix: `x_` (automatic)
 - Format: `x_descriptive_name`
-- Example: `x_agency_code`, `x_filing_deadline`
+- Example: `x_manager_code`, `x_filing_deadline`
 
 **Custom module fields:**
 - No prefix

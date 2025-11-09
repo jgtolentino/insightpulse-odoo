@@ -17,7 +17,7 @@
       "description": "Current fiscal period being closed",
       "default": "{{current_month}}"
     },
-    "agency_code": {
+    "manager_code": {
       "type": "string",
       "enum": ["RIM", "CKVC", "BOM", "JPAL", "JLI", "JAP", "LAS", "RMQB"],
       "description": "Agency identifier"
@@ -112,7 +112,7 @@
           "action": "send_message",
           "params": {
             "channel": "#finance-ssc-alerts",
-            "text": ":rotating_light: *CRITICAL*: {{steps.check_critical_tasks.output.overdue_count}} critical month-end tasks are overdue for {{agency_code}} - {{fiscal_period}}",
+            "text": ":rotating_light: *CRITICAL*: {{steps.check_critical_tasks.output.overdue_count}} critical month-end tasks are overdue for {{manager_code}} - {{fiscal_period}}",
             "blocks": [
               {
                 "type": "header",
@@ -126,7 +126,7 @@
                 "fields": [
                   {
                     "type": "mrkdwn",
-                    "text": "*Agency:*\n{{agency_code}}"
+                    "text": "*Agency:*\n{{manager_code}}"
                   },
                   {
                     "type": "mrkdwn",
@@ -169,12 +169,12 @@
           "integration": "email",
           "action": "send",
           "params": {
-            "to": "cfo@{{agency_code}}.ph",
-            "cc": ["finance.manager@{{agency_code}}.ph", "jgtolentino_rn@yahoo.com"],
-            "subject": "URGENT: Critical Month-End Tasks Overdue - {{agency_code}} {{fiscal_period}}",
+            "to": "cfo@{{manager_code}}.ph",
+            "cc": ["finance.manager@{{manager_code}}.ph", "jgtolentino_rn@yahoo.com"],
+            "subject": "URGENT: Critical Month-End Tasks Overdue - {{manager_code}} {{fiscal_period}}",
             "template": "critical_tasks_overdue",
             "variables": {
-              "agency_code": "{{agency_code}}",
+              "manager_code": "{{manager_code}}",
               "fiscal_period": "{{fiscal_period}}",
               "overdue_count": "{{steps.check_critical_tasks.output.overdue_count}}",
               "dashboard_url": "https://app.insightpulseai.net/dashboards/month-end-closing"
@@ -320,7 +320,7 @@
       "action": "send_message",
       "params": {
         "channel": "#finance-ssc",
-        "text": "📊 Month-End Closing Status for {{agency_code}} - {{fiscal_period}}",
+        "text": "📊 Month-End Closing Status for {{manager_code}} - {{fiscal_period}}",
         "blocks": [
           {
             "type": "header",
@@ -334,7 +334,7 @@
             "fields": [
               {
                 "type": "mrkdwn",
-                "text": "*Agency:*\n{{agency_code}}"
+                "text": "*Agency:*\n{{manager_code}}"
               },
               {
                 "type": "mrkdwn",
@@ -396,7 +396,7 @@
       "action": "month_end.workflow_completed",
       "metadata": {
         "fiscal_period": "{{fiscal_period}}",
-        "agency_code": "{{agency_code}}",
+        "manager_code": "{{manager_code}}",
         "completion_rate": "{{steps.calculate_completion.output.completion_rate}}",
         "total_tasks": "{{sum(steps.task_summary.output[*].total)}}",
         "completed_tasks": "{{sum(steps.task_summary.output[*].completed)}}",
@@ -414,14 +414,14 @@
     "notification": {
       "integration": "slack",
       "channel": "#finance-ssc-alerts",
-      "message": "❌ Month-End Closing Workflow Failed for {{agency_code}} - {{fiscal_period}}. Error: {{error.message}}"
+      "message": "❌ Month-End Closing Workflow Failed for {{manager_code}} - {{fiscal_period}}. Error: {{error.message}}"
     }
   },
   "on_success": {
     "notification": {
       "integration": "slack",
       "channel": "#finance-ssc",
-      "message": "✅ Month-End Closing Workflow Completed for {{agency_code}} - {{fiscal_period}}. Completion: {{steps.calculate_completion.output.completion_rate | round(2)}}%"
+      "message": "✅ Month-End Closing Workflow Completed for {{manager_code}} - {{fiscal_period}}. Completion: {{steps.calculate_completion.output.completion_rate | round(2)}}%"
     }
   },
   "metadata": {

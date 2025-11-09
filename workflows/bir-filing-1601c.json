@@ -17,10 +17,10 @@
       "description": "Tax period for filing",
       "default": "{{previous_month}}"
     },
-    "agency_code": {
+    "manager_code": {
       "type": "string",
       "enum": ["RIM", "CKVC", "BOM", "JPAL", "JLI", "JAP", "LAS", "RMQB"],
-      "description": "Agency identifier"
+      "description": "Project manager code (employee initials)"
     },
     "project_id": {
       "type": "uuid",
@@ -38,7 +38,7 @@
       "name": "Verify Month-End Closing Completed",
       "type": "query",
       "query": {
-        "sql": "SELECT CASE WHEN EXISTS (SELECT 1 FROM workflow_runs wr JOIN workflows w ON wr.workflow_id = w.id WHERE w.name LIKE '%Month-End Closing%' AND wr.metadata->>'fiscal_period' = {{fiscal_period}} AND wr.metadata->>'agency_code' = {{agency_code}} AND wr.status = 'success') THEN true ELSE false END as is_closed",
+        "sql": "SELECT CASE WHEN EXISTS (SELECT 1 FROM workflow_runs wr JOIN workflows w ON wr.workflow_id = w.id WHERE w.name LIKE '%Month-End Closing%' AND wr.metadata->>'fiscal_period' = {{fiscal_period}} AND wr.metadata->>'manager_code' = {{manager_code}} AND wr.status = 'success') THEN true ELSE false END as is_closed",
         "returns": "single_value"
       },
       "output": "month_end_closed"
@@ -57,7 +57,7 @@
           "action": "send_message",
           "params": {
             "channel": "#finance-ssc-alerts",
-            "text": ":warning: Cannot proceed with BIR 1601-C filing for {{agency_code}} {{fiscal_period}} - Month-end closing not completed"
+            "text": ":warning: Cannot proceed with BIR 1601-C filing for {{manager_code}} {{fiscal_period}} - Month-end closing not completed"
           }
         },
         {
@@ -81,7 +81,7 @@
           ["move_id.date", ">=", "{{date_start(fiscal_period)}}"],
           ["move_id.date", "<=", "{{date_end(fiscal_period)}}"],
           ["account_id.code", "like", "2303%"],
-          ["company_id.name", "=", "{{agency_code}}"]
+          ["company_id.name", "=", "{{manager_code}}"]
         ],
         "fields": ["move_id", "partner_id", "debit", "credit", "account_id", "tax_ids"]
       },
@@ -176,7 +176,7 @@
           },
           "Agency": {
             "select": {
-              "name": "{{agency_code}}"
+              "name": "{{manager_code}}"
             }
           }
         }
@@ -188,14 +188,14 @@
       "name": "Create Review Ticket",
       "type": "create_ticket",
       "params": {
-        "title": "Review BIR Form 1601-C: {{agency_code}} {{fiscal_period}}",
+        "title": "Review BIR Form 1601-C: {{manager_code}} {{fiscal_period}}",
         "description": "Please review the auto-generated BIR Form 1601-C before filing.\n\n**Period:** {{fiscal_period}}\n**Total Tax Withheld:** PHP {{steps.calculate_total_tax.output.sum | number_format(2)}}\n**Number of Payees:** {{steps.generate_alphalist.output | length}}\n**Deadline:** {{filing_deadline}}",
         "severity": "high",
         "assignee_role": "Tax Compliance Officer",
         "metadata": {
           "form_type": "1601-C",
           "fiscal_period": "{{fiscal_period}}",
-          "agency_code": "{{agency_code}}",
+          "manager_code": "{{manager_code}}",
           "bir_form_data": "{{steps.create_bir_form_draft.output}}",
           "notion_page_id": "{{steps.save_draft_to_notion.output.id}}",
           "alphalist": "{{steps.generate_alphalist.output}}"
@@ -249,7 +249,7 @@
       "on_timeout": {
         "action": "send_escalation",
         "escalate_to": "CFO",
-        "message": "BIR Form 1601-C approval overdue for {{agency_code}} {{fiscal_period}}"
+        "message": "BIR Form 1601-C approval overdue for {{manager_code}} {{fiscal_period}}"
       },
       "output": "approval_response"
     },
@@ -266,7 +266,7 @@
           "action": "send_message",
           "params": {
             "channel": "#finance-ssc",
-            "text": ":x: BIR Form 1601-C rejected for {{agency_code}} {{fiscal_period}}. Reason: {{steps.wait_for_approval.output.rejection_reason}}"
+            "text": ":x: BIR Form 1601-C rejected for {{manager_code}} {{fiscal_period}}. Reason: {{steps.wait_for_approval.output.rejection_reason}}"
           }
         },
         {
@@ -311,7 +311,7 @@
       "params": {
         "template": "bir_1601c_v2018",
         "data": "{{steps.create_bir_form_draft.output}}",
-        "output_filename": "BIR_1601C_{{agency_code}}_{{fiscal_period}}.pdf"
+        "output_filename": "BIR_1601C_{{manager_code}}_{{fiscal_period}}.pdf"
       },
       "output": "bir_pdf"
     },
@@ -324,7 +324,7 @@
       "params": {
         "template": "alphalist_1601c",
         "data": "{{steps.generate_alphalist.output}}",
-        "output_filename": "Alphalist_1601C_{{agency_code}}_{{fiscal_period}}.xlsx"
+        "output_filename": "Alphalist_1601C_{{manager_code}}_{{fiscal_period}}.xlsx"
       },
       "output": "alphalist_excel"
     },
@@ -354,7 +354,7 @@
           "action": "send_message",
           "params": {
             "channel": "#finance-ssc-bir",
-            "text": ":alarm_clock: REMINDER: BIR Form 1601-C for {{agency_code}} {{fiscal_period}} due TOMORROW ({{filing_deadline}}). Amount: PHP {{steps.calculate_total_tax.output.sum | number_format(2)}}"
+            "text": ":alarm_clock: REMINDER: BIR Form 1601-C for {{manager_code}} {{fiscal_period}} due TOMORROW ({{filing_deadline}}). Amount: PHP {{steps.calculate_total_tax.output.sum | number_format(2)}}"
           }
         }
       }
@@ -444,11 +444,11 @@
       "type": "audit_log",
       "action": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), 'bir.form_submitted', 'bir.form_submitted_late')}}",
       "resource_type": "tax_form",
-      "resource_id": "1601C-{{agency_code}}-{{fiscal_period}}",
+      "resource_id": "1601C-{{manager_code}}-{{fiscal_period}}",
       "metadata": {
         "form_type": "1601-C",
         "period": "{{fiscal_period}}",
-        "agency_code": "{{agency_code}}",
+        "manager_code": "{{manager_code}}",
         "filing_deadline": "{{filing_deadline}}",
         "filed_date": "{{steps.filing_confirmation.output.filed_date}}",
         "amount": "{{steps.calculate_total_tax.output.sum}}",
@@ -468,7 +468,7 @@
       "action": "send_message",
       "params": {
         "channel": "#finance-ssc",
-        "text": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), ':white_check_mark:', ':warning:')}} BIR Form 1601-C filed for {{agency_code}} {{fiscal_period}}",
+        "text": "{{if((steps.filing_confirmation.output.filed_date <= filing_deadline), ':white_check_mark:', ':warning:')}} BIR Form 1601-C filed for {{manager_code}} {{fiscal_period}}",
         "blocks": [
           {
             "type": "header",
@@ -482,7 +482,7 @@
             "fields": [
               {
                 "type": "mrkdwn",
-                "text": "*Agency:*\n{{agency_code}}"
+                "text": "*Agency:*\n{{manager_code}}"
               },
               {
                 "type": "mrkdwn",
@@ -523,7 +523,7 @@
                   "type": "plain_text",
                   "text": "View Audit Log"
                 },
-                "url": "https://app.insightpulseai.net/audit?resource=1601C-{{agency_code}}-{{fiscal_period}}"
+                "url": "https://app.insightpulseai.net/audit?resource=1601C-{{manager_code}}-{{fiscal_period}}"
               }
             ]
           }
@@ -550,10 +550,10 @@
     "notification": {
       "integration": "slack",
       "channel": "#finance-ssc-alerts",
-      "message": "❌ BIR 1601-C Filing Workflow Failed for {{agency_code}} {{fiscal_period}}. Error: {{error.message}}. Deadline: {{filing_deadline}}"
+      "message": "❌ BIR 1601-C Filing Workflow Failed for {{manager_code}} {{fiscal_period}}. Error: {{error.message}}. Deadline: {{filing_deadline}}"
     },
     "create_ticket": {
-      "title": "URGENT: BIR 1601-C Filing Failed - {{agency_code}} {{fiscal_period}}",
+      "title": "URGENT: BIR 1601-C Filing Failed - {{manager_code}} {{fiscal_period}}",
       "severity": "critical",
       "assignee_role": "Finance Manager",
       "description": "Automated BIR filing workflow failed. Manual intervention required.\n\nError: {{error.message}}\nDeadline: {{filing_deadline}}"
@@ -563,7 +563,7 @@
     "notification": {
       "integration": "email",
       "to": "{{project.metadata.cfo_email}}",
-      "subject": "BIR Form 1601-C Filed: {{agency_code}} {{fiscal_period}}",
+      "subject": "BIR Form 1601-C Filed: {{manager_code}} {{fiscal_period}}",
       "template": "bir_filing_confirmation",
       "attachments": [
         "{{steps.export_bir_form_pdf.output.url}}",
