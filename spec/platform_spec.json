@@ -199,7 +199,7 @@
     "url": "https://jgtolentino.github.io/insightpulse-odoo/",
     "root_dir": "docs",
     "config_file": "docs/_config.yml",
-    "index_files": ["docs/index.md", "docs/INDEX.md"],
+    "index_files": ["docs/index.md"],
     "sections": [
       {
         "id": "core",

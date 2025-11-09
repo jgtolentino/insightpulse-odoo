@@ -165,26 +165,67 @@
 
 ---
 
+## Required Checks for Branch Protection
+
+To enable PR #377 to merge safely, configure the following **required status checks** on the `main` branch:
+
+### Core CI/CD Checks (Required):
+- `CI - Code Quality & Tests / Odoo Module Tests`
+- `CI Unified / ci-summary`
+- `CI Unified / quality-checks`
+- `CI Unified / python-tests`
+- `CI Unified / security-scan`
+- `Spec Guard / Validate Platform Specification`
+- `Deploy Gates / gates`
+
+### Supporting Checks (Optional - Informational):
+- `Dependency Scanning` (all jobs) - set to `continue-on-error: true`
+- `Automation Health Check` - non-blocking for PRs, fails only on schedule
+- `Documentation Automation` - informational only
+
+### Deployment Checks (Post-Merge):
+- `CD - Odoo Production` - only runs after merge to main
+
 ## Workflow Trigger Matrix
 
-| Workflow | push:main | pull_request | schedule | workflow_dispatch |
-|----------|-----------|--------------|----------|-------------------|
-| cd-odoo-prod.yml | ✅ | ❌ | ❌ | ❌ |
-| spec-guard.yml | ✅ | ✅ | ❌ | ❌ |
-| ci-odoo.yml | ✅ | ✅ | ❌ | ❌ |
-| ci-supabase.yml | ❌ | ✅ | ❌ | ❌ |
-| ci-superset.yml | ❌ | ✅ | ❌ | ❌ |
-| docs-ci.yml | ✅ | ✅ | ❌ | ❌ |
-| pages-deploy.yml | ✅ | ❌ | ❌ | ❌ |
-| deploy-canary.yml | ❌ | ❌ | ❌ | ✅ |
-| deploy-gates.yml | ❌ | ✅ | ❌ | ✅ |
+| Workflow | push:main | pull_request | schedule | workflow_dispatch | Required for Merge |
+|----------|-----------|--------------|----------|-------------------|-------------------|
+| cd-odoo-prod.yml | ✅ | ❌ | ❌ | ❌ | ❌ (post-merge) |
+| spec-guard.yml | ✅ | ✅ | ❌ | ❌ | ✅ **CORE** |
+| ci-odoo.yml | ✅ | ✅ | ❌ | ❌ | ✅ **CORE** |
+| ci-supabase.yml | ❌ | ✅ | ❌ | ❌ | ⚠️ (skeleton) |
+| ci-superset.yml | ❌ | ✅ | ❌ | ❌ | ⚠️ (skeleton) |
+| docs-ci.yml | ✅ | ✅ | ❌ | ❌ | ⚠️ (skeleton) |
+| pages-deploy.yml | ✅ | ❌ | ❌ | ❌ | ❌ (post-merge) |
+| deploy-canary.yml | ❌ | ❌ | ❌ | ✅ | ❌ (manual) |
+| deploy-gates.yml | ❌ | ✅ | ❌ | ✅ | ✅ **CORE** |
+| ci-unified.yml | ✅ | ✅ | ❌ | ✅ | ✅ **CORE** |
+| ci-consolidated.yml | ✅ | ✅ | ❌ | ✅ | ✅ **CORE** |
+| dependency-scanning.yml | ✅ | ✅ | ⏰ | ❌ | ⚠️ (informational) |
+| automation-health.yml | ✅ | ✅ | ⏰ | ✅ | ⚠️ (non-blocking for PRs) |
 
 ---
+
+## PR #377 Deployment Hardening - Changes Summary
+
+### Added Workflows:
+- ✅ `cd-odoo-prod.yml` - **Single source of truth** for production ERP + portal deployment
+- ✅ `spec-guard.yml` - Validates `spec/platform_spec.json` against schema
+- ✅ `ci-odoo.yml`, `ci-supabase.yml`, `ci-superset.yml` - Spec-kit CI workflows (skeletons)
+- ✅ `docs-ci.yml`, `pages-deploy.yml` - Documentation workflows
+
+### Disabled Workflows:
+- ❌ `odoo-deploy.yml.disabled` - Replaced by `cd-odoo-prod.yml`
+- ❌ `deploy-consolidated.yml.disabled` - Replaced by `cd-odoo-prod.yml`
+
+### Enhanced Workflows:
+- 🔧 `dependency-scanning.yml` - Made resilient to missing files/tokens
+- 🔧 `automation-health.yml` - Non-blocking for PRs, fails only on schedule
 
 ## Conflict Prevention Rules
 
 1. **Only ONE workflow per deployment target**
-   - Production Odoo: cd-odoo-prod.yml only
+   - Production Odoo: cd-odoo-prod.yml only ✅
    - OCR service: deploy-ocr.yml only
    - Superset: deploy-superset.yml (or superset-deploy.yml - consolidate later)
 
@@ -197,8 +238,13 @@
    - Document reason and date in this README
 
 4. **Spec-kit workflows are canonical**
-   - workflows defined in spec/platform_spec.json are authoritative
+   - workflows defined in spec/platform_spec.json are authoritative ✅
    - Non-spec workflows should have clear justification
+
+5. **Graceful degradation for missing dependencies**
+   - Workflows check for file existence before running
+   - Secrets/tokens checked conditionally
+   - `continue-on-error: true` for informational scans
 
 ---
 
