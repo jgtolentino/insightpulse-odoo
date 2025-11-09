@@ -388,6 +388,14 @@ python -m pytest tests/performance/ -v
 - **[docs/compliance/soc2.md](docs/compliance/soc2.md)** - SOC 2 controls mapping
 - **[SECURITY_AUDIT_REPORT.md](SECURITY_AUDIT_REPORT.md)** - Complete security audit
 
+### Repository Operations & CI/CD
+- **[docs/REPO_STATE_OF_UNION_2025-11.md](docs/REPO_STATE_OF_UNION_2025-11.md)** - 📊 Current state of CI/CD, SRE, and AI infrastructure
+- **[docs/ISSUE_RESOLUTION_SUMMARY.md](docs/ISSUE_RESOLUTION_SUMMARY.md)** - Historic issue cleanup and resolution guidance
+- **[.github/workflows/README.md](.github/workflows/README.md)** - Complete workflow inventory (~76 workflows)
+- **[docs/CI_CD_FIXES_SUMMARY.md](docs/CI_CD_FIXES_SUMMARY.md)** - Recent CI/CD improvements
+- **[docs/CANARY_DEPLOYMENT_GUIDE.md](docs/CANARY_DEPLOYMENT_GUIDE.md)** - Canary deployment strategy
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines and development workflow
+
 ### Module-Specific Documentation
 - **Finance Modules**: [ipai_rate_policy](addons/insightpulse/finance/ipai_rate_policy/README.md), [ipai_ppm](addons/insightpulse/finance/ipai_ppm/README.md), [ipai_ppm_costsheet](insightpulse_odoo/addons/insightpulse/finance/ipai_ppm_costsheet/README.md)
 - **Operations**: [ipai_procure](insightpulse_odoo/addons/insightpulse/ops/ipai_procure/README.md), [ipai_saas_ops](addons/insightpulse/ops/ipai_saas_ops/README.md), [ipai_approvals](insightpulse_odoo/addons/insightpulse/finance/ipai_approvals/README.md)
