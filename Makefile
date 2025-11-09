@@ -199,9 +199,9 @@ lint: ## Lint code (Python, JS, YAML)
 	@echo "🔍 Linting code..."
 	@./scripts/development/lint-code.sh || echo "⚠️  Lint script not found"
 	@echo "Running pylint..."
-	@pylint custom/ --exit-zero || echo "⚠️  pylint not installed"
+	@pylint odoo/modules/ --exit-zero || echo "⚠️  pylint not installed"
 	@echo "Running flake8..."
-	@flake8 custom/ --exit-zero || echo "⚠️  flake8 not installed"
+	@flake8 odoo/modules/ --exit-zero || echo "⚠️  flake8 not installed"
 
 # ══════════════════════════════════════════════════════════════
 # 🚀 DEPLOYMENT
@@ -255,7 +255,7 @@ create-module: ## Create new custom module (usage: make create-module NAME=my_mo
 	fi
 	@echo "🎨 Creating module: $(NAME)..."
 	@./scripts/development/create-module.sh $(NAME) || echo "⚠️  Create module script not found"
-	@echo "✅ Module $(NAME) created in custom/$(NAME)/"
+	@echo "✅ Module $(NAME) created in odoo/modules/$(NAME)/"
 
 # ══════════════════════════════════════════════════════════════
 # 🛠️ SHELL ACCESS
@@ -526,7 +526,7 @@ superclaude-help: ## Show SuperClaude commands
 	@echo "Usage examples:"
 	@echo "  make superclaude-bootstrap                    # First-time setup"
 	@echo "  make superclaude-build-ai --parallel          # Build AI infrastructure"
-	@echo "  make skill-generate MODULE=custom/expense_automation  # Generate skill"
+	@echo "  make skill-generate MODULE=odoo/modules/expense_automation  # Generate skill"
 	@echo "  make skill-suggest --threshold 500            # Suggest skills for modules >500 LOC"
 
 # Workflow Commands
@@ -561,7 +561,7 @@ superclaude-dry-run: ## Dry run workflow (simulate without executing)
 .PHONY: skill-generate
 skill-generate: ## Generate skill from module (requires MODULE=path/to/module)
 	@echo "📚 Generating skill from module..."
-	@test -n "$(MODULE)" || (echo "❌ MODULE not set. Usage: make skill-generate MODULE=custom/expense_automation" && exit 1)
+	@test -n "$(MODULE)" || (echo "❌ MODULE not set. Usage: make skill-generate MODULE=odoo/modules/expense_automation" && exit 1)
 	@python3 skills/core/librarian-indexer/auto-generate-skill.py \
 		--module "$(MODULE)" \
 		--output "skills/auto-generated/" \
@@ -582,7 +582,7 @@ skill-index: ## Rebuild skill index and catalog
 skill-suggest: ## Suggest new skills based on codebase analysis
 	@echo "💡 Analyzing codebase for skill suggestions..."
 	@python3 skills/core/librarian-indexer/suggest-skills.py \
-		--codebase custom/ \
+		--codebase odoo/modules/ \
 		--threshold $(THRESHOLD) \
 		--output .superclaude/shared-context/skill-suggestions.txt \
 		--verbose

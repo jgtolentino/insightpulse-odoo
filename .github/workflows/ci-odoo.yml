@@ -16,8 +16,8 @@ jobs:
       - name: Lint Python
         run: |
           pip install flake8 pylint
-          flake8 custom/ scripts/ tests/ --exit-zero
-          pylint custom/ --exit-zero
+          flake8 odoo/modules/ scripts/ tests/ --exit-zero
+          pylint odoo/modules/ --exit-zero
 
   test:
     runs-on: ubuntu-latest

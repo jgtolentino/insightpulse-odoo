@@ -31,7 +31,7 @@ class RepoStructureValidator:
             'docs/knowledge-base',
             'docs/runbooks',
             'skills/core',
-            'custom',
+            'odoo/modules',
             'addons',
             'infrastructure/docker',
             'infrastructure/terraform',
@@ -317,7 +317,7 @@ class RepoStructureValidator:
             'evals',
             'tests',
             'monitoring',
-            'custom',
+            'odoo/modules',
             'infrastructure',
         ]
 
