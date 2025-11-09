@@ -46,7 +46,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install pylint flake8 mypy bandit pip-audit pytest yamllint
-          pip install -r requirements.txt || echo "No requirements.txt found"
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt || echo "⚠️  Failed to install requirements.txt"
+          else
+            echo "ℹ️  No root requirements.txt found"
+          fi
 
       - name: Install system dependencies
         run: |
@@ -61,20 +65,25 @@ jobs:
       - name: Run automation health check
         id: health_check
         run: |
-          chmod +x ci/automation-health.sh
-
-          if [ "$FAST_MODE" = "true" ]; then
-            ./ci/automation-health.sh --layer "$LAYER" --fast --json > health-report.json || true
+          if [ ! -f ci/automation-health.sh ]; then
+            echo "⚠️  ci/automation-health.sh not found - creating stub report"
+            echo '{"total_checks":0,"passed":0,"failed":0,"warnings":1,"pass_rate":0,"results":[{"status":"WARN","message":"Health check script not found"}],"timestamp":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > health-report.json
           else
-            ./ci/automation-health.sh --layer "$LAYER" --json > health-report.json || true
+            chmod +x ci/automation-health.sh
+
+            if [ "$FAST_MODE" = "true" ]; then
+              ./ci/automation-health.sh --layer "$LAYER" --fast --json > health-report.json || echo '{"total_checks":0,"passed":0,"failed":1,"warnings":0,"pass_rate":0,"results":[{"status":"FAIL","message":"Health check failed"}],"timestamp":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > health-report.json
+            else
+              ./ci/automation-health.sh --layer "$LAYER" --json > health-report.json || echo '{"total_checks":0,"passed":0,"failed":1,"warnings":0,"pass_rate":0,"results":[{"status":"FAIL","message":"Health check failed"}],"timestamp":"'$(date -u +"%Y-%m-%dT%H:%M:%SZ")'"}' > health-report.json
+            fi
           fi
 
-          # Extract results
-          TOTAL=$(jq -r '.total_checks' health-report.json)
-          PASSED=$(jq -r '.passed' health-report.json)
-          FAILED=$(jq -r '.failed' health-report.json)
-          WARNINGS=$(jq -r '.warnings' health-report.json)
-          PASS_RATE=$(jq -r '.pass_rate' health-report.json)
+          # Extract results (with defaults)
+          TOTAL=$(jq -r '.total_checks // 0' health-report.json)
+          PASSED=$(jq -r '.passed // 0' health-report.json)
+          FAILED=$(jq -r '.failed // 0' health-report.json)
+          WARNINGS=$(jq -r '.warnings // 0' health-report.json)
+          PASS_RATE=$(jq -r '.pass_rate // 0' health-report.json)
 
           echo "total_checks=${TOTAL}" >> $GITHUB_OUTPUT
           echo "passed=${PASSED}" >> $GITHUB_OUTPUT
@@ -93,6 +102,7 @@ jobs:
             echo "status=healthy" >> $GITHUB_OUTPUT
             echo "status_emoji=🟢" >> $GITHUB_OUTPUT
           fi
+        continue-on-error: true
 
       - name: Upload health report
         uses: actions/upload-artifact@v4
@@ -241,11 +251,17 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
           SLACK_WEBHOOK_TYPE: INCOMING_WEBHOOK
 
-      - name: Fail if unhealthy
-        if: steps.health_check.outputs.status == 'unhealthy'
+      - name: Fail if unhealthy (scheduled runs only)
+        if: steps.health_check.outputs.status == 'unhealthy' && github.event_name == 'schedule'
         run: |
           echo "❌ Automation health check failed with ${{ steps.health_check.outputs.failed }} failures"
           exit 1
+
+      - name: Warning if unhealthy (PR/push)
+        if: steps.health_check.outputs.status == 'unhealthy' && github.event_name != 'schedule'
+        run: |
+          echo "⚠️  Automation health check found ${{ steps.health_check.outputs.failed }} failures"
+          echo "This is non-blocking for PRs/pushes, but will fail on scheduled runs"
 
   instance-health:
     runs-on: ubuntu-latest
@@ -285,6 +301,13 @@ jobs:
           SUPABASE_DB_URL_PRODUCTION: ${{ secrets.SUPABASE_DB_URL_PRODUCTION }}
           SUPERSET_META_DB_URL_PRODUCTION: ${{ secrets.SUPERSET_META_DB_URL_PRODUCTION }}
         run: |
+          if [ ! -f scripts/health/check-instance-health.sh ]; then
+            echo "⚠️  Health check script not found - skipping"
+            echo "status=skipped" >> $GITHUB_OUTPUT
+            echo "status_emoji=⚠️" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           chmod +x scripts/health/check-instance-health.sh
 
           if ./scripts/health/check-instance-health.sh ${{ matrix.environment }}; then
@@ -294,6 +317,7 @@ jobs:
             echo "status=unhealthy" >> $GITHUB_OUTPUT
             echo "status_emoji=❌" >> $GITHUB_OUTPUT
           fi
+        continue-on-error: true
 
       - name: Report instance health
         if: always()

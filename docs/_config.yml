@@ -1,0 +1,31 @@
+# InsightPulse Odoo Platform Documentation
+# GitHub Pages Configuration
+
+title: InsightPulse Odoo Platform
+description: Multi-tenant, BIR-compliant Finance SSC on Odoo CE 19
+theme: jekyll-theme-minimal
+baseurl: "/insightpulse-odoo"
+url: "https://jgtolentino.github.io"
+
+# Navigation
+navigation:
+  - title: Getting Started
+    url: /getting-started
+  - title: Architecture
+    url: /architecture
+  - title: Guides
+    url: /guides/
+  - title: Deployments
+    url: /deployments/
+
+# Build settings
+markdown: kramdown
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+
+# Exclude
+exclude:
+  - README.md
+  - CLAUDE.md
+  - vendor/

@@ -1,0 +1,26 @@
+name: CI - Supabase Migrations
+
+on:
+  pull_request:
+    paths:
+      - 'supabase/**'
+      - 'warehouse/**'
+
+jobs:
+  test-migrations:
+    runs-on: ubuntu-latest
+    name: Test Supabase Migrations
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Echo responsibility
+        run: |
+          echo "Responsibility: Apply Supabase migrations against ephemeral DB"
+          echo "TODO: Implement Supabase migration testing"
+          echo "Status: Skeleton workflow created per platform_spec.json"
+
+      - name: Placeholder validation
+        run: |
+          echo "✅ Skeleton workflow runs successfully"

@@ -7,11 +7,14 @@ First off, thank you for considering contributing to InsightPulse Odoo! It's peo
 - [Code of Conduct](#code-of-conduct)
 - [Getting Started](#getting-started)
 - [Development Workflow](#development-workflow)
+- [Platform Spec Validation (Required)](#platform-spec-validation-required)
 - [Code Quality Standards](#code-quality-standards)
 - [Module Development Guidelines](#module-development-guidelines)
 - [Testing Requirements](#testing-requirements)
 - [Documentation Standards](#documentation-standards)
+- [Pre-Commit Guardrails](#pre-commit-guardrails)
 - [Submitting Changes](#submitting-changes)
+- [CI/CD Pipeline & Required Checks](#cicd-pipeline--required-checks)
 - [Review Process](#review-process)
 
 ---
@@ -99,6 +102,20 @@ git rebase upstream/main
 
 Follow our [Code Quality Standards](#code-quality-standards) and [Module Development Guidelines](#module-development-guidelines).
 
+**⚠️ IMPORTANT: Platform Spec Validation**
+
+Before making changes, understand our platform spec:
+
+```bash
+# View the canonical platform spec
+cat spec/platform_spec.json
+
+# Validate spec compliance
+python3 scripts/validate_spec.py
+```
+
+See [Platform Spec Validation](#platform-spec-validation-required) for details.
+
 ### 4. Test Your Changes
 
 ```bash
@@ -155,6 +172,95 @@ git push origin feature/your-feature-name
 ### 7. Create a Pull Request
 
 Go to GitHub and create a pull request from your fork to the main repository.
+
+---
+
+## Platform Spec Validation (Required)
+
+**✅ All contributions must comply with the platform specification.**
+
+### What is the Platform Spec?
+
+The platform spec (`spec/platform_spec.json`) is the **single source of truth** for:
+- Service architecture (Odoo, Supabase, Superset, MCP, Pulser)
+- CI/CD workflow definitions
+- Deployment targets and configurations
+- Documentation structure
+- Module paths and dependencies
+
+### Validation Requirements
+
+#### 1. **Run Spec Validation Before Committing**
+
+```bash
+# Validate platform spec
+python3 scripts/validate_spec.py
+
+# Expected output:
+# ✅ Schema validation passed
+# ✅ All docs files exist
+# ✅ All workflow files exist
+# ✅ Spec validation complete – all guardrails passed
+```
+
+#### 2. **When to Update the Spec**
+
+Update `spec/platform_spec.json` if you:
+- Add/remove CI/CD workflows
+- Add/remove documentation pages
+- Change service architecture
+- Modify deployment configuration
+- Update module paths
+
+#### 3. **Spec Update Process**
+
+```bash
+# 1. Edit the spec
+nano spec/platform_spec.json
+
+# 2. Validate against schema
+python3 scripts/validate_spec.py
+
+# 3. Commit both spec and related changes together
+git add spec/platform_spec.json .github/workflows/my-new-workflow.yml
+git commit -m "feat: add new deployment workflow
+
+- Added .github/workflows/my-new-workflow.yml
+- Updated spec/platform_spec.json with new workflow definition
+- Validated spec compliance"
+```
+
+#### 4. **Spec Validation Failures**
+
+If validation fails:
+
+```bash
+# Check which files are missing
+python3 scripts/validate_spec.py
+
+# Example error:
+# ❌ Missing docs page: docs/new-guide.md
+
+# Fix by creating the missing file
+touch docs/new-guide.md
+
+# Re-validate
+python3 scripts/validate_spec.py
+```
+
+### Spec-Kit Architecture
+
+Our spec-kit approach ensures:
+- ✅ **Single source of truth** - No drift between code and documentation
+- ✅ **Automated validation** - CI/CD enforces spec compliance
+- ✅ **Clear boundaries** - Explicit service responsibilities
+- ✅ **Deployment safety** - Platform spec guards production deploys
+
+**Required Reading:**
+- `spec/platform_spec.json` - The canonical spec
+- `spec/platform_spec.schema.json` - JSON schema definition
+- `docs/spec-kit/PRD_PLATFORM.md` - Platform spec PRD
+- `.github/workflows/spec-guard.yml` - Spec validation workflow
 
 ---
 
@@ -461,23 +567,153 @@ When adding features:
 
 ---
 
+## Pre-Commit Guardrails
+
+**🛡️ Prevent common mistakes before they reach CI/CD**
+
+### 1. **Install Pre-Commit Hooks (Recommended)**
+
+```bash
+# Install pre-commit
+pip install pre-commit
+
+# Install hooks
+pre-commit install
+
+# Test hooks on all files
+pre-commit run --all-files
+```
+
+### 2. **Local Validation Script**
+
+Run this before committing:
+
+```bash
+#!/bin/bash
+# save as: scripts/pre-flight-check.sh
+
+set -e
+
+echo "🔍 Running pre-flight checks..."
+
+# 1. Spec validation
+echo "📋 Validating platform spec..."
+python3 scripts/validate_spec.py
+
+# 2. Code formatting
+echo "🎨 Checking code formatting..."
+black --check . || echo "⚠️  Run: black ."
+isort --check-only . || echo "⚠️  Run: isort ."
+
+# 3. Linting
+echo "🔍 Running linters..."
+flake8 addons/ scripts/ --max-line-length=120 --extend-ignore=E203,W503 || echo "⚠️  Linting issues found"
+
+# 4. Security checks
+echo "🔒 Checking for secrets..."
+if grep -r "sk-" --include="*.py" --include="*.yml" --include="*.yaml" .; then
+  echo "❌ ERROR: Potential API keys found!"
+  exit 1
+fi
+
+# 5. Test compilation
+echo "🧪 Compiling Python modules..."
+python -m compileall agents workflows memory addons || echo "⚠️  Compilation issues"
+
+echo "✅ Pre-flight checks complete!"
+```
+
+Make it executable:
+
+```bash
+chmod +x scripts/pre-flight-check.sh
+./scripts/pre-flight-check.sh
+```
+
+### 3. **Automated Checks (Mandatory)**
+
+Before pushing, run:
+
+```bash
+# Full validation suite
+make validate
+
+# Or individual checks
+make lint          # Code linting
+make format-check  # Code formatting
+make test          # Run tests
+make spec-validate # Platform spec validation
+```
+
+### 4. **Guardrail Checklist**
+
+Before every commit:
+
+- [ ] ✅ Spec validation passes (`python3 scripts/validate_spec.py`)
+- [ ] ✅ No secrets in code (check `.env.example` for config)
+- [ ] ✅ Code formatted (`black .` and `isort .`)
+- [ ] ✅ Linting passes (`make lint`)
+- [ ] ✅ Tests pass locally (`make test`)
+- [ ] ✅ Documentation updated (README, spec, CHANGELOG)
+
+### 5. **Common Gotchas**
+
+❌ **Don't commit**:
+- API keys, tokens, passwords
+- `__pycache__/`, `*.pyc`, `.env`
+- Large binary files (use Git LFS)
+- Merge conflict markers
+- `TODO` markers in production code
+
+✅ **Do commit**:
+- `.env.example` with placeholder values
+- Updated spec when adding workflows/docs
+- Tests for new features
+- Migration scripts for DB changes
+
+---
+
 ## Submitting Changes
 
 ### Pull Request Checklist
 
 Before submitting a PR, ensure:
 
-- [ ] Code follows OCA guidelines
-- [ ] All tests pass (`make test`)
-- [ ] Linting passes (`make lint`)
-- [ ] Type hints added
-- [ ] Docstrings added
-- [ ] Tests written (unit + integration)
-- [ ] README updated
-- [ ] CHANGELOG.md updated
-- [ ] No hardcoded secrets
-- [ ] Commit messages follow convention
-- [ ] Branch is up-to-date with main
+#### **Platform Spec & Architecture (Required)**
+- [ ] ✅ Platform spec validation passes (`python3 scripts/validate_spec.py`)
+- [ ] ✅ Spec updated if adding workflows/docs/services
+- [ ] ✅ Architecture changes documented in `docs/architecture.md`
+
+#### **Code Quality (Required)**
+- [ ] ✅ Code follows OCA guidelines
+- [ ] ✅ All tests pass (`make test`)
+- [ ] ✅ Linting passes (`make lint`)
+- [ ] ✅ Type hints added (Python 3.11+)
+- [ ] ✅ Docstrings added (Google style)
+
+#### **Testing (Required)**
+- [ ] ✅ Unit tests written
+- [ ] ✅ Integration tests written (if applicable)
+- [ ] ✅ E2E tests written (if applicable)
+- [ ] ✅ Test coverage ≥ 80%
+
+#### **Documentation (Required)**
+- [ ] ✅ Module README updated
+- [ ] ✅ Main README updated (if needed)
+- [ ] ✅ CHANGELOG.md updated
+- [ ] ✅ Relevant `docs/` files updated
+- [ ] ✅ API documentation added (if new endpoints)
+
+#### **Security & Best Practices (Required)**
+- [ ] ✅ No hardcoded secrets (use environment variables)
+- [ ] ✅ No TODO markers in production code
+- [ ] ✅ Security rules defined (`ir.model.access.csv`)
+- [ ] ✅ Commit messages follow convention
+
+#### **Git Hygiene (Required)**
+- [ ] ✅ Branch is up-to-date with main (`git rebase upstream/main`)
+- [ ] ✅ Commits are atomic and well-described
+- [ ] ✅ No merge conflicts
 
 ### Pull Request Template
 
@@ -511,15 +747,180 @@ Add screenshots here
 
 ---
 
+## CI/CD Pipeline & Required Checks
+
+**📊 Understanding our CI/CD architecture (PR #377)**
+
+### Pipeline Architecture
+
+Our CI/CD follows a **spec-driven approach** with guardrails at every stage:
+
+```
+┌─────────────────────────────────────────────────────┐
+│  1. Push/PR Trigger                                  │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│  2. Required Checks (Must Pass)                      │
+│                                                      │
+│  ✅ Spec Guard - Validates platform_spec.json       │
+│  ✅ CI Unified - Quality checks + tests + security  │
+│  ✅ CI - Code Quality & Tests - Odoo module tests   │
+│  ✅ Deploy Gates - Pre-deployment validation        │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│  3. Supporting Checks (Informational)                │
+│                                                      │
+│  ⚠️  Dependency Scanning - Security vulnerabilities │
+│  ⚠️  Automation Health - Infrastructure health      │
+│  ⚠️  Documentation - Docs validation                │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│  4. Code Review (Manual)                             │
+│                                                      │
+│  👥 Maintainer review                               │
+│  💬 Feedback & iteration                            │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│  5. Merge to main                                    │
+└────────────────┬────────────────────────────────────┘
+                 │
+                 ▼
+┌─────────────────────────────────────────────────────┐
+│  6. Production Deployment (Automatic)                │
+│                                                      │
+│  🚀 cd-odoo-prod.yml triggers                       │
+│  📦 Docker compose pull/up                          │
+│  🌐 Deploy portal (insightpulseai.net)             │
+│  🔧 Update nginx config                             │
+│  ✅ Triple smoke tests (ERP + Portal + Auth)       │
+└─────────────────────────────────────────────────────┘
+```
+
+### Required Status Checks
+
+These **must pass** before your PR can merge:
+
+#### **1. Spec Guard**
+```yaml
+Workflow: .github/workflows/spec-guard.yml
+Purpose: Validates spec/platform_spec.json against schema
+Runs: On changes to spec/, docs/, .github/workflows/
+```
+
+**What it checks:**
+- ✅ JSON schema validation
+- ✅ All referenced docs files exist
+- ✅ All referenced workflow files exist
+
+**How to pass:**
+```bash
+python3 scripts/validate_spec.py
+```
+
+#### **2. CI Unified**
+```yaml
+Workflow: .github/workflows/ci-unified.yml
+Purpose: Unified CI pipeline for quality + tests + security
+Runs: On all PRs and pushes to main
+```
+
+**What it checks:**
+- ✅ Code quality (black, isort, flake8, pylint)
+- ✅ Python tests (pytest with coverage)
+- ✅ Security scans (basic vulnerability detection)
+
+**How to pass:**
+```bash
+make lint
+make test
+```
+
+#### **3. CI - Code Quality & Tests**
+```yaml
+Workflow: .github/workflows/ci-consolidated.yml
+Purpose: Comprehensive code quality and Odoo module tests
+Runs: On all PRs (except docs-only changes)
+```
+
+**What it checks:**
+- ✅ Odoo module tests
+- ✅ Pre-commit hooks
+- ✅ Code formatting and linting
+
+**How to pass:**
+```bash
+make test-odoo
+pre-commit run --all-files
+```
+
+#### **4. Deploy Gates**
+```yaml
+Workflow: .github/workflows/deploy-gates.yml
+Purpose: Pre-deployment quality gates
+Runs: On PRs to main
+```
+
+**What it checks:**
+- ✅ Claude config validation
+- ✅ DBML schema compilation (if exists)
+- ✅ No TODO markers in generated SQL
+- ✅ Repository structure validation
+
+**How to pass:**
+```bash
+# Run deploy gates locally
+scripts/deploy-gates-local.sh
+```
+
+### Supporting Checks (Informational)
+
+These provide **valuable feedback** but won't block your PR:
+
+- **Dependency Scanning** - Security vulnerability reports
+- **Automation Health** - Infrastructure health monitoring
+- **Documentation** - Docs link validation
+
+### Branch Protection Rules
+
+The `main` branch requires:
+- ✅ All 4 required checks must pass
+- ✅ At least 1 approval from maintainers
+- ✅ Branch must be up-to-date with main
+- ✅ No force pushes allowed
+
+### Workflow Documentation
+
+See comprehensive workflow documentation:
+- `.github/workflows/README.md` - Workflow guide
+- `docs/pr-377-fixes.md` - Recent CI/CD improvements
+- `docs/guides/workflows-ci-cd.md` - CI/CD best practices
+
+---
+
 ## Review Process
 
 ### 1. **Automated Checks**
 
 Your PR will be automatically checked for:
-- ✅ Linting (pylint, flake8)
-- ✅ Tests (pytest)
-- ✅ Security (no secrets in code)
-- ✅ OCA compliance
+
+#### **Required (Must Pass):**
+- ✅ Spec Guard - Platform spec validation
+- ✅ CI Unified - Quality + tests + security
+- ✅ Code Quality & Tests - Odoo module tests
+- ✅ Deploy Gates - Pre-deployment validation
+
+#### **Informational (Advisory):**
+- ⚠️ Dependency Scanning - Vulnerability reports
+- ⚠️ Automation Health - Infrastructure monitoring
+- ⚠️ Documentation - Docs validation
 
 ### 2. **Code Review**
 
