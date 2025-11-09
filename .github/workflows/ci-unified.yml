@@ -72,6 +72,12 @@ jobs:
           pip install pytest pytest-cov pytest-mock
           pip install --quiet -r requirements.txt 2>/dev/null || true
 
+      - name: Sanity check agent runtime
+        run: |
+          echo "🧪 Sanity checking agent runtime modules..."
+          python -m compileall agents workflows memory
+          echo "✅ Agent runtime modules compiled successfully"
+
       - name: Run Python unit tests
         run: |
           if [ -d "tests" ]; then
