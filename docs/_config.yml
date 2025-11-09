@@ -17,6 +17,8 @@ navigation:
     url: /guides/
   - title: Deployments
     url: /deployments/
+  - title: API Docs
+    url: /GENERATED_ODOO_DOCS.html
 
 # Build settings
 markdown: kramdown
@@ -24,8 +26,18 @@ plugins:
   - jekyll-feed
   - jekyll-seo-tag
 
+# Module documentation paths (post-migration structure)
+module_docs_paths:
+  - ../odoo/modules/
+  - ../odoo/addons/
+  - ../odoo/custom-addons/
+
 # Exclude
 exclude:
   - README.md
   - CLAUDE.md
   - vendor/
+  - node_modules/
+  - "*.log"
+  - .git/
+  - .github/
