@@ -149,6 +149,28 @@ health: ## Check health status of all services
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
 # ══════════════════════════════════════════════════════════════
+# 🏥 INSTANCE HEALTH CHECKS (Multi-Environment)
+# ══════════════════════════════════════════════════════════════
+
+.PHONY: instance-health instance-health-local instance-health-staging instance-health-production
+
+instance-health: ## Check instance health (default: local environment)
+	@echo "🏥 [instance-health] Checking default (local) environment"
+	@bash scripts/health/check-instance-health.sh local
+
+instance-health-local: ## Check local instance health (Odoo/Supabase/Superset)
+	@echo "🏥 [instance-health-local] Checking local environment"
+	@bash scripts/health/check-instance-health.sh local
+
+instance-health-staging: ## Check staging instance health
+	@echo "🏥 [instance-health-staging] Checking staging environment"
+	@bash scripts/health/check-instance-health.sh staging
+
+instance-health-production: ## Check production instance health
+	@echo "🏥 [instance-health-production] Checking production environment"
+	@bash scripts/health/check-instance-health.sh production
+
+# ══════════════════════════════════════════════════════════════
 # 🧪 TESTING & QUALITY
 # ══════════════════════════════════════════════════════════════
 

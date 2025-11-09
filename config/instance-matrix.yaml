@@ -1,0 +1,172 @@
+# config/instance-matrix.yaml
+# Canonical machine-readable map of Odoo, Supabase, and Superset instances.
+# Secrets should always be provided via env vars; this file only references
+# ENV names, not raw credentials.
+#
+# Last Updated: 2025-11-09
+# Owner: InsightPulse AI Operations Team
+
+environments:
+  local:
+    description: "Developer workstations, Docker Compose setup"
+    infrastructure: "docker-compose"
+
+    odoo:
+      role: "erp"
+      url: "http://localhost:8069"
+      db_url_env: "ODOO_DB_URL_LOCAL"
+      version: "19.0"
+      backup_enabled: false
+      notes: "Local development instance, no backups"
+
+    supabase:
+      role: "app+analytics"
+      project_ref_env: "SUPABASE_PROJECT_REF_LOCAL"
+      db_url_env: "SUPABASE_DB_URL_LOCAL"
+      studio_url: "http://localhost:54323"
+      backup_enabled: false
+      notes: "Local PostgreSQL or Supabase local dev"
+
+    superset:
+      role: "bi-metadata"
+      url: "http://localhost:8088"
+      metadata_db_url_env: "SUPERSET_META_DB_URL_LOCAL"
+      version: "3.0"
+      backup_enabled: false
+      notes: "BI metadata only, connects to local Supabase"
+
+  staging:
+    description: "Pre-production validation, realistic data testing"
+    infrastructure: "digitalocean"
+
+    odoo:
+      role: "erp"
+      url: "https://staging-erp.insightpulseai.net"
+      db_url_env: "ODOO_DB_URL_STAGING"
+      version: "19.0"
+      backup_enabled: true
+      backup_retention_days: 7
+      notes: "Mirrors production modules, anonymized data"
+
+    supabase:
+      role: "app+analytics"
+      project_ref_env: "SUPABASE_PROJECT_REF_STAGING"
+      db_url_env: "SUPABASE_DB_URL_STAGING"
+      backup_enabled: true
+      backup_strategy: "supabase_pitr"
+      notes: "Schema mirrors production, used for testing"
+
+    superset:
+      role: "bi-metadata"
+      url: "https://staging-superset.insightpulseai.net"
+      metadata_db_url_env: "SUPERSET_META_DB_URL_STAGING"
+      version: "3.0"
+      backup_enabled: true
+      notes: "Validate dashboards before production"
+
+  production:
+    description: "Live Finance SSC, customer-facing, mission-critical"
+    infrastructure: "digitalocean"
+
+    odoo:
+      role: "erp"
+      url: "https://erp.insightpulseai.net"
+      db_url_env: "ODOO_DB_URL_PRODUCTION"
+      server_ip: "165.227.10.178"
+      droplet_name: "ipai-odoo-erp"
+      region: "sfo2"
+      version: "19.0"
+      backup_enabled: true
+      backup_retention_days: 30
+      backup_strategy: "automated_daily_pitr"
+      sla_uptime: "99.9%"
+      notes: "System of record, multi-tenant, BIR compliant"
+
+    supabase:
+      role: "app+analytics"
+      project_ref: "spdtwktxdalcfigzeqrz"
+      project_ref_env: "SUPABASE_PROJECT_REF_PRODUCTION"
+      db_url_env: "SUPABASE_DB_URL_PRODUCTION"
+      db_url_direct: "postgres://postgres.spdtwktxdalcfigzeqrz:***@db.spdtwktxdalcfigzeqrz.supabase.co:5432/postgres"
+      db_url_pooler: "postgres://postgres.spdtwktxdalcfigzeqrz:***@aws-1-us-east-1.pooler.supabase.com:6543/postgres"
+      region: "aws-us-east-1"
+      backup_enabled: true
+      backup_strategy: "supabase_pitr"
+      sla_uptime: "99.95%"
+      notes: "Main analytics warehouse, RLS enabled, pgvector"
+
+    superset:
+      role: "bi-metadata"
+      url: "https://superset.insightpulseai.net"
+      metadata_db_url_env: "SUPERSET_META_DB_URL_PRODUCTION"
+      app_id: "73af11cb-dab2-4cb1-9770-291c536531e6"
+      app_name: "superset-analytics"
+      region: "sfo2"
+      version: "3.0"
+      backup_enabled: true
+      backup_strategy: "metadata_exports"
+      sla_uptime: "99.5%"
+      notes: "Executive dashboards, Scout analytics, CFO reports"
+
+# Health check configuration
+health_checks:
+  enabled: true
+  interval_minutes: 5
+  timeout_seconds: 30
+  retry_attempts: 3
+
+  checks:
+    odoo:
+      type: "http"
+      endpoint: "/web/login"
+      expected_status: 200
+
+    supabase:
+      type: "postgresql"
+      query: "SELECT 1;"
+      expected_result: "1"
+
+    superset:
+      type: "http"
+      endpoint: "/health"
+      expected_status: 200
+
+# Deployment configuration
+deployment:
+  local:
+    method: "docker-compose"
+    command: "make up"
+
+  staging:
+    method: "digitalocean_app_platform"
+    requires_approval: false
+
+  production:
+    method: "digitalocean_droplet_ssh"
+    requires_approval: true
+    approval_required_from: ["operations_team", "cto"]
+
+# Automation gates
+automation_gates:
+  auto_merge:
+    requires:
+      - "automation_health_success"
+      - "instance_health_success"
+      - "security_scan_passed"
+
+  auto_patch:
+    requires:
+      - "automation_health_success"
+      - "instance_health_success"
+      - "no_critical_alerts"
+
+  auto_deploy_staging:
+    requires:
+      - "automation_health_success"
+      - "instance_health_local_success"
+
+  auto_deploy_production:
+    requires:
+      - "automation_health_success"
+      - "instance_health_staging_success"
+      - "manual_approval"
