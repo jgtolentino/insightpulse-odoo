@@ -1,0 +1,32 @@
+name: CI - Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'spec/**'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+      - 'spec/**'
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    name: Validate Documentation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Echo responsibility
+        run: |
+          echo "Responsibility: Validate docs links and structure"
+          echo "TODO: Implement doc link checking and structure validation"
+          echo "Status: Skeleton workflow created per platform_spec.json"
+
+      - name: Placeholder validation
+        run: |
+          echo "✅ Skeleton workflow runs successfully"

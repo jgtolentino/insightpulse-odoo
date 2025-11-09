@@ -1,0 +1,294 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InsightPulse Platform Specification Schema",
+  "description": "JSON Schema for validating platform_spec.json canonical configuration",
+  "type": "object",
+  "required": [
+    "spec_state",
+    "spec_version",
+    "app",
+    "hosting",
+    "oauth",
+    "docs_platform",
+    "ai_orchestration",
+    "ci_cd",
+    "governance"
+  ],
+  "properties": {
+    "spec_state": {
+      "type": "string",
+      "enum": ["desired_end_state", "draft", "deprecated"],
+      "description": "Current state of the specification"
+    },
+    "spec_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of the specification"
+    },
+    "app": {
+      "type": "object",
+      "required": ["name", "version", "repository", "base_domain", "core_services", "environments"],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        },
+        "repository": {
+          "type": "string",
+          "format": "uri"
+        },
+        "base_domain": {
+          "type": "string",
+          "format": "uri"
+        },
+        "core_services": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "name", "type"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string"
+              },
+              "public_url": {
+                "type": ["string", "null"],
+                "format": "uri"
+              },
+              "docker_service": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "environments": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
+    },
+    "hosting": {
+      "type": "object",
+      "required": ["primary_mode", "providers", "orchestration", "domains"],
+      "properties": {
+        "primary_mode": {
+          "type": "string",
+          "enum": ["self_hosted", "cloud_managed", "hybrid"]
+        },
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "orchestration": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "domains": {
+          "type": "object",
+          "required": ["root", "erp"]
+        },
+        "odoo_sh": {
+          "type": "object",
+          "required": ["usage", "allowed_topics", "forbidden_topics"],
+          "properties": {
+            "usage": {
+              "type": "string",
+              "enum": ["reference_only", "disabled"]
+            },
+            "allowed_topics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "forbidden_topics": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "oauth": {
+      "type": "object",
+      "required": ["provider", "authorized_origins", "authorized_redirect_uris", "apps"],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "authorized_origins": {
+          "type": "array",
+          "minItems": 1
+        },
+        "authorized_redirect_uris": {
+          "type": "array",
+          "minItems": 1
+        },
+        "apps": {
+          "type": "array",
+          "minItems": 1
+        }
+      }
+    },
+    "docs_platform": {
+      "type": "object",
+      "required": ["url", "root_dir", "sections"],
+      "properties": {
+        "url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "root_dir": {
+          "type": "string"
+        },
+        "config_file": {
+          "type": "string"
+        },
+        "index_files": {
+          "type": "array"
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "title"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "dir": {
+                "type": "string"
+              },
+              "pages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "documents": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "index": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "ai_orchestration": {
+      "type": "object",
+      "required": ["runtime", "entry_doc", "agents"],
+      "properties": {
+        "runtime": {
+          "type": "string"
+        },
+        "entry_doc": {
+          "type": "string"
+        },
+        "claude_context_doc": {
+          "type": "string"
+        },
+        "skills_file": {
+          "type": "string"
+        },
+        "agents": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["name", "role", "skills_scope"],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "skills_scope": {
+                "type": "array"
+              },
+              "spec_docs": {
+                "type": "array"
+              }
+            }
+          }
+        },
+        "ai_policy": {
+          "type": "object"
+        }
+      }
+    },
+    "ci_cd": {
+      "type": "object",
+      "required": ["provider", "workflows"],
+      "properties": {
+        "provider": {
+          "type": "string"
+        },
+        "workflows": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "file", "triggers", "responsibility"],
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "file": {
+                "type": "string"
+              },
+              "triggers": {
+                "type": "array"
+              },
+              "responsibility": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "required": ["spec_kit", "semver", "required_docs"],
+      "properties": {
+        "spec_kit": {
+          "type": "boolean"
+        },
+        "semver": {
+          "type": "boolean"
+        },
+        "required_docs": {
+          "type": "array",
+          "minItems": 1
+        },
+        "review_rules": {
+          "type": "object"
+        }
+      }
+    }
+  }
+}

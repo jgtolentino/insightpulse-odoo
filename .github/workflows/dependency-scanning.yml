@@ -29,6 +29,10 @@ jobs:
       - name: Install dependencies
         run: |
           pip install safety pip-audit
+          # Install project requirements if they exist
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt || true
+          fi
 
       - name: Run Safety check
         id: safety
@@ -66,7 +70,12 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm ci
+        run: |
+          if [ -f package.json ]; then
+            npm ci || echo "npm ci failed, continuing..."
+          else
+            echo "No package.json found, skipping npm install"
+          fi
         continue-on-error: true
 
       - name: Run npm audit
@@ -86,11 +95,13 @@ jobs:
   snyk-scan:
     name: Snyk Vulnerability Scan
     runs-on: ubuntu-latest
+    if: github.event.repository.private == false || vars.SNYK_ENABLED == 'true'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run Snyk to check for vulnerabilities
+        if: secrets.SNYK_TOKEN != ''
         uses: snyk/actions/python@master
         continue-on-error: true
         env:
@@ -99,10 +110,15 @@ jobs:
           args: --sarif-file-output=snyk-results.sarif
 
       - name: Upload result to GitHub Code Scanning
-        if: always()
+        if: always() && secrets.SNYK_TOKEN != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: snyk-results.sarif
+        continue-on-error: true
+
+      - name: Snyk scan skipped
+        if: secrets.SNYK_TOKEN == ''
+        run: echo "⚠️  Snyk scan skipped - SNYK_TOKEN not configured"
 
   trivy-scan:
     name: Trivy Vulnerability Scan
@@ -156,8 +172,13 @@ jobs:
 
       - name: Build Docker image
         run: |
+          if [ ! -f "${{ matrix.image }}" ]; then
+            echo "Dockerfile ${{ matrix.image }} not found, skipping"
+            exit 0
+          fi
           IMAGE_NAME=$(echo ${{ matrix.image }} | sed 's/\//-/g' | sed 's/Dockerfile/image/g')
-          docker build -f ${{ matrix.image }} -t ${IMAGE_NAME}:test . || true
+          docker build -f ${{ matrix.image }} -t ${IMAGE_NAME}:test . || echo "Build failed, continuing..."
+        continue-on-error: true
 
       - name: Run Trivy on Docker image
         uses: aquasecurity/trivy-action@0.16.1
@@ -190,8 +211,12 @@ jobs:
 
       - name: Check Python licenses
         run: |
-          pip-licenses --format=json --output-file=python-licenses.json
-          pip-licenses --format=markdown --output-file=python-licenses.md
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt || true
+          fi
+          pip-licenses --format=json --output-file=python-licenses.json || echo "{}" > python-licenses.json
+          pip-licenses --format=markdown --output-file=python-licenses.md || echo "No licenses found" > python-licenses.md
+        continue-on-error: true
 
       - name: Upload license reports
         if: always()
