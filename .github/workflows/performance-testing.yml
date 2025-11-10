@@ -50,7 +50,7 @@ jobs:
 
       - name: Upload Lighthouse Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: lighthouse-results
           path: .lighthouseci
@@ -119,7 +119,7 @@ jobs:
 
       - name: Upload K6 Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: k6-results
           path: summary.json
@@ -218,7 +218,7 @@ jobs:
 
       - name: Upload Artillery Results
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: artillery-results
           path: ./load-tests/artillery-report.html
@@ -288,7 +288,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Download all artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Generate performance summary
         run: |
@@ -328,7 +328,7 @@ jobs:
           cat performance-summary.md
 
       - name: Upload performance summary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: performance-summary
           path: performance-summary.md

@@ -92,7 +92,7 @@ Audit trail: See auto-merge-audit.json
 
       - name: Upload audit trail
         if: always() && steps.check-conflicts.outputs.has_conflicts == 'true'
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: auto-merge-audit
           path: auto-merge-audit.json
