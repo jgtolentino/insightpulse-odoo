@@ -6,7 +6,7 @@
 [![Test Coverage](https://img.shields.io/badge/tests-134%20methods-blue)](tests/)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue)](LICENSE)
 
-> **Enterprise-grade multi-tenant SaaS platform** built on Odoo 19.0 CE + OCA modules with embedded BI and AI capabilities.
+> **Enterprise-grade multi-tenant SaaS platform** built on Odoo 18.0 CE + OCA modules with embedded BI and AI capabilities.
 >
 > Replicate key enterprise processes in an open, modular framework optimized for mid-market services businesses at **< $20/month** (87-91% cost reduction vs traditional enterprise stacks).
 
@@ -35,7 +35,7 @@ Replace $60K+/year in SaaS subscriptions with self-hosted alternatives:
 ## 🎯 What Is This?
 
 A complete **Finance Shared Service Center** platform built on:
-- **Odoo 19 CE** (open-source ERP core)
+- **Odoo 18.0 CE** (open-source ERP core)
 - **OCA Modules** (community-maintained extensions)
 - **Custom Modules** (10 enterprise modules, 134 test methods, 2,771 lines of tests)
 - **Self-Hosted Tools** (Superset, n8n, Authentik, MinIO, Qdrant)
