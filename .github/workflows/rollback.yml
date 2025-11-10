@@ -1,0 +1,356 @@
+name: Emergency Rollback
+
+# ============================================================================
+# EMERGENCY ROLLBACK WORKFLOW
+# Use this to quickly rollback a failed deployment
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to rollback'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      rollback_type:
+        description: 'Rollback strategy'
+        required: true
+        type: choice
+        options:
+          - blue_green_swap
+          - previous_image
+          - specific_version
+      version:
+        description: 'Specific version (for specific_version option)'
+        required: false
+        type: string
+      reason:
+        description: 'Reason for rollback'
+        required: true
+        type: string
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ==========================================================================
+  # ROLLBACK PREPARATION
+  # ==========================================================================
+
+  validate-rollback:
+    name: ✅ Validate Rollback Request
+    runs-on: ubuntu-latest
+    outputs:
+      target-image: ${{ steps.determine.outputs.image }}
+      current-image: ${{ steps.current.outputs.image }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Get current deployment
+        id: current
+        run: |
+          if [ "${{ inputs.environment }}" == "production" ]; then
+            KUBECONFIG="${{ secrets.KUBE_CONFIG_PRODUCTION }}"
+          else
+            KUBECONFIG="${{ secrets.KUBE_CONFIG_STAGING }}"
+          fi
+
+          current_image=$(kubectl get deployment/odoo -n ${{ inputs.environment }} -o jsonpath='{.spec.template.spec.containers[0].image}')
+          echo "image=$current_image" >> $GITHUB_OUTPUT
+          echo "Current image: $current_image"
+
+      - name: 🎯 Determine rollback target
+        id: determine
+        run: |
+          case "${{ inputs.rollback_type }}" in
+            blue_green_swap)
+              # Get the blue version image
+              target=$(kubectl get deployment/odoo-blue -n ${{ inputs.environment }} -o jsonpath='{.spec.template.spec.containers[0].image}')
+              ;;
+            previous_image)
+              # Get previous image from revision history
+              target=$(kubectl rollout history deployment/odoo -n ${{ inputs.environment }} --revision=2 -o jsonpath='{.spec.template.spec.containers[0].image}')
+              ;;
+            specific_version)
+              target="${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ inputs.version }}"
+              ;;
+          esac
+
+          echo "image=$target" >> $GITHUB_OUTPUT
+          echo "Target image: $target"
+
+      - name: ✅ Verify rollback target exists
+        run: |
+          docker manifest inspect ${{ steps.determine.outputs.image }} || {
+            echo "❌ Target image does not exist!"
+            exit 1
+          }
+
+      - name: 📊 Create rollback summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Rollback Summary
+
+          **Environment:** ${{ inputs.environment }}
+          **Reason:** ${{ inputs.reason }}
+          **Strategy:** ${{ inputs.rollback_type }}
+
+          **Current Image:**
+          \`\`\`
+          ${{ steps.current.outputs.image }}
+          \`\`\`
+
+          **Target Image:**
+          \`\`\`
+          ${{ steps.determine.outputs.image }}
+          \`\`\`
+
+          **Triggered by:** @${{ github.actor }}
+          **Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          EOF
+
+  # ==========================================================================
+  # DATABASE SNAPSHOT
+  # ==========================================================================
+
+  create-snapshot:
+    name: 💾 Create Database Snapshot
+    runs-on: ubuntu-latest
+    needs: [validate-rollback]
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: 💾 Backup current database
+        run: |
+          timestamp=$(date +%Y%m%d-%H%M%S)
+          backup_file="rollback-backup-${{ inputs.environment }}-${timestamp}.dump"
+
+          kubectl exec -n ${{ inputs.environment }} deployment/postgres -- \
+            pg_dump -U odoo -Fc odoo > "$backup_file"
+
+          # Upload to S3/GCS
+          aws s3 cp "$backup_file" s3://odoo-backups/rollback/ || \
+            echo "⚠️ Could not upload backup to remote storage"
+
+          echo "✅ Backup created: $backup_file" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📸 Snapshot Kubernetes state
+        run: |
+          timestamp=$(date +%Y%m%d-%H%M%S)
+          snapshot_file="k8s-snapshot-${{ inputs.environment }}-${timestamp}.yaml"
+
+          kubectl get all,configmap,secret -n ${{ inputs.environment }} -o yaml > "$snapshot_file"
+
+          echo "✅ Kubernetes snapshot created" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # EXECUTE ROLLBACK
+  # ==========================================================================
+
+  execute-rollback:
+    name: 🔄 Execute Rollback
+    runs-on: ubuntu-latest
+    needs: [validate-rollback, create-snapshot]
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ inputs.environment == 'production' && secrets.KUBE_CONFIG_PRODUCTION || secrets.KUBE_CONFIG_STAGING }}
+
+      - name: 🚨 Put application in maintenance mode
+        run: |
+          kubectl set env deployment/odoo -n ${{ inputs.environment }} \
+            MAINTENANCE_MODE=true
+
+          # Show maintenance page
+          kubectl scale deployment/maintenance-page -n ${{ inputs.environment }} --replicas=1
+
+          echo "🚨 Maintenance mode enabled" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔄 Rollback deployment
+        run: |
+          case "${{ inputs.rollback_type }}" in
+            blue_green_swap)
+              echo "Swapping from green to blue..."
+              kubectl patch service odoo-service -n ${{ inputs.environment }} \
+                -p '{"spec":{"selector":{"version":"blue"}}}'
+              ;;
+
+            previous_image|specific_version)
+              echo "Rolling back to: ${{ needs.validate-rollback.outputs.target-image }}"
+              kubectl set image deployment/odoo -n ${{ inputs.environment }} \
+                odoo=${{ needs.validate-rollback.outputs.target-image }}
+
+              kubectl rollout status deployment/odoo -n ${{ inputs.environment }} --timeout=10m
+              ;;
+          esac
+
+          echo "✅ Rollback executed" >> $GITHUB_STEP_SUMMARY
+
+      - name: ✅ Health check after rollback
+        run: |
+          sleep 30  # Wait for stabilization
+
+          # Run health checks
+          kubectl run health-check --rm -i --restart=Never \
+            --image=curlimages/curl -n ${{ inputs.environment }} -- \
+            curl -f http://odoo-service:8069/web/health || {
+              echo "❌ Health check failed after rollback!"
+              exit 1
+            }
+
+          echo "✅ Health checks passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🟢 Disable maintenance mode
+        run: |
+          kubectl set env deployment/odoo -n ${{ inputs.environment }} \
+            MAINTENANCE_MODE=false
+
+          kubectl scale deployment/maintenance-page -n ${{ inputs.environment }} --replicas=0
+
+          echo "✅ Maintenance mode disabled" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # POST-ROLLBACK VALIDATION
+  # ==========================================================================
+
+  validate-rollback-success:
+    name: ✅ Validate Rollback Success
+    runs-on: ubuntu-latest
+    needs: [execute-rollback]
+
+    steps:
+      - name: 🧪 Run smoke tests
+        run: |
+          base_url="https://${{ inputs.environment == 'production' && 'insightpulseai.net' || 'staging.insightpulseai.net' }}"
+
+          # Health check
+          curl -f "$base_url/web/health" || exit 1
+
+          # Database connectivity
+          curl -f "$base_url/web/database/list" || exit 1
+
+          # Module check
+          curl -f "$base_url/web/webclient/version_info" || exit 1
+
+          echo "✅ All smoke tests passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📊 Compare performance
+        run: |
+          echo "## Performance Comparison" >> $GITHUB_STEP_SUMMARY
+          echo "Run performance comparison between old and rolled-back version" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # NOTIFICATIONS
+  # ==========================================================================
+
+  notify-rollback:
+    name: 📢 Notify Rollback
+    runs-on: ubuntu-latest
+    needs: [execute-rollback, validate-rollback-success]
+    if: always()
+
+    steps:
+      - name: 🚨 Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚨 Emergency Rollback Executed",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚨 Emergency Rollback - ${{ inputs.environment }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*Environment:*\n${{ inputs.environment }}"},
+                    {"type": "mrkdwn", "text": "*Triggered by:*\n@${{ github.actor }}"},
+                    {"type": "mrkdwn", "text": "*Reason:*\n${{ inputs.reason }}"},
+                    {"type": "mrkdwn", "text": "*Status:*\n${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*From:* `${{ needs.validate-rollback.outputs.current-image }}`\n*To:* `${{ needs.validate-rollback.outputs.target-image }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📧 Email incident report
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "🚨 Rollback Executed: ${{ inputs.environment }}"
+          to: ${{ secrets.INCIDENT_EMAIL_LIST }}
+          from: DevOps Automation
+          body: |
+            Emergency rollback executed on ${{ inputs.environment }}
+
+            Triggered by: ${{ github.actor }}
+            Reason: ${{ inputs.reason }}
+            Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+            From: ${{ needs.validate-rollback.outputs.current-image }}
+            To: ${{ needs.validate-rollback.outputs.target-image }}
+
+            Status: ${{ job.status }}
+
+            Details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      - name: 📝 Create incident ticket
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Rollback: ${{ inputs.environment }} - ${{ inputs.reason }}`,
+              body: `## Rollback Incident Report
+
+              **Environment:** ${{ inputs.environment }}
+              **Triggered by:** @${{ github.actor }}
+              **Reason:** ${{ inputs.reason }}
+              **Time:** ${new Date().toISOString()}
+
+              ### Deployment Details
+              - **From:** \`${{ needs.validate-rollback.outputs.current-image }}\`
+              - **To:** \`${{ needs.validate-rollback.outputs.target-image }}\`
+
+              ### Action Required
+              - [ ] Investigate root cause
+              - [ ] Fix underlying issue
+              - [ ] Test fix in staging
+              - [ ] Create post-mortem
+              - [ ] Update runbooks
+
+              **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              `,
+              labels: ['incident', 'rollback', '${{ inputs.environment }}']
+            });
+
+            console.log(`Created incident ticket: ${issue.data.html_url}`);

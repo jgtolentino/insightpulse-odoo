@@ -1,0 +1,528 @@
+name: Security Audit
+
+# ============================================================================
+# COMPREHENSIVE SECURITY AUDIT WORKFLOW
+# Scheduled and manual security scanning across all layers
+# ============================================================================
+
+on:
+  schedule:
+    # Run every Monday at 3 AM UTC
+    - cron: '0 3 * * 1'
+
+  workflow_dispatch:
+    inputs:
+      scan_depth:
+        description: 'Scan depth'
+        required: true
+        type: choice
+        options:
+          - quick        # Basic security checks (~10 min)
+          - standard     # Standard audit (~30 min)
+          - comprehensive # Full security audit (~60 min)
+        default: 'standard'
+      include_dependencies:
+        description: 'Include dependency vulnerability scan'
+        type: boolean
+        default: true
+      include_secrets:
+        description: 'Include secret scanning'
+        type: boolean
+        default: true
+      include_containers:
+        description: 'Include container image scanning'
+        type: boolean
+        default: true
+
+env:
+  SEVERITY_THRESHOLD: 'HIGH'  # Fail on HIGH or CRITICAL
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # ==========================================================================
+  # CODE SECURITY SCANNING
+  # ==========================================================================
+
+  code-security-scan:
+    name: 🔒 Code Security Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install security tools
+        run: |
+          pip install bandit safety semgrep
+
+      - name: 🔍 Bandit security scan
+        run: |
+          echo "## Bandit Security Scan" >> $GITHUB_STEP_SUMMARY
+          bandit -r addons/custom \
+            -f json -o bandit-report.json \
+            -ll  # Only show medium and high severity
+
+          # Convert to readable format
+          bandit -r addons/custom -f txt || true
+
+          # Count issues by severity
+          high_issues=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' bandit-report.json)
+          medium_issues=$(jq '[.results[] | select(.issue_severity == "MEDIUM")] | length' bandit-report.json)
+
+          echo "**High Severity Issues:** $high_issues" >> $GITHUB_STEP_SUMMARY
+          echo "**Medium Severity Issues:** $medium_issues" >> $GITHUB_STEP_SUMMARY
+
+          # Fail if high severity issues found
+          if [ "$high_issues" -gt 0 ]; then
+            echo "❌ High severity security issues found!"
+            exit 1
+          fi
+
+      - name: 🔍 Semgrep security scan
+        run: |
+          echo "## Semgrep Security Scan" >> $GITHUB_STEP_SUMMARY
+          semgrep --config=auto \
+            --severity=ERROR \
+            --severity=WARNING \
+            addons/custom \
+            --json -o semgrep-report.json || true
+
+          # Generate summary
+          semgrep --config=auto \
+            --severity=ERROR \
+            addons/custom || true
+
+      - name: 📊 Upload security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: code-security-reports
+          path: |
+            bandit-report.json
+            semgrep-report.json
+
+  # ==========================================================================
+  # DEPENDENCY VULNERABILITY SCANNING
+  # ==========================================================================
+
+  dependency-scan:
+    name: 📦 Dependency Vulnerability Scan
+    runs-on: ubuntu-latest
+    if: inputs.include_dependencies != false
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install safety pip-audit
+
+      - name: 🔍 Safety check
+        run: |
+          echo "## Safety Dependency Scan" >> $GITHUB_STEP_SUMMARY
+          safety check --json -o safety-report.json || true
+
+          # Generate readable report
+          safety check || true
+
+          # Count vulnerabilities
+          if [ -f safety-report.json ]; then
+            vuln_count=$(jq '[.vulnerabilities[]] | length' safety-report.json || echo "0")
+            echo "**Vulnerabilities Found:** $vuln_count" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Pip-audit check
+        run: |
+          echo "## Pip-Audit Scan" >> $GITHUB_STEP_SUMMARY
+          pip-audit --format json -o pip-audit-report.json || true
+
+          # Generate readable report
+          pip-audit || true
+
+      - name: 🔍 GitHub Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+      - name: 📊 Upload dependency reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-security-reports
+          path: |
+            safety-report.json
+            pip-audit-report.json
+
+  # ==========================================================================
+  # SECRET SCANNING
+  # ==========================================================================
+
+  secret-scan:
+    name: 🔐 Secret & Credential Scanning
+    runs-on: ubuntu-latest
+    if: inputs.include_secrets != false
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 TruffleHog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --only-verified --json
+
+      - name: 🔍 Gitleaks scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🔍 Custom secret patterns
+        run: |
+          echo "## Custom Secret Pattern Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Define custom patterns
+          declare -A patterns=(
+            ["API_KEY"]="api[_-]?key['\"]?\s*[:=]\s*['\"]?[a-zA-Z0-9_-]{20,}"
+            ["PASSWORD"]="password['\"]?\s*[:=]\s*['\"]?[^'\"\s]{8,}"
+            ["SECRET"]="secret['\"]?\s*[:=]\s*['\"]?[a-zA-Z0-9_-]{20,}"
+            ["TOKEN"]="token['\"]?\s*[:=]\s*['\"]?[a-zA-Z0-9_-]{20,}"
+            ["PRIVATE_KEY"]="-----BEGIN\s+(RSA\s+)?PRIVATE\s+KEY-----"
+          )
+
+          found_secrets=0
+          for pattern_name in "${!patterns[@]}"; do
+            pattern="${patterns[$pattern_name]}"
+            matches=$(grep -rPn "$pattern" addons/custom/ config/ --exclude-dir=.git || echo "")
+
+            if [ -n "$matches" ]; then
+              echo "⚠️ Potential $pattern_name found:"
+              echo "$matches"
+              found_secrets=$((found_secrets + 1))
+            fi
+          done
+
+          if [ $found_secrets -gt 0 ]; then
+            echo "❌ Found $found_secrets potential secret patterns!" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          else
+            echo "✅ No secrets found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ==========================================================================
+  # CONTAINER IMAGE SCANNING
+  # ==========================================================================
+
+  container-scan:
+    name: 🐳 Container Image Security Scan
+    runs-on: ubuntu-latest
+    if: inputs.include_containers != false
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🏗️ Build test image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          load: true
+          tags: odoo-security-test:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 🔍 Trivy vulnerability scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: odoo-security-test:latest
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: 🔍 Grype vulnerability scan
+        uses: anchore/scan-action@v3
+        with:
+          image: odoo-security-test:latest
+          fail-build: true
+          severity-cutoff: high
+
+      - name: 🔍 Dockerfile security scan
+        run: |
+          echo "## Dockerfile Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Install hadolint
+          wget -qO hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+          chmod +x hadolint
+
+          # Scan Dockerfile
+          ./hadolint Dockerfile --format json > hadolint-report.json || true
+          ./hadolint Dockerfile || true
+
+          # Count issues
+          error_count=$(jq '[.[] | select(.level == "error")] | length' hadolint-report.json || echo "0")
+          warning_count=$(jq '[.[] | select(.level == "warning")] | length' hadolint-report.json || echo "0")
+
+          echo "**Dockerfile Errors:** $error_count" >> $GITHUB_STEP_SUMMARY
+          echo "**Dockerfile Warnings:** $warning_count" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📊 Upload container security reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-security-reports
+          path: |
+            trivy-results.sarif
+            hadolint-report.json
+
+      - name: 📤 Upload to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+
+  # ==========================================================================
+  # INFRASTRUCTURE SECURITY
+  # ==========================================================================
+
+  infrastructure-scan:
+    name: 🏗️ Infrastructure Security Scan
+    runs-on: ubuntu-latest
+    if: inputs.scan_depth == 'comprehensive'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Kubernetes manifest security scan
+        run: |
+          # Install kubesec
+          wget -qO kubesec https://github.com/controlplaneio/kubesec/releases/latest/download/kubesec_linux_amd64
+          chmod +x kubesec
+
+          echo "## Kubernetes Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Scan all K8s manifests
+          for manifest in k8s/*.yaml k8s/**/*.yaml; do
+            if [ -f "$manifest" ]; then
+              echo "Scanning: $manifest"
+              ./kubesec scan "$manifest" || true
+            fi
+          done
+
+      - name: 🔍 Docker Compose security scan
+        run: |
+          echo "## Docker Compose Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Check for security issues in docker-compose.yml
+          if [ -f "docker-compose.yml" ]; then
+            # Check for privileged containers
+            if grep -q "privileged:\s*true" docker-compose.yml; then
+              echo "⚠️ Privileged containers found!" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Check for host network mode
+            if grep -q "network_mode:\s*host" docker-compose.yml; then
+              echo "⚠️ Host network mode found!" >> $GITHUB_STEP_SUMMARY
+            fi
+
+            # Check for secrets in environment
+            if grep -qE "password|secret|key|token" docker-compose.yml; then
+              echo "⚠️ Potential secrets in docker-compose.yml!" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+
+      - name: 🔍 GitHub Actions security scan
+        run: |
+          echo "## GitHub Actions Security Scan" >> $GITHUB_STEP_SUMMARY
+
+          # Check for unpinned actions
+          unpinned=$(grep -rn "uses:.*@" .github/workflows/ | grep -v "@v[0-9]" || echo "")
+          if [ -n "$unpinned" ]; then
+            echo "⚠️ Unpinned GitHub Actions found:" >> $GITHUB_STEP_SUMMARY
+            echo "$unpinned" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ==========================================================================
+  # COMPLIANCE & BEST PRACTICES
+  # ==========================================================================
+
+  compliance-check:
+    name: ✅ Compliance & Best Practices
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 OWASP dependency check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'insightpulse-odoo'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --enableExperimental
+
+      - name: 🔍 License compliance check
+        run: |
+          echo "## License Compliance Check" >> $GITHUB_STEP_SUMMARY
+
+          # Check for GPL-incompatible licenses
+          pip install pip-licenses
+          pip-licenses --format=json -o licenses.json
+
+          # Check for problematic licenses
+          problematic=$(jq '[.[] | select(.License | contains("MIT") or contains("Apache") or contains("AGPL") | not)] | length' licenses.json)
+
+          if [ "$problematic" -gt 0 ]; then
+            echo "⚠️ Found $problematic packages with non-standard licenses" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ All licenses compatible" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔍 Security headers check
+        run: |
+          echo "## Security Headers Check" >> $GITHUB_STEP_SUMMARY
+
+          # Check nginx configuration for security headers
+          if [ -f "config/nginx/nginx.conf" ]; then
+            headers=(
+              "X-Frame-Options"
+              "X-Content-Type-Options"
+              "X-XSS-Protection"
+              "Strict-Transport-Security"
+              "Content-Security-Policy"
+            )
+
+            for header in "${headers[@]}"; do
+              if grep -q "$header" config/nginx/nginx.conf; then
+                echo "✅ $header configured" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "⚠️ $header missing!" >> $GITHUB_STEP_SUMMARY
+              fi
+            done
+          fi
+
+  # ==========================================================================
+  # SECURITY REPORT GENERATION
+  # ==========================================================================
+
+  generate-report:
+    name: 📊 Generate Security Report
+    runs-on: ubuntu-latest
+    needs: [code-security-scan, dependency-scan, secret-scan, container-scan, compliance-check]
+    if: always()
+
+    steps:
+      - name: 📥 Download all reports
+        uses: actions/download-artifact@v4
+
+      - name: 📊 Generate consolidated report
+        run: |
+          cat > security-report.md << 'EOF'
+          # Security Audit Report
+
+          **Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Scan Depth:** ${{ inputs.scan_depth || 'standard' }}
+          **Triggered by:** @${{ github.actor }}
+
+          ## Summary
+
+          | Check | Status | Critical | High | Medium | Low |
+          |-------|--------|----------|------|--------|-----|
+          | Code Security | ${{ needs.code-security-scan.result }} | - | - | - | - |
+          | Dependencies | ${{ needs.dependency-scan.result }} | - | - | - | - |
+          | Secrets | ${{ needs.secret-scan.result }} | - | - | - | - |
+          | Containers | ${{ needs.container-scan.result }} | - | - | - | - |
+          | Compliance | ${{ needs.compliance-check.result }} | - | - | - | - |
+
+          ## Recommendations
+
+          1. **High Priority**: Address all CRITICAL and HIGH severity issues
+          2. **Medium Priority**: Review and fix MEDIUM severity issues
+          3. **Low Priority**: Consider fixing LOW severity issues in next sprint
+
+          ## Next Steps
+
+          - Review detailed reports in workflow artifacts
+          - Create issues for critical findings
+          - Schedule remediation work
+          - Re-run security audit after fixes
+
+          EOF
+
+          cat security-report.md >> $GITHUB_STEP_SUMMARY
+
+      - name: 📧 Send security report
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🔒 Weekly Security Audit Complete",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🔒 Security Audit Report"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*Code Security:*\n${{ needs.code-security-scan.result }}"},
+                    {"type": "mrkdwn", "text": "*Dependencies:*\n${{ needs.dependency-scan.result }}"},
+                    {"type": "mrkdwn", "text": "*Secrets:*\n${{ needs.secret-scan.result }}"},
+                    {"type": "mrkdwn", "text": "*Containers:*\n${{ needs.container-scan.result }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Full Report>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📝 Create security issues
+        if: needs.code-security-scan.result == 'failure' || needs.dependency-scan.result == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🔒 Security Audit Findings - ' + new Date().toISOString().split('T')[0],
+              body: `## Security Audit Findings\n\n` +
+                    `Critical security issues found in automated security audit.\n\n` +
+                    `**Workflow Run:** ${context.payload.repository.html_url}/actions/runs/${context.runId}\n\n` +
+                    `### Action Required\n` +
+                    `- [ ] Review security scan results\n` +
+                    `- [ ] Prioritize critical and high severity issues\n` +
+                    `- [ ] Create remediation plan\n` +
+                    `- [ ] Fix issues and re-run security audit`,
+              labels: ['security', 'critical', 'audit']
+            });

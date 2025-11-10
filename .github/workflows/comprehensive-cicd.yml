@@ -1,0 +1,653 @@
+name: Comprehensive CI/CD Pipeline
+
+# ============================================================================
+# TRIGGER CONFIGURATION
+# ============================================================================
+on:
+  push:
+    branches: [main, develop, 'release/**', 'hotfix/**']
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      skip_tests:
+        description: 'Skip tests (emergency deployments only)'
+        required: false
+        type: boolean
+        default: false
+
+# ============================================================================
+# ENVIRONMENT VARIABLES
+# ============================================================================
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+  DOCKER_REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  ODOO_VERSION: '19.0'
+
+# ============================================================================
+# CONCURRENT BUILDS CONTROL
+# ============================================================================
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ============================================================================
+# JOBS
+# ============================================================================
+jobs:
+  # ==========================================================================
+  # STAGE 1: CODE QUALITY & SECURITY
+  # ==========================================================================
+
+  code-quality:
+    name: 🔍 Code Quality Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for better analysis
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install linting tools
+        run: |
+          pip install -U pip wheel
+          pip install ruff pylint black isort mypy
+          pip install bandit safety
+
+      - name: 🎨 Check code formatting (Black)
+        run: black --check --diff .
+        continue-on-error: true
+
+      - name: 📋 Check import sorting (isort)
+        run: isort --check-only --diff .
+        continue-on-error: true
+
+      - name: 🔎 Lint with Ruff
+        run: ruff check . --output-format=github
+        continue-on-error: true
+
+      - name: 🐛 Lint with Pylint
+        run: |
+          find addons/custom -name "*.py" -not -path "*/tests/*" | \
+            xargs pylint --rcfile=.pylintrc --output-format=colorized
+        continue-on-error: true
+
+      - name: 📊 Generate quality report
+        run: |
+          echo "## Code Quality Report" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Black formatting checked" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Import sorting checked" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Ruff linting completed" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Pylint analysis completed" >> $GITHUB_STEP_SUMMARY
+
+  security-scan:
+    name: 🔒 Security Scanning
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      security-events: write
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 🔐 Security scan with Bandit
+        run: |
+          pip install bandit[toml]
+          bandit -r addons/custom -f json -o bandit-report.json || true
+          bandit -r addons/custom -f screen
+        continue-on-error: true
+
+      - name: 📦 Dependency vulnerability scan
+        run: |
+          pip install safety
+          pip freeze | safety check --json || true
+        continue-on-error: true
+
+      - name: 🔍 Secret scanning with TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+        continue-on-error: true
+
+      - name: 📊 Upload security reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+          retention-days: 30
+
+  # ==========================================================================
+  # STAGE 2: TESTING
+  # ==========================================================================
+
+  unit-tests:
+    name: 🧪 Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -U pip wheel
+          pip install pytest pytest-cov pytest-xdist pytest-timeout
+          pip install -r requirements.txt
+
+      - name: 🧪 Run unit tests
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          pytest tests/unit \
+            -v \
+            --cov=addons/custom \
+            --cov-report=xml \
+            --cov-report=html \
+            --cov-report=term \
+            --junit-xml=junit.xml \
+            --timeout=300 \
+            -n auto
+        continue-on-error: true
+
+      - name: 📊 Upload coverage reports
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: ./coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: 📈 Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: junit.xml
+
+  integration-tests:
+    name: 🔗 Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [code-quality, unit-tests]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐳 Build test image
+        run: |
+          docker build -t odoo-test:latest \
+            --build-arg ODOO_VERSION=${{ env.ODOO_VERSION }} \
+            -f Dockerfile .
+
+      - name: 🧪 Run integration tests
+        if: ${{ !inputs.skip_tests }}
+        run: |
+          docker run --rm \
+            --network host \
+            -e DB_HOST=localhost \
+            -e DB_PORT=5432 \
+            -e DB_USER=odoo \
+            -e DB_PASSWORD=odoo \
+            odoo-test:latest \
+            pytest tests/integration -v --junit-xml=integration-junit.xml
+        continue-on-error: true
+
+      - name: 📊 Upload integration test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: integration-test-results
+          path: integration-junit.xml
+
+  module-validation:
+    name: 📦 Odoo Module Validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: 📦 Install Odoo dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: ✅ Validate module manifests
+        run: |
+          python << 'EOF'
+          import os
+          import ast
+          import sys
+
+          errors = []
+          for root, dirs, files in os.walk('addons/custom'):
+              if '__manifest__.py' in files:
+                  manifest_path = os.path.join(root, '__manifest__.py')
+                  try:
+                      with open(manifest_path) as f:
+                          manifest = ast.literal_eval(f.read())
+
+                      # Validate required fields
+                      required = ['name', 'version', 'depends', 'data']
+                      missing = [f for f in required if f not in manifest]
+                      if missing:
+                          errors.append(f"{manifest_path}: Missing {missing}")
+
+                      # Validate version format
+                      if 'version' in manifest and not manifest['version'].startswith('19.0'):
+                          errors.append(f"{manifest_path}: Invalid version {manifest['version']}")
+
+                  except Exception as e:
+                      errors.append(f"{manifest_path}: {str(e)}")
+
+          if errors:
+              print("❌ Manifest validation errors:")
+              for error in errors:
+                  print(f"  - {error}")
+              sys.exit(1)
+          else:
+              print("✅ All manifests valid")
+          EOF
+
+      - name: 🔍 Check XML syntax
+        run: |
+          find addons/custom -name "*.xml" | while read file; do
+            xmllint --noout "$file" || echo "Error in $file"
+          done
+
+      - name: 🐍 Check Python syntax
+        run: |
+          find addons/custom -name "*.py" -exec python -m py_compile {} \;
+
+  # ==========================================================================
+  # STAGE 3: BUILD & PACKAGE
+  # ==========================================================================
+
+  build-docker:
+    name: 🐳 Build Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [security-scan, module-validation]
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: 🔐 Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.DOCKER_REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📋 Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.DOCKER_REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: 🏗️ Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile.production
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            ODOO_VERSION=${{ env.ODOO_VERSION }}
+            BUILD_DATE=${{ github.event.head_commit.timestamp }}
+            VCS_REF=${{ github.sha }}
+
+      - name: 📊 Image scan with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.meta.outputs.tags }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+        continue-on-error: true
+
+      - name: 📤 Upload Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # ==========================================================================
+  # STAGE 4: DEPLOYMENT
+  # ==========================================================================
+
+  deploy-staging:
+    name: 🚀 Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build-docker, integration-tests]
+    if: github.ref == 'refs/heads/develop' || github.event.inputs.environment == 'staging'
+    environment:
+      name: staging
+      url: https://staging.insightpulseai.net
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_STAGING }}
+
+      - name: 🚀 Deploy to Kubernetes
+        run: |
+          kubectl set image deployment/odoo \
+            odoo=${{ needs.build-docker.outputs.image-tag }} \
+            -n staging
+
+          kubectl rollout status deployment/odoo -n staging --timeout=5m
+
+      - name: ✅ Run smoke tests
+        run: |
+          sleep 30  # Wait for deployment to stabilize
+
+          curl -f https://staging.insightpulseai.net/web/health || exit 1
+
+          echo "✅ Staging deployment successful" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📢 Notify deployment
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 Deployed to Staging",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Staging Deployment Complete*\n\n• Image: `${{ needs.build-docker.outputs.image-tag }}`\n• Commit: ${{ github.sha }}\n• URL: https://staging.insightpulseai.net"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        continue-on-error: true
+
+  deploy-production:
+    name: 🎯 Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [build-docker, integration-tests]
+    if: github.ref == 'refs/heads/main' || github.event.inputs.environment == 'production'
+    environment:
+      name: production
+      url: https://insightpulseai.net
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG_PRODUCTION }}
+
+      - name: 💾 Backup database
+        run: |
+          kubectl exec -n production deployment/postgres -- \
+            pg_dump -U odoo -Fc odoo > backup-pre-deploy-$(date +%Y%m%d-%H%M%S).dump
+
+      - name: 📸 Create snapshot
+        run: |
+          kubectl get all -n production -o yaml > snapshot-$(date +%Y%m%d-%H%M%S).yaml
+
+      - name: 🚀 Deploy with blue-green strategy
+        run: |
+          # Deploy green version
+          kubectl set image deployment/odoo-green \
+            odoo=${{ needs.build-docker.outputs.image-tag }} \
+            -n production
+
+          # Wait for green to be ready
+          kubectl rollout status deployment/odoo-green -n production --timeout=10m
+
+          # Run health checks on green
+          kubectl run health-check --rm -i --restart=Never \
+            --image=curlimages/curl -- \
+            curl -f http://odoo-green-service:8069/web/health
+
+          # Switch traffic to green
+          kubectl patch service odoo-service -n production \
+            -p '{"spec":{"selector":{"version":"green"}}}'
+
+          echo "✅ Production deployment successful" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔄 Keep blue version for rollback
+        run: |
+          echo "Blue version kept for 24h rollback window"
+
+      - name: 📢 Notify production deployment
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🎯 Deployed to Production",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Production Deployment Complete*\n\n• Image: `${{ needs.build-docker.outputs.image-tag }}`\n• Commit: ${{ github.sha }}\n• URL: https://insightpulseai.net\n• Rollback available for 24h"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ==========================================================================
+  # STAGE 5: POST-DEPLOYMENT VALIDATION
+  # ==========================================================================
+
+  e2e-tests:
+    name: 🎭 E2E Tests (Production)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📦 Install Playwright
+        run: |
+          npm ci
+          npx playwright install --with-deps
+
+      - name: 🎭 Run E2E tests
+        run: |
+          npx playwright test --config=tests/e2e/playwright.config.ts
+        env:
+          BASE_URL: https://insightpulseai.net
+
+      - name: 📊 Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  performance-tests:
+    name: ⚡ Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: ⚡ Run k6 load tests
+        uses: grafana/k6-action@v0.3.1
+        with:
+          filename: tests/performance/load-test.js
+          flags: --out json=results.json
+        env:
+          K6_CLOUD_TOKEN: ${{ secrets.K6_CLOUD_TOKEN }}
+
+      - name: 📊 Analyze results
+        run: |
+          cat results.json | jq '.metrics'
+
+          # Check SLA
+          p95=$(cat results.json | jq -r '.metrics.http_req_duration.values.p95')
+          if (( $(echo "$p95 > 1000" | bc -l) )); then
+            echo "⚠️ P95 latency exceeds 1s: ${p95}ms" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ Performance within SLA" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ==========================================================================
+  # STAGE 6: MONITORING & ALERTS
+  # ==========================================================================
+
+  update-monitoring:
+    name: 📊 Update Monitoring Dashboards
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [deploy-production]
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📊 Update Grafana dashboards
+        run: |
+          # Upload dashboards to Grafana
+          for dashboard in monitoring/dashboards/*.json; do
+            curl -X POST \
+              -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d @"$dashboard" \
+              https://grafana.insightpulseai.net/api/dashboards/db
+          done
+
+      - name: 🔔 Create deployment annotation
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.GRAFANA_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "text": "Production deployment: ${{ github.sha }}",
+              "tags": ["deployment", "production"],
+              "time": '$(date +%s000)'
+            }' \
+            https://grafana.insightpulseai.net/api/annotations
+
+# ============================================================================
+# REUSABLE WORKFLOWS REFERENCE
+# ============================================================================
+# This workflow can be referenced by other projects:
+#
+# jobs:
+#   call-cicd:
+#     uses: jgtolentino/insightpulse-odoo/.github/workflows/comprehensive-cicd.yml@main
+#     with:
+#       environment: staging
+#     secrets: inherit

@@ -1,0 +1,500 @@
+name: Module Packaging
+
+# ============================================================================
+# MODULE PACKAGING WORKFLOW
+# Create distributable Odoo module packages
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      module_name:
+        description: 'Module name to package'
+        required: true
+        type: string
+      version:
+        description: 'Module version (e.g., 19.0.1.0.0)'
+        required: true
+        type: string
+      package_type:
+        description: 'Package type'
+        required: true
+        type: choice
+        options:
+          - zip          # ZIP archive
+          - tar.gz       # Tarball
+          - wheel        # Python wheel
+          - all          # All formats
+        default: 'zip'
+      include_dependencies:
+        description: 'Include dependencies'
+        type: boolean
+        default: false
+      create_release:
+        description: 'Create GitHub release'
+        type: boolean
+        default: false
+
+env:
+  PACKAGE_DIR: dist/packages
+
+jobs:
+  # ==========================================================================
+  # VALIDATE MODULE
+  # ==========================================================================
+
+  validate-module:
+    name: ✅ Validate Module
+    runs-on: ubuntu-latest
+    outputs:
+      module-path: ${{ steps.locate.outputs.path }}
+      dependencies: ${{ steps.manifest.outputs.dependencies }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Locate module
+        id: locate
+        run: |
+          # Search for module in custom addons
+          module_path=""
+          for search_path in addons/custom addons/insightpulse addons; do
+            if [ -d "$search_path/${{ inputs.module_name }}" ]; then
+              module_path="$search_path/${{ inputs.module_name }}"
+              break
+            fi
+          done
+
+          if [ -z "$module_path" ]; then
+            echo "❌ Module ${{ inputs.module_name }} not found!"
+            exit 1
+          fi
+
+          echo "path=$module_path" >> $GITHUB_OUTPUT
+          echo "✅ Module found at: $module_path"
+
+      - name: 📋 Validate manifest
+        id: manifest
+        run: |
+          module_path="${{ steps.locate.outputs.path }}"
+          manifest="$module_path/__manifest__.py"
+
+          if [ ! -f "$manifest" ]; then
+            echo "❌ __manifest__.py not found!"
+            exit 1
+          fi
+
+          # Extract and validate manifest fields
+          python3 << 'PYTHON'
+          import ast
+          import json
+
+          with open("${{ steps.locate.outputs.path }}/__manifest__.py", 'r') as f:
+              manifest = ast.literal_eval(f.read())
+
+          required_fields = ['name', 'version', 'depends', 'author', 'license']
+          missing = [f for f in required_fields if f not in manifest]
+
+          if missing:
+              print(f"❌ Missing required fields: {missing}")
+              exit(1)
+
+          # Validate version format
+          version = manifest.get('version', '')
+          if not version or version.count('.') < 3:
+              print(f"❌ Invalid version format: {version}")
+              print("Expected format: 19.0.X.Y.Z")
+              exit(1)
+
+          # Check if version matches input
+          if version != "${{ inputs.version }}":
+              print(f"⚠️ Manifest version ({version}) differs from input (${{ inputs.version }})")
+              print("Updating manifest version...")
+              manifest['version'] = "${{ inputs.version }}"
+
+          # Output dependencies
+          deps = json.dumps(manifest.get('depends', []))
+          print(f"::set-output name=dependencies::{deps}")
+
+          print("✅ Manifest validation passed")
+          print(f"Module: {manifest['name']}")
+          print(f"Version: {manifest['version']}")
+          print(f"Author: {manifest['author']}")
+          print(f"License: {manifest['license']}")
+          PYTHON
+
+      - name: 🔍 Validate module structure
+        run: |
+          module_path="${{ steps.locate.outputs.path }}"
+
+          echo "## Module Structure Validation" >> $GITHUB_STEP_SUMMARY
+
+          # Check required files
+          required_files=("__init__.py" "__manifest__.py")
+          for file in "${required_files[@]}"; do
+            if [ -f "$module_path/$file" ]; then
+              echo "✅ $file exists" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ $file missing!" >> $GITHUB_STEP_SUMMARY
+              exit 1
+            fi
+          done
+
+          # Check common directories
+          common_dirs=("models" "views" "security")
+          for dir in "${common_dirs[@]}"; do
+            if [ -d "$module_path/$dir" ]; then
+              file_count=$(find "$module_path/$dir" -type f | wc -l)
+              echo "✅ $dir/ ($file_count files)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  # ==========================================================================
+  # RUN TESTS
+  # ==========================================================================
+
+  test-module:
+    name: 🧪 Test Module
+    runs-on: ubuntu-latest
+    needs: [validate-module]
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install Odoo
+        run: |
+          pip install -r requirements.txt
+
+      - name: 🧪 Run module tests
+        run: |
+          odoo -d odoo_test \
+            -i ${{ inputs.module_name }} \
+            --test-enable \
+            --stop-after-init \
+            --log-level=test
+
+      - name: ✅ Validate installation
+        run: |
+          # Check if module installed successfully
+          PGPASSWORD=odoo psql -h postgres -U odoo -d odoo_test \
+            -c "SELECT name, state FROM ir_module_module WHERE name = '${{ inputs.module_name }}';"
+
+          # Verify state is 'installed'
+          state=$(PGPASSWORD=odoo psql -h postgres -U odoo -d odoo_test -t \
+            -c "SELECT state FROM ir_module_module WHERE name = '${{ inputs.module_name }}';")
+
+          if [[ "$state" != *"installed"* ]]; then
+            echo "❌ Module not installed correctly!"
+            exit 1
+          fi
+
+          echo "✅ Module installed and tested successfully"
+
+  # ==========================================================================
+  # CREATE PACKAGE
+  # ==========================================================================
+
+  create-package:
+    name: 📦 Create Package
+    runs-on: ubuntu-latest
+    needs: [validate-module, test-module]
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install packaging tools
+        run: |
+          pip install build setuptools wheel
+
+      - name: 📁 Prepare package directory
+        run: |
+          mkdir -p ${{ env.PACKAGE_DIR }}
+          module_path="${{ needs.validate-module.outputs.module-path }}"
+
+          echo "Packaging module from: $module_path"
+
+      - name: 📦 Create ZIP package
+        if: inputs.package_type == 'zip' || inputs.package_type == 'all'
+        run: |
+          module_path="${{ needs.validate-module.outputs.module-path }}"
+          package_name="${{ inputs.module_name }}-${{ inputs.version }}.zip"
+
+          cd "$(dirname $module_path)"
+          zip -r "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/$package_name" \
+            "$(basename $module_path)" \
+            -x "*.pyc" "*/__pycache__/*" "*/.git/*" "*/tests/*"
+
+          echo "✅ Created ZIP package: $package_name"
+
+      - name: 📦 Create TAR.GZ package
+        if: inputs.package_type == 'tar.gz' || inputs.package_type == 'all'
+        run: |
+          module_path="${{ needs.validate-module.outputs.module-path }}"
+          package_name="${{ inputs.module_name }}-${{ inputs.version }}.tar.gz"
+
+          cd "$(dirname $module_path)"
+          tar -czf "$GITHUB_WORKSPACE/${{ env.PACKAGE_DIR }}/$package_name" \
+            --exclude="*.pyc" \
+            --exclude="__pycache__" \
+            --exclude=".git" \
+            --exclude="tests" \
+            "$(basename $module_path)"
+
+          echo "✅ Created TAR.GZ package: $package_name"
+
+      - name: 📦 Create Python wheel
+        if: inputs.package_type == 'wheel' || inputs.package_type == 'all'
+        run: |
+          module_path="${{ needs.validate-module.outputs.module-path }}"
+
+          # Create setup.py for the module
+          cat > setup.py << 'EOF'
+          from setuptools import setup, find_packages
+          import ast
+
+          # Read manifest
+          with open("${{ needs.validate-module.outputs.module-path }}/__manifest__.py", 'r') as f:
+              manifest = ast.literal_eval(f.read())
+
+          setup(
+              name='odoo-addon-${{ inputs.module_name }}',
+              version='${{ inputs.version }}',
+              description=manifest.get('summary', manifest.get('name', '')),
+              author=manifest.get('author', ''),
+              license=manifest.get('license', 'AGPL-3'),
+              packages=find_packages(),
+              include_package_data=True,
+              zip_safe=False,
+              install_requires=[
+                  'odoo>=19.0,<20.0',
+              ] + manifest.get('external_dependencies', {}).get('python', []),
+          )
+          EOF
+
+          # Build wheel
+          python -m build --wheel
+          mv dist/*.whl "${{ env.PACKAGE_DIR }}/"
+
+          echo "✅ Created Python wheel package"
+
+      - name: 📦 Include dependencies
+        if: inputs.include_dependencies == true
+        run: |
+          dependencies='${{ needs.validate-module.outputs.dependencies }}'
+
+          echo "## Including Dependencies" >> $GITHUB_STEP_SUMMARY
+
+          # Create dependencies directory
+          mkdir -p ${{ env.PACKAGE_DIR }}/dependencies
+
+          # Copy each dependency module
+          for dep in $(echo $dependencies | jq -r '.[]'); do
+            # Skip base Odoo modules
+            if [[ "$dep" == "base" || "$dep" == "web" ]]; then
+              continue
+            fi
+
+            # Find dependency module
+            for search_path in addons/custom addons/insightpulse addons; do
+              if [ -d "$search_path/$dep" ]; then
+                echo "Including dependency: $dep"
+                cp -r "$search_path/$dep" "${{ env.PACKAGE_DIR }}/dependencies/"
+                echo "✅ $dep" >> $GITHUB_STEP_SUMMARY
+                break
+              fi
+            done
+          done
+
+      - name: 📊 Generate package manifest
+        run: |
+          cat > ${{ env.PACKAGE_DIR }}/PACKAGE_MANIFEST.json << EOF
+          {
+            "module_name": "${{ inputs.module_name }}",
+            "version": "${{ inputs.version }}",
+            "package_type": "${{ inputs.package_type }}",
+            "packaged_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
+            "packaged_by": "${{ github.actor }}",
+            "repository": "${{ github.repository }}",
+            "commit": "${{ github.sha }}",
+            "dependencies": ${{ needs.validate-module.outputs.dependencies }},
+            "includes_dependencies": ${{ inputs.include_dependencies }}
+          }
+          EOF
+
+          cat ${{ env.PACKAGE_DIR }}/PACKAGE_MANIFEST.json
+
+      - name: 📊 Generate checksums
+        run: |
+          cd ${{ env.PACKAGE_DIR }}
+
+          # Generate SHA256 checksums for all packages
+          sha256sum * > SHA256SUMS.txt
+
+          echo "## Package Checksums" >> $GITHUB_STEP_SUMMARY
+          cat SHA256SUMS.txt >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: module-packages
+          path: ${{ env.PACKAGE_DIR }}/
+          retention-days: 90
+
+      - name: 📊 Package summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Package Summary
+
+          **Module:** ${{ inputs.module_name }}
+          **Version:** ${{ inputs.version }}
+          **Package Type:** ${{ inputs.package_type }}
+
+          ### Packages Created
+
+          EOF
+
+          cd ${{ env.PACKAGE_DIR }}
+          for file in *.zip *.tar.gz *.whl; do
+            if [ -f "$file" ]; then
+              size=$(du -h "$file" | cut -f1)
+              echo "- **$file** ($size)" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+  # ==========================================================================
+  # CREATE GITHUB RELEASE
+  # ==========================================================================
+
+  create-release:
+    name: 🚀 Create GitHub Release
+    runs-on: ubuntu-latest
+    needs: [validate-module, create-package]
+    if: inputs.create_release == true
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📥 Download packages
+        uses: actions/download-artifact@v4
+        with:
+          name: module-packages
+          path: packages/
+
+      - name: 📋 Generate release notes
+        run: |
+          cat > RELEASE_NOTES.md << 'EOF'
+          # ${{ inputs.module_name }} v${{ inputs.version }}
+
+          ## Installation
+
+          ### From ZIP/TAR.GZ
+          ```bash
+          # Extract to Odoo addons directory
+          unzip ${{ inputs.module_name }}-${{ inputs.version }}.zip -d /path/to/odoo/addons/
+
+          # Restart Odoo
+          sudo systemctl restart odoo
+
+          # Install via Odoo Apps
+          # Settings → Apps → Update Apps List → Search "${{ inputs.module_name }}" → Install
+          ```
+
+          ### From Python Wheel
+          ```bash
+          pip install odoo-addon-${{ inputs.module_name }}-${{ inputs.version }}-py3-none-any.whl
+          ```
+
+          ## Package Contents
+
+          - Module: ${{ inputs.module_name }}
+          - Version: ${{ inputs.version }}
+          - Dependencies included: ${{ inputs.include_dependencies }}
+
+          ## Checksums
+
+          See `SHA256SUMS.txt` for package checksums.
+
+          ## Support
+
+          For issues or questions, please visit:
+          ${{ github.server_url }}/${{ github.repository }}/issues
+          EOF
+
+          cat RELEASE_NOTES.md
+
+      - name: 🚀 Create release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ inputs.module_name }}-v${{ inputs.version }}
+          name: ${{ inputs.module_name }} v${{ inputs.version }}
+          body_path: RELEASE_NOTES.md
+          files: |
+            packages/*.zip
+            packages/*.tar.gz
+            packages/*.whl
+            packages/SHA256SUMS.txt
+            packages/PACKAGE_MANIFEST.json
+          draft: false
+          prerelease: false
+
+      - name: 📧 Notify release
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "📦 New Module Release",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "📦 Module Package Released"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*Module:*\n${{ inputs.module_name }}"},
+                    {"type": "mrkdwn", "text": "*Version:*\n${{ inputs.version }}"},
+                    {"type": "mrkdwn", "text": "*Package Type:*\n${{ inputs.package_type }}"},
+                    {"type": "mrkdwn", "text": "*Released by:*\n@${{ github.actor }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.module_name }}-v${{ inputs.version }}|Download Release>"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

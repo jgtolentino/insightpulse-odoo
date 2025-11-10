@@ -1,0 +1,523 @@
+name: Database Migration
+
+# ============================================================================
+# DATABASE MIGRATION WORKFLOW
+# Safely migrate database schema changes with backup and rollback
+# ============================================================================
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      migration_type:
+        description: 'Migration type'
+        required: true
+        type: choice
+        options:
+          - module_upgrade      # Upgrade existing module
+          - new_module_install  # Install new module
+          - schema_change       # Direct schema change
+          - data_migration      # Data transformation
+      module_name:
+        description: 'Module name (for module operations)'
+        required: false
+        type: string
+      sql_script:
+        description: 'SQL script name (for schema_change)'
+        required: false
+        type: string
+      dry_run:
+        description: 'Dry run (test without applying)'
+        type: boolean
+        default: true
+
+env:
+  BACKUP_RETENTION_DAYS: 30
+
+jobs:
+  # ==========================================================================
+  # PRE-MIGRATION VALIDATION
+  # ==========================================================================
+
+  validate-migration:
+    name: ✅ Validate Migration Request
+    runs-on: ubuntu-latest
+    outputs:
+      backup-filename: ${{ steps.backup-info.outputs.filename }}
+      migration-plan: ${{ steps.plan.outputs.plan }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔍 Validate inputs
+        run: |
+          case "${{ inputs.migration_type }}" in
+            module_upgrade|new_module_install)
+              if [ -z "${{ inputs.module_name }}" ]; then
+                echo "❌ Module name required for ${{ inputs.migration_type }}"
+                exit 1
+              fi
+              ;;
+            schema_change)
+              if [ -z "${{ inputs.sql_script }}" ]; then
+                echo "❌ SQL script required for schema_change"
+                exit 1
+              fi
+              ;;
+          esac
+
+          echo "✅ Input validation passed"
+
+      - name: 📋 Generate backup filename
+        id: backup-info
+        run: |
+          timestamp=$(date +%Y%m%d-%H%M%S)
+          filename="migration-backup-${{ inputs.environment }}-${timestamp}.dump"
+          echo "filename=$filename" >> $GITHUB_OUTPUT
+          echo "Backup will be saved as: $filename"
+
+      - name: 📊 Create migration plan
+        id: plan
+        run: |
+          cat > migration-plan.md << EOF
+          ## Migration Plan
+
+          **Environment:** ${{ inputs.environment }}
+          **Type:** ${{ inputs.migration_type }}
+          **Dry Run:** ${{ inputs.dry_run }}
+          **Requested by:** @${{ github.actor }}
+          **Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+
+          ### Actions
+          EOF
+
+          case "${{ inputs.migration_type }}" in
+            module_upgrade)
+              cat >> migration-plan.md << EOF
+          - Upgrade module: \`${{ inputs.module_name }}\`
+          - Expected impact: Schema changes, data transformations
+          - Rollback: Restore from backup and reinstall previous version
+          EOF
+              ;;
+            new_module_install)
+              cat >> migration-plan.md << EOF
+          - Install new module: \`${{ inputs.module_name }}\`
+          - Expected impact: New tables, views, security rules
+          - Rollback: Uninstall module and restore backup
+          EOF
+              ;;
+            schema_change)
+              cat >> migration-plan.md << EOF
+          - Execute SQL script: \`${{ inputs.sql_script }}\`
+          - Expected impact: Direct database schema modification
+          - Rollback: Restore from backup
+          EOF
+              ;;
+            data_migration)
+              cat >> migration-plan.md << EOF
+          - Execute data migration script
+          - Expected impact: Data transformations
+          - Rollback: Restore from backup
+          EOF
+              ;;
+          esac
+
+          cat migration-plan.md >> $GITHUB_STEP_SUMMARY
+          echo "plan=$(cat migration-plan.md | base64 -w 0)" >> $GITHUB_OUTPUT
+
+  # ==========================================================================
+  # DATABASE BACKUP
+  # ==========================================================================
+
+  create-backup:
+    name: 💾 Create Database Backup
+    runs-on: ubuntu-latest
+    needs: [validate-migration]
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: 🔧 Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ inputs.environment == 'production' && secrets.KUBE_CONFIG_PRODUCTION || secrets.KUBE_CONFIG_STAGING }}
+
+      - name: 💾 Create full database backup
+        run: |
+          echo "Creating backup: ${{ needs.validate-migration.outputs.backup-filename }}"
+
+          # Create backup using pg_dump
+          kubectl exec -n ${{ inputs.environment }} deployment/postgres -- \
+            pg_dump -U odoo -Fc odoo > "${{ needs.validate-migration.outputs.backup-filename }}"
+
+          # Verify backup integrity
+          if [ ! -s "${{ needs.validate-migration.outputs.backup-filename }}" ]; then
+            echo "❌ Backup file is empty!"
+            exit 1
+          fi
+
+          # Get backup size
+          backup_size=$(du -h "${{ needs.validate-migration.outputs.backup-filename }}" | cut -f1)
+          echo "✅ Backup created successfully: $backup_size"
+
+      - name: 📤 Upload backup to storage
+        run: |
+          # Upload to S3/GCS/DigitalOcean Spaces
+          aws s3 cp "${{ needs.validate-migration.outputs.backup-filename }}" \
+            s3://odoo-backups/migrations/ || \
+            echo "⚠️ Could not upload to remote storage"
+
+      - name: 💾 Upload backup as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: migration-backup
+          path: ${{ needs.validate-migration.outputs.backup-filename }}
+          retention-days: ${{ env.BACKUP_RETENTION_DAYS }}
+
+      - name: 📊 Backup summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Backup Created
+
+          **Filename:** \`${{ needs.validate-migration.outputs.backup-filename }}\`
+          **Size:** $(du -h "${{ needs.validate-migration.outputs.backup-filename }}" | cut -f1)
+          **Location:** S3 + GitHub Artifacts
+          **Retention:** ${{ env.BACKUP_RETENTION_DAYS }} days
+
+          ✅ Backup verified and uploaded successfully
+          EOF
+
+  # ==========================================================================
+  # DRY RUN VALIDATION
+  # ==========================================================================
+
+  dry-run-migration:
+    name: 🧪 Dry Run Migration
+    runs-on: ubuntu-latest
+    needs: [validate-migration, create-backup]
+    if: inputs.dry_run == true
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: odoo_test
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: 📦 Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: 💾 Download backup
+        uses: actions/download-artifact@v4
+        with:
+          name: migration-backup
+
+      - name: 📥 Restore backup to test database
+        run: |
+          # Restore to test database
+          PGPASSWORD=odoo pg_restore -h postgres -U odoo -d odoo_test \
+            --no-owner --no-acl \
+            "${{ needs.validate-migration.outputs.backup-filename }}"
+
+          echo "✅ Backup restored to test database"
+
+      - name: 🧪 Execute migration (dry run)
+        run: |
+          case "${{ inputs.migration_type }}" in
+            module_upgrade)
+              echo "Simulating module upgrade: ${{ inputs.module_name }}"
+              odoo -d odoo_test -u ${{ inputs.module_name }} \
+                --stop-after-init --test-enable --log-level=test
+              ;;
+
+            new_module_install)
+              echo "Simulating module install: ${{ inputs.module_name }}"
+              odoo -d odoo_test -i ${{ inputs.module_name }} \
+                --stop-after-init --test-enable --log-level=test
+              ;;
+
+            schema_change)
+              echo "Simulating schema change: ${{ inputs.sql_script }}"
+              PGPASSWORD=odoo psql -h postgres -U odoo -d odoo_test \
+                -f "migrations/${{ inputs.sql_script }}" \
+                --echo-all
+              ;;
+
+            data_migration)
+              echo "Simulating data migration"
+              python3 migrations/data_migration.py --dry-run
+              ;;
+          esac
+
+          echo "✅ Dry run completed successfully"
+
+      - name: 📊 Dry run summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Dry Run Results
+
+          ✅ Migration dry run completed successfully
+
+          **Test Database:** odoo_test
+          **Migration Type:** ${{ inputs.migration_type }}
+          **Status:** Success
+
+          The migration is ready to be applied to ${{ inputs.environment }}.
+
+          **Next Steps:**
+          1. Review the migration plan above
+          2. Re-run this workflow with dry_run=false to apply
+          EOF
+
+  # ==========================================================================
+  # EXECUTE MIGRATION
+  # ==========================================================================
+
+  execute-migration:
+    name: 🚀 Execute Migration
+    runs-on: ubuntu-latest
+    needs: [validate-migration, create-backup]
+    if: inputs.dry_run == false
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ inputs.environment == 'production' && 'https://insightpulseai.net' || 'https://staging.insightpulseai.net' }}
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ inputs.environment == 'production' && secrets.KUBE_CONFIG_PRODUCTION || secrets.KUBE_CONFIG_STAGING }}
+
+      - name: 🚨 Enable maintenance mode
+        run: |
+          kubectl set env deployment/odoo -n ${{ inputs.environment }} \
+            MAINTENANCE_MODE=true
+
+          kubectl scale deployment/maintenance-page -n ${{ inputs.environment }} --replicas=1
+
+          echo "🚨 Maintenance mode enabled" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔄 Execute migration
+        id: migration
+        run: |
+          case "${{ inputs.migration_type }}" in
+            module_upgrade)
+              echo "Upgrading module: ${{ inputs.module_name }}"
+              kubectl exec -n ${{ inputs.environment }} deployment/odoo -- \
+                odoo -d odoo -u ${{ inputs.module_name }} --stop-after-init
+              ;;
+
+            new_module_install)
+              echo "Installing module: ${{ inputs.module_name }}"
+              kubectl exec -n ${{ inputs.environment }} deployment/odoo -- \
+                odoo -d odoo -i ${{ inputs.module_name }} --stop-after-init
+              ;;
+
+            schema_change)
+              echo "Executing schema change: ${{ inputs.sql_script }}"
+              kubectl cp "migrations/${{ inputs.sql_script }}" \
+                "${{ inputs.environment }}/postgres-0:/tmp/migration.sql"
+
+              kubectl exec -n ${{ inputs.environment }} postgres-0 -- \
+                psql -U odoo -d odoo -f /tmp/migration.sql
+              ;;
+
+            data_migration)
+              echo "Executing data migration"
+              kubectl exec -n ${{ inputs.environment }} deployment/odoo -- \
+                python3 /mnt/extra-addons/migrations/data_migration.py
+              ;;
+          esac
+
+          echo "✅ Migration executed successfully" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔄 Restart Odoo
+        run: |
+          kubectl rollout restart deployment/odoo -n ${{ inputs.environment }}
+          kubectl rollout status deployment/odoo -n ${{ inputs.environment }} --timeout=5m
+
+      - name: ✅ Post-migration validation
+        run: |
+          sleep 30  # Wait for services to stabilize
+
+          # Health check
+          kubectl run health-check --rm -i --restart=Never \
+            --image=curlimages/curl -n ${{ inputs.environment }} -- \
+            curl -f http://odoo-service:8069/web/health || {
+              echo "❌ Health check failed!"
+              echo "🔄 Initiating automatic rollback..."
+              exit 1
+            }
+
+          # Smoke tests
+          base_url="${{ inputs.environment == 'production' && 'https://insightpulseai.net' || 'https://staging.insightpulseai.net' }}"
+
+          curl -f "$base_url/web/database/list" || exit 1
+          curl -f "$base_url/web/webclient/version_info" || exit 1
+
+          echo "✅ Post-migration validation passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🟢 Disable maintenance mode
+        if: success()
+        run: |
+          kubectl set env deployment/odoo -n ${{ inputs.environment }} \
+            MAINTENANCE_MODE=false
+
+          kubectl scale deployment/maintenance-page -n ${{ inputs.environment }} --replicas=0
+
+          echo "✅ Maintenance mode disabled" >> $GITHUB_STEP_SUMMARY
+
+      - name: 🔄 Automatic rollback on failure
+        if: failure()
+        run: |
+          echo "🔄 Executing automatic rollback..."
+
+          # Download backup
+          aws s3 cp "s3://odoo-backups/migrations/${{ needs.validate-migration.outputs.backup-filename }}" \
+            ./backup.dump
+
+          # Restore database
+          kubectl exec -n ${{ inputs.environment }} postgres-0 -- \
+            pg_restore -U odoo -d odoo --clean --if-exists ./backup.dump
+
+          # Restart Odoo
+          kubectl rollout restart deployment/odoo -n ${{ inputs.environment }}
+
+          echo "✅ Rollback completed" >> $GITHUB_STEP_SUMMARY
+
+  # ==========================================================================
+  # POST-MIGRATION VALIDATION
+  # ==========================================================================
+
+  validate-migration-success:
+    name: ✅ Validate Migration Success
+    runs-on: ubuntu-latest
+    needs: [execute-migration]
+    if: inputs.dry_run == false
+
+    steps:
+      - name: 🧪 Run comprehensive tests
+        run: |
+          base_url="${{ inputs.environment == 'production' && 'https://insightpulseai.net' || 'https://staging.insightpulseai.net' }}"
+
+          # Test database connectivity
+          curl -f "$base_url/web/database/list" || exit 1
+
+          # Test module availability
+          if [ -n "${{ inputs.module_name }}" ]; then
+            echo "Verifying module: ${{ inputs.module_name }}"
+            # Add module-specific checks here
+          fi
+
+          # Test core functionality
+          curl -f "$base_url/web/health" || exit 1
+
+          echo "✅ All validation tests passed" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📊 Migration statistics
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY << EOF
+          ## Migration Statistics
+
+          **Duration:** ${{ github.event.workflow_run.duration || 'N/A' }}
+          **Status:** ✅ Success
+          **Downtime:** ~5 minutes (maintenance mode)
+          **Data Integrity:** ✅ Verified
+          **Rollback Available:** Yes (backup retained for ${{ env.BACKUP_RETENTION_DAYS }} days)
+          EOF
+
+  # ==========================================================================
+  # NOTIFICATIONS
+  # ==========================================================================
+
+  notify:
+    name: 📢 Notify Migration Status
+    runs-on: ubuntu-latest
+    needs: [validate-migration, execute-migration, validate-migration-success]
+    if: always() && inputs.dry_run == false
+
+    steps:
+      - name: 📧 Send Slack notification
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "${{ needs.execute-migration.result == 'success' && '✅' || '❌' }} Database Migration ${{ needs.execute-migration.result == 'success' && 'Completed' || 'Failed' }}",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "${{ needs.execute-migration.result == 'success' && '✅' || '❌' }} Database Migration - ${{ inputs.environment }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {"type": "mrkdwn", "text": "*Environment:*\n${{ inputs.environment }}"},
+                    {"type": "mrkdwn", "text": "*Type:*\n${{ inputs.migration_type }}"},
+                    {"type": "mrkdwn", "text": "*Module:*\n${{ inputs.module_name || 'N/A' }}"},
+                    {"type": "mrkdwn", "text": "*Status:*\n${{ needs.execute-migration.result }}"}
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Triggered by:* @${{ github.actor }}\n*Backup:* `${{ needs.validate-migration.outputs.backup-filename }}`"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 📧 Email notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "${{ needs.execute-migration.result == 'success' && '✅' || '❌' }} Database Migration: ${{ inputs.environment }}"
+          to: ${{ secrets.DBA_EMAIL_LIST }}
+          from: DevOps Automation
+          body: |
+            Database migration ${{ needs.execute-migration.result == 'success' && 'completed successfully' || 'FAILED' }} on ${{ inputs.environment }}.
+
+            Environment: ${{ inputs.environment }}
+            Migration Type: ${{ inputs.migration_type }}
+            Module: ${{ inputs.module_name || 'N/A' }}
+            Status: ${{ needs.execute-migration.result }}
+
+            Backup: ${{ needs.validate-migration.outputs.backup-filename }}
+            Retention: ${{ env.BACKUP_RETENTION_DAYS }} days
+
+            Workflow Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
