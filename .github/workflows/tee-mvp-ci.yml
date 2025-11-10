@@ -35,5 +35,5 @@ jobs:
           SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          pip install requests psycopg pytest
+          pip install requests psycopg pytest pytest-cov
           pytest -q tests/test_ocr_endpoints.py tests/test_warehouse_views.py
