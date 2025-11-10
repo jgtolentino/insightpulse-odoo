@@ -1,5 +1,6 @@
-from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+from odoo import _, api, fields, models
 
 
 class AccountMove(models.Model):
@@ -60,9 +61,7 @@ class AccountMove(models.Model):
             raise UserError(_("This invoice does not require approval."))
 
         if self.approval_request_id:
-            raise UserError(
-                _("An approval request already exists for this invoice.")
-            )
+            raise UserError(_("An approval request already exists for this invoice."))
 
         # Get approval flow
         flow = self.env["ipai.approval.flow"].search(

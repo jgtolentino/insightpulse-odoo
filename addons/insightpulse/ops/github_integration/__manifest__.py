@@ -1,9 +1,9 @@
 {
-    'name': 'GitHub Integration (pulser-hub)',
-    'version': '1.0.0',
-    'category': 'Operations',
-    'summary': 'GitHub webhook and OAuth integration via pulser-hub app',
-    'description': """
+    "name": "GitHub Integration (pulser-hub)",
+    "version": "1.0.0",
+    "category": "Operations",
+    "summary": "GitHub webhook and OAuth integration via pulser-hub app",
+    "description": """
 GitHub Integration Module
 =========================
 
@@ -39,24 +39,24 @@ GitHub App: pulser-hub
 Owner: @jgtolentino
 Homepage: https://insightpulseai.net/pulser-hub
     """,
-    'author': 'InsightPulse',
-    'website': 'https://insightpulseai.net',
-    'license': 'LGPL-3',
-    'depends': [
-        'base',
-        'project',
-        'web',
+    "author": "InsightPulse",
+    "website": "https://insightpulseai.net",
+    "license": "LGPL-3",
+    "depends": [
+        "base",
+        "project",
+        "web",
     ],
-    'data': [
-        'security/ir.model.access.csv',
-        'views/github_repository_views.xml',
-        'views/github_pull_request_views.xml',
-        'views/github_issue_views.xml',
-        'views/github_webhook_views.xml',
-        'data/github_config.xml',
+    "data": [
+        "security/ir.model.access.csv",
+        "views/github_repository_views.xml",
+        "views/github_pull_request_views.xml",
+        "views/github_issue_views.xml",
+        "views/github_webhook_views.xml",
+        "data/github_config.xml",
     ],
-    'installable': True,
-    'application': False,
-    'auto_install': False,
-    'maintainers': ['jgtolentino'],
+    "installable": True,
+    "application": False,
+    "auto_install": False,
+    "maintainers": ["jgtolentino"],
 }

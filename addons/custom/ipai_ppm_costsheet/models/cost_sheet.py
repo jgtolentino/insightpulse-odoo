@@ -1,5 +1,6 @@
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
+from odoo.exceptions import UserError
+
+from odoo import _, api, fields, models
 
 
 class CostSheet(models.Model):
@@ -131,7 +132,9 @@ class CostSheet(models.Model):
     def create(self, vals):
         """Generate code sequence on create."""
         if not vals.get("code"):
-            vals["code"] = self.env["ir.sequence"].next_by_code("ipai.cost.sheet") or "/"
+            vals["code"] = (
+                self.env["ir.sequence"].next_by_code("ipai.cost.sheet") or "/"
+            )
         return super().create(vals)
 
     @api.depends("line_ids.public_subtotal")

@@ -1,0 +1,75 @@
+{
+  "// Odoo 18.0 CE Development Settings": "",
+  "// Optimized for InsightPulse AI Finance SSC": "",
+
+  "editor.tabSize": 4,
+  "editor.insertSpaces": true,
+  "editor.formatOnSave": true,
+  "editor.rulers": [80, 120],
+  "editor.wordWrap": "on",
+
+  "// Python Settings (Odoo)": "",
+  "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+  "python.linting.enabled": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.flake8Enabled": true,
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": ["--line-length=120"],
+
+  "// JavaScript/XML Settings": "",
+  "javascript.format.enable": true,
+  "xml.format.enabled": true,
+  "xml.validation.enabled": true,
+
+  "// Files": "",
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true,
+    "**/.pytest_cache": true,
+    "**/node_modules": true,
+    "**/.git": false
+  },
+
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/.git/subtree-cache/**": true,
+    "**/node_modules/**": true,
+    "**/__pycache__/**": true,
+    "**/oca/**": true
+  },
+
+  "// Search": "",
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/oca": true,
+    "**/__pycache__": true,
+    "**/.venv": true
+  },
+
+  "// OCA Intelligence MCP": "",
+  "// Enable MCP server for OCA module discovery": "",
+  "mcpServers": {
+    "oca-intel": {
+      "command": "node",
+      "args": ["${workspaceFolder}/mcp/oca-intel/dist/index.js"]
+    }
+  },
+
+  "// Cursor AI Settings": "",
+  "cursor.ai.contextFiles": [
+    "CLAUDE.md",
+    "insightpulse_odoo/CLAUDE.md",
+    "docs/odoo-18-ce-vs-enterprise.md",
+    "docs/odoo-18-oca-alternatives.md",
+    "PLANNING.md"
+  ],
+
+  "cursor.ai.systemPrompt": "You are an expert in Odoo 18.0 CE development for InsightPulse AI Finance SSC. Focus on OCA community modules, Philippine BIR compliance, and multi-agency workflows. Use the OCA Intelligence MCP server for module discovery.",
+
+  "// Terminal": "",
+  "terminal.integrated.defaultProfile.osx": "zsh",
+  "terminal.integrated.env.osx": {
+    "ODOO_RC": "${workspaceFolder}/odoo/config/odoo.conf",
+    "PYTHONPATH": "${workspaceFolder}/odoo:${workspaceFolder}/odoo/addons"
+  }
+}

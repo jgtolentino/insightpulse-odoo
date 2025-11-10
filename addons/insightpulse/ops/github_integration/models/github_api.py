@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 """GitHub API client for Odoo."""
 
-from odoo import models, api
-import requests
-import jwt
-import time
 import logging
+import time
+
+import jwt
+import requests
+
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
@@ -13,18 +15,22 @@ _logger = logging.getLogger(__name__)
 class GitHubAPI(models.AbstractModel):
     """GitHub API client using pulser-hub app credentials."""
 
-    _name = 'github.api'
-    _description = 'GitHub API Client'
+    _name = "github.api"
+    _description = "GitHub API Client"
 
     @api.model
     def _get_app_id(self):
         """Get GitHub App ID from system parameters."""
-        return int(self.env['ir.config_parameter'].sudo().get_param('github.app_id', '2191216'))
+        return int(
+            self.env["ir.config_parameter"].sudo().get_param("github.app_id", "2191216")
+        )
 
     @api.model
     def _get_private_key(self):
         """Get GitHub App private key from system parameters."""
-        return self.env['ir.config_parameter'].sudo().get_param('github.private_key', '')
+        return (
+            self.env["ir.config_parameter"].sudo().get_param("github.private_key", "")
+        )
 
     @api.model
     def _generate_jwt(self):
@@ -36,12 +42,12 @@ class GitHubAPI(models.AbstractModel):
             raise ValueError("GitHub private key not configured in system parameters")
 
         payload = {
-            'iat': int(time.time()),
-            'exp': int(time.time()) + (10 * 60),  # 10 minutes
-            'iss': app_id
+            "iat": int(time.time()),
+            "exp": int(time.time()) + (10 * 60),  # 10 minutes
+            "iss": app_id,
         }
 
-        token = jwt.encode(payload, private_key, algorithm='RS256')
+        token = jwt.encode(payload, private_key, algorithm="RS256")
         return token
 
     @api.model
@@ -57,22 +63,24 @@ class GitHubAPI(models.AbstractModel):
             str: Installation access token
         """
         if not installation_id:
-            installation_id = self.env['ir.config_parameter'].sudo().get_param(
-                'github.installation_id'
+            installation_id = (
+                self.env["ir.config_parameter"]
+                .sudo()
+                .get_param("github.installation_id")
             )
 
         jwt_token = self._generate_jwt()
 
         response = requests.post(
-            f'https://api.github.com/app/installations/{installation_id}/access_tokens',
+            f"https://api.github.com/app/installations/{installation_id}/access_tokens",
             headers={
-                'Authorization': f'Bearer {jwt_token}',
-                'Accept': 'application/vnd.github.v3+json'
-            }
+                "Authorization": f"Bearer {jwt_token}",
+                "Accept": "application/vnd.github.v3+json",
+            },
         )
 
         if response.status_code == 201:
-            return response.json()['token']
+            return response.json()["token"]
         else:
             raise Exception(f"Failed to get installation token: {response.text}")
 
@@ -93,19 +101,19 @@ class GitHubAPI(models.AbstractModel):
         token = self._get_installation_token()
 
         data = {
-            'title': title,
-            'body': body,
+            "title": title,
+            "body": body,
         }
         if labels:
-            data['labels'] = labels
+            data["labels"] = labels
 
         response = requests.post(
-            f'https://api.github.com/repos/{repo}/issues',
+            f"https://api.github.com/repos/{repo}/issues",
             headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/vnd.github.v3+json'
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json",
             },
-            json=data
+            json=data,
         )
 
         if response.status_code == 201:
@@ -131,12 +139,12 @@ class GitHubAPI(models.AbstractModel):
         token = self._get_installation_token()
 
         response = requests.post(
-            f'https://api.github.com/repos/{repo}/issues/{issue_number}/comments',
+            f"https://api.github.com/repos/{repo}/issues/{issue_number}/comments",
             headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/vnd.github.v3+json'
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json",
             },
-            json={'body': body}
+            json={"body": body},
         )
 
         if response.status_code == 201:
@@ -146,7 +154,7 @@ class GitHubAPI(models.AbstractModel):
             raise Exception(f"Failed to create comment: {response.text}")
 
     @api.model
-    def trigger_workflow(self, repo, workflow_id, ref='main', inputs=None):
+    def trigger_workflow(self, repo, workflow_id, ref="main", inputs=None):
         """
         Trigger GitHub Actions workflow.
 
@@ -162,18 +170,18 @@ class GitHubAPI(models.AbstractModel):
         token = self._get_installation_token()
 
         data = {
-            'ref': ref,
+            "ref": ref,
         }
         if inputs:
-            data['inputs'] = inputs
+            data["inputs"] = inputs
 
         response = requests.post(
-            f'https://api.github.com/repos/{repo}/actions/workflows/{workflow_id}/dispatches',
+            f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_id}/dispatches",
             headers={
-                'Authorization': f'Bearer {token}',
-                'Accept': 'application/vnd.github.v3+json'
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github.v3+json",
             },
-            json=data
+            json=data,
         )
 
         if response.status_code == 204:

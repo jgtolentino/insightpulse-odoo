@@ -1,7 +1,8 @@
-from odoo import api, fields, models, _
-from odoo.exceptions import UserError, ValidationError
-import psycopg2
 import logging
+
+from odoo.exceptions import UserError, ValidationError
+
+from odoo import _, api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -63,7 +64,11 @@ class TenantManager(models.Model):
 
     _sql_constraints = [
         ("code_unique", "UNIQUE(code)", "Tenant code must be unique."),
-        ("database_name_unique", "UNIQUE(database_name)", "Database name must be unique."),
+        (
+            "database_name_unique",
+            "UNIQUE(database_name)",
+            "Database name must be unique.",
+        ),
     ]
 
     @api.depends("code")
@@ -81,7 +86,9 @@ class TenantManager(models.Model):
         for tenant in self:
             if tenant.code and not tenant.code.replace("_", "").isalnum():
                 raise ValidationError(
-                    _("Tenant code must contain only letters, numbers, and underscores.")
+                    _(
+                        "Tenant code must contain only letters, numbers, and underscores."
+                    )
                 )
 
     def action_provision(self):
@@ -211,9 +218,7 @@ class TenantPlan(models.Model):
     )
 
     # Limits
-    max_users = fields.Integer(
-        default=10, required=True, help="Maximum active users"
-    )
+    max_users = fields.Integer(default=10, required=True, help="Maximum active users")
     max_storage_mb = fields.Integer(
         default=1024, required=True, help="Maximum storage in MB"
     )

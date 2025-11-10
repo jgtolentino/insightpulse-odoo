@@ -384,3 +384,162 @@ When adding or modifying workflows:
 
 **Maintained by:** DevOps Team  
 **Questions?** Open an issue with label `infrastructure`.
+
+---
+
+## Enterprise Workflow Automation System (NEW)
+
+### Overview
+
+The repository now includes a comprehensive, self-healing CI/CD automation system with five major components:
+
+1. **Self-Healing Pipeline** (`self-healing.yml`) - Automatic failure recovery
+2. **Intelligent Router** (`router.yml`) - Smart change detection and routing
+3. **Scheduled Automations** (`scheduled.yml`) - Daily/weekly/monthly maintenance
+4. **Agentic Code Review** (`agent-review.yml`) - Automated quality enforcement
+5. **Monitoring & Remediation** (`monitor.yml`) - Production health management
+
+### Quick Reference
+
+| Workflow | Trigger | Purpose | Documentation |
+|----------|---------|---------|---------------|
+| `self-healing.yml` | Reusable | Retry failed jobs with intelligent recovery | [Architecture](../../docs/workflows.md) |
+| `router.yml` | PR/Push | Detect changes and route to specialized workflows | [Architecture](../../docs/workflows.md) |
+| `scheduled.yml` | Cron (Daily/Weekly/Monthly) | Automated maintenance and security tasks | [Architecture](../../docs/workflows.md) |
+| `agent-review.yml` | PR/Push | Automated code review and deployment | [Architecture](../../docs/workflows.md) |
+| `monitor.yml` | Cron (Every 15min) | Production monitoring and auto-healing | [Architecture](../../docs/workflows.md) |
+
+### Key Features
+
+✅ **Self-Healing**: Automatic retry with exponential backoff (max 3 retries)
+✅ **Intelligent Routing**: File-based change detection and parallel execution
+✅ **Security**: Daily vulnerability scans (Trivy, Safety, npm audit)
+✅ **Auto-Remediation**: Automatic healing of production issues (high CPU/memory)
+✅ **Compliance**: Weekly/monthly checks for dependencies and licenses
+✅ **Code Quality**: Auto-fix formatting and imports before PR review
+✅ **Documentation**: Comprehensive guides and operational runbooks
+
+### Supporting Components
+
+#### Custom Actions
+- **smart-cache** (`.github/actions/smart-cache/`) - Intelligent caching based on workflow type
+
+#### CI Scripts
+- **execute-job.sh** (`.github/scripts/ci/`) - Unified job execution with error handling
+- **health-check.sh** (`.github/scripts/ci/`) - Post-healing verification
+
+#### Documentation
+- **[Architecture Overview](../../docs/workflows.md)** - Complete system documentation (12KB)
+- **[Runbooks](../../docs/runbooks/)** - Operational procedures (27KB total)
+  - [High CPU Usage](../../docs/runbooks/high-cpu.md)
+  - [High Memory Usage](../../docs/runbooks/high-memory.md)
+  - [Slow Response Times](../../docs/runbooks/slow-response.md)
+  - [Service Restart Procedure](../../docs/runbooks/service-restart.md)
+
+### Workflow Scheduling
+
+```yaml
+# Scheduled tasks run at:
+- Daily 02:00 UTC: Dependency updates, security scans
+- Weekly Sunday 03:00 UTC: Performance tests, dead code detection
+- Monthly 1st 04:00 UTC: License compliance audits
+- Every 15 minutes: Production health monitoring
+```
+
+### Usage Examples
+
+#### Using Self-Healing in Your Workflow
+```yaml
+jobs:
+  my-job:
+    uses: ./.github/workflows/self-healing.yml
+    with:
+      job_name: test
+      max_retries: 3
+      enable_rollback: true
+```
+
+#### Triggering Scheduled Tasks Manually
+```bash
+# Run specific task
+gh workflow run scheduled.yml -f task=security-scans
+
+# Run all scheduled tasks
+gh workflow run scheduled.yml -f task=all
+```
+
+#### Production Monitoring
+```bash
+# Manual health check
+gh workflow run monitor.yml -f action=health-check
+
+# Trigger remediation
+gh workflow run monitor.yml -f action=remediate
+```
+
+### Configuration
+
+#### Required Secrets
+- `GITHUB_TOKEN` - Auto-provided for PR/issue creation
+- `ANTHROPIC_API_KEY` - For AI-powered features (optional)
+- `PRODUCTION_URL` - For health monitoring endpoint
+
+#### Environment Variables
+```yaml
+# Self-Healing
+RETRY_BACKOFF_BASE: 2       # Exponential backoff base
+MAX_RETRY_DELAY: 300        # Max delay (seconds)
+
+# Monitoring Thresholds
+ALERT_THRESHOLD_RESPONSE_TIME: 2000  # ms
+ALERT_THRESHOLD_ERROR_RATE: 5        # %
+ALERT_THRESHOLD_CPU: 80              # %
+ALERT_THRESHOLD_MEMORY: 85           # %
+```
+
+### Performance Metrics
+
+Target metrics for the automation system:
+
+| Metric | Target | Status |
+|--------|--------|--------|
+| Cache Hit Rate | 90% | 🟡 TBD |
+| Self-Healing Success Rate | 80% | 🟡 TBD |
+| Average Build Time | <10 min | 🟡 TBD |
+| False Positive Alert Rate | <5% | 🟡 TBD |
+| Mean Time to Remediation | <15 min | 🟡 TBD |
+
+### Integration with Existing Workflows
+
+The new automation system integrates with existing workflows:
+
+- **router.yml** calls existing specialized workflows (oca-pre-commit.yml, ci-consolidated.yml, docs-ci.yml)
+- **agent-review.yml** complements existing ai-code-review.yml
+- **monitor.yml** works alongside existing automation-health.yml and health-monitor.yml
+- **scheduled.yml** can replace/supplement existing backup-scheduler.yml and dependency-scanning.yml
+
+### Troubleshooting
+
+For issues with the automation system:
+
+1. Check [workflows.md](../../docs/workflows.md) for architecture details
+2. Review relevant [runbook](../../docs/runbooks/) for operational issues
+3. Check workflow logs in Actions tab
+4. Create issue with `workflow-automation` label
+
+### Future Enhancements
+
+Planned improvements:
+- [ ] Machine learning for flaky test detection
+- [ ] Predictive scaling based on metrics
+- [ ] Cross-repository workflow orchestration
+- [ ] Advanced cost optimization
+- [ ] Multi-cloud deployment support
+- [ ] Integration with Slack/PagerDuty/Datadog
+
+---
+
+**Automation System Version**: 1.0.0
+**Last Updated**: 2024-11-09
+**Maintainer**: InsightPulse DevOps Team
+

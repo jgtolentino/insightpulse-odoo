@@ -1,5 +1,6 @@
-from odoo import api, fields, models
 from odoo.modules.module import get_module_path
+
+from odoo import api, fields, models
 
 
 class IrModuleModule(models.Model):

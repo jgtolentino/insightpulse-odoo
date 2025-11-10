@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Odoo Knowledge Agent',
-    'version': '19.0.1.0.0',
-    'category': 'Tools',
-    'summary': 'Forum scraper and error prevention for Odoo custom modules',
-    'description': """
+    "name": "Odoo Knowledge Agent",
+    "version": "19.0.1.0.0",
+    "category": "Tools",
+    "summary": "Forum scraper and error prevention for Odoo custom modules",
+    "description": """
 Odoo Knowledge Agent
 ====================
 
@@ -19,21 +19,21 @@ Features:
 - Generates preventive guardrails
 - Creates auto-patch scripts
     """,
-    'author': 'InsightPulse AI',
-    'website': 'https://insightpulseai.net',
-    'license': 'LGPL-3',
-    'depends': [
-        'base',
+    "author": "InsightPulse AI",
+    "website": "https://insightpulseai.net",
+    "license": "LGPL-3",
+    "depends": [
+        "base",
     ],
-    'data': [
-        'security/ir.model.access.csv',
-        'data/cron_forum_scraper.xml',
-        'views/knowledge_agent_views.xml',
+    "data": [
+        "security/ir.model.access.csv",
+        "data/cron_forum_scraper.xml",
+        "views/knowledge_agent_views.xml",
     ],
-    'external_dependencies': {
-        'python': ['playwright'],
+    "external_dependencies": {
+        "python": ["playwright"],
     },
-    'installable': True,
-    'application': False,
-    'auto_install': False,
+    "installable": True,
+    "application": False,
+    "auto_install": False,
 }

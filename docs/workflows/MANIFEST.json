@@ -1,0 +1,116 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2025-11-10",
+  "project": "InsightPulse Odoo CE 18.0",
+  "total_workflows": 30,
+  "categories": {
+    "code_quality": {
+      "workflows": ["quality.yml"],
+      "purpose": "Enforce code standards (Black, isort, Flake8, Pylint, pre-commit)",
+      "triggers": ["pull_request", "push"],
+      "cli_equivalent": "make lint && make format",
+      "docs": "docs/workflows/CODE_QUALITY.md"
+    },
+    "ci_testing": {
+      "workflows": ["ci-unified.yml", "ci-odoo.yml", "tee-mvp-ci.yml"],
+      "purpose": "Run automated tests and validation",
+      "triggers": ["pull_request", "push"],
+      "cli_equivalent": "make test && make validate",
+      "docs": "docs/workflows/CI_TESTING.md"
+    },
+    "deployment": {
+      "workflows": ["cd-odoo-prod.yml", "deploy-gates.yml", "pages-deploy.yml", "supabase-funcs.yml"],
+      "purpose": "Deploy to production with validation gates",
+      "triggers": ["push:main", "workflow_dispatch"],
+      "cli_equivalent": "make deploy-prod",
+      "docs": "docs/workflows/DEPLOYMENT.md"
+    },
+    "documentation": {
+      "workflows": ["docs-validation.yml", "deploy-docs.yml", "gittodoc-ci.yml"],
+      "purpose": "Validate and deploy documentation",
+      "triggers": ["pull_request", "push", "schedule"],
+      "cli_equivalent": "make docs-validate && make docs-deploy",
+      "docs": "docs/workflows/DOCUMENTATION.md"
+    },
+    "automation": {
+      "workflows": ["ai-code-review.yml", "claude-autofix-bot.yml", "claude-config.yml", "automation-health.yml", "backup-scheduler.yml"],
+      "purpose": "AI-powered automation and health monitoring",
+      "triggers": ["pull_request", "schedule", "workflow_dispatch"],
+      "cli_equivalent": "make automation-check",
+      "docs": "docs/workflows/AUTOMATION.md"
+    }
+  },
+  "workflow_details": {
+    "quality.yml": {
+      "name": "Code Quality",
+      "purpose": "Run all code quality checks in parallel",
+      "jobs": ["black", "isort", "flake8", "pylint", "pre-commit"],
+      "cli_local": "make lint",
+      "skip_conditions": ["[skip ci]", "[no quality]"],
+      "estimated_duration": "3-5 minutes"
+    },
+    "ci-unified.yml": {
+      "name": "CI Unified",
+      "purpose": "Main CI orchestrator for all tests",
+      "jobs": ["quality-checks", "python-tests", "integration-tests"],
+      "cli_local": "make test",
+      "skip_conditions": ["[skip ci]", "[skip tests]"],
+      "estimated_duration": "8-12 minutes"
+    },
+    "ci-odoo.yml": {
+      "name": "Odoo CI",
+      "purpose": "Odoo-specific tests and validation",
+      "jobs": ["lint", "test", "validate"],
+      "cli_local": "make odoo-test",
+      "skip_conditions": ["[skip odoo]"],
+      "estimated_duration": "10-15 minutes"
+    },
+    "cd-odoo-prod.yml": {
+      "name": "CD - Odoo Production",
+      "purpose": "Deploy Odoo to DigitalOcean production",
+      "jobs": ["deploy", "health-check", "smoke-test"],
+      "cli_local": "make deploy-prod",
+      "requires_approval": true,
+      "estimated_duration": "5-10 minutes"
+    }
+  },
+  "ai_integration": {
+    "claude_code_skill": "github-workflows-navigator",
+    "auto_fix_workflows": ["claude-autofix-bot.yml", "ai-code-review.yml"],
+    "intelligent_routing": {
+      "code_quality_failure": "Run 'make lint' locally, review output, commit fixes",
+      "odoo_test_failure": "Run 'make odoo-test' locally, check test logs, fix failing tests",
+      "deployment_failure": "Check 'make deploy-gates', review deployment logs, verify infrastructure"
+    }
+  },
+  "cli_commands": {
+    "check_workflow_status": "gh pr view <PR> --json statusCheckRollup | jq '.statusCheckRollup'",
+    "trigger_deployment": "gh workflow run cd-odoo-prod.yml",
+    "run_quality_checks": "make lint && make format",
+    "run_tests": "make test",
+    "validate_all": "make validate"
+  },
+  "troubleshooting": {
+    "flake8_failures": {
+      "local_fix": "make lint",
+      "auto_fix": "autopep8 --in-place --aggressive <file>",
+      "workflow": "quality.yml"
+    },
+    "odoo_test_failures": {
+      "local_fix": "make odoo-test",
+      "logs": "pytest odoo/tests -v",
+      "workflow": "ci-odoo.yml"
+    },
+    "deployment_failures": {
+      "local_fix": "make deploy-gates",
+      "check_health": "curl https://erp.insightpulseai.net/web/health",
+      "workflow": "cd-odoo-prod.yml"
+    }
+  },
+  "deletion_log": {
+    "date": "2025-11-10",
+    "deleted_count": 62,
+    "reason": "Consolidation to reduce maintenance burden and improve AI-readability",
+    "deleted_workflows": []
+  }
+}

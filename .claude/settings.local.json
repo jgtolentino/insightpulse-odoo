@@ -148,7 +148,8 @@
       "Bash(do echo 'Repository: $repo%/')",
       "Bash(git -C $repo remote get-url origin)",
       "Bash(git -C $repo branch:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(/Users/tbwa/insightpulse-odoo/scripts/fix-pr-390-issues.sh:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'Finance SSC Month-End Closing',
-    'version': '19.0.1.0.0',
-    'category': 'Accounting/Finance',
-    'summary': 'Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center',
-    'description': """
+    "name": "Finance SSC Month-End Closing",
+    "version": "19.0.1.0.0",
+    "category": "Accounting/Finance",
+    "summary": "Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center",
+    "description": """
 Finance SSC Month-End Closing Module
 =====================================
 
@@ -41,62 +41,58 @@ Technical Details:
 - OCA Dependencies: auditlog, approval_request (optional)
 - License: LGPL-3
     """,
-    'author': 'InsightPulse AI',
-    'website': 'https://github.com/jgtolentino/insightpulse-odoo',
-    'license': 'LGPL-3',
-    'depends': [
-        'base',
-        'account',
-        'account_accountant',
-        'project',
-        'mail',
-        'hr',
-        'web',
+    "author": "InsightPulse AI",
+    "website": "https://github.com/jgtolentino/insightpulse-odoo",
+    "license": "LGPL-3",
+    "depends": [
+        "base",
+        "account",
+        "account_accountant",
+        "project",
+        "mail",
+        "hr",
+        "web",
     ],
-    'external_dependencies': {
-        'python': [],
+    "external_dependencies": {
+        "python": [],
     },
-    'data': [
+    "data": [
         # Security
-        'security/ir.model.access.csv',
-        'security/security.xml',
-
+        "security/ir.model.access.csv",
+        "security/security.xml",
         # Data
-        'data/closing_task_templates.xml',
-        'data/bir_form_templates.xml',
-        'data/mail_templates.xml',
-        'data/scheduled_actions.xml',
-
+        "data/closing_task_templates.xml",
+        "data/bir_form_templates.xml",
+        "data/mail_templates.xml",
+        "data/scheduled_actions.xml",
         # Views
-        'views/closing_period_views.xml',
-        'views/closing_task_views.xml',
-        'views/bir_compliance_views.xml',
-        'views/closing_dashboard_views.xml',
-        'views/menus.xml',
-
+        "views/closing_period_views.xml",
+        "views/closing_task_views.xml",
+        "views/bir_compliance_views.xml",
+        "views/closing_dashboard_views.xml",
+        "views/menus.xml",
         # Wizards
-        'wizard/generate_closing_tasks_views.xml',
-        'wizard/bulk_approve_views.xml',
-
+        "wizard/generate_closing_tasks_views.xml",
+        "wizard/bulk_approve_views.xml",
         # Reports
-        'reports/closing_report_template.xml',
-        'reports/bir_compliance_report.xml',
+        "reports/closing_report_template.xml",
+        "reports/bir_compliance_report.xml",
     ],
-    'demo': [
-        'demo/demo_data.xml',
+    "demo": [
+        "demo/demo_data.xml",
     ],
-    'assets': {
-        'web.assets_backend': [
-            'finance_ssc_closing/static/src/css/closing_dashboard.css',
-            'finance_ssc_closing/static/src/js/closing_dashboard.js',
+    "assets": {
+        "web.assets_backend": [
+            "finance_ssc_closing/static/src/css/closing_dashboard.css",
+            "finance_ssc_closing/static/src/js/closing_dashboard.js",
         ],
     },
-    'images': [
-        'static/description/icon.png',
-        'static/description/banner.png',
+    "images": [
+        "static/description/icon.png",
+        "static/description/banner.png",
     ],
-    'installable': True,
-    'application': True,
-    'auto_install': False,
-    'post_init_hook': 'post_init_hook',
+    "installable": True,
+    "application": True,
+    "auto_install": False,
+    "post_init_hook": "post_init_hook",
 }

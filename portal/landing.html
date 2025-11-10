@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>InsightPulseAI – Visualize and Orchestrate Your AI Systems</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta
+    name="description"
+    content="InsightPulseAI turns agents, APIs, and workflows into a live, secure system map with delegated AI execution and enterprise-grade security."
+  />
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            // Brand colors from /config/branding_theme.json
+            primary: {
+              DEFAULT: '#2F5BFF',
+              hover: '#1E44E0',
+              light: '#E8EEFF',
+            },
+            neutral: {
+              white: '#FFFFFF',
+              50: '#F8F9FA',
+              100: '#F1F3F5',
+              200: '#E9ECEF',
+              300: '#DEE2E6',
+              400: '#CED4DA',
+              500: '#ADB5BD',
+              600: '#6C757D',
+              700: '#495057',
+              800: '#343A40',
+              900: '#212529',
+            },
+            semantic: {
+              success: '#28A745',
+              warning: '#FFC107',
+              error: '#DC3545',
+              info: '#17A2B8',
+            },
+          },
+          fontFamily: {
+            sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'sans-serif'],
+            mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
+          },
+          boxShadow: {
+            soft: '0 18px 45px rgba(33,37,41,0.09)',
+            brand: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+          },
+          borderRadius: {
+            '3xl': '1.75rem',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Google Fonts - Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body class="min-h-screen bg-neutral-50 text-neutral-900 antialiased">
+  <!-- Background decorative gradient blobs -->
+  <div
+    aria-hidden="true"
+    class="pointer-events-none fixed inset-x-0 top-[-8rem] -z-10 transform-gpu overflow-hidden blur-3xl"
+  >
+    <div
+      class="relative left-1/2 aspect-[1155/678] w-[72rem] -translate-x-1/2 bg-gradient-to-tr from-primary-light to-purple-100 opacity-70"
+    ></div>
+  </div>
+
+  <!-- NAVBAR -->
+  <header class="border-b border-neutral-200 bg-white/80 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 lg:px-8">
+      <a href="#" class="flex items-center gap-2">
+        <div
+          class="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-primary to-violet-500 text-white shadow-md"
+        >
+          <span class="text-lg font-semibold">IP</span>
+        </div>
+        <div class="flex flex-col leading-tight">
+          <span class="text-base font-semibold tracking-tight">InsightPulseAI</span>
+          <span class="text-xs text-neutral-600">Finance SSC Automation</span>
+        </div>
+      </a>
+
+      <nav class="hidden items-center gap-8 text-sm font-medium text-neutral-700 md:flex">
+        <a href="#features" class="hover:text-neutral-900">Product</a>
+        <a href="#security" class="hover:text-neutral-900">Security</a>
+        <a href="#pricing" class="hover:text-neutral-900">Pricing</a>
+        <a href="#faq" class="hover:text-neutral-900">FAQ</a>
+      </nav>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="#demo"
+          class="hidden text-sm font-medium text-neutral-700 hover:text-neutral-900 md:inline"
+        >
+          Book a demo
+        </a>
+        <a
+          href="/index.html"
+          class="rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white shadow-soft hover:bg-primary-hover"
+        >
+          Sign in
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main class="mx-auto max-w-6xl px-4 pb-24 pt-10 lg:px-8 lg:pt-16">
+    <!-- HERO -->
+    <section class="grid gap-12 md:grid-cols-2 md:items-center">
+      <div>
+        <h1 class="text-4xl font-semibold tracking-tight text-neutral-900 sm:text-5xl">
+          Visualize and orchestrate your AI systems
+          <span class="text-primary">in real time.</span>
+        </h1>
+        <p class="mt-4 text-base leading-relaxed text-neutral-600">
+          InsightPulseAI turns agents, APIs, and workflows into a living, secure system map.
+          Monitor behavior, delegate actions, and govern AI automation from a single pane of
+          control.
+        </p>
+
+        <div class="mt-6 flex flex-wrap items-center gap-3">
+          <a
+            href="/index.html"
+            class="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-primary-hover"
+          >
+            Get started
+          </a>
+          <a
+            href="#demo"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:border-neutral-300"
+          >
+            See live demo
+          </a>
+          <p class="mt-1 text-xs text-neutral-500">
+            Designed for secure AI execution, observability, and compliance-first automation.
+          </p>
+        </div>
+      </div>
+
+      <!-- Hero mock diagram -->
+      <div class="relative">
+        <div
+          class="absolute -left-10 -top-10 h-32 w-32 rounded-full bg-primary-light/60 blur-3xl"
+        ></div>
+        <div
+          class="absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-violet-100 blur-3xl"
+        ></div>
+
+        <div
+          class="relative rounded-3xl bg-white/80 p-5 shadow-brand ring-1 ring-neutral-100 backdrop-blur"
+        >
+          <div class="mb-3 flex items-center justify-between text-xs text-neutral-400">
+            <span>Live System Map</span>
+            <span class="inline-flex items-center gap-1 rounded-full bg-semantic-success/10 px-2 py-1 text-[10px] font-medium text-semantic-success">
+              <span class="h-1.5 w-1.5 rounded-full bg-semantic-success"></span>
+              Streaming
+            </span>
+          </div>
+
+          <!-- Simple node graph -->
+          <div class="relative h-64 rounded-2xl bg-neutral-900/95 p-4">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_top,_#1e3a8a_0,_#020617_55%)] opacity-70"></div>
+            <div class="relative h-full w-full">
+              <!-- Nodes -->
+              <div
+                class="absolute left-4 top-1/2 flex -translate-y-1/2 flex-col items-center gap-1"
+              >
+                <div
+                  class="rounded-xl bg-neutral-800 px-3 py-1.5 text-[11px] font-medium text-neutral-100 shadow"
+                >
+                  Client Apps
+                </div>
+              </div>
+
+              <div
+                class="absolute left-1/2 top-10 flex -translate-x-1/2 flex-col items-center gap-1"
+              >
+                <div
+                  class="rounded-2xl bg-gradient-to-tr from-primary to-cyan-400 px-4 py-2 text-[11px] font-semibold text-white shadow-lg"
+                >
+                  InsightPulseAI Mesh
+                </div>
+              </div>
+
+              <div
+                class="absolute right-6 top-12 flex flex-col items-center gap-2 text-[10px] text-neutral-100"
+              >
+                <div class="rounded-xl bg-neutral-800/80 px-3 py-1.5 shadow">
+                  OpenAI / DeepSeek
+                </div>
+                <div class="rounded-xl bg-neutral-800/80 px-3 py-1.5 shadow">
+                  Internal APIs
+                </div>
+                <div class="rounded-xl bg-neutral-800/80 px-3 py-1.5 shadow">
+                  Databases
+                </div>
+              </div>
+
+              <!-- Lines -->
+              <div
+                class="absolute left-16 right-24 top-1/2 h-px -translate-y-1/2 bg-gradient-to-r from-sky-400/40 via-sky-300 to-transparent"
+              ></div>
+              <div
+                class="absolute left-1/2 top-16 h-16 w-px -translate-x-1/2 bg-gradient-to-b from-sky-300 via-sky-400 to-transparent"
+              ></div>
+              <div
+                class="absolute right-10 top-20 h-32 w-px bg-gradient-to-b from-sky-400/70 via-sky-300 to-transparent"
+              ></div>
+
+              <!-- Events -->
+              <div
+                class="absolute bottom-5 left-1/2 flex -translate-x-1/2 gap-2 rounded-full bg-neutral-900/70 px-3 py-1.5 text-[10px] text-neutral-200"
+              >
+                <span class="h-1.5 w-1.5 self-center rounded-full bg-semantic-success"></span>
+                42 secure executions · 3 pending approvals
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION: FEATURES SUMMARY -->
+    <section id="features" class="mt-20 space-y-12">
+      <div class="max-w-3xl">
+        <h2 class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+          Create AI system maps you can trust.
+        </h2>
+        <p class="mt-3 text-sm leading-relaxed text-neutral-600">
+          Move beyond static architecture diagrams. InsightPulseAI gives you real-time,
+          security-aware visibility into how agents, APIs, and automations actually behave,
+          not just how they were designed on paper.
+        </p>
+      </div>
+
+      <div class="grid gap-10 md:grid-cols-2 md:items-start">
+        <!-- Left: collapsible feature list -->
+        <div class="space-y-3">
+          <details
+            class="group rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm"
+            open
+          >
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Live agent & API flow diagrams</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs leading-relaxed text-neutral-600">
+              Pull topology straight from your repos, deployment manifests, and routing rules.
+              InsightPulseAI keeps diagrams synced as you ship new agents or refactor services.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Delegated AI execution with guardrails</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs leading-relaxed text-neutral-600">
+              Route high-privilege actions through isolated executors. Every tool call is
+              policy-checked, logged, and correlated back to the exact diagram node that
+              triggered it.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Context graphs & data lineage</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs leading-relaxed text-neutral-600">
+              Understand how prompts, tools, and datasets flow across agents. See where
+              sensitive fields travel and where decisions are actually made.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Collaboration for engineering, ops, and risk</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs leading-relaxed text-neutral-600">
+              Share read-only or interactive maps with product, security, and leadership.
+              Comment directly on nodes, flows, and execution logs to resolve issues faster.
+            </p>
+          </details>
+        </div>
+
+        <!-- Right: secondary screenshot / explanation -->
+        <div
+          class="rounded-3xl bg-white/80 p-5 shadow-brand ring-1 ring-neutral-100 backdrop-blur"
+        >
+          <div class="mb-3 flex items-center justify-between text-xs text-neutral-500">
+            <span>System overview</span>
+            <span>Last updated · 2 min ago</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div class="grid grid-cols-[auto,1fr] items-center gap-2 rounded-2xl bg-neutral-50 p-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-primary-light text-[11px] font-semibold text-primary">
+                A
+              </span>
+              <div>
+                <div class="font-semibold text-neutral-900">
+                  Multi-agent orchestration
+                </div>
+                <p class="text-[11px] text-neutral-600">
+                  Visualize planner, tool, and reviewer agents as first-class nodes with
+                  health, latency, and risk indicators.
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-[auto,1fr] items-center gap-2 rounded-2xl bg-neutral-50 p-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-semantic-success/10 text-[11px] font-semibold text-semantic-success">
+                S
+              </span>
+              <div>
+                <div class="font-semibold text-neutral-900">
+                  Secure routing layer
+                </div>
+                <p class="text-[11px] text-neutral-600">
+                  Define which models, tools, and environments each agent is allowed to touch.
+                  Enforce it at the mesh, not in scattered config files.
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-[auto,1fr] items-center gap-2 rounded-2xl bg-neutral-50 p-3">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-xl bg-semantic-warning/10 text-[11px] font-semibold text-semantic-warning">
+                O
+              </span>
+              <div>
+                <div class="font-semibold text-neutral-900">
+                  Observability built in
+                </div>
+                <p class="text-[11px] text-neutral-600">
+                  Overlay traces, anomalies, and policy violations directly on the diagram so
+                  issues are obvious from the first glance.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECURITY BAND -->
+    <section
+      id="security"
+      class="mt-20 rounded-3xl bg-neutral-900 px-6 py-10 text-neutral-100 shadow-brand md:px-10"
+    >
+      <div class="grid gap-10 md:grid-cols-[1.5fr,1fr] md:items-center">
+        <div>
+          <h2 class="text-2xl font-semibold tracking-tight sm:text-3xl">
+            Get enterprise-grade security and governance.
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-neutral-300">
+            InsightPulseAI is built as a delegated execution mesh: your secrets stay in your
+            control while agents act through tightly-scoped, auditable channels. Every
+            decision, prompt, and tool call can be inspected and tied back to policy.
+          </p>
+
+          <dl class="mt-6 grid gap-4 text-xs md:grid-cols-2">
+            <div>
+              <dt class="font-semibold text-neutral-100">Zero-trust routing</dt>
+              <dd class="mt-1 text-neutral-300">
+                Fine-grained allow-lists for models, tools, and environments per workspace,
+                agent, and team.
+              </dd>
+            </div>
+            <div>
+              <dt class="font-semibold text-neutral-100">Full execution audit trail</dt>
+              <dd class="mt-1 text-neutral-300">
+                End-to-end tracing from user intent to model output, including all tool calls
+                and context injections.
+              </dd>
+            </div>
+            <div>
+              <dt class="font-semibold text-neutral-100">Compliance-ready primitives</dt>
+              <dd class="mt-1 text-neutral-300">
+                SSO, SCIM, role-based access, and regional data residency options for
+                regulated teams.
+              </dd>
+            </div>
+            <div>
+              <dt class="font-semibold text-neutral-100">Secure deployment options</dt>
+              <dd class="mt-1 text-neutral-300">
+                Cloud-hosted or private VPC deployment, with your own key management and
+                logging stack.
+              </dd>
+            </div>
+          </dl>
+
+          <div class="mt-6 flex flex-wrap gap-3">
+            <a
+              href="/index.html"
+              class="inline-flex items-center justify-center rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-neutral-900 shadow hover:bg-neutral-100"
+            >
+              Talk to security
+            </a>
+            <a
+              href="#faq"
+              class="inline-flex items-center justify-center rounded-full border border-neutral-500 px-5 py-2.5 text-sm font-semibold text-neutral-100 hover:border-neutral-300"
+            >
+              View common questions
+            </a>
+          </div>
+        </div>
+
+        <div
+          class="rounded-2xl border border-neutral-700 bg-neutral-900/60 p-4 text-xs text-neutral-200"
+        >
+          <div class="mb-3 flex items-center justify-between text-[11px] text-neutral-400">
+            <span>Recent policy events</span>
+            <span>Last 24 hours</span>
+          </div>
+          <ul class="space-y-2">
+            <li class="flex items-start gap-2">
+              <span class="mt-[5px] h-1.5 w-1.5 rounded-full bg-semantic-success"></span>
+              <div>
+                <p class="font-medium">
+                  128 secure tool calls executed
+                </p>
+                <p class="text-[11px] text-neutral-400">
+                  Approved by mesh policies · no violations detected.
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-[5px] h-1.5 w-1.5 rounded-full bg-semantic-warning"></span>
+              <div>
+                <p class="font-medium">
+                  3 attempted high-privilege actions blocked
+                </p>
+                <p class="text-[11px] text-neutral-400">
+                  Non-compliant file access from experimental agent prevented and logged.
+                </p>
+              </div>
+            </li>
+            <li class="flex items-start gap-2">
+              <span class="mt-[5px] h-1.5 w-1.5 rounded-full bg-sky-400"></span>
+              <div>
+                <p class="font-medium">
+                  9 new routes deployed
+                </p>
+                <p class="text-[11px] text-neutral-400">
+                  Updated model & tool routing safely rolled out with automatic rollback
+                  hooks.
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- PRICING -->
+    <section
+      id="pricing"
+      class="mt-20 rounded-3xl bg-gradient-to-b from-primary-light to-purple-50 px-6 py-10 shadow-brand md:px-10"
+    >
+      <div class="max-w-3xl">
+        <h2 class="text-2xl font-semibold tracking-tight text-neutral-900 sm:text-3xl">
+          Determine which option best fits your needs.
+        </h2>
+        <p class="mt-3 text-sm text-neutral-600">
+          Start with a live system map in minutes and grow into a fully-governed AI execution
+          layer as your automation footprint expands.
+        </p>
+      </div>
+
+      <div class="mt-8 grid gap-6 md:grid-cols-3">
+        <!-- Free -->
+        <div
+          class="flex flex-col rounded-3xl border border-neutral-200 bg-white p-5 text-sm shadow-sm"
+        >
+          <h3 class="text-base font-semibold text-neutral-900">
+            Included · Sandbox
+          </h3>
+          <p class="mt-1 text-xs text-neutral-600">
+            Explore live diagrams for single projects and experiments.
+          </p>
+          <p class="mt-4 text-3xl font-semibold text-neutral-900">
+            $0
+            <span class="text-xs font-normal text-neutral-500">/ forever</span>
+          </p>
+          <ul class="mt-4 space-y-2 text-xs text-neutral-600">
+            <li>• 1 workspace</li>
+            <li>• 1 delegated executor</li>
+            <li>• Up to 3 external integrations</li>
+            <li>• Basic diagrams & observability</li>
+          </ul>
+          <a
+            href="/index.html"
+            class="mt-6 inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-900 hover:border-neutral-300"
+          >
+            Start in sandbox
+          </a>
+        </div>
+
+        <!-- Pro -->
+        <div
+          class="flex flex-col rounded-3xl border-2 border-primary bg-white p-5 text-sm shadow-brand"
+        >
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold text-neutral-900">
+              Pro Layer
+            </h3>
+            <span
+              class="rounded-full bg-primary-light px-2 py-0.5 text-[10px] font-semibold text-primary"
+            >
+              Most popular
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-neutral-600">
+            For teams running production agents and automation.
+          </p>
+          <p class="mt-4 text-3xl font-semibold text-neutral-900">
+            $9
+            <span class="text-xs font-normal text-neutral-500">/ user / month</span>
+          </p>
+          <ul class="mt-4 space-y-2 text-xs text-neutral-600">
+            <li>• Unlimited workspaces</li>
+            <li>• Team-based permissioning</li>
+            <li>• Advanced routing & policies</li>
+            <li>• Priority support and rollout guidance</li>
+          </ul>
+          <a
+            href="/index.html"
+            class="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary-hover"
+          >
+            Upgrade to Pro
+          </a>
+        </div>
+
+        <!-- Enterprise -->
+        <div
+          class="flex flex-col rounded-3xl border border-neutral-200 bg-white p-5 text-sm shadow-sm"
+        >
+          <h3 class="text-base font-semibold text-neutral-900">
+            Enterprise Mesh
+          </h3>
+          <p class="mt-1 text-xs text-neutral-600">
+            For organizations needing private routing, governance APIs, and custom controls.
+          </p>
+          <p class="mt-4 text-3xl font-semibold text-neutral-900">
+            Custom
+          </p>
+          <ul class="mt-4 space-y-2 text-xs text-neutral-600">
+            <li>• Private VPC or on-prem deployment</li>
+            <li>• SSO, SCIM & granular RBAC</li>
+            <li>• Compliance & security reviews</li>
+            <li>• Dedicated solutions support</li>
+          </ul>
+          <a
+            href="#demo"
+            class="mt-6 inline-flex items-center justify-center rounded-full border border-neutral-200 px-4 py-2 text-xs font-semibold text-neutral-900 hover:border-neutral-300"
+          >
+            Talk to sales
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- EXTEND YOUR DIAGRAMS -->
+    <section class="mt-16">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <h2 class="text-xl font-semibold tracking-tight text-neutral-900">
+            Extend InsightPulseAI with your existing stack.
+          </h2>
+          <p class="mt-2 text-sm text-neutral-600">
+            Connect the mesh to your favorite tools to enrich diagrams with telemetry, logs,
+            and collaboration context.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 flex gap-4 overflow-x-auto pb-2">
+        <!-- Card template -->
+        <article
+          class="min-w-[230px] max-w-xs flex-1 rounded-2xl border border-neutral-200 bg-white p-4 text-xs shadow-sm"
+        >
+          <h3 class="text-sm font-semibold text-neutral-900">
+            GitHub & CI/CD sync
+          </h3>
+          <p class="mt-2 text-neutral-600">
+            Keep diagrams aligned with the reality of your services by ingesting manifests,
+            workflows, and deployment metadata.
+          </p>
+        </article>
+
+        <article
+          class="min-w-[230px] max-w-xs flex-1 rounded-2xl border border-neutral-200 bg-white p-4 text-xs shadow-sm"
+        >
+          <h3 class="text-sm font-semibold text-neutral-900">
+            Observability overlays
+          </h3>
+          <p class="mt-2 text-neutral-600">
+            Plug into Datadog, OpenTelemetry, or custom metrics and see latency, error rates,
+            and anomalies directly on flows.
+          </p>
+        </article>
+
+        <article
+          class="min-w-[230px] max-w-xs flex-1 rounded-2xl border border-neutral-200 bg-white p-4 text-xs shadow-sm"
+        >
+          <h3 class="text-sm font-semibold text-neutral-900">
+            Slack & ticketing integrations
+          </h3>
+          <p class="mt-2 text-neutral-600">
+            Create, annotate, and resolve incidents from the diagram, with updates mirrored in
+            Slack and your issue tracker.
+          </p>
+        </article>
+
+        <article
+          class="min-w-[230px] max-w-xs flex-1 rounded-2xl border border-neutral-200 bg-white p-4 text-xs shadow-sm"
+        >
+          <h3 class="text-sm font-semibold text-neutral-900">
+            Model provider routing
+          </h3>
+          <p class="mt-2 text-neutral-600">
+            Visualize which agents use OpenAI, DeepSeek, or internal models and shift traffic
+            across providers safely.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq" class="mt-20 grid gap-10 md:grid-cols-[1.4fr,1fr] md:items-start">
+      <div>
+        <h2 class="text-2xl font-semibold tracking-tight text-neutral-900">
+          Frequently asked questions
+        </h2>
+        <p class="mt-2 text-sm text-neutral-600">
+          Quick answers to common questions about InsightPulseAI. For anything more specific,
+          we're happy to talk.
+        </p>
+
+        <div class="mt-6 space-y-3">
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4" open>
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>What is a delegated AI executor?</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs text-neutral-600">
+              It's an isolated environment that performs actions on behalf of an agent under
+              strict policies. Instead of exposing your real infrastructure directly to
+              models, executors mediate access and log every step.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>How is InsightPulseAI different from a typical dashboard?</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs text-neutral-600">
+              Traditional dashboards show metrics; InsightPulseAI combines live topology,
+              execution traces, and security policies into one interactive map. You don't just
+              observe the system—you steer it.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Can we run InsightPulseAI in our own cloud?</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs text-neutral-600">
+              Yes. Enterprise Mesh deployments support private VPC or on-prem, with your own
+              logging, monitoring, and key management systems.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-neutral-200 bg-white p-4">
+            <summary
+              class="flex cursor-pointer items-center justify-between text-sm font-semibold text-neutral-900"
+            >
+              <span>Which model and tool providers are supported?</span>
+              <span
+                class="ml-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-neutral-300 text-xs text-neutral-500 group-open:rotate-90"
+              >
+                ❯
+              </span>
+            </summary>
+            <p class="mt-2 text-xs text-neutral-600">
+              InsightPulseAI is provider-agnostic. Connect OpenAI, DeepSeek, self-hosted
+              models, HTTP APIs, databases, and internal tools through the same routing and
+              policy engine.
+            </p>
+          </details>
+        </div>
+      </div>
+
+      <!-- Get started panel -->
+      <section
+        id="demo"
+        class="rounded-3xl bg-white p-5 shadow-brand ring-1 ring-neutral-100"
+      >
+        <h3 class="text-lg font-semibold text-neutral-900">
+          Get started with InsightPulseAI
+        </h3>
+        <p class="mt-2 text-sm text-neutral-600">
+          Share a small slice of your existing automation or agent setup. We'll turn it into a
+          live diagram and walk you through a secure execution path in under an hour.
+        </p>
+
+        <div class="mt-4 space-y-2 text-xs text-neutral-600">
+          <p>Here's what you'll get:</p>
+          <ul class="list-disc space-y-1 pl-4">
+            <li>Shared map of your current agent & API topology</li>
+            <li>Recommendations for safer routing and permissions</li>
+            <li>Preview of observability and audit trails</li>
+          </ul>
+        </div>
+
+        <div class="mt-6 flex flex-col gap-3">
+          <a
+            href="/index.html"
+            class="inline-flex items-center justify-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-soft hover:bg-primary-hover"
+          >
+            Book a live walkthrough
+          </a>
+          <a
+            href="/index.html"
+            class="inline-flex items-center justify-center rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-semibold text-neutral-800 hover:border-neutral-300"
+          >
+            Join the early access list
+          </a>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="border-t border-neutral-200 bg-white">
+    <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-6 text-xs text-neutral-500 lg:px-8 md:flex-row md:items-center md:justify-between">
+      <div class="flex items-center gap-2">
+        <span class="text-sm font-semibold text-neutral-800">InsightPulseAI</span>
+        <span>·</span>
+        <span>Finance SSC Automation & AI orchestration mesh.</span>
+      </div>
+      <div class="flex flex-wrap gap-4">
+        <a href="#" class="hover:text-neutral-800">Product</a>
+        <a href="https://jgtolentino.github.io/insightpulse-odoo/" class="hover:text-neutral-800">Docs</a>
+        <a href="#security" class="hover:text-neutral-800">Security</a>
+        <a href="https://insightpulseai.net" class="hover:text-neutral-800">Status</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

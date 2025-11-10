@@ -1,0 +1,52 @@
+name: 'Smart Cache'
+description: 'Intelligent caching strategy based on workflow type'
+inputs:
+  cache-type:
+    description: 'Type of cache (python, npm, docker, general)'
+    required: true
+  cache-key-prefix:
+    description: 'Prefix for cache key'
+    required: false
+    default: 'cache'
+outputs:
+  cache-hit:
+    description: 'Whether cache was hit'
+    value: ${{ steps.cache.outputs.cache-hit }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup cache paths
+      id: cache-paths
+      shell: bash
+      run: |
+        case "${{ inputs.cache-type }}" in
+          python)
+            echo "paths=~/.cache/pip" >> $GITHUB_OUTPUT
+            echo "key=${{ inputs.cache-key-prefix }}-python-${{ hashFiles('**/requirements*.txt') }}" >> $GITHUB_OUTPUT
+            ;;
+          npm)
+            echo "paths=~/.npm" >> $GITHUB_OUTPUT
+            echo "key=${{ inputs.cache-key-prefix }}-npm-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
+            ;;
+          docker)
+            echo "paths=/tmp/.buildx-cache" >> $GITHUB_OUTPUT
+            echo "key=${{ inputs.cache-key-prefix }}-docker-${{ hashFiles('**/Dockerfile*') }}" >> $GITHUB_OUTPUT
+            ;;
+          general)
+            echo "paths=~/.cache" >> $GITHUB_OUTPUT
+            echo "key=${{ inputs.cache-key-prefix }}-general-${{ github.sha }}" >> $GITHUB_OUTPUT
+            ;;
+          *)
+            echo "::error::Unknown cache type: ${{ inputs.cache-type }}"
+            exit 1
+            ;;
+        esac
+
+    - name: Cache dependencies
+      id: cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ steps.cache-paths.outputs.paths }}
+        key: ${{ steps.cache-paths.outputs.key }}
+        restore-keys: |
+          ${{ inputs.cache-key-prefix }}-${{ inputs.cache-type }}-
