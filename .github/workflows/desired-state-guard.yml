@@ -1,0 +1,276 @@
+name: Desired State Guard
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+  schedule:
+    # Run daily at 6 AM UTC to catch drift
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  validate-desired-state:
+    runs-on: ubuntu-latest
+    name: Validate Repository Against Desired State
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Add any additional dependencies your validators need
+          # pip install pydantic jsonschema
+
+      - name: Verify desired_state.json exists
+        run: |
+          if [ ! -f docs/desired_state.json ]; then
+            echo "❌ ERROR: docs/desired_state.json not found"
+            exit 1
+          fi
+          echo "✅ Found docs/desired_state.json"
+
+      - name: Validate desired_state.json syntax
+        run: |
+          python3 -c "import json; json.load(open('docs/desired_state.json'))"
+          echo "✅ desired_state.json is valid JSON"
+
+      - name: Run desired state validator
+        id: validator
+        run: |
+          echo "🎯 Running desired state validation..."
+          python3 tools/check_desired_state.py --verbose
+        continue-on-error: true
+
+      - name: Upload validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desired-state-validation-report
+          path: |
+            docs/desired_state.json
+            tools/check_desired_state.py
+          retention-days: 30
+
+      - name: Check validation result
+        if: steps.validator.outcome == 'failure'
+        run: |
+          echo "❌ Desired state validation failed"
+          echo "The repository does not match the desired end state defined in docs/desired_state.json"
+          echo ""
+          echo "Common fixes:"
+          echo "  1. Ensure all custom modules use 'ipai_' prefix"
+          echo "  2. Verify module manifests have required fields"
+          echo "  3. Check for hardcoded secrets"
+          echo "  4. Ensure odoo_addons directory exists"
+          echo ""
+          echo "Run locally: python3 tools/check_desired_state.py --verbose"
+          exit 1
+
+      - name: Post validation success
+        if: steps.validator.outcome == 'success'
+        run: |
+          echo "🎯 ✅ Desired state validation passed!"
+          echo "Repository structure matches specification in docs/desired_state.json"
+
+      - name: Comment on PR (if validation fails)
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = `## ❌ Desired State Validation Failed
+
+            The repository does not match the desired end state defined in \`docs/desired_state.json\`.
+
+            ### Common Issues
+
+            - ✅ Ensure all custom modules use \`ipai_\` prefix
+            - ✅ Verify module manifests have all required fields
+            - ✅ Check for hardcoded secrets or credentials
+            - ✅ Ensure \`odoo_addons\` directory exists
+            - ✅ Verify Odoo version is 18.0 CE
+
+            ### How to Fix
+
+            Run the validator locally to see detailed errors:
+
+            \`\`\`bash
+            python3 tools/check_desired_state.py --verbose
+            \`\`\`
+
+            Then fix the issues and push again.
+
+            ### Validation Report
+
+            See the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId}) for detailed output.
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  validate-json-schema:
+    runs-on: ubuntu-latest
+    name: Validate desired_state.json Schema
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install jsonschema
+        run: pip install jsonschema
+
+      - name: Validate JSON structure
+        run: |
+          python3 << 'PYTHON_SCRIPT'
+          import json
+          import sys
+          from pathlib import Path
+
+          # Load the spec
+          spec_path = Path("docs/desired_state.json")
+          if not spec_path.exists():
+              print("❌ docs/desired_state.json not found")
+              sys.exit(1)
+
+          try:
+              spec = json.loads(spec_path.read_text())
+              print("✅ JSON is valid")
+          except json.JSONDecodeError as e:
+              print(f"❌ Invalid JSON: {e}")
+              sys.exit(1)
+
+          # Validate required top-level keys
+          required_keys = [
+              "target_state",
+              "runtime_environment",
+              "routing_specification",
+              "compliance_requirements"
+          ]
+
+          missing_keys = [k for k in required_keys if k not in spec]
+          if missing_keys:
+              print(f"❌ Missing required keys: {', '.join(missing_keys)}")
+              sys.exit(1)
+
+          print(f"✅ All required top-level keys present")
+
+          # Validate target_state has critical fields
+          target = spec.get("target_state", {})
+          critical_fields = ["odoo_version", "addons_root", "module_prefix"]
+          missing_critical = [f for f in critical_fields if not target.get(f)]
+
+          if missing_critical:
+              print(f"❌ target_state missing: {', '.join(missing_critical)}")
+              sys.exit(1)
+
+          print(f"✅ target_state has all critical fields")
+          print(f"   • Odoo: {target.get('odoo_version')}")
+          print(f"   • Addons root: {target.get('addons_root')}")
+          print(f"   • Module prefix: {target.get('module_prefix')}")
+
+          # Validate routing
+          routing = spec.get("routing_specification", {})
+          if not routing.get("routes"):
+              print("⚠️  No routes defined in routing_specification")
+          else:
+              print(f"✅ {len(routing['routes'])} routes defined")
+
+          print("\n🎯 desired_state.json schema validation passed!")
+          PYTHON_SCRIPT
+
+  check-drift:
+    runs-on: ubuntu-latest
+    name: Check for Configuration Drift
+    timeout-minutes: 5
+    if: github.event_name == 'schedule'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check for drift
+        id: drift
+        run: |
+          python3 tools/check_desired_state.py --verbose
+        continue-on-error: true
+
+      - name: Create drift issue
+        if: steps.drift.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Desired State Drift Detected (${new Date().toISOString().split('T')[0]})`;
+            const body = `## Configuration Drift Alert
+
+            The scheduled desired state validation has detected drift between the repository
+            and the specification defined in \`docs/desired_state.json\`.
+
+            ### What to do
+
+            1. Review the [workflow run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            2. Run validation locally: \`python3 tools/check_desired_state.py --verbose\`
+            3. Fix the drift or update the specification if intentional
+            4. Re-run the workflow to verify
+
+            ### Auto-detected via scheduled check
+
+            This issue was automatically created by the desired-state-guard workflow.
+            `;
+
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'desired-state-drift,automated'
+            });
+
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['desired-state-drift', 'automated', 'ops']
+              });
+              console.log('✅ Created drift alert issue');
+            } else {
+              console.log('⚠️  Drift issue already exists, skipping creation');
+            }

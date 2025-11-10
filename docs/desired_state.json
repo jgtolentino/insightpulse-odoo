@@ -1,0 +1,352 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "version": "1.0.0",
+  "last_updated": "2025-11-10",
+  "description": "InsightPulse Odoo - Desired End State Specification",
+
+  "target_state": {
+    "odoo_version": "18.0-ce",
+    "odoo_edition": "community",
+    "python_version": "3.11+",
+    "postgresql_version": "16+",
+
+    "addons_root": "odoo_addons",
+    "module_prefix": "ipai_",
+    "module_naming_convention": "snake_case",
+
+    "architecture": {
+      "type": "multi-tenant",
+      "license": "LGPL-3.0",
+      "oca_compliance": true,
+      "testing_required": true,
+      "min_test_coverage": 80
+    },
+
+    "module_structure": {
+      "required_files": [
+        "__init__.py",
+        "__manifest__.py",
+        "README.md"
+      ],
+      "optional_dirs": [
+        "models",
+        "views",
+        "security",
+        "data",
+        "controllers",
+        "static",
+        "tests",
+        "wizards",
+        "reports"
+      ]
+    },
+
+    "manifest_requirements": {
+      "required_fields": [
+        "name",
+        "version",
+        "category",
+        "license",
+        "author",
+        "depends",
+        "data"
+      ],
+      "version_format": "18.0.x.y.z",
+      "license_allowed": [
+        "LGPL-3",
+        "AGPL-3",
+        "LGPL-3.0",
+        "AGPL-3.0"
+      ]
+    },
+
+    "security_rules": {
+      "no_hardcoded_secrets": true,
+      "no_root_user": true,
+      "rls_enforcement": true,
+      "ssl_required": true,
+      "env_vars_only": true
+    },
+
+    "modules": {
+      "custom": [
+        "ipai_ariba_cxml",
+        "ipai_audit_discovery",
+        "ipai_chat_core",
+        "ipai_clarity_ppm_sync",
+        "ipai_concur_bridge",
+        "ipai_connect_external",
+        "ipai_consent_manager",
+        "ipai_dlp_guard",
+        "ipai_doc_ai",
+        "ipai_files_spaces",
+        "ipai_huddles_webrtc",
+        "ipai_retention_policies",
+        "ipai_salesforce_sync",
+        "ipai_scim_provisioner",
+        "ipai_search_vector",
+        "ipai_slack_bridge",
+        "ipai_statement_engine",
+        "ipai_visual_gate",
+        "ipai_workflow_bot"
+      ],
+      "oca_categories": [
+        "account-invoicing",
+        "account-payment",
+        "account-reconcile",
+        "account-financial-reporting",
+        "account-financial-tools",
+        "bank-payment",
+        "server-auth",
+        "server-tools",
+        "server-backend",
+        "queue",
+        "rest-framework",
+        "web",
+        "purchase-workflow",
+        "partner-contact",
+        "hr",
+        "reporting-engine",
+        "account-budgeting"
+      ]
+    }
+  },
+
+  "runtime_environment": {
+    "ERP_BASE_URL": "https://erp.insightpulseai.net",
+    "CHAT_BASE_URL": "https://chat.insightpulseai.net",
+    "N8N_BASE_URL": "https://n8n.insightpulseai.net",
+    "OCR_BASE_URL": "https://ocr.insightpulseai.net",
+    "AGENT_BASE_URL": "https://agent.insightpulseai.net",
+    "MCP_BASE_URL": "https://mcp.insightpulseai.net",
+    "SUPERSET_BASE_URL": "https://superset.insightpulseai.net",
+
+    "database": {
+      "host": "aws-1-us-east-1.pooler.supabase.com",
+      "port": 6543,
+      "ssl_mode": "require",
+      "pooler_mode": "transaction"
+    },
+
+    "deployment": {
+      "platform": "digitalocean",
+      "region": "nyc3",
+      "min_memory": "512MB",
+      "recommended_memory": "1GB",
+      "workers": 2,
+      "max_cron_threads": 1
+    },
+
+    "integrations": {
+      "supabase": {
+        "enabled": true,
+        "features": ["pgvector", "rls", "backups"]
+      },
+      "superset": {
+        "enabled": true,
+        "version": "3.0+",
+        "dashboards": 5
+      },
+      "n8n": {
+        "enabled": true,
+        "purpose": "workflow_automation"
+      },
+      "paddleocr": {
+        "enabled": true,
+        "endpoint": "https://ade-ocr-backend-d9dru.ondigitalocean.app"
+      },
+      "openai": {
+        "enabled": true,
+        "model": "gpt-4o-mini",
+        "use_case": ["embeddings", "chat", "document_processing"]
+      }
+    }
+  },
+
+  "routing_specification": {
+    "description": "Unified domain routing for InsightPulse services",
+    "base_domain": "insightpulseai.net",
+    "ssl_provider": "letsencrypt",
+    "proxy": "nginx",
+
+    "routes": [
+      {
+        "subdomain": "erp",
+        "target": "odoo:8069",
+        "description": "Main Odoo ERP instance"
+      },
+      {
+        "subdomain": "chat",
+        "target": "mattermost:8065",
+        "description": "Slack alternative (optional)"
+      },
+      {
+        "subdomain": "n8n",
+        "target": "n8n:5678",
+        "description": "Workflow automation"
+      },
+      {
+        "subdomain": "ocr",
+        "target": "paddleocr:8000",
+        "description": "Document OCR service"
+      },
+      {
+        "subdomain": "agent",
+        "target": "ipai-agent:8080",
+        "description": "AI agent services"
+      },
+      {
+        "subdomain": "mcp",
+        "target": "mcp-server:3000",
+        "description": "Model Context Protocol server"
+      },
+      {
+        "subdomain": "superset",
+        "target": "superset:8088",
+        "description": "BI dashboards"
+      }
+    ]
+  },
+
+  "compliance_requirements": {
+    "bir_philippines": {
+      "enabled": true,
+      "forms_supported": [
+        "1601-C",
+        "1702-RT",
+        "1702-EX",
+        "2550Q",
+        "ATP"
+      ]
+    },
+    "gdpr": {
+      "enabled": true,
+      "features": [
+        "right_to_erasure",
+        "data_portability",
+        "consent_management"
+      ]
+    },
+    "soc2": {
+      "enabled": true,
+      "controls": [
+        "access_control",
+        "audit_logging",
+        "encryption_at_rest",
+        "encryption_in_transit"
+      ]
+    }
+  },
+
+  "testing_requirements": {
+    "frameworks": ["pytest", "unittest", "playwright"],
+    "coverage_min": 80,
+    "test_types": [
+      "unit",
+      "integration",
+      "e2e",
+      "performance"
+    ],
+    "ci_platforms": ["github_actions"],
+    "test_execution": {
+      "on_push": true,
+      "on_pr": true,
+      "scheduled": "daily"
+    }
+  },
+
+  "ci_cd_requirements": {
+    "linting": {
+      "python": ["pylint", "flake8", "black"],
+      "javascript": ["eslint", "prettier"]
+    },
+    "security_scanning": {
+      "secrets": ["gitleaks", "truffleHog"],
+      "dependencies": ["snyk", "dependabot"],
+      "containers": ["trivy"]
+    },
+    "deployment_gates": {
+      "tests_pass": true,
+      "security_scan_pass": true,
+      "code_review_required": true,
+      "branch_protection": true
+    }
+  },
+
+  "documentation_requirements": {
+    "module_readme": true,
+    "api_documentation": true,
+    "user_guides": true,
+    "deployment_guides": true,
+    "architecture_docs": true,
+    "changelog": true
+  },
+
+  "validation_rules": {
+    "no_enterprise_modules": {
+      "description": "Only CE and OCA modules allowed",
+      "enforcement": "strict",
+      "reason": "Cost reduction and open-source compliance"
+    },
+    "module_prefix_enforcement": {
+      "description": "All custom modules must start with ipai_",
+      "enforcement": "strict",
+      "reason": "Namespace isolation and clarity"
+    },
+    "test_coverage_gate": {
+      "description": "Minimum 80% test coverage for custom modules",
+      "enforcement": "warning",
+      "reason": "Quality assurance"
+    },
+    "manifest_validation": {
+      "description": "All manifests must have required fields",
+      "enforcement": "strict",
+      "reason": "OCA compliance"
+    },
+    "no_secrets_in_repo": {
+      "description": "No hardcoded secrets, credentials, or API keys",
+      "enforcement": "strict",
+      "reason": "Security"
+    }
+  },
+
+  "saas_replacement_targets": {
+    "notion_enterprise": {
+      "replacement": "odoo_knowledge + ipai_knowledge_ai",
+      "parity": 87,
+      "annual_savings": 12000
+    },
+    "sap_concur": {
+      "replacement": "ipai_expense + paddleocr",
+      "parity": 85,
+      "annual_savings": 18000
+    },
+    "sap_ariba": {
+      "replacement": "ipai_procure + oca_purchase",
+      "parity": 90,
+      "annual_savings": 15000
+    },
+    "tableau": {
+      "replacement": "apache_superset",
+      "parity": 110,
+      "annual_savings": 8400
+    },
+    "slack_business": {
+      "replacement": "mattermost",
+      "parity": 95,
+      "annual_savings": 3600
+    },
+    "jira_software": {
+      "replacement": "ipai_ppm + odoo_project",
+      "parity": 90,
+      "annual_savings": 4200
+    }
+  },
+
+  "cost_optimization": {
+    "target_monthly_infrastructure": 20,
+    "target_annual_infrastructure": 240,
+    "vs_enterprise_stack_monthly": 5100,
+    "savings_percentage": 91
+  }
+}
