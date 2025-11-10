@@ -32,6 +32,7 @@ except ImportError:
 
 class FixProposal(BaseModel):
     """Structured fix proposal from Claude"""
+
     category: str = Field(description="Error category")
     files_to_modify: List[str] = Field(description="Files that need changes")
     changes: List[Dict[str, str]] = Field(description="Specific changes to apply")
@@ -45,7 +46,7 @@ class ClaudeAutoFixer:
     """Autonomous CI failure fixer using Claude Code"""
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or os.getenv('ANTHROPIC_API_KEY')
+        self.api_key = api_key or os.getenv("ANTHROPIC_API_KEY")
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY not set")
 
@@ -53,15 +54,10 @@ class ClaudeAutoFixer:
         self.model = "claude-sonnet-4-5-20250929"  # Claude Sonnet 4.5
 
     @retry(
-        stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10)
+        stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10)
     )
     def analyze_and_fix(
-        self,
-        error_log: str,
-        category: str,
-        confidence: float,
-        suggested_fix: str
+        self, error_log: str, category: str, confidence: float, suggested_fix: str
     ) -> FixProposal:
         """Analyze error and generate fix proposal"""
 
@@ -129,9 +125,7 @@ Return JSON with this structure:
             max_tokens=4096,
             temperature=0.2,  # Low temperature for deterministic fixes
             system=system_prompt,
-            messages=[
-                {"role": "user", "content": user_prompt}
-            ]
+            messages=[{"role": "user", "content": user_prompt}],
         )
 
         # Parse JSON response
@@ -163,13 +157,13 @@ Return JSON with this structure:
             return False
 
         for change in proposal.changes:
-            file_path = Path(change['file'])
+            file_path = Path(change["file"])
 
-            if change['action'] == 'edit':
+            if change["action"] == "edit":
                 self._apply_edit(file_path, change)
-            elif change['action'] == 'create':
+            elif change["action"] == "create":
                 self._create_file(file_path, change)
-            elif change['action'] == 'delete':
+            elif change["action"] == "delete":
                 self._delete_file(file_path, change)
 
         return True
@@ -182,21 +176,21 @@ Return JSON with this structure:
 
         content = file_path.read_text()
 
-        if 'before' in change and 'after' in change:
+        if "before" in change and "after" in change:
             # String replacement
-            if change['before'] in content:
-                updated_content = content.replace(change['before'], change['after'])
+            if change["before"] in content:
+                updated_content = content.replace(change["before"], change["after"])
                 file_path.write_text(updated_content)
                 print(f"✅ Edited: {file_path}")
             else:
                 print(f"⚠️  Pattern not found in {file_path}: {change['before'][:50]}")
-        elif 'line_number' in change and 'new_line' in change:
+        elif "line_number" in change and "new_line" in change:
             # Line replacement
             lines = content.splitlines(keepends=True)
-            line_num = change['line_number'] - 1  # 0-indexed
+            line_num = change["line_number"] - 1  # 0-indexed
             if 0 <= line_num < len(lines):
-                lines[line_num] = change['new_line'] + '\n'
-                file_path.write_text(''.join(lines))
+                lines[line_num] = change["new_line"] + "\n"
+                file_path.write_text("".join(lines))
                 print(f"✅ Edited line {change['line_number']} in {file_path}")
             else:
                 print(f"⚠️  Invalid line number: {change['line_number']}")
@@ -204,7 +198,7 @@ Return JSON with this structure:
     def _create_file(self, file_path: Path, change: Dict):
         """Create new file"""
         file_path.parent.mkdir(parents=True, exist_ok=True)
-        file_path.write_text(change.get('content', ''))
+        file_path.write_text(change.get("content", ""))
         print(f"✅ Created: {file_path}")
 
     def _delete_file(self, file_path: Path, change: Dict):
@@ -223,9 +217,7 @@ Return JSON with this structure:
 
         for test in tests:
             result = subprocess.run(
-                ['pytest', test, '-v'],
-                capture_output=True,
-                text=True
+                ["pytest", test, "-v"], capture_output=True, text=True
             )
 
             if result.returncode != 0:
@@ -241,12 +233,20 @@ Return JSON with this structure:
 def main():
     """CLI interface"""
     parser = argparse.ArgumentParser(description="Claude Code Auto-Fixer")
-    parser.add_argument('--error-log', required=True, help='Path to error log file')
-    parser.add_argument('--category', required=True, help='ML-detected error category')
-    parser.add_argument('--confidence', required=True, type=float, help='ML confidence (0-100)')
-    parser.add_argument('--suggested-fix', required=True, help='Path to ML suggested fix')
-    parser.add_argument('--auto-commit', type=lambda x: x.lower() == 'true', default=False,
-                        help='Auto-commit if tests pass')
+    parser.add_argument("--error-log", required=True, help="Path to error log file")
+    parser.add_argument("--category", required=True, help="ML-detected error category")
+    parser.add_argument(
+        "--confidence", required=True, type=float, help="ML confidence (0-100)"
+    )
+    parser.add_argument(
+        "--suggested-fix", required=True, help="Path to ML suggested fix"
+    )
+    parser.add_argument(
+        "--auto-commit",
+        type=lambda x: x.lower() == "true",
+        default=False,
+        help="Auto-commit if tests pass",
+    )
 
     args = parser.parse_args()
 
@@ -263,11 +263,11 @@ def main():
         error_log=error_log,
         category=args.category,
         confidence=args.confidence,
-        suggested_fix=suggested_fix
+        suggested_fix=suggested_fix,
     )
 
     # Save proposal
-    proposal_path = Path('fix-proposal.json')
+    proposal_path = Path("fix-proposal.json")
     proposal_path.write_text(proposal.model_dump_json(indent=2))
     print(f"📄 Fix proposal saved to {proposal_path}")
 
@@ -284,7 +284,7 @@ def main():
 
         if not tests_passed:
             print("❌ Verification tests failed, reverting changes")
-            subprocess.run(['git', 'checkout', '.'], check=False)
+            subprocess.run(["git", "checkout", "."], check=False)
             sys.exit(1)
 
     # Auto-commit if requested and tests passed
@@ -297,5 +297,5 @@ def main():
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
