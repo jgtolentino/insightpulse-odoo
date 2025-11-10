@@ -1,6 +1,6 @@
 # InsightPulse Odoo Platform
 
-Multi-tenant, BIR-compliant Finance Shared Service Center (SSC) built on Odoo CE 19.
+Multi-tenant, BIR-compliant Finance Shared Service Center (SSC) built on Odoo CE 18.0.
 
 ## Quick Links
 
@@ -10,13 +10,15 @@ Multi-tenant, BIR-compliant Finance Shared Service Center (SSC) built on Odoo CE
 - [Deployments](deployments/)
 - [Platform Spec-Kit](spec-kit/)
 - [Pulser Spec-Kit](pulser/)
+- [Visual Compliance Agent](knowledge-graph-architecture.md)
+- [Routing Review](ROUTING_REVIEW.md)
 
 ## Overview
 
 InsightPulse Odoo is a self-hosted ERP platform that replaces expensive SaaS tools (SAP Concur, Ariba, Tableau) with 100% open-source alternatives.
 
 **Core Technologies:**
-- ERP: Odoo CE 19 + OCA modules
+- ERP: Odoo CE 18.0 + OCA modules
 - Database: PostgreSQL 15 + Supabase
 - Analytics: Apache Superset (Tableau alternative)
 - Infrastructure: DigitalOcean (Docker + App Platform)
