@@ -12,7 +12,7 @@
         "views/menu.xml",
         "views/expense_views.xml",
         "views/templates.xml",
-        "views/admin_dashboard.xml"
+        "views/admin_dashboard.xml",
     ],
     "application": True,
 }

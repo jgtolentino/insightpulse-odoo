@@ -4,18 +4,20 @@ CI Autofix Helper
 Extracts errors from GitHub Actions logs and generates fix suggestions using LLM
 """
 
+import json
 import os
 import re
 import sys
-import json
+from dataclasses import asdict, dataclass
+from typing import List, Optional
+
 import requests
-from typing import List, Dict, Optional
-from dataclasses import dataclass, asdict
 
 
 @dataclass
 class Error:
     """Represents a CI error"""
+
     type: str
     message: str
     file: Optional[str] = None
@@ -40,25 +42,24 @@ class CIAutofixHelper:
         (r"ValueError:(.+)", "value_error"),
         (r"KeyError:(.+)", "key_error"),
         (r"AttributeError:(.+)", "attribute_error"),
-
         # Linting errors
         (r"([A-Z]\d{3,4}):(.+)", "lint_error"),
         (r"pylint:(.+?):\d+:\d+:(.+)", "pylint_error"),
         (r"flake8:(.+?):\d+:\d+:(.+)", "flake8_error"),
-
         # Odoo specific errors
         (r"odoo\.exceptions\.(.+?):(.+)", "odoo_error"),
         (r"ParseError:(.+)", "odoo_parse_error"),
         (r"ValidationError:(.+)", "odoo_validation_error"),
-
         # Docker/deployment errors
         (r"Error response from daemon:(.+)", "docker_error"),
         (r"FATAL:(.+)", "fatal_error"),
     ]
 
-    def __init__(self, github_token: Optional[str] = None, openai_api_key: Optional[str] = None):
-        self.github_token = github_token or os.getenv('GITHUB_TOKEN')
-        self.openai_api_key = openai_api_key or os.getenv('OPENAI_API_KEY')
+    def __init__(
+        self, github_token: Optional[str] = None, openai_api_key: Optional[str] = None
+    ):
+        self.github_token = github_token or os.getenv("GITHUB_TOKEN")
+        self.openai_api_key = openai_api_key or os.getenv("OPENAI_API_KEY")
 
     def extract_errors(self, logs: str) -> List[Error]:
         """Extract errors from CI logs"""
@@ -115,7 +116,9 @@ class CIAutofixHelper:
                 return int(match.group(1))
         return None
 
-    def generate_fix_prompt(self, errors: List[Error], workflow_name: str, repo: str) -> str:
+    def generate_fix_prompt(
+        self, errors: List[Error], workflow_name: str, repo: str
+    ) -> str:
         """Generate prompt for LLM to fix errors"""
         prompt = f"""# CI Failure Autofix Request
 
@@ -182,12 +185,9 @@ For each error, provide:
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are an expert software engineer specializing in debugging CI/CD failures, Python, Odoo, and DevOps. Provide concise, actionable fixes."
+                            "content": "You are an expert software engineer specializing in debugging CI/CD failures, Python, Odoo, and DevOps. Provide concise, actionable fixes.",
                         },
-                        {
-                            "role": "user",
-                            "content": prompt
-                        }
+                        {"role": "user", "content": prompt},
                     ],
                     "temperature": 0.3,
                     "max_tokens": 2000,
@@ -203,8 +203,14 @@ For each error, provide:
         except Exception as e:
             return f"ERROR calling OpenAI API: {str(e)}"
 
-    def create_issue_body(self, errors: List[Error], fix_suggestion: str,
-                         workflow_name: str, run_id: int, run_url: str) -> str:
+    def create_issue_body(
+        self,
+        errors: List[Error],
+        fix_suggestion: str,
+        workflow_name: str,
+        run_id: int,
+        run_url: str,
+    ) -> str:
         """Create GitHub issue body with error details and fix suggestions"""
         body = f"""## 🤖 CI Autofix Assistant
 
@@ -257,6 +263,7 @@ For each error, provide:
     def _get_timestamp(self) -> str:
         """Get current timestamp in ISO format"""
         from datetime import datetime
+
         return datetime.utcnow().isoformat() + "Z"
 
 
@@ -272,13 +279,13 @@ def main():
     log_source = sys.argv[1]
 
     # Read logs
-    if log_source.startswith('http'):
+    if log_source.startswith("http"):
         # Download from URL
         response = requests.get(log_source)
         logs = response.text
     else:
         # Read from file
-        with open(log_source, 'r') as f:
+        with open(log_source, "r") as f:
             logs = f.read()
 
     # Extract errors
@@ -289,9 +296,9 @@ def main():
     print(json.dumps([asdict(e) for e in errors], indent=2))
 
     # Generate fix
-    if os.getenv('GENERATE_FIX') == 'true':
-        workflow_name = os.getenv('WORKFLOW_NAME', 'Unknown')
-        repo = os.getenv('GITHUB_REPOSITORY', 'unknown/repo')
+    if os.getenv("GENERATE_FIX") == "true":
+        workflow_name = os.getenv("WORKFLOW_NAME", "Unknown")
+        repo = os.getenv("GITHUB_REPOSITORY", "unknown/repo")
 
         prompt = helper.generate_fix_prompt(errors, workflow_name, repo)
         print("\n📝 Generated prompt:")

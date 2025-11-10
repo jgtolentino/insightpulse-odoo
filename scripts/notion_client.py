@@ -16,10 +16,11 @@ Dependencies:
     pip install notion-client python-dateutil
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Any
+import os
 from datetime import datetime
+from typing import Any, Dict, List, Optional
+
 from notion_client import Client
 from notion_client.errors import APIResponseError
 
@@ -37,7 +38,7 @@ class NotionClient:
         Args:
             api_token: Notion API token. Defaults to NOTION_API_TOKEN env var.
         """
-        self.api_token = api_token or os.getenv('NOTION_API_TOKEN')
+        self.api_token = api_token or os.getenv("NOTION_API_TOKEN")
         if not self.api_token:
             raise ValueError("Notion API token required (NOTION_API_TOKEN env var)")
 
@@ -60,13 +61,15 @@ class NotionClient:
                 database_id=database_id,
                 filter={
                     "property": "External ID",
-                    "rich_text": {"equals": external_id}
-                }
+                    "rich_text": {"equals": external_id},
+                },
             )
 
-            if response.get('results'):
-                page_id = response['results'][0]['id']
-                logger.info(f"Found existing page: {page_id} (external_id={external_id})")
+            if response.get("results"):
+                page_id = response["results"][0]["id"]
+                logger.info(
+                    f"Found existing page: {page_id} (external_id={external_id})"
+                )
                 return page_id
 
             logger.info(f"No existing page found (external_id={external_id})")
@@ -81,7 +84,7 @@ class NotionClient:
         database_id: str,
         external_id: str,
         properties: Dict[str, Any],
-        children: Optional[List[Dict]] = None
+        children: Optional[List[Dict]] = None,
     ) -> str:
         """
         Create or update page using External ID pattern.
@@ -96,14 +99,10 @@ class NotionClient:
             Page ID of created/updated page
         """
         # Add External ID to properties
-        properties['External ID'] = {
-            'rich_text': [{'text': {'content': external_id}}]
-        }
+        properties["External ID"] = {"rich_text": [{"text": {"content": external_id}}]}
 
         # Add timestamp
-        properties['Last Synced'] = {
-            'date': {'start': datetime.now().isoformat()}
-        }
+        properties["Last Synced"] = {"date": {"start": datetime.now().isoformat()}}
 
         # Check if page already exists
         existing_page_id = self.find_by_external_id(database_id, external_id)
@@ -111,10 +110,7 @@ class NotionClient:
         if existing_page_id:
             # Update existing page
             logger.info(f"Updating page: {existing_page_id}")
-            self.client.pages.update(
-                page_id=existing_page_id,
-                properties=properties
-            )
+            self.client.pages.update(page_id=existing_page_id, properties=properties)
             return existing_page_id
         else:
             # Create new page
@@ -122,15 +118,12 @@ class NotionClient:
             response = self.client.pages.create(
                 parent={"database_id": database_id},
                 properties=properties,
-                children=children or []
+                children=children or [],
             )
-            return response['id']
+            return response["id"]
 
     def create_database_schema(
-        self,
-        parent_page_id: str,
-        title: str,
-        properties: Dict[str, Dict[str, Any]]
+        self, parent_page_id: str, title: str, properties: Dict[str, Dict[str, Any]]
     ) -> str:
         """
         Create new database with schema.
@@ -144,18 +137,18 @@ class NotionClient:
             Database ID
         """
         # Ensure External ID and Last Synced columns exist
-        if 'External ID' not in properties:
-            properties['External ID'] = {'rich_text': {}}
-        if 'Last Synced' not in properties:
-            properties['Last Synced'] = {'date': {}}
+        if "External ID" not in properties:
+            properties["External ID"] = {"rich_text": {}}
+        if "Last Synced" not in properties:
+            properties["Last Synced"] = {"date": {}}
 
         response = self.client.databases.create(
             parent={"type": "page_id", "page_id": parent_page_id},
             title=[{"type": "text", "text": {"content": title}}],
-            properties=properties
+            properties=properties,
         )
 
-        database_id = response['id']
+        database_id = response["id"]
         logger.info(f"Created database: {title} ({database_id})")
         return database_id
 
@@ -163,7 +156,7 @@ class NotionClient:
         self,
         database_id: str,
         items: List[Dict[str, Any]],
-        external_id_field: str = 'external_id'
+        external_id_field: str = "external_id",
     ) -> List[str]:
         """
         Bulk upsert multiple pages.
@@ -184,15 +177,15 @@ class NotionClient:
                 logger.warning(f"Skipping item without external ID: {item}")
                 continue
 
-            properties = item.get('properties', {})
-            children = item.get('children')
+            properties = item.get("properties", {})
+            children = item.get("children")
 
             try:
                 page_id = self.upsert_page(
                     database_id=database_id,
                     external_id=external_id,
                     properties=properties,
-                    children=children
+                    children=children,
                 )
                 page_ids.append(page_id)
             except Exception as e:
@@ -202,9 +195,7 @@ class NotionClient:
         return page_ids
 
     def get_database_items(
-        self,
-        database_id: str,
-        filter_params: Optional[Dict] = None
+        self, database_id: str, filter_params: Optional[Dict] = None
     ) -> List[Dict]:
         """
         Retrieve all items from database.
@@ -229,10 +220,10 @@ class NotionClient:
                 query_params["start_cursor"] = next_cursor
 
             response = self.client.databases.query(**query_params)
-            results.extend(response.get('results', []))
+            results.extend(response.get("results", []))
 
-            has_more = response.get('has_more', False)
-            next_cursor = response.get('next_cursor')
+            has_more = response.get("has_more", False)
+            next_cursor = response.get("next_cursor")
 
         logger.info(f"Retrieved {len(results)} items from database")
         return results
@@ -249,27 +240,27 @@ def create_notion_property(prop_type: str, value: Any) -> Dict[str, Any]:
     Returns:
         Notion property object
     """
-    if prop_type == 'title':
-        return {'title': [{'text': {'content': str(value)}}]}
-    elif prop_type == 'rich_text':
-        return {'rich_text': [{'text': {'content': str(value)}}]}
-    elif prop_type == 'number':
-        return {'number': float(value)}
-    elif prop_type == 'select':
-        return {'select': {'name': str(value)}}
-    elif prop_type == 'multi_select':
-        return {'multi_select': [{'name': item} for item in value]}
-    elif prop_type == 'date':
-        return {'date': {'start': value}}
-    elif prop_type == 'checkbox':
-        return {'checkbox': bool(value)}
-    elif prop_type == 'url':
-        return {'url': str(value)}
+    if prop_type == "title":
+        return {"title": [{"text": {"content": str(value)}}]}
+    elif prop_type == "rich_text":
+        return {"rich_text": [{"text": {"content": str(value)}}]}
+    elif prop_type == "number":
+        return {"number": float(value)}
+    elif prop_type == "select":
+        return {"select": {"name": str(value)}}
+    elif prop_type == "multi_select":
+        return {"multi_select": [{"name": item} for item in value]}
+    elif prop_type == "date":
+        return {"date": {"start": value}}
+    elif prop_type == "checkbox":
+        return {"checkbox": bool(value)}
+    elif prop_type == "url":
+        return {"url": str(value)}
     else:
         raise ValueError(f"Unsupported property type: {prop_type}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # Example usage
     client = NotionClient()
 

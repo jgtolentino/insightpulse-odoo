@@ -9,111 +9,112 @@ Usage:
     python scripts/month_end_generator.py --year 2025 --month 1 --output docs/month_end_tasks_2025_01.json
 """
 
-import os
-import json
 import argparse
-import logging
-from datetime import datetime
-from dateutil.relativedelta import relativedelta
 import calendar
+import json
+import logging
+import os
+from datetime import datetime
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+from dateutil.relativedelta import relativedelta
+
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-AGENCIES = ['RIM', 'CKVC', 'BOM', 'JPAL', 'JLI', 'JAP', 'LAS', 'RMQB']
+AGENCIES = ["RIM", "CKVC", "BOM", "JPAL", "JLI", "JAP", "LAS", "RMQB"]
 
 CLOSING_TASKS = [
     {
-        'task': 'Bank Reconciliation',
-        'priority': 'critical',
-        'deadline_offset': 3,
-        'subtasks': [
-            'Download bank statements',
-            'Match deposits and withdrawals',
-            'Investigate unreconciled items',
-            'Prepare reconciliation report',
-            'Get Finance Officer approval'
-        ]
+        "task": "Bank Reconciliation",
+        "priority": "critical",
+        "deadline_offset": 3,
+        "subtasks": [
+            "Download bank statements",
+            "Match deposits and withdrawals",
+            "Investigate unreconciled items",
+            "Prepare reconciliation report",
+            "Get Finance Officer approval",
+        ],
     },
     {
-        'task': 'Accounts Payable Review',
-        'priority': 'high',
-        'deadline_offset': 4,
-        'subtasks': [
-            'Review pending invoices',
-            'Verify aging report accuracy',
-            'Schedule payments for next month',
-            'Update payment tracking sheet'
-        ]
+        "task": "Accounts Payable Review",
+        "priority": "high",
+        "deadline_offset": 4,
+        "subtasks": [
+            "Review pending invoices",
+            "Verify aging report accuracy",
+            "Schedule payments for next month",
+            "Update payment tracking sheet",
+        ],
     },
     {
-        'task': 'Accounts Receivable Review',
-        'priority': 'high',
-        'deadline_offset': 4,
-        'subtasks': [
-            'Review aging report',
-            'Follow up on overdue accounts',
-            'Prepare collection letters',
-            'Update receivables tracking'
-        ]
+        "task": "Accounts Receivable Review",
+        "priority": "high",
+        "deadline_offset": 4,
+        "subtasks": [
+            "Review aging report",
+            "Follow up on overdue accounts",
+            "Prepare collection letters",
+            "Update receivables tracking",
+        ],
     },
     {
-        'task': 'Expense Report Processing',
-        'priority': 'high',
-        'deadline_offset': 5,
-        'subtasks': [
-            'Review pending expense reports',
-            'Verify receipts and documentation',
-            'Process approved reports',
-            'Schedule reimbursements'
-        ]
+        "task": "Expense Report Processing",
+        "priority": "high",
+        "deadline_offset": 5,
+        "subtasks": [
+            "Review pending expense reports",
+            "Verify receipts and documentation",
+            "Process approved reports",
+            "Schedule reimbursements",
+        ],
     },
     {
-        'task': 'General Ledger Review',
-        'priority': 'critical',
-        'deadline_offset': 5,
-        'subtasks': [
-            'Review all journal entries',
-            'Verify account balances',
-            'Post adjusting entries',
-            'Run trial balance report',
-            'Review for errors or anomalies'
-        ]
+        "task": "General Ledger Review",
+        "priority": "critical",
+        "deadline_offset": 5,
+        "subtasks": [
+            "Review all journal entries",
+            "Verify account balances",
+            "Post adjusting entries",
+            "Run trial balance report",
+            "Review for errors or anomalies",
+        ],
     },
     {
-        'task': 'Fixed Assets Review',
-        'priority': 'medium',
-        'deadline_offset': 6,
-        'subtasks': [
-            'Record new asset acquisitions',
-            'Process disposals',
-            'Calculate depreciation',
-            'Update asset register'
-        ]
+        "task": "Fixed Assets Review",
+        "priority": "medium",
+        "deadline_offset": 6,
+        "subtasks": [
+            "Record new asset acquisitions",
+            "Process disposals",
+            "Calculate depreciation",
+            "Update asset register",
+        ],
     },
     {
-        'task': 'Payroll Reconciliation',
-        'priority': 'high',
-        'deadline_offset': 5,
-        'subtasks': [
-            'Verify payroll transactions posted',
-            'Reconcile to payroll reports',
-            'Review withholding tax accruals',
-            'Update employee records if needed'
-        ]
+        "task": "Payroll Reconciliation",
+        "priority": "high",
+        "deadline_offset": 5,
+        "subtasks": [
+            "Verify payroll transactions posted",
+            "Reconcile to payroll reports",
+            "Review withholding tax accruals",
+            "Update employee records if needed",
+        ],
     },
     {
-        'task': 'Financial Reports Generation',
-        'priority': 'critical',
-        'deadline_offset': 7,
-        'subtasks': [
-            'Generate income statement',
-            'Generate balance sheet',
-            'Generate cash flow statement',
-            'Prepare management reports',
-            'Submit to Finance Manager for review'
-        ]
-    }
+        "task": "Financial Reports Generation",
+        "priority": "critical",
+        "deadline_offset": 7,
+        "subtasks": [
+            "Generate income statement",
+            "Generate balance sheet",
+            "Generate cash flow statement",
+            "Prepare management reports",
+            "Submit to Finance Manager for review",
+        ],
+    },
 ]
 
 
@@ -138,15 +139,15 @@ def generate_month_end_tasks(year: int, month: int) -> list:
 
     for agency in AGENCIES:
         for task_template in CLOSING_TASKS:
-            deadline = month_end + relativedelta(days=task_template['deadline_offset'])
+            deadline = month_end + relativedelta(days=task_template["deadline_offset"])
 
             task = {
-                'agency': agency,
-                'task': task_template['task'],
-                'priority': task_template['priority'],
-                'deadline': deadline.strftime('%Y-%m-%d'),
-                'month': f"{month_name} {year}",
-                'subtasks': task_template['subtasks']
+                "agency": agency,
+                "task": task_template["task"],
+                "priority": task_template["priority"],
+                "deadline": deadline.strftime("%Y-%m-%d"),
+                "month": f"{month_name} {year}",
+                "subtasks": task_template["subtasks"],
             }
             all_tasks.append(task)
 
@@ -155,20 +156,22 @@ def generate_month_end_tasks(year: int, month: int) -> list:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate month-end closing tasks')
-    parser.add_argument('--year', type=int, required=True, help='Year (YYYY)')
-    parser.add_argument('--month', type=int, required=True, help='Month (1-12)')
-    parser.add_argument('--output', default='docs/month_end_tasks.json', help='Output JSON file')
+    parser = argparse.ArgumentParser(description="Generate month-end closing tasks")
+    parser.add_argument("--year", type=int, required=True, help="Year (YYYY)")
+    parser.add_argument("--month", type=int, required=True, help="Month (1-12)")
+    parser.add_argument(
+        "--output", default="docs/month_end_tasks.json", help="Output JSON file"
+    )
     args = parser.parse_args()
 
     tasks = generate_month_end_tasks(year=args.year, month=args.month)
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
-    with open(args.output, 'w') as f:
+    with open(args.output, "w") as f:
         json.dump(tasks, f, indent=2)
 
     logger.info(f"📄 Saved to: {args.output}")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

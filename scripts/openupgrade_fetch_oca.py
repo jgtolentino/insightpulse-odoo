@@ -10,12 +10,11 @@ Usage:
 """
 
 import argparse
-import os
-import sys
-from pathlib import Path
-import subprocess
-import tempfile
 import shutil
+import subprocess
+import sys
+import tempfile
+from pathlib import Path
 
 OPENUPGRADE_REPO = "https://github.com/OCA/OpenUpgrade.git"
 OPENUPGRADE_BRANCH = "19.0"
@@ -57,19 +56,14 @@ def fetch_oca_migration(module_name: str, output_dir: Path) -> bool:
         # Clone OpenUpgrade repo (sparse checkout for specific module)
         try:
             # Initialize git repo
-            subprocess.run(
-                ["git", "init"],
-                cwd=tmpdir,
-                check=True,
-                capture_output=True
-            )
+            subprocess.run(["git", "init"], cwd=tmpdir, check=True, capture_output=True)
 
             # Add remote
             subprocess.run(
                 ["git", "remote", "add", "origin", OPENUPGRADE_REPO],
                 cwd=tmpdir,
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # Enable sparse checkout
@@ -77,13 +71,13 @@ def fetch_oca_migration(module_name: str, output_dir: Path) -> bool:
                 ["git", "config", "core.sparseCheckout", "true"],
                 cwd=tmpdir,
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # Specify path to checkout
             sparse_file = tmpdir / ".git" / "info" / "sparse-checkout"
             sparse_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(sparse_file, 'w') as f:
+            with open(sparse_file, "w") as f:
                 f.write(f"openupgrade_scripts/scripts/{module_name}/\n")
 
             # Pull
@@ -91,11 +85,13 @@ def fetch_oca_migration(module_name: str, output_dir: Path) -> bool:
                 ["git", "pull", "--depth=1", "origin", OPENUPGRADE_BRANCH],
                 cwd=tmpdir,
                 check=True,
-                capture_output=True
+                capture_output=True,
             )
 
             # Check if migration scripts exist
-            module_scripts_path = tmpdir / "openupgrade_scripts" / "scripts" / module_name
+            module_scripts_path = (
+                tmpdir / "openupgrade_scripts" / "scripts" / module_name
+            )
 
             if module_scripts_path.exists() and list(module_scripts_path.iterdir()):
                 # Copy to output directory
@@ -103,14 +99,14 @@ def fetch_oca_migration(module_name: str, output_dir: Path) -> bool:
                 module_output_path.mkdir(parents=True, exist_ok=True)
 
                 shutil.copytree(
-                    module_scripts_path,
-                    module_output_path,
-                    dirs_exist_ok=True
+                    module_scripts_path, module_output_path, dirs_exist_ok=True
                 )
 
                 # Count scripts
                 script_count = len(list(module_output_path.rglob("*.py")))
-                print(f"✅ Downloaded {script_count} migration scripts for {module_name}")
+                print(
+                    f"✅ Downloaded {script_count} migration scripts for {module_name}"
+                )
                 return True
             else:
                 print(f"ℹ️  No migration scripts available for {module_name}")
@@ -127,7 +123,9 @@ def main():
     )
     parser.add_argument("--module", help="Specific OCA module to fetch")
     parser.add_argument("--all", action="store_true", help="Fetch all dependencies")
-    parser.add_argument("--force", action="store_true", help="Re-download even if already exists")
+    parser.add_argument(
+        "--force", action="store_true", help="Re-download even if already exists"
+    )
     args = parser.parse_args()
 
     if not args.module and not args.all:
@@ -149,9 +147,21 @@ def main():
 
         # Filter common OCA modules
         oca_modules = {
-            "account", "sale", "purchase", "stock", "mrp", "website",
-            "crm", "hr", "project", "mail", "product", "base",
-            "account_accountant", "sale_management", "purchase_stock"
+            "account",
+            "sale",
+            "purchase",
+            "stock",
+            "mrp",
+            "website",
+            "crm",
+            "hr",
+            "project",
+            "mail",
+            "product",
+            "base",
+            "account_accountant",
+            "sale_management",
+            "purchase_stock",
         }
 
         modules_to_fetch = modules_to_fetch & oca_modules
@@ -176,7 +186,9 @@ def main():
         output_path = OCA_MIGRATIONS_PATH / module_name
 
         if output_path.exists() and not args.force:
-            print(f"⏭️  Skipping {module_name} (already exists, use --force to re-download)")
+            print(
+                f"⏭️  Skipping {module_name} (already exists, use --force to re-download)"
+            )
             skipped += 1
             continue
 

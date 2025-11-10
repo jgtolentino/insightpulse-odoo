@@ -11,12 +11,11 @@ Usage:
 Options:
     --with-prod-status    Query production Odoo for installation status via XML-RPC
 """
-import os
-import json
-import csv
-import ast
-import sys
 import argparse
+import ast
+import csv
+import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -26,6 +25,7 @@ ADDON_ROOTS = [
     ROOT / "addons" / "oca",
 ]
 
+
 def load_manifest(p):
     """Load and parse __manifest__.py file"""
     try:
@@ -33,6 +33,7 @@ def load_manifest(p):
     except Exception as e:
         print(f"Warning: Failed to parse {p}: {e}", file=sys.stderr)
         return {}
+
 
 def category_for(path: Path):
     """Determine module category from path"""
@@ -44,6 +45,7 @@ def category_for(path: Path):
     if "/oca/" in parts or "/addons/" in parts:
         return "oca"
     return "unknown"
+
 
 def scan():
     """Scan all addon directories and extract module metadata"""
@@ -58,20 +60,23 @@ def scan():
             mod_name = mod_dir.name
             m = load_manifest(man)
 
-            out.append({
-                "category": category_for(mod_dir),
-                "module_name": mod_name,
-                "display_name": m.get("name", mod_name),
-                "version": m.get("version", ""),
-                "author": m.get("author", ""),
-                "license": m.get("license", ""),
-                "depends": ",".join(m.get("depends", [])),
-                "path": str(mod_dir.relative_to(ROOT)),
-                "installed": "",   # filled in by robust path
-                "state": "",       # filled in by robust path
-            })
+            out.append(
+                {
+                    "category": category_for(mod_dir),
+                    "module_name": mod_name,
+                    "display_name": m.get("name", mod_name),
+                    "version": m.get("version", ""),
+                    "author": m.get("author", ""),
+                    "license": m.get("license", ""),
+                    "depends": ",".join(m.get("depends", [])),
+                    "path": str(mod_dir.relative_to(ROOT)),
+                    "installed": "",  # filled in by robust path
+                    "state": "",  # filled in by robust path
+                }
+            )
 
     return out
+
 
 def fetch_installed_states(url, db, user, password):
     """Query Odoo via XML-RPC for module installation states"""
@@ -90,14 +95,16 @@ def fetch_installed_states(url, db, user, password):
 
         models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
         recs = models.execute_kw(
-            db, uid, password,
-            'ir.module.module',
-            'search_read',
-            [[['name', '!=', False]]],
-            {'fields': ['name', 'state']}
+            db,
+            uid,
+            password,
+            "ir.module.module",
+            "search_read",
+            [[["name", "!=", False]]],
+            {"fields": ["name", "state"]},
         )
 
-        states = {r['name']: r['state'] for r in recs}
+        states = {r["name"]: r["state"] for r in recs}
         print(f"Retrieved {len(states)} module states from production", file=sys.stderr)
         return states
 
@@ -105,12 +112,14 @@ def fetch_installed_states(url, db, user, password):
         print(f"Error querying production Odoo: {e}", file=sys.stderr)
         return {}
 
+
 def emit_csv(rows, fpath):
     """Generate CSV inventory file"""
     with open(fpath, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
         w.writeheader()
         w.writerows(rows)
+
 
 def emit_json(rows, fpath):
     """Generate JSON inventory file"""
@@ -121,7 +130,7 @@ def emit_json(rows, fpath):
         "total": len(rows),
         "by_category": {},
         "by_status": {},
-        "generated_at": datetime.utcnow().isoformat() + "Z"
+        "generated_at": datetime.utcnow().isoformat() + "Z",
     }
 
     for row in rows:
@@ -132,13 +141,11 @@ def emit_json(rows, fpath):
             status = "installed" if row["installed"] == "true" else "uninstalled"
             summary["by_status"][status] = summary["by_status"].get(status, 0) + 1
 
-    data = {
-        "summary": summary,
-        "modules": rows
-    }
+    data = {"summary": summary, "modules": rows}
 
     with open(fpath, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
+
 
 def emit_md(rows, fpath):
     """Generate Markdown inventory file"""
@@ -158,7 +165,9 @@ def emit_md(rows, fpath):
 
     with open(fpath, "w", encoding="utf-8") as f:
         f.write("# Odoo Module Inventory\n\n")
-        f.write(f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\n\n")
+        f.write(
+            f"**Generated:** {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC\n\n"
+        )
 
         f.write("## Summary\n\n")
         f.write(f"- **Total modules**: {total}\n")
@@ -177,12 +186,24 @@ def emit_md(rows, fpath):
                 continue
 
             f.write(f"## {c.replace('_', ' ').title()}\n\n")
-            f.write("| Module | Display Name | Version | Status | State | Dependencies |\n")
-            f.write("|--------|--------------|---------|--------|-------|-------------|\n")
+            f.write(
+                "| Module | Display Name | Version | Status | State | Dependencies |\n"
+            )
+            f.write(
+                "|--------|--------------|---------|--------|-------|-------------|\n"
+            )
 
             for r in subset:
-                status = "✅" if r["installed"] == "true" else "⬜" if r["installed"] == "false" else "❓"
-                deps = r["depends"][:50] + "..." if len(r["depends"]) > 50 else r["depends"]
+                status = (
+                    "✅"
+                    if r["installed"] == "true"
+                    else "⬜" if r["installed"] == "false" else "❓"
+                )
+                deps = (
+                    r["depends"][:50] + "..."
+                    if len(r["depends"]) > 50
+                    else r["depends"]
+                )
 
                 f.write(
                     f"| {r['module_name']} | {r['display_name']} | {r['version']} | "
@@ -190,18 +211,26 @@ def emit_md(rows, fpath):
                 )
             f.write("\n")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate Odoo module inventory")
-    parser.add_argument("--with-prod-status", action="store_true",
-                        help="Query production Odoo for installation status")
-    parser.add_argument("--url", default="http://localhost:8069",
-                        help="Odoo URL (default: http://localhost:8069)")
-    parser.add_argument("--db", default="odoo",
-                        help="Database name (default: odoo)")
-    parser.add_argument("--user", default="admin",
-                        help="Admin username (default: admin)")
-    parser.add_argument("--password", default="admin",
-                        help="Admin password (default: admin)")
+    parser.add_argument(
+        "--with-prod-status",
+        action="store_true",
+        help="Query production Odoo for installation status",
+    )
+    parser.add_argument(
+        "--url",
+        default="http://localhost:8069",
+        help="Odoo URL (default: http://localhost:8069)",
+    )
+    parser.add_argument("--db", default="odoo", help="Database name (default: odoo)")
+    parser.add_argument(
+        "--user", default="admin", help="Admin username (default: admin)"
+    )
+    parser.add_argument(
+        "--password", default="admin", help="Admin password (default: admin)"
+    )
 
     args = parser.parse_args()
 

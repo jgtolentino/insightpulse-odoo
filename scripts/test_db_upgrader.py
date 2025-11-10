@@ -25,21 +25,14 @@ import os
 import sys
 import unittest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
 try:
     import psycopg2
-    from db_upgrader import (
-        calculate_checksum,
-        parse_migration_filename,
-        get_pending_migrations,
-        create_schemas,
-        init_version_table,
-        SCHEMAS
-    )
+    from db_upgrader import (SCHEMAS, calculate_checksum, create_schemas,
+                             init_version_table, parse_migration_filename)
 except ImportError as e:
     print(f"ERROR: Failed to import db_upgrader: {e}")
     sys.exit(1)

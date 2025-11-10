@@ -5,7 +5,7 @@ Close all open health check issues using GitHub API
 
 import os
 import sys
-import json
+
 try:
     import requests
 except ImportError:
@@ -16,21 +16,20 @@ except ImportError:
 REPO_OWNER = "jgtolentino"
 REPO_NAME = "insightpulse-odoo"
 
+
 def get_github_token():
     """Get GitHub token from environment or gh CLI"""
     # Try environment variable first
-    token = os.environ.get('GITHUB_TOKEN') or os.environ.get('GH_TOKEN')
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN")
     if token:
         return token
 
     # Try gh CLI
     try:
         import subprocess
+
         result = subprocess.run(
-            ['gh', 'auth', 'token'],
-            capture_output=True,
-            text=True,
-            check=True
+            ["gh", "auth", "token"], capture_output=True, text=True, check=True
         )
         return result.stdout.strip()
     except:
@@ -38,20 +37,17 @@ def get_github_token():
 
     return None
 
+
 def close_health_issues(token):
     """Close all open health check issues"""
     headers = {
-        'Authorization': f'token {token}',
-        'Accept': 'application/vnd.github.v3+json'
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json",
     }
 
     # Get all open health check issues
-    url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues'
-    params = {
-        'state': 'open',
-        'labels': 'health-check',
-        'per_page': 100
-    }
+    url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues"
+    params = {"state": "open", "labels": "health-check", "per_page": 100}
 
     response = requests.get(url, headers=headers, params=params)
     response.raise_for_status()
@@ -84,24 +80,18 @@ If you continue to see health issues, they will be tracked in a single consolida
 
     count = 0
     for issue in issues:
-        issue_num = issue['number']
+        issue_num = issue["number"]
         print(f"Closing issue #{issue_num}...")
 
         # Add comment
-        comment_url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues/{issue_num}/comments'
-        requests.post(
-            comment_url,
-            headers=headers,
-            json={'body': comment_body}
-        )
+        comment_url = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues/{issue_num}/comments"
+        requests.post(comment_url, headers=headers, json={"body": comment_body})
 
         # Close issue
-        issue_url = f'https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues/{issue_num}'
-        requests.patch(
-            issue_url,
-            headers=headers,
-            json={'state': 'closed'}
+        issue_url = (
+            f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/issues/{issue_num}"
         )
+        requests.patch(issue_url, headers=headers, json={"state": "closed"})
 
         count += 1
         print(f"✓ Closed issue #{issue_num}")
@@ -111,12 +101,15 @@ If you continue to see health issues, they will be tracked in a single consolida
     print(f"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     return count
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     token = get_github_token()
 
     if not token:
         print("❌ Error: No GitHub token found")
-        print("\nPlease set GITHUB_TOKEN environment variable or authenticate with gh CLI:")
+        print(
+            "\nPlease set GITHUB_TOKEN environment variable or authenticate with gh CLI:"
+        )
         print("  export GITHUB_TOKEN=your_token_here")
         print("  # or")
         print("  gh auth login")

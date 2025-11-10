@@ -3,10 +3,9 @@
 Sync section 19 (skills inventory) in claude.md from docs/claude-code-skills/*
 """
 import argparse
-import os
+import pathlib
 import re
 import sys
-import pathlib
 
 
 def parse_args():
@@ -32,11 +31,13 @@ def list_skills(skills_dir: str):
             md = p / "SKILL.md"
             if not md.exists():
                 md = p / "README.md"
-            skills.append({
-                "name": p.name.replace("_", "-"),
-                "path": str(p),
-                "doc": str(md) if md.exists() else "",
-            })
+            skills.append(
+                {
+                    "name": p.name.replace("_", "-"),
+                    "path": str(p),
+                    "doc": str(md) if md.exists() else "",
+                }
+            )
     return skills
 
 
@@ -55,7 +56,7 @@ def replace_section(md_text, new_section):
         return md_text.rstrip() + "\n\n" + new_section
     start = sec19_match.start()
     tail = md_text[start:]
-    mnext = re.search(r"(?m)^##\s*\d+\b.*$", tail[len(SEC_HEADER):])
+    mnext = re.search(r"(?m)^##\s*\d+\b.*$", tail[len(SEC_HEADER) :])
     end = start + (mnext.start() + len(SEC_HEADER) if mnext else len(tail))
     return md_text[:start] + new_section + md_text[end:]
 
@@ -70,11 +71,13 @@ def main():
     current = ""
     sec_match = SEC_START_RE.search(md)
     if sec_match:
-        cur_tail = md[sec_match.start():]
-        mnext = re.search(r"(?m)^##\s*\d+\b.*$", cur_tail[len(SEC_HEADER):])
-        current = cur_tail[: (mnext.start() + len(SEC_HEADER) if mnext else len(cur_tail))]
+        cur_tail = md[sec_match.start() :]
+        mnext = re.search(r"(?m)^##\s*\d+\b.*$", cur_tail[len(SEC_HEADER) :])
+        current = cur_tail[
+            : (mnext.start() + len(SEC_HEADER) if mnext else len(cur_tail))
+        ]
 
-    changed = (current.strip() != new_section.strip())
+    changed = current.strip() != new_section.strip()
 
     if a.check and changed:
         print("⚠️  Drift detected: section 19 differs from filesystem skills.")

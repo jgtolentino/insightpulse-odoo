@@ -1,11 +1,14 @@
 """Slack event handlers and slash commands for InsightPulse"""
-import hmac
+
 import hashlib
-import time
+import hmac
 import json
 import logging
-from odoo import http
+import time
+
 from odoo.http import request
+
+from odoo import http
 
 _logger = logging.getLogger(__name__)
 
@@ -20,11 +23,10 @@ def _verify_slack_request(req, secret):
         return False
 
     basestring = f"v0:{ts}:{req.httprequest.data.decode('utf-8')}"
-    mysig = "v0=" + hmac.new(
-        secret.encode(),
-        basestring.encode(),
-        hashlib.sha256
-    ).hexdigest()
+    mysig = (
+        "v0="
+        + hmac.new(secret.encode(), basestring.encode(), hashlib.sha256).hexdigest()
+    )
 
     valid = hmac.compare_digest(mysig, sig)
     if not valid:
@@ -35,10 +37,16 @@ def _verify_slack_request(req, secret):
 class SlackController(http.Controller):
     """Slack webhook endpoints"""
 
-    @http.route("/slack/events", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route(
+        "/slack/events", type="http", auth="public", methods=["POST"], csrf=False
+    )
     def events(self, **kwargs):
         """Handle Slack Events API callbacks"""
-        secret = request.env["ir.config_parameter"].sudo().get_param("slack.signing_secret", "")
+        secret = (
+            request.env["ir.config_parameter"]
+            .sudo()
+            .get_param("slack.signing_secret", "")
+        )
 
         if not _verify_slack_request(request, secret):
             return http.Response(status=401)
@@ -63,11 +71,12 @@ class SlackController(http.Controller):
             # Route to ipai_agent if available
             try:
                 if request.env.registry.get("ipai.agent"):
-                    response = request.env["ipai.agent"].sudo().process_slack_mention(
-                        channel=channel,
-                        text=text,
-                        user=user,
-                        event=event
+                    response = (
+                        request.env["ipai.agent"]
+                        .sudo()
+                        .process_slack_mention(
+                            channel=channel, text=text, user=user, event=event
+                        )
                     )
                 else:
                     response = "👋 InsightPulse Odoo here. How can I help?"
@@ -76,8 +85,7 @@ class SlackController(http.Controller):
             except Exception as e:
                 _logger.error(f"Error processing app mention: {e}")
                 request.env["slack.bridge"].sudo().post_message(
-                    channel,
-                    f"⚠️ Error processing request: {str(e)}"
+                    channel, f"⚠️ Error processing request: {str(e)}"
                 )
 
         # Handle channel messages (if bot is in channel)
@@ -90,9 +98,11 @@ class SlackController(http.Controller):
             text = event.get("text", "")
 
             # Check if this channel is mapped to an Odoo project/agency
-            channel_mapping = request.env["slack.channel"].sudo().search([
-                ("channel_id", "=", channel)
-            ], limit=1)
+            channel_mapping = (
+                request.env["slack.channel"]
+                .sudo()
+                .search([("channel_id", "=", channel)], limit=1)
+            )
 
             if channel_mapping and channel_mapping.auto_respond:
                 _logger.info(f"Auto-responding to message in {channel}: {text}")
@@ -100,10 +110,16 @@ class SlackController(http.Controller):
 
         return http.Response(status=200)
 
-    @http.route("/slack/command", type="http", auth="public", methods=["POST"], csrf=False)
+    @http.route(
+        "/slack/command", type="http", auth="public", methods=["POST"], csrf=False
+    )
     def command(self, **kwargs):
         """Handle Slack slash commands"""
-        secret = request.env["ir.config_parameter"].sudo().get_param("slack.signing_secret", "")
+        secret = (
+            request.env["ir.config_parameter"]
+            .sudo()
+            .get_param("slack.signing_secret", "")
+        )
 
         if not _verify_slack_request(request, secret):
             return http.Response(status=401)
@@ -131,11 +147,15 @@ class SlackController(http.Controller):
                 else:
                     # Route to AI agent
                     if request.env.registry.get("ipai.agent"):
-                        response_text = request.env["ipai.agent"].sudo().process_slack_command(
-                            command=command,
-                            text=text,
-                            user_name=user_name,
-                            channel=channel
+                        response_text = (
+                            request.env["ipai.agent"]
+                            .sudo()
+                            .process_slack_command(
+                                command=command,
+                                text=text,
+                                user_name=user_name,
+                                channel=channel,
+                            )
                         )
                     else:
                         response_text = "💡 Try `/odoo help` for available commands"
@@ -157,8 +177,7 @@ class SlackController(http.Controller):
         except Exception as e:
             _logger.error(f"Error handling slash command: {e}")
             request.env["slack.bridge"].sudo().post_message(
-                channel,
-                f"⚠️ Error: {str(e)}"
+                channel, f"⚠️ Error: {str(e)}"
             )
 
         return http.Response(status=200)
@@ -191,9 +210,9 @@ class SlackController(http.Controller):
         if not request.env.registry.get("sale.order"):
             return "⚠️ Sales module not installed"
 
-        order = request.env["sale.order"].sudo().search([
-            ("name", "=", so_name)
-        ], limit=1)
+        order = (
+            request.env["sale.order"].sudo().search([("name", "=", so_name)], limit=1)
+        )
 
         if not order:
             return f"❌ Sale order {so_name} not found"

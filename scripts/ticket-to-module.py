@@ -20,11 +20,10 @@ Usage:
 
 import argparse
 import json
-import os
+import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Any
-import re
+from typing import Any, Dict, List
 
 
 class TicketToModuleGenerator:
@@ -33,14 +32,16 @@ class TicketToModuleGenerator:
     def __init__(self, ticket_data: Dict[str, Any], output_dir: Path):
         self.ticket = ticket_data
         self.output_dir = output_dir
-        self.module_name = self._sanitize_module_name(ticket_data.get("title", "custom_module"))
+        self.module_name = self._sanitize_module_name(
+            ticket_data.get("title", "custom_module")
+        )
         self.specification = {}
 
     def _sanitize_module_name(self, title: str) -> str:
         """Convert ticket title to valid Python module name"""
         # Remove special characters, convert to snake_case
-        name = re.sub(r'[^a-zA-Z0-9\s]', '', title.lower())
-        name = re.sub(r'\s+', '_', name)
+        name = re.sub(r"[^a-zA-Z0-9\s]", "", title.lower())
+        name = re.sub(r"\s+", "_", name)
         return f"ipai_{name}"
 
     def generate(self):
@@ -129,12 +130,18 @@ class TicketToModuleGenerator:
         for pattern in patterns:
             matches = re.findall(pattern, text.lower())
             for match in matches:
-                entities.append({
-                    "name": match.capitalize(),
-                    "fields": self._infer_fields(match),
-                })
+                entities.append(
+                    {
+                        "name": match.capitalize(),
+                        "fields": self._infer_fields(match),
+                    }
+                )
 
-        return entities if entities else [{"name": "GenericRecord", "fields": ["name", "description", "state"]}]
+        return (
+            entities
+            if entities
+            else [{"name": "GenericRecord", "fields": ["name", "description", "state"]}]
+        )
 
     def _infer_fields(self, entity_name: str) -> List[str]:
         """Infer common fields based on entity type"""
@@ -270,7 +277,10 @@ class {entity_name}(models.Model):
             }
 
             for field_name in entity.get("fields", []):
-                field_def = field_types.get(field_name, f"fields.Char(string='{field_name.replace('_', ' ').title()}')")
+                field_def = field_types.get(
+                    field_name,
+                    f"fields.Char(string='{field_name.replace('_', ' ').title()}')",
+                )
                 code += f"    {field_name} = {field_def}\n"
 
             # Generate action methods (stubs for human completion)

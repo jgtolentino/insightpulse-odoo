@@ -8,8 +8,9 @@ import time
 from hashlib import sha256
 
 import requests
-from odoo import http
 from odoo.http import request
+
+from odoo import http
 
 _logger = logging.getLogger(__name__)
 
@@ -38,8 +39,10 @@ def _jwt_for_app(app_id: str, pem: bytes) -> str:
     try:
         import jwt  # PyJWT
     except ImportError:
-        raise ImportError("PyJWT is required for GitHub App authentication. Install with: pip install PyJWT")
-    
+        raise ImportError(
+            "PyJWT is required for GitHub App authentication. Install with: pip install PyJWT"
+        )
+
     now = int(time.time())
     payload = {
         "iat": now - 60,  # Issued 60 seconds ago
@@ -52,13 +55,13 @@ def _jwt_for_app(app_id: str, pem: bytes) -> str:
 class PulserWebhook(http.Controller):
     """
     Webhook controller for triggering GitHub repository_dispatch events.
-    
+
     Endpoint: POST /pulser/git-ops
-    
+
     Headers:
         X-Pulser-Secret: Shared secret for authentication
         X-Pulser-Signature: HMAC-SHA256 signature of request body
-    
+
     Body (JSON):
         {
             "branch": "gitops/push",
@@ -68,17 +71,19 @@ class PulserWebhook(http.Controller):
         }
     """
 
-    @http.route("/pulser/git-ops", type="json", auth="public", methods=["POST"], csrf=False)
+    @http.route(
+        "/pulser/git-ops", type="json", auth="public", methods=["POST"], csrf=False
+    )
     def git_ops(self, **kw):
         """
         Trigger GitHub repository_dispatch event for git-ops workflow.
-        
+
         Returns:
             dict: {"ok": bool, "status": int, "detail": str}
         """
         body = request.httprequest.get_data() or b""
         secret = os.getenv("PULSER_WEBHOOK_SECRET", "")
-        
+
         if not secret:
             _logger.error("PULSER_WEBHOOK_SECRET environment variable not set")
             return {"ok": False, "error": "missing PULSER_WEBHOOK_SECRET"}
@@ -88,7 +93,9 @@ class PulserWebhook(http.Controller):
         header_sig = request.httprequest.headers.get("X-Pulser-Signature", "")
 
         if header_secret != secret or not _check_sig(body, header_sig, secret):
-            _logger.warning("Unauthorized webhook request from %s", request.httprequest.remote_addr)
+            _logger.warning(
+                "Unauthorized webhook request from %s", request.httprequest.remote_addr
+            )
             return {"ok": False, "error": "unauthorized"}
 
         # Parse request payload
@@ -127,15 +134,19 @@ class PulserWebhook(http.Controller):
                 },
                 timeout=20,
             )
-            
+
             if tok_res.status_code >= 300:
-                _logger.error("GitHub token exchange failed: %s %s", tok_res.status_code, tok_res.text)
+                _logger.error(
+                    "GitHub token exchange failed: %s %s",
+                    tok_res.status_code,
+                    tok_res.text,
+                )
                 return {
                     "ok": False,
                     "error": f"token_exchange_failed:{tok_res.status_code}",
                     "detail": tok_res.text[:500],
                 }
-            
+
             gh_token = tok_res.json().get("token")
 
             # Fire repository_dispatch event
@@ -148,7 +159,7 @@ class PulserWebhook(http.Controller):
                     "kv_value": kv_val,
                 },
             }
-            
+
             res = requests.post(
                 f"https://api.github.com/repos/{owner}/{repo}/dispatches",
                 headers={
@@ -158,20 +169,24 @@ class PulserWebhook(http.Controller):
                 json=disp,
                 timeout=20,
             )
-            
+
             ok = res.status_code in (201, 204)
-            
+
             if ok:
-                _logger.info("GitHub dispatch successful: %s → %s/%s", message, owner, repo)
+                _logger.info(
+                    "GitHub dispatch successful: %s → %s/%s", message, owner, repo
+                )
             else:
-                _logger.error("GitHub dispatch failed: %s %s", res.status_code, res.text)
-            
+                _logger.error(
+                    "GitHub dispatch failed: %s %s", res.status_code, res.text
+                )
+
             return {
                 "ok": ok,
                 "status": res.status_code,
                 "detail": res.text[:500] if not ok else "dispatched",
             }
-            
+
         except Exception as e:
             _logger.exception("Error in git-ops webhook: %s", e)
             return {"ok": False, "error": str(e)}

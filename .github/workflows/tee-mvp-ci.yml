@@ -28,12 +28,12 @@ jobs:
 
       - name: OCR + Warehouse evals (blocking)
         env:
-          OCR_HOST: ${{ vars.OCR_HOST }}
+          OCR_HOST: ${{ vars.OCR_HOST || 'ocr.insightpulseai.net' }}
           SUPABASE_DB_HOST: ${{ secrets.SUPABASE_DB_HOST }}
           SUPABASE_DB_PORT: ${{ secrets.SUPABASE_DB_PORT }}
           SUPABASE_DB_NAME: ${{ secrets.SUPABASE_DB_NAME }}
           SUPABASE_DB_USER: ${{ secrets.SUPABASE_DB_USER }}
           SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
         run: |
-          pip install requests psycopg pytest
+          pip install requests psycopg pytest pytest-cov
           pytest -q tests/test_ocr_endpoints.py tests/test_warehouse_views.py

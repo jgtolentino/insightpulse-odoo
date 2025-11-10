@@ -30,39 +30,49 @@ Environment Variables:
     ANTHROPIC_API_KEY - Claude API key for embeddings
 """
 
-import os
-import sys
 import argparse
-import json
-from pathlib import Path
-from typing import List, Dict, Optional, Tuple
 import ast
 import hashlib
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Dict, List, Optional
 
 try:
     import psycopg2
-    from psycopg2.extras import execute_values, RealDictCursor
+    from psycopg2.extras import RealDictCursor
 except ImportError:
     print("⚠️  psycopg2 not installed. Installing...")
     import subprocess
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'psycopg2-binary'])
+
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "psycopg2-binary"])
     import psycopg2
-    from psycopg2.extras import execute_values, RealDictCursor
+    from psycopg2.extras import RealDictCursor
 
 try:
     from anthropic import Anthropic
 except ImportError:
     print("⚠️  anthropic not installed. Installing...")
     import subprocess
-    subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'anthropic'])
+
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "anthropic"])
     from anthropic import Anthropic
 
 
 class CodeChunk:
     """Represents a chunk of code for embedding"""
 
-    def __init__(self, file_path: str, chunk_type: str, name: str,
-                 code: str, line_start: int, line_end: int, metadata: Dict = None):
+    def __init__(
+        self,
+        file_path: str,
+        chunk_type: str,
+        name: str,
+        code: str,
+        line_start: int,
+        line_end: int,
+        metadata: Dict = None,
+    ):
         self.file_path = file_path
         self.chunk_type = chunk_type  # function, class, workflow, model
         self.name = name
@@ -73,13 +83,13 @@ class CodeChunk:
 
     def to_dict(self) -> Dict:
         return {
-            'file_path': self.file_path,
-            'chunk_type': self.chunk_type,
-            'name': self.name,
-            'code': self.code,
-            'line_start': self.line_start,
-            'line_end': self.line_end,
-            'metadata': self.metadata
+            "file_path": self.file_path,
+            "chunk_type": self.chunk_type,
+            "name": self.name,
+            "code": self.code,
+            "line_start": self.line_start,
+            "line_end": self.line_end,
+            "metadata": self.metadata,
         }
 
     def get_hash(self) -> str:
@@ -114,7 +124,8 @@ class InsightPulseCodeSearch:
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
         # Create embeddings table
-        cur.execute("""
+        cur.execute(
+            """
             CREATE TABLE IF NOT EXISTS insightpulse_code_embeddings (
                 id SERIAL PRIMARY KEY,
                 chunk_hash TEXT UNIQUE NOT NULL,
@@ -129,25 +140,32 @@ class InsightPulseCodeSearch:
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             );
-        """)
+        """
+        )
 
         # Create indexes
-        cur.execute("""
+        cur.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_file_path
             ON insightpulse_code_embeddings(file_path);
-        """)
+        """
+        )
 
-        cur.execute("""
+        cur.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_chunk_type
             ON insightpulse_code_embeddings(chunk_type);
-        """)
+        """
+        )
 
-        cur.execute("""
+        cur.execute(
+            """
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_vector
             ON insightpulse_code_embeddings
             USING ivfflat (embedding vector_cosine_ops)
             WITH (lists = 100);
-        """)
+        """
+        )
 
         self.conn.commit()
         print("✅ Database schema created")
@@ -157,69 +175,81 @@ class InsightPulseCodeSearch:
         chunks = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 content = f.read()
-                lines = content.split('\n')
+                lines = content.split("\n")
 
             tree = ast.parse(content, filename=str(file_path))
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     # Extract function
-                    code = '\n'.join(lines[node.lineno-1:node.end_lineno])
+                    code = "\n".join(lines[node.lineno - 1 : node.end_lineno])
 
                     # Detect metadata
-                    metadata = {'is_api': False, 'is_compute': False, 'is_onchange': False}
+                    metadata = {
+                        "is_api": False,
+                        "is_compute": False,
+                        "is_onchange": False,
+                    }
                     for decorator in node.decorator_list:
                         if isinstance(decorator, ast.Name):
-                            if decorator.id == 'api':
-                                metadata['is_api'] = True
+                            if decorator.id == "api":
+                                metadata["is_api"] = True
                         elif isinstance(decorator, ast.Attribute):
-                            if decorator.attr in ['depends', 'onchange', 'constrains']:
-                                metadata['is_api'] = True
-                                if decorator.attr == 'onchange':
-                                    metadata['is_onchange'] = True
+                            if decorator.attr in ["depends", "onchange", "constrains"]:
+                                metadata["is_api"] = True
+                                if decorator.attr == "onchange":
+                                    metadata["is_onchange"] = True
 
                     # Check if compute method
-                    if node.name.startswith('_compute_'):
-                        metadata['is_compute'] = True
+                    if node.name.startswith("_compute_"):
+                        metadata["is_compute"] = True
 
-                    chunks.append(CodeChunk(
-                        file_path=str(file_path),
-                        chunk_type='function',
-                        name=node.name,
-                        code=code,
-                        line_start=node.lineno,
-                        line_end=node.end_lineno or node.lineno,
-                        metadata=metadata
-                    ))
+                    chunks.append(
+                        CodeChunk(
+                            file_path=str(file_path),
+                            chunk_type="function",
+                            name=node.name,
+                            code=code,
+                            line_start=node.lineno,
+                            line_end=node.end_lineno or node.lineno,
+                            metadata=metadata,
+                        )
+                    )
 
                 elif isinstance(node, ast.ClassDef):
                     # Extract class
-                    code = '\n'.join(lines[node.lineno-1:node.end_lineno])
+                    code = "\n".join(lines[node.lineno - 1 : node.end_lineno])
 
                     # Detect Odoo model
-                    metadata = {'is_model': False, 'model_name': None, 'inherit': None}
+                    metadata = {"is_model": False, "model_name": None, "inherit": None}
                     for item in node.body:
                         if isinstance(item, ast.Assign):
                             for target in item.targets:
                                 if isinstance(target, ast.Name):
-                                    if target.id == '_name' and isinstance(item.value, ast.Constant):
-                                        metadata['is_model'] = True
-                                        metadata['model_name'] = item.value.value
-                                    elif target.id == '_inherit' and isinstance(item.value, ast.Constant):
-                                        metadata['is_model'] = True
-                                        metadata['inherit'] = item.value.value
+                                    if target.id == "_name" and isinstance(
+                                        item.value, ast.Constant
+                                    ):
+                                        metadata["is_model"] = True
+                                        metadata["model_name"] = item.value.value
+                                    elif target.id == "_inherit" and isinstance(
+                                        item.value, ast.Constant
+                                    ):
+                                        metadata["is_model"] = True
+                                        metadata["inherit"] = item.value.value
 
-                    chunks.append(CodeChunk(
-                        file_path=str(file_path),
-                        chunk_type='class',
-                        name=node.name,
-                        code=code,
-                        line_start=node.lineno,
-                        line_end=node.end_lineno or node.lineno,
-                        metadata=metadata
-                    ))
+                    chunks.append(
+                        CodeChunk(
+                            file_path=str(file_path),
+                            chunk_type="class",
+                            name=node.name,
+                            code=code,
+                            line_start=node.lineno,
+                            line_end=node.end_lineno or node.lineno,
+                            metadata=metadata,
+                        )
+                    )
 
         except Exception as e:
             print(f"  ⚠️  Error parsing {file_path}: {e}")
@@ -231,24 +261,26 @@ class InsightPulseCodeSearch:
         chunks = []
 
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
+            with open(file_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             # Check if it's a workflow
-            if 'steps' in data:
-                chunks.append(CodeChunk(
-                    file_path=str(file_path),
-                    chunk_type='workflow',
-                    name=data.get('name', file_path.stem),
-                    code=json.dumps(data, indent=2),
-                    line_start=1,
-                    line_end=1,
-                    metadata={
-                        'category': data.get('category'),
-                        'trigger_type': data.get('trigger_type'),
-                        'description': data.get('description')
-                    }
-                ))
+            if "steps" in data:
+                chunks.append(
+                    CodeChunk(
+                        file_path=str(file_path),
+                        chunk_type="workflow",
+                        name=data.get("name", file_path.stem),
+                        code=json.dumps(data, indent=2),
+                        line_start=1,
+                        line_end=1,
+                        metadata={
+                            "category": data.get("category"),
+                            "trigger_type": data.get("trigger_type"),
+                            "description": data.get("description"),
+                        },
+                    )
+                )
 
         except Exception as e:
             print(f"  ⚠️  Error parsing {file_path}: {e}")
@@ -264,14 +296,15 @@ class InsightPulseCodeSearch:
         # TODO: Replace with actual embedding API
         # For demonstration, we'll use text hash as pseudo-embedding
         import hashlib
+
         hash_obj = hashlib.sha512(text.encode())
         hash_bytes = hash_obj.digest()
 
         # Convert to 1024-dim vector
         embedding = []
         for i in range(0, len(hash_bytes), 8):
-            chunk = hash_bytes[i:i+8]
-            val = int.from_bytes(chunk.ljust(8, b'\x00'), 'big') / (2**64)
+            chunk = hash_bytes[i : i + 8]
+            val = int.from_bytes(chunk.ljust(8, b"\x00"), "big") / (2**64)
             embedding.append(val)
 
         # Pad to 1024 dimensions
@@ -291,7 +324,7 @@ class InsightPulseCodeSearch:
         # Index Python files
         for py_file in repo.rglob("*.py"):
             # Skip __pycache__ and venv
-            if '__pycache__' in str(py_file) or 'venv' in str(py_file):
+            if "__pycache__" in str(py_file) or "venv" in str(py_file):
                 continue
 
             chunks = self.chunk_python_file(py_file)
@@ -327,7 +360,8 @@ class InsightPulseCodeSearch:
         embedding = self.get_embedding(chunk.code)
 
         # Upsert chunk
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO insightpulse_code_embeddings
             (chunk_hash, file_path, chunk_type, name, code, line_start, line_end, metadata, embedding)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s::vector)
@@ -335,19 +369,23 @@ class InsightPulseCodeSearch:
                 code = EXCLUDED.code,
                 embedding = EXCLUDED.embedding,
                 updated_at = NOW()
-        """, (
-            chunk.get_hash(),
-            chunk.file_path,
-            chunk.chunk_type,
-            chunk.name,
-            chunk.code,
-            chunk.line_start,
-            chunk.line_end,
-            json.dumps(chunk.metadata),
-            embedding
-        ))
+        """,
+            (
+                chunk.get_hash(),
+                chunk.file_path,
+                chunk.chunk_type,
+                chunk.name,
+                chunk.code,
+                chunk.line_start,
+                chunk.line_end,
+                json.dumps(chunk.metadata),
+                embedding,
+            ),
+        )
 
-    def search(self, query: str, limit: int = 5, chunk_type: Optional[str] = None) -> List[Dict]:
+    def search(
+        self, query: str, limit: int = 5, chunk_type: Optional[str] = None
+    ) -> List[Dict]:
         """Semantic search for code"""
         # Get query embedding
         query_embedding = self.get_embedding(query)
@@ -405,9 +443,10 @@ class InsightPulseCodeSearch:
         response = self.client.messages.create(
             model="claude-sonnet-4-20250514",
             max_tokens=2048,
-            messages=[{
-                "role": "user",
-                "content": f"""You are an expert on the InsightPulse Odoo codebase.
+            messages=[
+                {
+                    "role": "user",
+                    "content": f"""You are an expert on the InsightPulse Odoo codebase.
 
 This is a Finance Shared Service Center (SSC) system managing:
 - 8 companies (RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB)
@@ -421,8 +460,9 @@ Relevant code:
 Question: {question}
 
 Answer based on the code above. Be specific and cite file paths with line numbers.
-If the code doesn't fully answer the question, say so and explain what's shown."""
-            }]
+If the code doesn't fully answer the question, say so and explain what's shown.""",
+                }
+            ],
         )
 
         return response.content[0].text
@@ -445,7 +485,7 @@ If the code doesn't fully answer the question, say so and explain what's shown."
                 if not user_input:
                     continue
 
-                if user_input.lower() in ['quit', 'exit', 'q']:
+                if user_input.lower() in ["quit", "exit", "q"]:
                     print("👋 Goodbye!")
                     break
 
@@ -453,7 +493,7 @@ If the code doesn't fully answer the question, say so and explain what's shown."
                 command = parts[0].lower()
                 query = parts[1] if len(parts) > 1 else ""
 
-                if command == 'search':
+                if command == "search":
                     if not query:
                         print("❌ Usage: search <query>")
                         continue
@@ -465,11 +505,15 @@ If the code doesn't fully answer the question, say so and explain what's shown."
                         print("❌ No results found")
                     else:
                         for i, r in enumerate(results, 1):
-                            print(f"\n{i}. {r['name']} ({r['chunk_type']}) - {r['similarity']:.1%} match")
-                            print(f"   📄 {r['file_path']}:{r['line_start']}-{r['line_end']}")
+                            print(
+                                f"\n{i}. {r['name']} ({r['chunk_type']}) - {r['similarity']:.1%} match"
+                            )
+                            print(
+                                f"   📄 {r['file_path']}:{r['line_start']}-{r['line_end']}"
+                            )
                             print(f"   {r['code'][:150].replace(chr(10), ' ')}...")
 
-                elif command == 'ask':
+                elif command == "ask":
                     if not query:
                         print("❌ Usage: ask <question>")
                         continue
@@ -494,17 +538,19 @@ If the code doesn't fully answer the question, say so and explain what's shown."
 
 
 def main():
-    parser = argparse.ArgumentParser(description='InsightPulse AI Code Search')
-    parser.add_argument('--index', action='store_true', help='Index codebase')
-    parser.add_argument('--search', type=str, help='Search for code')
-    parser.add_argument('--ask', type=str, help='Ask Claude about codebase')
-    parser.add_argument('--interactive', action='store_true', help='Interactive mode')
-    parser.add_argument('--limit', type=int, default=5, help='Number of results (default: 5)')
+    parser = argparse.ArgumentParser(description="InsightPulse AI Code Search")
+    parser.add_argument("--index", action="store_true", help="Index codebase")
+    parser.add_argument("--search", type=str, help="Search for code")
+    parser.add_argument("--ask", type=str, help="Ask Claude about codebase")
+    parser.add_argument("--interactive", action="store_true", help="Interactive mode")
+    parser.add_argument(
+        "--limit", type=int, default=5, help="Number of results (default: 5)"
+    )
     args = parser.parse_args()
 
     # Get credentials from environment
-    postgres_url = os.getenv('POSTGRES_URL')
-    anthropic_key = os.getenv('ANTHROPIC_API_KEY')
+    postgres_url = os.getenv("POSTGRES_URL")
+    anthropic_key = os.getenv("ANTHROPIC_API_KEY")
 
     if not postgres_url:
         print("❌ POSTGRES_URL environment variable not set")
@@ -534,7 +580,9 @@ def main():
             print("❌ No results found")
         else:
             for i, r in enumerate(results, 1):
-                print(f"\n{i}. {r['name']} ({r['chunk_type']}) - {r['similarity']:.1%} match")
+                print(
+                    f"\n{i}. {r['name']} ({r['chunk_type']}) - {r['similarity']:.1%} match"
+                )
                 print(f"   📄 {r['file_path']}:{r['line_start']}-{r['line_end']}")
                 print(f"\n{r['code'][:300]}...\n")
 

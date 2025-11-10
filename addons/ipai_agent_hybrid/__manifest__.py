@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'InsightPulse AI Agent Hybrid',
-    'version': '19.0.1.0.0',
-    'category': 'Productivity/AI',
-    'summary': 'Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration',
-    'description': """
+    "name": "InsightPulse AI Agent Hybrid",
+    "version": "19.0.1.0.0",
+    "category": "Productivity/AI",
+    "summary": "Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration",
+    "description": """
 InsightPulse AI Agent Hybrid
 ============================
 
@@ -40,26 +40,26 @@ Integration:
 Author: Jake Tolentino
 License: AGPL-3
     """,
-    'author': 'Jake Tolentino',
-    'website': 'https://github.com/jgtolentino/insightpulse-odoo',
-    'license': 'AGPL-3',
-    'depends': [
-        'base',
-        'web',
-        'mail',
-        'project',
-        'calendar',
+    "author": "Jake Tolentino",
+    "website": "https://github.com/jgtolentino/insightpulse-odoo",
+    "license": "AGPL-3",
+    "depends": [
+        "base",
+        "web",
+        "mail",
+        "project",
+        "calendar",
     ],
-    'data': [
-        'security/ir.model.access.csv',
-        'data/memory_seeds.xml',
-        'views/ip_page_views.xml',
-        'views/ip_agent_run_views.xml',
-        'views/ip_memory_kv_views.xml',
-        'views/menus.xml',
+    "data": [
+        "security/ir.model.access.csv",
+        "data/memory_seeds.xml",
+        "views/ip_page_views.xml",
+        "views/ip_agent_run_views.xml",
+        "views/ip_memory_kv_views.xml",
+        "views/menus.xml",
     ],
-    'demo': [],
-    'installable': True,
-    'application': True,
-    'auto_install': False,
+    "demo": [],
+    "installable": True,
+    "application": True,
+    "auto_install": False,
 }

@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'InsightPulse AI Agent',
-    'version': '1.0.0',
-    'category': 'Productivity',
-    'summary': 'AI-powered chatbot for Odoo Discuss with automation capabilities',
-    'description': """
+    "name": "InsightPulse AI Agent",
+    "version": "1.0.0",
+    "category": "Productivity",
+    "summary": "AI-powered chatbot for Odoo Discuss with automation capabilities",
+    "description": """
 InsightPulse AI Agent
 =====================
 
@@ -27,24 +27,24 @@ Features:
 Author: Jake Tolentino
 License: AGPL-3
 """,
-    'author': 'Jake Tolentino',
-    'website': 'https://insightpulseai.net',
-    'license': 'AGPL-3',
-    'depends': [
-        'base',
-        'mail',
-        'hr_expense',
-        'account',
+    "author": "Jake Tolentino",
+    "website": "https://insightpulseai.net",
+    "license": "AGPL-3",
+    "depends": [
+        "base",
+        "mail",
+        "hr_expense",
+        "account",
     ],
-    'data': [
-        'security/security.xml',
-        'security/ir.model.access.csv',
-        'data/bot_user.xml',
-        'data/channels.xml',
-        'views/chatbot_config_views.xml',
-        'views/agent_log_views.xml',
+    "data": [
+        "security/security.xml",
+        "security/ir.model.access.csv",
+        "data/bot_user.xml",
+        "data/channels.xml",
+        "views/chatbot_config_views.xml",
+        "views/agent_log_views.xml",
     ],
-    'installable': True,
-    'application': True,
-    'auto_install': False,
+    "installable": True,
+    "application": True,
+    "auto_install": False,
 }

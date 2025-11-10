@@ -371,11 +371,11 @@ jobs:
       - name: Deploy to staging
         run: |
           echo "Deploying to staging environment..."
-          
+
           # This would trigger actual deployment
           # For now, simulate deployment
           echo "Deployment to staging completed"
-          echo "staging_url=https://staging.insightpulse.example.com" >> $GITHUB_ENV
+          echo "staging_url=https://staging.insightpulseai.net" >> $GITHUB_ENV
 
       - name: Run E2E tests
         run: |
@@ -410,7 +410,7 @@ jobs:
     
     environment:
       name: production
-      url: https://insightpulse.example.com
+      url: https://erp.insightpulseai.net
     
     steps:
       - name: Checkout code

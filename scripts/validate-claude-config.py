@@ -144,7 +144,9 @@ def extract_skill_names(sections: Dict[int, str]) -> Set[str]:
     return skills
 
 
-def validate_mcp_config(claude_mcp_servers: Set[str], project_root: Path) -> Tuple[List[str], List[str]]:
+def validate_mcp_config(
+    claude_mcp_servers: Set[str], project_root: Path
+) -> Tuple[List[str], List[str]]:
     """Validate MCP configuration against vscode-mcp-config.json
 
     Returns: (errors, warnings) tuple
@@ -168,10 +170,14 @@ def validate_mcp_config(claude_mcp_servers: Set[str], project_root: Path) -> Tup
         extra_in_config = actual_servers - claude_mcp_servers
 
         if missing_in_config:
-            warnings.append(f"MCP servers in claude.md but NOT in config: {missing_in_config}")
+            warnings.append(
+                f"MCP servers in claude.md but NOT in config: {missing_in_config}"
+            )
 
         if extra_in_config:
-            warnings.append(f"MCP servers in config but NOT in claude.md: {extra_in_config}")
+            warnings.append(
+                f"MCP servers in config but NOT in claude.md: {extra_in_config}"
+            )
 
     except json.JSONDecodeError as e:
         errors.append(f"Failed to parse MCP config: {e}")
@@ -206,12 +212,16 @@ def validate_agent_files(claude_agents: Set[str]) -> Tuple[List[str], List[str]]
         warnings.append(f"Agents in claude.md but missing files: {missing_agents}")
 
     if extra_agents:
-        warnings.append(f"Agent files exist but not documented in claude.md: {extra_agents}")
+        warnings.append(
+            f"Agent files exist but not documented in claude.md: {extra_agents}"
+        )
 
     return errors, warnings
 
 
-def validate_skill_directories(claude_skills: Set[str], project_root: Path) -> Tuple[List[str], List[str]]:
+def validate_skill_directories(
+    claude_skills: Set[str], project_root: Path
+) -> Tuple[List[str], List[str]]:
     """Validate skill directories against docs/claude-code-skills/
 
     Returns: (errors, warnings) tuple
@@ -235,10 +245,14 @@ def validate_skill_directories(claude_skills: Set[str], project_root: Path) -> T
     extra_skills = actual_skills - claude_skills
 
     if missing_skills:
-        warnings.append(f"Skills in claude.md but missing directories: {missing_skills}")
+        warnings.append(
+            f"Skills in claude.md but missing directories: {missing_skills}"
+        )
 
     if extra_skills:
-        warnings.append(f"Skill directories exist but not documented in claude.md: {extra_skills}")
+        warnings.append(
+            f"Skill directories exist but not documented in claude.md: {extra_skills}"
+        )
 
     return errors, warnings
 
@@ -310,14 +324,26 @@ def generate_report(
         f.write("## Recommendations\n\n")
 
         if total_errors > 0:
-            f.write("1. **Fix Configuration Drift**: Sync configurations across interface files\n")
-            f.write("2. **Update Documentation**: Ensure all sections are documented in claude.md\n")
+            f.write(
+                "1. **Fix Configuration Drift**: Sync configurations across interface files\n"
+            )
+            f.write(
+                "2. **Update Documentation**: Ensure all sections are documented in claude.md\n"
+            )
             f.write("3. **Validate Files**: Check that all referenced files exist\n")
-            f.write("4. **Run Sync Script**: Execute `scripts/sync-claude-configs.sh`\n")
+            f.write(
+                "4. **Run Sync Script**: Execute `scripts/sync-claude-configs.sh`\n"
+            )
         elif total_warnings > 0:
-            f.write("⚠️  **Warnings detected** - Consider addressing these for better configuration consistency:\n\n")
-            f.write("1. **Document MCP Servers**: Add missing MCP servers to claude.md Section 17\n")
-            f.write("2. **Document Skills**: Add missing skills to claude.md Section 19\n")
+            f.write(
+                "⚠️  **Warnings detected** - Consider addressing these for better configuration consistency:\n\n"
+            )
+            f.write(
+                "1. **Document MCP Servers**: Add missing MCP servers to claude.md Section 17\n"
+            )
+            f.write(
+                "2. **Document Skills**: Add missing skills to claude.md Section 19\n"
+            )
             f.write("3. **Update Agents**: Sync agent definitions with actual files\n")
         else:
             f.write("✅ No drift detected. Configuration is synchronized.\n")
@@ -327,7 +353,9 @@ def generate_report(
 
 def main():
     """Main validation workflow"""
-    parser = argparse.ArgumentParser(description="Validate Claude interface configurations")
+    parser = argparse.ArgumentParser(
+        description="Validate Claude interface configurations"
+    )
     parser.add_argument(
         "--project-root",
         type=Path,
@@ -408,7 +436,9 @@ def main():
     # Step 6: Validate skills
     print("\n6. Validating skills inventory...")
     claude_skills = extract_skill_names(sections)
-    skill_errors, skill_warnings = validate_skill_directories(claude_skills, project_root)
+    skill_errors, skill_warnings = validate_skill_directories(
+        claude_skills, project_root
+    )
 
     if skill_errors:
         for error in skill_errors:
@@ -455,13 +485,19 @@ def main():
 
     if total_errors == 0:
         if total_warnings > 0:
-            log_warning(f"Configuration has {total_warnings} warnings but no blocking errors.")
-            print("CI will pass, but consider addressing warnings for better consistency.")
+            log_warning(
+                f"Configuration has {total_warnings} warnings but no blocking errors."
+            )
+            print(
+                "CI will pass, but consider addressing warnings for better consistency."
+            )
         else:
             log_success("Configuration is synchronized!")
         sys.exit(0)
     else:
-        log_error(f"Configuration has {total_errors} blocking errors that must be fixed.")
+        log_error(
+            f"Configuration has {total_errors} blocking errors that must be fixed."
+        )
         sys.exit(1)
 
 

@@ -3,7 +3,8 @@ Security tests for URL injection vulnerability fix (CVSS 6.5)
 Validates filter parameter sanitization and encoding
 """
 
-from odoo.addons.superset_connector.controllers.embedded import SupersetEmbedController
+from odoo.addons.superset_connector.controllers.embedded import \
+    SupersetEmbedController
 from odoo.exceptions import ValidationError
 from odoo.tests import TransactionCase
 
