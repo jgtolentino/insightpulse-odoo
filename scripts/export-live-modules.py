@@ -12,12 +12,12 @@ Usage:
     export ODOO_PASSWORD="password"
     python3 scripts/export-live-modules.py
 """
-import json
-import requests
-import os
-import sys
 import csv
 import datetime
+import os
+import sys
+
+import requests
 
 # Configuration from environment
 URL = os.environ.get("ODOO_URL", "").rstrip("/")
@@ -37,14 +37,7 @@ s = requests.Session()
 print(f"Authenticating to {URL}...", file=sys.stderr)
 auth_response = s.post(
     f"{URL}/web/session/authenticate",
-    json={
-        "jsonrpc": "2.0",
-        "params": {
-            "db": DB,
-            "login": USER,
-            "password": PWD
-        }
-    }
+    json={"jsonrpc": "2.0", "params": {"db": DB, "login": USER, "password": PWD}},
 )
 
 try:
@@ -76,11 +69,11 @@ payload = {
                 "latest_version",
                 "state",
                 "category_id",
-                "summary"
+                "summary",
             ],
-            "limit": 5000
-        }
-    }
+            "limit": 5000,
+        },
+    },
 }
 
 try:
@@ -103,25 +96,29 @@ os.makedirs("reports", exist_ok=True)
 print(f"Writing CSV to {csv_path}...", file=sys.stderr)
 with open(csv_path, "w", newline="", encoding="utf-8") as f:
     w = csv.writer(f)
-    w.writerow([
-        "technical_name",
-        "name",
-        "author",
-        "website",
-        "latest_version",
-        "state",
-        "category"
-    ])
+    w.writerow(
+        [
+            "technical_name",
+            "name",
+            "author",
+            "website",
+            "latest_version",
+            "state",
+            "category",
+        ]
+    )
     for m in mods:
-        w.writerow([
-            m.get("name"),
-            m.get("shortdesc"),
-            m.get("author"),
-            m.get("website"),
-            m.get("latest_version"),
-            m.get("state"),
-            (m.get("category_id") or [None, ""])[1]
-        ])
+        w.writerow(
+            [
+                m.get("name"),
+                m.get("shortdesc"),
+                m.get("author"),
+                m.get("website"),
+                m.get("latest_version"),
+                m.get("state"),
+                (m.get("category_id") or [None, ""])[1],
+            ]
+        )
 
 # 4) Write Markdown summary
 installed = [m for m in mods if m.get("state") == "installed"]
@@ -144,21 +141,19 @@ lines = [
     f"- **To Install**: {len([m for m in mods if m.get('state') == 'to install'])}",
     f"- **To Remove**: {len([m for m in mods if m.get('state') == 'to remove'])}",
     f"- **Uninstallable**: {len([m for m in mods if m.get('state') == 'uninstallable'])}\n",
-    "## Installed Modules by Category\n"
+    "## Installed Modules by Category\n",
 ]
 
 for k in sorted(cats, key=cats.get, reverse=True):
     lines.append(f"- **{k}**: {cats[k]} modules")
 
-lines.extend([
-    "\n## Top 10 Most Recently Updated (Installed)\n"
-])
+lines.extend(["\n## Top 10 Most Recently Updated (Installed)\n"])
 
 # Sort by latest_version (proxy for recent activity)
 recent = sorted(
     [m for m in installed if m.get("latest_version")],
     key=lambda x: x.get("latest_version", ""),
-    reverse=True
+    reverse=True,
 )[:10]
 
 for m in recent:

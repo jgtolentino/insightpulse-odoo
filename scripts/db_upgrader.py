@@ -19,18 +19,16 @@ Usage:
 
 import argparse
 import hashlib
-import json
 import os
 import re
 import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Tuple
 
 try:
     import psycopg2
-    from psycopg2.extensions import ISOLATION_LEVEL_AUTOCOMMIT
 except ImportError:
     print("ERROR: psycopg2 not installed. Run: pip install psycopg2-binary")
     sys.exit(1)
@@ -54,7 +52,7 @@ SCHEMAS = {
     "ai": "AI training data, embeddings, and model metadata",
     "scout_bronze": "Raw ingestion layer (ELT bronze)",
     "scout_silver": "Cleaned and validated data (ELT silver)",
-    "scout_gold": "Business metrics and aggregates (ELT gold)"
+    "scout_gold": "Business metrics and aggregates (ELT gold)",
 }
 
 # Migration version tracking table
@@ -81,6 +79,7 @@ COMMENT ON TABLE public.schema_version IS
 # ============================================================================
 # DATABASE CONNECTION
 # ============================================================================
+
 
 def get_db_connection(env: str = "development") -> psycopg2.extensions.connection:
     """
@@ -117,13 +116,16 @@ def get_db_connection(env: str = "development") -> psycopg2.extensions.connectio
         return conn
     except Exception as e:
         print(f"❌ Failed to connect to database: {e}")
-        print(f"Connection string pattern: {conn_string.split('@')[1] if '@' in conn_string else 'invalid'}")
+        print(
+            f"Connection string pattern: {conn_string.split('@')[1] if '@' in conn_string else 'invalid'}"
+        )
         sys.exit(1)
 
 
 # ============================================================================
 # MIGRATION TRACKING
 # ============================================================================
+
 
 def init_version_table(conn: psycopg2.extensions.connection):
     """Initialize schema_version tracking table."""
@@ -136,7 +138,7 @@ def init_version_table(conn: psycopg2.extensions.connection):
 def calculate_checksum(file_path: Path) -> str:
     """Calculate SHA256 checksum of migration file."""
     sha256 = hashlib.sha256()
-    with open(file_path, 'rb') as f:
+    with open(file_path, "rb") as f:
         sha256.update(f.read())
     return sha256.hexdigest()
 
@@ -144,12 +146,14 @@ def calculate_checksum(file_path: Path) -> str:
 def get_applied_versions(conn: psycopg2.extensions.connection) -> Dict[str, Dict]:
     """Get list of applied migration versions."""
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             SELECT version, description, migration_file, checksum,
                    installed_at, execution_time_ms, success
             FROM public.schema_version
             ORDER BY installed_at ASC
-        """)
+        """
+        )
 
         return {
             row[0]: {
@@ -158,7 +162,7 @@ def get_applied_versions(conn: psycopg2.extensions.connection) -> Dict[str, Dict
                 "checksum": row[3],
                 "installed_at": row[4],
                 "execution_time_ms": row[5],
-                "success": row[6]
+                "success": row[6],
             }
             for row in cur.fetchall()
         }
@@ -171,11 +175,12 @@ def record_migration(
     migration_file: str,
     checksum: str,
     execution_time_ms: int,
-    success: bool = True
+    success: bool = True,
 ):
     """Record migration execution in version table."""
     with conn.cursor() as cur:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO public.schema_version
                 (version, description, migration_file, checksum, execution_time_ms, success)
             VALUES (%s, %s, %s, %s, %s, %s)
@@ -184,7 +189,16 @@ def record_migration(
                 execution_time_ms = EXCLUDED.execution_time_ms,
                 success = EXCLUDED.success,
                 installed_at = NOW()
-        """, (version, description, migration_file, checksum, execution_time_ms, success))
+        """,
+            (
+                version,
+                description,
+                migration_file,
+                checksum,
+                execution_time_ms,
+                success,
+            ),
+        )
     conn.commit()
 
 
@@ -192,20 +206,25 @@ def record_migration(
 # SCHEMA MANAGEMENT
 # ============================================================================
 
+
 def create_schemas(conn: psycopg2.extensions.connection):
     """Create all required schemas if they don't exist."""
     with conn.cursor() as cur:
         for schema, description in SCHEMAS.items():
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 CREATE SCHEMA IF NOT EXISTS {schema};
                 COMMENT ON SCHEMA {schema} IS '{description}';
-            """)
+            """
+            )
 
             # Grant permissions
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 GRANT USAGE ON SCHEMA {schema} TO postgres, authenticated, service_role;
                 GRANT ALL ON SCHEMA {schema} TO postgres, service_role;
-            """)
+            """
+            )
 
         print(f"✅ Created {len(SCHEMAS)} schemas")
     conn.commit()
@@ -214,6 +233,7 @@ def create_schemas(conn: psycopg2.extensions.connection):
 # ============================================================================
 # MIGRATION EXECUTION
 # ============================================================================
+
 
 def parse_migration_filename(filename: str) -> Tuple[str, str]:
     """
@@ -225,28 +245,28 @@ def parse_migration_filename(filename: str) -> Tuple[str, str]:
         20251105_github_installations.sql -> (20251105, "GitHub Installations")
     """
     # Remove .sql extension
-    name = filename.replace('.sql', '')
+    name = filename.replace(".sql", "")
 
     # Try different patterns
     patterns = [
-        r'^(\d{3})_(.+)$',  # 001_name
-        r'^(\d{8})_(.+)$',  # 20251105_name
-        r'^(\d+)_(.+)$',    # any_digits_name
+        r"^(\d{3})_(.+)$",  # 001_name
+        r"^(\d{8})_(.+)$",  # 20251105_name
+        r"^(\d+)_(.+)$",  # any_digits_name
     ]
 
     for pattern in patterns:
         match = re.match(pattern, name)
         if match:
             version = match.group(1)
-            description = match.group(2).replace('_', ' ').title()
+            description = match.group(2).replace("_", " ").title()
             return version, description
 
     # Fallback
-    return name, name.replace('_', ' ').title()
+    return name, name.replace("_", " ").title()
 
 
 def get_pending_migrations(
-    conn: psycopg2.extensions.connection
+    conn: psycopg2.extensions.connection,
 ) -> List[Tuple[str, Path]]:
     """
     Get list of pending migrations that haven't been applied yet.
@@ -286,7 +306,7 @@ def execute_migration(
     conn: psycopg2.extensions.connection,
     version: str,
     file_path: Path,
-    dry_run: bool = False
+    dry_run: bool = False,
 ) -> bool:
     """
     Execute a single migration file.
@@ -296,11 +316,13 @@ def execute_migration(
     """
     version_display, description = parse_migration_filename(file_path.name)
 
-    print(f"\n{'[DRY RUN] ' if dry_run else ''}Applying migration {version}: {description}")
+    print(
+        f"\n{'[DRY RUN] ' if dry_run else ''}Applying migration {version}: {description}"
+    )
     print(f"  File: {file_path.name}")
 
     # Read migration SQL
-    with open(file_path, 'r') as f:
+    with open(file_path, "r") as f:
         sql = f.read()
 
     if dry_run:
@@ -323,8 +345,13 @@ def execute_migration(
 
         # Record success
         record_migration(
-            conn, version, description, file_path.name,
-            checksum, int(execution_time), success=True
+            conn,
+            version,
+            description,
+            file_path.name,
+            checksum,
+            int(execution_time),
+            success=True,
         )
 
         print(f"  ✅ Success ({int(execution_time)}ms)")
@@ -337,8 +364,13 @@ def execute_migration(
 
         # Record failure
         record_migration(
-            conn, version, f"FAILED: {description}", file_path.name,
-            checksum, int(execution_time), success=False
+            conn,
+            version,
+            f"FAILED: {description}",
+            file_path.name,
+            checksum,
+            int(execution_time),
+            success=False,
         )
 
         print(f"  ❌ Failed: {e}")
@@ -348,6 +380,7 @@ def execute_migration(
 # ============================================================================
 # SUPERSET INTEGRATION
 # ============================================================================
+
 
 def init_superset_metadata(conn: psycopg2.extensions.connection):
     """
@@ -360,10 +393,7 @@ def init_superset_metadata(conn: psycopg2.extensions.connection):
     # Check if superset command is available
     try:
         result = subprocess.run(
-            ["superset", "db", "upgrade"],
-            capture_output=True,
-            text=True,
-            timeout=120
+            ["superset", "db", "upgrade"], capture_output=True, text=True, timeout=120
         )
 
         if result.returncode == 0:
@@ -406,7 +436,7 @@ def create_analytics_views(conn: psycopg2.extensions.connection):
         try:
             print(f"  Creating {dataset_file.name}...")
 
-            with open(dataset_file, 'r') as f:
+            with open(dataset_file, "r") as f:
                 sql = f.read()
 
             with conn.cursor() as cur:
@@ -427,10 +457,8 @@ def create_analytics_views(conn: psycopg2.extensions.connection):
 # SAMPLE DATA
 # ============================================================================
 
-def install_sample_data(
-    conn: psycopg2.extensions.connection,
-    schema: str = "all"
-):
+
+def install_sample_data(conn: psycopg2.extensions.connection, schema: str = "all"):
     """
     Install sample data for testing and demo purposes.
 
@@ -449,51 +477,53 @@ def install_sample_data(
                     "kind": "DEPLOY_WEB",
                     "payload": {"branch": "main", "commit": "abc123"},
                     "status": "completed",
-                    "pr_number": 101
+                    "pr_number": 101,
                 },
                 {
                     "kind": "ODOO_BUILD",
                     "payload": {"module": "sale_management", "version": "19.0"},
                     "status": "completed",
-                    "pr_number": 102
+                    "pr_number": 102,
                 },
                 {
                     "kind": "DOCS_SYNC",
                     "payload": {"source": "notion", "pages_synced": 25},
                     "status": "processing",
-                    "pr_number": None
-                }
+                    "pr_number": None,
+                },
             ],
             "workflow_runs": [
                 {
                     "workflow_name": "deploy-production",
                     "status": "success",
-                    "duration_seconds": 180
+                    "duration_seconds": 180,
                 },
                 {
                     "workflow_name": "deploy-production",
                     "status": "success",
-                    "duration_seconds": 175
+                    "duration_seconds": 175,
                 },
                 {
                     "workflow_name": "test-suite",
                     "status": "success",
-                    "duration_seconds": 420
+                    "duration_seconds": 420,
                 },
                 {
                     "workflow_name": "test-suite",
                     "status": "failure",
-                    "duration_seconds": 380
-                }
-            ]
+                    "duration_seconds": 380,
+                },
+            ],
         },
         "analytics": {
             # Analytics sample data would come from Odoo exports
             # For now, we'll create placeholder data
-        }
+        },
     }
 
-    schemas_to_populate = [schema] if schema != "all" else sample_data_definitions.keys()
+    schemas_to_populate = (
+        [schema] if schema != "all" else sample_data_definitions.keys()
+    )
 
     for schema_name in schemas_to_populate:
         if schema_name not in sample_data_definitions:
@@ -508,8 +538,8 @@ def install_sample_data(
             try:
                 # Get column names from first row
                 columns = list(rows[0].keys())
-                placeholders = ', '.join(['%s'] * len(columns))
-                columns_sql = ', '.join(columns)
+                placeholders = ", ".join(["%s"] * len(columns))
+                columns_sql = ", ".join(columns)
 
                 sql = f"""
                     INSERT INTO {schema_name}.{table_name} ({columns_sql})
@@ -536,6 +566,7 @@ def install_sample_data(
 # APP INSTALLATION
 # ============================================================================
 
+
 def install_odoo_apps(app_list: List[str], odoo_url: str, api_key: str):
     """
     Install Odoo apps via RPC API.
@@ -548,7 +579,7 @@ def install_odoo_apps(app_list: List[str], odoo_url: str, api_key: str):
     print(f"\n📦 Installing Odoo apps...")
 
     try:
-        import xmlrpc.client
+        pass
     except ImportError:
         print("⚠️  xmlrpc not available, skipping Odoo app installation")
         return False
@@ -566,6 +597,7 @@ def install_odoo_apps(app_list: List[str], odoo_url: str, api_key: str):
 # STATUS & REPORTING
 # ============================================================================
 
+
 def print_migration_status(conn: psycopg2.extensions.connection):
     """Print current migration status."""
     print("\n" + "=" * 70)
@@ -580,9 +612,11 @@ def print_migration_status(conn: psycopg2.extensions.connection):
         return
 
     print(f"\nApplied migrations: {len(applied)}")
-    print("\n{:<12} {:<30} {:<12} {:<10}".format(
-        "VERSION", "DESCRIPTION", "DATE", "STATUS"
-    ))
+    print(
+        "\n{:<12} {:<30} {:<12} {:<10}".format(
+            "VERSION", "DESCRIPTION", "DATE", "STATUS"
+        )
+    )
     print("-" * 70)
 
     for version, info in sorted(applied.items()):
@@ -609,6 +643,7 @@ def print_migration_status(conn: psycopg2.extensions.connection):
 # MAIN CLI
 # ============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="InsightPulse Database Upgrader",
@@ -632,41 +667,42 @@ Examples:
 
     # Full setup (migrations + superset + sample data)
     python3 scripts/db_upgrader.py full-setup
-        """
+        """,
     )
 
     parser.add_argument(
         "command",
         choices=[
-            "status", "upgrade", "init-superset",
-            "install-sample-data", "full-setup", "rollback"
+            "status",
+            "upgrade",
+            "init-superset",
+            "install-sample-data",
+            "full-setup",
+            "rollback",
         ],
-        help="Command to execute"
+        help="Command to execute",
     )
 
     parser.add_argument(
         "--env",
         choices=["development", "staging", "production"],
         default="development",
-        help="Environment to target"
+        help="Environment to target",
     )
 
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be executed without making changes"
+        help="Show what would be executed without making changes",
     )
 
     parser.add_argument(
         "--schema",
         default="all",
-        help="Schema to operate on (for sample data installation)"
+        help="Schema to operate on (for sample data installation)",
     )
 
-    parser.add_argument(
-        "--to-version",
-        help="Target version for rollback"
-    )
+    parser.add_argument("--to-version", help="Target version for rollback")
 
     args = parser.parse_args()
 

@@ -3,196 +3,187 @@
 Notion-like Page Model
 Similar to notion_pages but optimized for agent-generated content
 """
-from odoo import models, fields, api, _
-from odoo.exceptions import ValidationError
-import re
 import json
+import re
+
+from odoo import _, api, fields, models
 
 
 class IpPage(models.Model):
-    _name = 'ip.page'
-    _description = 'InsightPulse Page (Notion-like)'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'write_date desc, id desc'
-    _rec_name = 'name'
+    _name = "ip.page"
+    _description = "InsightPulse Page (Notion-like)"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "write_date desc, id desc"
+    _rec_name = "name"
 
     # Core fields
     name = fields.Char(
-        string='Title',
+        string="Title",
         required=True,
         tracking=True,
-        help='Page title (like Notion page title)'
+        help="Page title (like Notion page title)",
     )
 
     body_md = fields.Html(
-        string='Content (Markdown)',
-        help='Page content in markdown/HTML format'
+        string="Content (Markdown)", help="Page content in markdown/HTML format"
     )
 
     body_plain = fields.Text(
-        string='Plain Text Content',
-        compute='_compute_body_plain',
+        string="Plain Text Content",
+        compute="_compute_body_plain",
         store=True,
-        help='Plain text version for search'
+        help="Plain text version for search",
     )
 
     # Metadata
-    page_type = fields.Selection([
-        ('doc', 'Document'),
-        ('prd', 'PRD (Product Requirements)'),
-        ('meeting', 'Meeting Notes'),
-        ('task_list', 'Task List'),
-        ('wiki', 'Wiki Page'),
-        ('template', 'Template'),
-    ], string='Page Type', default='doc', required=True)
+    page_type = fields.Selection(
+        [
+            ("doc", "Document"),
+            ("prd", "PRD (Product Requirements)"),
+            ("meeting", "Meeting Notes"),
+            ("task_list", "Task List"),
+            ("wiki", "Wiki Page"),
+            ("template", "Template"),
+        ],
+        string="Page Type",
+        default="doc",
+        required=True,
+    )
 
-    status = fields.Selection([
-        ('draft', 'Draft'),
-        ('review', 'In Review'),
-        ('published', 'Published'),
-        ('archived', 'Archived'),
-    ], string='Status', default='draft', tracking=True)
+    status = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("review", "In Review"),
+            ("published", "Published"),
+            ("archived", "Archived"),
+        ],
+        string="Status",
+        default="draft",
+        tracking=True,
+    )
 
     # Ownership
     owner_id = fields.Many2one(
-        'res.users',
-        string='Owner',
+        "res.users",
+        string="Owner",
         default=lambda self: self.env.user,
         tracking=True,
-        help='Page owner (creator)'
+        help="Page owner (creator)",
     )
 
     team_id = fields.Many2one(
-        'project.project',
-        string='Team/Project',
-        help='Associated team or project'
+        "project.project", string="Team/Project", help="Associated team or project"
     )
 
-    agency_code = fields.Selection([
-        ('RIM', 'RIM'),
-        ('CKVC', 'CKVC'),
-        ('BOM', 'BOM'),
-        ('JPAL', 'JPAL'),
-        ('JLI', 'JLI'),
-        ('JAP', 'JAP'),
-        ('LAS', 'LAS'),
-        ('RMQB', 'RMQB'),
-    ], string='Agency', help='Finance SSC agency if applicable')
+    agency_code = fields.Selection(
+        [
+            ("RIM", "RIM"),
+            ("CKVC", "CKVC"),
+            ("BOM", "BOM"),
+            ("JPAL", "JPAL"),
+            ("JLI", "JLI"),
+            ("JAP", "JAP"),
+            ("LAS", "LAS"),
+            ("RMQB", "RMQB"),
+        ],
+        string="Agency",
+        help="Finance SSC agency if applicable",
+    )
 
     # Source tracking (where this page came from)
-    source_type = fields.Selection([
-        ('manual', 'Manual Creation'),
-        ('agent', 'AI Agent Generated'),
-        ('notion', 'Synced from Notion'),
-        ('github', 'GitHub Issue/PR'),
-        ('meeting', 'Calendar Meeting'),
-        ('slack', 'Slack Conversation'),
-    ], string='Source Type', default='manual')
+    source_type = fields.Selection(
+        [
+            ("manual", "Manual Creation"),
+            ("agent", "AI Agent Generated"),
+            ("notion", "Synced from Notion"),
+            ("github", "GitHub Issue/PR"),
+            ("meeting", "Calendar Meeting"),
+            ("slack", "Slack Conversation"),
+        ],
+        string="Source Type",
+        default="manual",
+    )
 
     source_links = fields.Text(
-        string='Source Links',
-        help='JSON array of source URLs/references'
+        string="Source Links", help="JSON array of source URLs/references"
     )
 
     source_id = fields.Char(
-        string='External Source ID',
-        help='External ID (Notion page ID, GitHub issue #, etc.)'
+        string="External Source ID",
+        help="External ID (Notion page ID, GitHub issue #, etc.)",
     )
 
     # Agent tracking
     created_by_agent = fields.Boolean(
-        string='Created by Agent',
+        string="Created by Agent",
         default=False,
-        help='True if this page was generated by AI agent'
+        help="True if this page was generated by AI agent",
     )
 
     agent_run_id = fields.Many2one(
-        'ip.agent.run',
-        string='Agent Run',
-        help='The agent run that created/updated this page'
+        "ip.agent.run",
+        string="Agent Run",
+        help="The agent run that created/updated this page",
     )
 
     # Relationships
     parent_id = fields.Many2one(
-        'ip.page',
-        string='Parent Page',
-        ondelete='cascade',
-        help='Parent page for hierarchical organization'
+        "ip.page",
+        string="Parent Page",
+        ondelete="cascade",
+        help="Parent page for hierarchical organization",
     )
 
-    child_ids = fields.One2many(
-        'ip.page',
-        'parent_id',
-        string='Child Pages'
-    )
+    child_ids = fields.One2many("ip.page", "parent_id", string="Child Pages")
 
     # Task integration
-    task_ids = fields.One2many(
-        'project.task',
-        'page_id',
-        string='Related Tasks'
-    )
+    task_ids = fields.One2many("project.task", "page_id", string="Related Tasks")
 
-    task_count = fields.Integer(
-        string='Task Count',
-        compute='_compute_task_count'
-    )
+    task_count = fields.Integer(string="Task Count", compute="_compute_task_count")
 
     # Tags
-    tag_ids = fields.Many2many(
-        'project.tags',
-        string='Tags'
-    )
+    tag_ids = fields.Many2many("project.tags", string="Tags")
 
     # Metrics
     word_count = fields.Integer(
-        string='Word Count',
-        compute='_compute_word_count',
-        store=True
+        string="Word Count", compute="_compute_word_count", store=True
     )
 
     view_count = fields.Integer(
-        string='View Count',
-        default=0,
-        help='Number of times this page was viewed'
+        string="View Count", default=0, help="Number of times this page was viewed"
     )
 
     # Timestamps
-    published_date = fields.Datetime(
-        string='Published Date',
-        readonly=True
-    )
+    published_date = fields.Datetime(string="Published Date", readonly=True)
 
     # Security
     is_public = fields.Boolean(
-        string='Public',
-        default=False,
-        help='If True, anyone can view this page'
+        string="Public", default=False, help="If True, anyone can view this page"
     )
 
     allowed_user_ids = fields.Many2many(
-        'res.users',
-        'ip_page_user_rel',
-        'page_id',
-        'user_id',
-        string='Allowed Users',
-        help='Users who can view/edit this page'
+        "res.users",
+        "ip_page_user_rel",
+        "page_id",
+        "user_id",
+        string="Allowed Users",
+        help="Users who can view/edit this page",
     )
 
     # Computed fields
-    @api.depends('body_md')
+    @api.depends("body_md")
     def _compute_body_plain(self):
         """Extract plain text from HTML/markdown for search"""
         for page in self:
             if page.body_md:
                 # Simple HTML tag removal
-                text = re.sub(r'<[^>]+>', '', page.body_md or '')
-                text = re.sub(r'\s+', ' ', text).strip()
+                text = re.sub(r"<[^>]+>", "", page.body_md or "")
+                text = re.sub(r"\s+", " ", text).strip()
                 page.body_plain = text
             else:
-                page.body_plain = ''
+                page.body_plain = ""
 
-    @api.depends('body_plain')
+    @api.depends("body_plain")
     def _compute_word_count(self):
         """Calculate word count"""
         for page in self:
@@ -201,7 +192,7 @@ class IpPage(models.Model):
             else:
                 page.word_count = 0
 
-    @api.depends('task_ids')
+    @api.depends("task_ids")
     def _compute_task_count(self):
         """Count related tasks"""
         for page in self:
@@ -211,26 +202,23 @@ class IpPage(models.Model):
     def action_publish(self):
         """Publish page"""
         self.ensure_one()
-        self.write({
-            'status': 'published',
-            'published_date': fields.Datetime.now()
-        })
+        self.write({"status": "published", "published_date": fields.Datetime.now()})
 
     def action_archive_page(self):
         """Archive page"""
         self.ensure_one()
-        self.write({'status': 'archived'})
+        self.write({"status": "archived"})
 
     def action_view_tasks(self):
         """Open related tasks"""
         self.ensure_one()
         return {
-            'name': _('Tasks for %s') % self.name,
-            'type': 'ir.actions.act_window',
-            'res_model': 'project.task',
-            'view_mode': 'tree,form',
-            'domain': [('page_id', '=', self.id)],
-            'context': {'default_page_id': self.id}
+            "name": _("Tasks for %s") % self.name,
+            "type": "ir.actions.act_window",
+            "res_model": "project.task",
+            "view_mode": "tree,form",
+            "domain": [("page_id", "=", self.id)],
+            "context": {"default_page_id": self.id},
         }
 
     def increment_view_count(self):
@@ -253,11 +241,13 @@ class IpPage(models.Model):
         """Add a source link"""
         self.ensure_one()
         links = self.get_source_links_list()
-        links.append({
-            'url': url,
-            'title': title or url,
-            'added_at': fields.Datetime.now().isoformat()
-        })
+        links.append(
+            {
+                "url": url,
+                "title": title or url,
+                "added_at": fields.Datetime.now().isoformat(),
+            }
+        )
         self.source_links = json.dumps(links)
 
     # Search
@@ -278,25 +268,31 @@ class IpPage(models.Model):
 
         # Text search
         if query:
-            domain.extend(['|', '|',
-                ('name', 'ilike', query),
-                ('body_plain', 'ilike', query),
-                ('source_links', 'ilike', query)
-            ])
+            domain.extend(
+                [
+                    "|",
+                    "|",
+                    ("name", "ilike", query),
+                    ("body_plain", "ilike", query),
+                    ("source_links", "ilike", query),
+                ]
+            )
 
         # Filters
         if page_type:
-            domain.append(('page_type', '=', page_type))
+            domain.append(("page_type", "=", page_type))
         if owner_id:
-            domain.append(('owner_id', '=', owner_id))
+            domain.append(("owner_id", "=", owner_id))
 
         # Exclude archived
-        domain.append(('status', '!=', 'archived'))
+        domain.append(("status", "!=", "archived"))
 
-        return self.search(domain, limit=limit, order='write_date desc')
+        return self.search(domain, limit=limit, order="write_date desc")
 
     @api.model
-    def create_from_agent(self, title, body_md, page_type='doc', sources=None, agent_run_id=None, **kwargs):
+    def create_from_agent(
+        self, title, body_md, page_type="doc", sources=None, agent_run_id=None, **kwargs
+    ):
         """Convenience method for agent to create pages
 
         Args:
@@ -311,19 +307,21 @@ class IpPage(models.Model):
             record: Created page
         """
         values = {
-            'name': title,
-            'body_md': body_md,
-            'page_type': page_type,
-            'created_by_agent': True,
-            'source_type': 'agent',
-            'agent_run_id': agent_run_id,
+            "name": title,
+            "body_md": body_md,
+            "page_type": page_type,
+            "created_by_agent": True,
+            "source_type": "agent",
+            "agent_run_id": agent_run_id,
         }
 
         if sources:
-            values['source_links'] = json.dumps([
-                {'url': url, 'title': url} if isinstance(url, str) else url
-                for url in sources
-            ])
+            values["source_links"] = json.dumps(
+                [
+                    {"url": url, "title": url} if isinstance(url, str) else url
+                    for url in sources
+                ]
+            )
 
         values.update(kwargs)
         return self.create(values)
@@ -331,25 +329,24 @@ class IpPage(models.Model):
 
 # Extend project.task to link to pages
 class ProjectTask(models.Model):
-    _inherit = 'project.task'
+    _inherit = "project.task"
 
     page_id = fields.Many2one(
-        'ip.page',
-        string='Source Page',
-        help='Page that this task was extracted from (PRD, meeting notes, etc.)'
+        "ip.page",
+        string="Source Page",
+        help="Page that this task was extracted from (PRD, meeting notes, etc.)",
     )
 
-    page_url = fields.Char(
-        string='Page URL',
-        compute='_compute_page_url'
-    )
+    page_url = fields.Char(string="Page URL", compute="_compute_page_url")
 
-    @api.depends('page_id')
+    @api.depends("page_id")
     def _compute_page_url(self):
         """Get URL to page"""
-        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        base_url = self.env["ir.config_parameter"].sudo().get_param("web.base.url")
         for task in self:
             if task.page_id:
-                task.page_url = f"{base_url}/web#id={task.page_id.id}&model=ip.page&view_type=form"
+                task.page_url = (
+                    f"{base_url}/web#id={task.page_id.id}&model=ip.page&view_type=form"
+                )
             else:
                 task.page_url = False

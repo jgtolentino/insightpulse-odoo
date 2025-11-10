@@ -1,21 +1,28 @@
 # -*- coding: utf-8 -*-
 import base64
-import json
 import logging
+
 import requests
-from odoo import api, fields, models
+
+from odoo import fields, models
 
 _logger = logging.getLogger(__name__)
+
 
 class HrExpense(models.Model):
     _inherit = "hr.expense"
 
-    ocr_status = fields.Selection([
-        ("new", "New"),
-        ("queued", "Queued"),
-        ("parsed", "Parsed"),
-        ("error", "Error"),
-    ], default="new", string="OCR Status", tracking=True)
+    ocr_status = fields.Selection(
+        [
+            ("new", "New"),
+            ("queued", "Queued"),
+            ("parsed", "Parsed"),
+            ("error", "Error"),
+        ],
+        default="new",
+        string="OCR Status",
+        tracking=True,
+    )
     ocr_confidence = fields.Float("OCR Confidence")
     ocr_merchant = fields.Char("Merchant")
     ocr_date = fields.Date("Receipt Date")
@@ -32,11 +39,14 @@ class HrExpense(models.Model):
 
         for rec in self:
             # Find first image attachment for the expense
-            att = self.env["ir.attachment"].search([
-                ("res_model", "=", rec._name),
-                ("res_id", "=", rec.id),
-                ("mimetype", "ilike", "image/%")
-            ], limit=1)
+            att = self.env["ir.attachment"].search(
+                [
+                    ("res_model", "=", rec._name),
+                    ("res_id", "=", rec.id),
+                    ("mimetype", "ilike", "image/%"),
+                ],
+                limit=1,
+            )
             if not att:
                 raise ValueError("Attach a receipt image first before OCR.")
 
@@ -58,6 +68,7 @@ class HrExpense(models.Model):
     def _apply_ocr_payload(self, payload: dict):
         """Map OCR JSON → expense fields."""
         vals = {"ocr_status": "parsed", "ocr_payload": payload}
+
         # tolerant key lookups from sample schema provided
         def gv(path, default=None):
             cur = payload
@@ -67,14 +78,18 @@ class HrExpense(models.Model):
                 else:
                     return default
             return cur
+
         merchant = gv("merchant_name.value") or gv("merchant_name")
         total = gv("total_amount.value") or gv("total_amount")
         conf = gv("total_amount.confidence") or gv("confidence") or 0.0
         rdate = gv("date.value") or gv("date")
 
-        if merchant: vals["ocr_merchant"] = merchant
-        if conf is not None: vals["ocr_confidence"] = conf
-        if rdate: vals["ocr_date"] = rdate
+        if merchant:
+            vals["ocr_merchant"] = merchant
+        if conf is not None:
+            vals["ocr_confidence"] = conf
+        if rdate:
+            vals["ocr_date"] = rdate
         if total:
             try:
                 vals["total_amount"] = float(total)

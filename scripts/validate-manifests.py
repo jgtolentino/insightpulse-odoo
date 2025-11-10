@@ -13,35 +13,34 @@ Checks for:
 import ast
 import sys
 from pathlib import Path
-from typing import Dict, List, Set
-
+from typing import Dict, List
 
 REQUIRED_KEYS = {
-    'name',
-    'version',
-    'category',
-    'author',
-    'license',
-    'depends',
-    'data',
+    "name",
+    "version",
+    "category",
+    "author",
+    "license",
+    "depends",
+    "data",
 }
 
 RECOMMENDED_KEYS = {
-    'summary',
-    'description',
-    'website',
-    'installable',
-    'application',
-    'auto_install',
+    "summary",
+    "description",
+    "website",
+    "installable",
+    "application",
+    "auto_install",
 }
 
 VALID_LICENSES = {
-    'AGPL-3',
-    'LGPL-3',
-    'OPL-1',
-    'GPL-2',
-    'GPL-3',
-    'Other proprietary',
+    "AGPL-3",
+    "LGPL-3",
+    "OPL-1",
+    "GPL-2",
+    "GPL-3",
+    "Other proprietary",
 }
 
 
@@ -50,7 +49,7 @@ def find_manifest_files(addons_path: Path) -> List[Path]:
     manifest_files = []
 
     # Search recursively for all __manifest__.py files
-    for manifest in addons_path.rglob('__manifest__.py'):
+    for manifest in addons_path.rglob("__manifest__.py"):
         manifest_files.append(manifest)
 
     return manifest_files
@@ -59,7 +58,7 @@ def find_manifest_files(addons_path: Path) -> List[Path]:
 def parse_manifest(manifest_path: Path) -> Dict:
     """Parse manifest file and return dictionary."""
     try:
-        with open(manifest_path, 'r', encoding='utf-8') as f:
+        with open(manifest_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         # Parse Python AST
@@ -98,30 +97,32 @@ def validate_manifest(manifest_path: Path, manifest: Dict) -> bool:
         warnings.append(f"Missing recommended keys: {', '.join(missing_recommended)}")
 
     # Validate version format
-    if 'version' in manifest:
-        version = manifest['version']
+    if "version" in manifest:
+        version = manifest["version"]
         if not isinstance(version, str):
             errors.append(f"Version must be string, got {type(version).__name__}")
-        elif not version.count('.') >= 2:
+        elif not version.count(".") >= 2:
             errors.append(f"Version format should be X.Y.Z, got {version}")
 
     # Validate license
-    if 'license' in manifest:
-        license_val = manifest['license']
+    if "license" in manifest:
+        license_val = manifest["license"]
         if license_val not in VALID_LICENSES:
-            warnings.append(f"Unknown license: {license_val}. Valid: {', '.join(VALID_LICENSES)}")
+            warnings.append(
+                f"Unknown license: {license_val}. Valid: {', '.join(VALID_LICENSES)}"
+            )
 
     # Validate depends
-    if 'depends' in manifest:
-        depends = manifest['depends']
+    if "depends" in manifest:
+        depends = manifest["depends"]
         if not isinstance(depends, list):
             errors.append(f"'depends' must be list, got {type(depends).__name__}")
         elif not all(isinstance(d, str) for d in depends):
             errors.append("'depends' must be list of strings")
 
     # Validate data
-    if 'data' in manifest:
-        data = manifest['data']
+    if "data" in manifest:
+        data = manifest["data"]
         if not isinstance(data, list):
             errors.append(f"'data' must be list, got {type(data).__name__}")
         elif not all(isinstance(d, str) for d in data):
@@ -151,7 +152,7 @@ def validate_manifest(manifest_path: Path, manifest: Dict) -> bool:
 
 def main():
     """Main validation function."""
-    addons_path = Path(__file__).parent.parent / 'addons'
+    addons_path = Path(__file__).parent.parent / "addons"
 
     if not addons_path.exists():
         print(f"❌ Addons directory not found: {addons_path}")
@@ -187,5 +188,5 @@ def main():
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -6,10 +6,12 @@ Helps migrate and organize Claude Code skills using scraped Odoo knowledge.
 Keeps skills library up-to-date as patterns evolve.
 """
 
-import os
 import json
+import os
 from pathlib import Path
+
 from anthropic import Anthropic
+
 
 def load_all_skills():
     """Load all skills from docs/claude-code-skills/"""
@@ -18,14 +20,17 @@ def load_all_skills():
 
     for skill_path in skills_dir.glob("*/SKILL.md"):
         with open(skill_path) as f:
-            skills.append({
-                'name': skill_path.parent.name,
-                'path': str(skill_path),
-                'content': f.read()
-            })
+            skills.append(
+                {
+                    "name": skill_path.parent.name,
+                    "path": str(skill_path),
+                    "content": f.read(),
+                }
+            )
 
     print(f"✅ Loaded {len(skills)} skills")
     return skills
+
 
 def scrape_odoo_patterns():
     """Load scraped patterns from knowledge base"""
@@ -41,16 +46,19 @@ def scrape_odoo_patterns():
     print(f"✅ Loaded {len(patterns)} patterns")
     return patterns
 
+
 def migrate_skill_with_claude(skill, patterns, migration_type):
     """Use Claude to suggest skill improvements based on patterns"""
 
-    client = Anthropic(api_key=os.environ.get('ANTHROPIC_API_KEY'))
+    client = Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
     # Build context
-    pattern_context = "\n".join([
-        f"- {p.get('title', 'Unknown')}: {p.get('pattern', '')}"
-        for p in patterns[:10]  # Limit to 10 patterns
-    ])
+    pattern_context = "\n".join(
+        [
+            f"- {p.get('title', 'Unknown')}: {p.get('pattern', '')}"
+            for p in patterns[:10]  # Limit to 10 patterns
+        ]
+    )
 
     prompt = f"""
     You are helping migrate a Claude Code skill library.
@@ -85,10 +93,11 @@ def migrate_skill_with_claude(skill, patterns, migration_type):
     response = client.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=1024,
-        messages=[{"role": "user", "content": prompt}]
+        messages=[{"role": "user", "content": prompt}],
     )
 
     return response.content[0].text
+
 
 def generate_migration_report(skills, patterns):
     """Generate report of suggested skill updates"""
@@ -103,9 +112,7 @@ def generate_migration_report(skills, patterns):
         print(f"Analyzing skill: {skill['name']}")
 
         suggestions = migrate_skill_with_claude(
-            skill,
-            patterns,
-            migration_type="enhance_with_patterns"
+            skill, patterns, migration_type="enhance_with_patterns"
         )
 
         report.append(f"\n## {skill['name']}")
@@ -113,6 +120,7 @@ def generate_migration_report(skills, patterns):
         report.append("---")
 
     return "\n".join(report)
+
 
 def main():
     print("=== Skills Library Migration Assistant ===\n")
@@ -133,14 +141,18 @@ def main():
 
     # 4. Save report
     os.makedirs("docs/migrations", exist_ok=True)
-    report_file = f"docs/migrations/skills_migration_{datetime.now().strftime('%Y%m%d')}.md"
+    report_file = (
+        f"docs/migrations/skills_migration_{datetime.now().strftime('%Y%m%d')}.md"
+    )
 
-    with open(report_file, 'w') as f:
+    with open(report_file, "w") as f:
         f.write(report)
 
     print(f"\n✅ Migration report: {report_file}")
     print("\nReview the report and apply suggested changes manually.")
 
+
 if __name__ == "__main__":
     from datetime import datetime
+
     main()

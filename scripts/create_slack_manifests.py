@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """Generate __manifest__.py for all IPAI Slack modules"""
 
-import os
 from pathlib import Path
 
 MANIFESTS = {
-    'ipai_slack_bridge': {
-        'name': 'IPAI Slack Bridge',
-        'summary': 'Bidirectional Slack integration - OAuth, Events API, message sync',
-        'depends': ['ipai_chat_core', 'base_rest'],
-        'description': '''
+    "ipai_slack_bridge": {
+        "name": "IPAI Slack Bridge",
+        "summary": "Bidirectional Slack integration - OAuth, Events API, message sync",
+        "depends": ["ipai_chat_core", "base_rest"],
+        "description": """
 Slack Bridge - Bidirectional Integration
 ========================================
 
@@ -27,13 +26,13 @@ Endpoints:
 - POST /slack/events
 - POST /slack/commands
 - POST /slack/actions
-''',
+""",
     },
-    'ipai_scim_provisioner': {
-        'name': 'IPAI SCIM Provisioner',
-        'summary': 'SCIM 2.0 user lifecycle management - provision, deprovision, sync',
-        'depends': ['base', 'base_rest', 'base_rest_auth_jwt'],
-        'description': '''
+    "ipai_scim_provisioner": {
+        "name": "IPAI SCIM Provisioner",
+        "summary": "SCIM 2.0 user lifecycle management - provision, deprovision, sync",
+        "depends": ["base", "base_rest", "base_rest_auth_jwt"],
+        "description": """
 SCIM 2.0 Provisioner
 ===================
 
@@ -50,13 +49,13 @@ Endpoints:
 - GET/POST /scim/v2/Groups
 
 Integration: Azure AD, Okta, OneLogin
-''',
+""",
     },
-    'ipai_audit_discovery': {
-        'name': 'IPAI Audit & eDiscovery',
-        'summary': 'Immutable audit trail, legal hold, eDiscovery export',
-        'depends': ['ipai_chat_core', 'auditlog'],
-        'description': '''
+    "ipai_audit_discovery": {
+        "name": "IPAI Audit & eDiscovery",
+        "summary": "Immutable audit trail, legal hold, eDiscovery export",
+        "depends": ["ipai_chat_core", "auditlog"],
+        "description": """
 Audit & eDiscovery
 =================
 
@@ -76,13 +75,13 @@ Events tracked:
 - DLP violations
 - Hold operations
 - Export requests
-''',
+""",
     },
-    'ipai_retention_policies': {
-        'name': 'IPAI Retention Policies',
-        'summary': 'Data retention, auto-purge, legal hold exceptions',
-        'depends': ['ipai_chat_core', 'ipai_audit_discovery'],
-        'description': '''
+    "ipai_retention_policies": {
+        "name": "IPAI Retention Policies",
+        "summary": "Data retention, auto-purge, legal hold exceptions",
+        "depends": ["ipai_chat_core", "ipai_audit_discovery"],
+        "description": """
 Retention Policies
 =================
 
@@ -94,13 +93,13 @@ Features:
 - Important message exceptions
 - Retention reporting
 - Compliance dashboard
-''',
+""",
     },
-    'ipai_dlp_guard': {
-        'name': 'IPAI DLP Guard',
-        'summary': 'Data Loss Prevention - pattern detection, quarantine, review',
-        'depends': ['ipai_chat_core'],
-        'description': '''
+    "ipai_dlp_guard": {
+        "name": "IPAI DLP Guard",
+        "summary": "Data Loss Prevention - pattern detection, quarantine, review",
+        "depends": ["ipai_chat_core"],
+        "description": """
 DLP Guard - Data Loss Prevention
 ================================
 
@@ -118,13 +117,13 @@ Built-in patterns:
 - API keys and tokens
 - Philippine TIN
 - Custom regex patterns
-''',
+""",
     },
-    'ipai_huddles_webrtc': {
-        'name': 'IPAI Huddles WebRTC',
-        'summary': 'Jitsi integration for audio/video calls and huddles',
-        'depends': ['ipai_chat_core'],
-        'description': '''
+    "ipai_huddles_webrtc": {
+        "name": "IPAI Huddles WebRTC",
+        "summary": "Jitsi integration for audio/video calls and huddles",
+        "depends": ["ipai_chat_core"],
+        "description": """
 Huddles - Audio/Video Calls
 ===========================
 
@@ -139,13 +138,13 @@ Features:
 Requirements:
 - Jitsi server (self-hosted or cloud)
 - Optional: Jibri for recording
-''',
+""",
     },
-    'ipai_workflow_bot': {
-        'name': 'IPAI Workflow Bot',
-        'summary': 'Slash commands, interactive dialogs, workflow automation',
-        'depends': ['ipai_chat_core', 'base_automation'],
-        'description': '''
+    "ipai_workflow_bot": {
+        "name": "IPAI Workflow Bot",
+        "summary": "Slash commands, interactive dialogs, workflow automation",
+        "depends": ["ipai_chat_core", "base_automation"],
+        "description": """
 Workflow Bot - Automation
 =========================
 
@@ -165,13 +164,13 @@ Built-in commands:
 - /expense - Create expense
 - /invoice - Create invoice
 - /task - Create task
-''',
+""",
     },
-    'ipai_connect_external': {
-        'name': 'IPAI Connect External',
-        'summary': 'Guest/partner collaboration spaces (Slack Connect equivalent)',
-        'depends': ['ipai_chat_core', 'portal'],
-        'description': '''
+    "ipai_connect_external": {
+        "name": "IPAI Connect External",
+        "summary": "Guest/partner collaboration spaces (Slack Connect equivalent)",
+        "depends": ["ipai_chat_core", "portal"],
+        "description": """
 External Connect - Guest Collaboration
 ======================================
 
@@ -188,14 +187,14 @@ Use cases:
 - Client communication
 - Partner projects
 - External consultants
-''',
+""",
     },
-    'ipai_search_vector': {
-        'name': 'IPAI Semantic Search',
-        'summary': 'pgvector-based semantic search for messages and files',
-        'depends': ['ipai_chat_core'],
-        'external_dependencies': {'python': ['openai', 'anthropic']},
-        'description': '''
+    "ipai_search_vector": {
+        "name": "IPAI Semantic Search",
+        "summary": "pgvector-based semantic search for messages and files",
+        "depends": ["ipai_chat_core"],
+        "external_dependencies": {"python": ["openai", "anthropic"]},
+        "description": """
 Semantic Search - AI-Powered
 ============================
 
@@ -210,14 +209,14 @@ Features:
 Requirements:
 - PostgreSQL with pgvector extension
 - OpenAI or Anthropic API key
-''',
+""",
     },
-    'ipai_files_spaces': {
-        'name': 'IPAI Files Storage',
-        'summary': 'S3/DigitalOcean Spaces integration for large files',
-        'depends': ['base'],
-        'external_dependencies': {'python': ['boto3']},
-        'description': '''
+    "ipai_files_spaces": {
+        "name": "IPAI Files Storage",
+        "summary": "S3/DigitalOcean Spaces integration for large files",
+        "depends": ["base"],
+        "external_dependencies": {"python": ["boto3"]},
+        "description": """
 Files Storage - Cloud Integration
 =================================
 
@@ -234,15 +233,18 @@ Supported backends:
 - AWS S3
 - MinIO
 - S3-compatible storage
-''',
+""",
     },
 }
 
+
 def create_manifest(module_name, config):
     """Create __manifest__.py for module"""
-    manifest_path = Path(f'/home/user/insightpulse-odoo/odoo_addons/{module_name}/__manifest__.py')
+    manifest_path = Path(
+        f"/home/user/insightpulse-odoo/odoo_addons/{module_name}/__manifest__.py"
+    )
 
-    external_deps = config.get('external_dependencies', {})
+    external_deps = config.get("external_dependencies", {})
     ext_deps_str = f"'external_dependencies': {external_deps}," if external_deps else ""
 
     manifest_content = f'''# -*- coding: utf-8 -*-
@@ -269,9 +271,10 @@ def create_manifest(module_name, config):
 '''
 
     manifest_path.write_text(manifest_content)
-    print(f'✅ Created {module_name}/__manifest__.py')
+    print(f"✅ Created {module_name}/__manifest__.py")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     for module_name, config in MANIFESTS.items():
         create_manifest(module_name, config)
-    print('\n🎉 All manifests created!')
+    print("\n🎉 All manifests created!")

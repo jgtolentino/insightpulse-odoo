@@ -16,11 +16,11 @@ External ID Format:
     Example: bir_1601-C_RIM_2025_01
 """
 
+import argparse
+import json
+import logging
 import os
 import sys
-import json
-import argparse
-import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -29,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from notion_client import NotionClient, create_notion_property
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -48,7 +48,9 @@ class BIRNotionSync:
         self.database_id = database_id
         logger.info(f"Initialized BIR sync for database: {database_id}")
 
-    def generate_external_id(self, form_code: str, company_code: str, deadline: str) -> str:
+    def generate_external_id(
+        self, form_code: str, company_code: str, deadline: str
+    ) -> str:
         """
         Generate External ID for BIR entry.
 
@@ -76,18 +78,20 @@ class BIRNotionSync:
             Notion page ID
         """
         external_id = self.generate_external_id(
-            form_code=entry['form'],
-            company_code=entry['company'],
-            deadline=entry['deadline']
+            form_code=entry["form"],
+            company_code=entry["company"],
+            deadline=entry["deadline"],
         )
 
         properties = {
-            'Form Code': create_notion_property('title', f"{entry['form']} - {entry['name']}"),
-            'Company': create_notion_property('select', entry['company']),
-            'Deadline': create_notion_property('date', entry['deadline']),
-            'Reminder Date': create_notion_property('date', entry['reminder_date']),
-            'Status': create_notion_property('select', 'Pending'),
-            'Priority': create_notion_property('select', 'High')
+            "Form Code": create_notion_property(
+                "title", f"{entry['form']} - {entry['name']}"
+            ),
+            "Company": create_notion_property("select", entry["company"]),
+            "Deadline": create_notion_property("date", entry["deadline"]),
+            "Reminder Date": create_notion_property("date", entry["reminder_date"]),
+            "Status": create_notion_property("select", "Pending"),
+            "Priority": create_notion_property("select", "High"),
         }
 
         # Create checklist as page children
@@ -97,55 +101,77 @@ class BIRNotionSync:
                 "type": "heading_2",
                 "heading_2": {
                     "rich_text": [{"type": "text", "text": {"content": "Checklist"}}]
-                }
+                },
             },
             {
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": "Gather supporting documents"}}],
-                    "checked": False
-                }
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": "Gather supporting documents"},
+                        }
+                    ],
+                    "checked": False,
+                },
             },
             {
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": f"Prepare {entry['form']} form"}}],
-                    "checked": False
-                }
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": f"Prepare {entry['form']} form"},
+                        }
+                    ],
+                    "checked": False,
+                },
             },
             {
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": "Review with Finance Officer"}}],
-                    "checked": False
-                }
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": "Review with Finance Officer"},
+                        }
+                    ],
+                    "checked": False,
+                },
             },
             {
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": "Submit to BIR"}}],
-                    "checked": False
-                }
+                    "rich_text": [
+                        {"type": "text", "text": {"content": "Submit to BIR"}}
+                    ],
+                    "checked": False,
+                },
             },
             {
                 "object": "block",
                 "type": "to_do",
                 "to_do": {
-                    "rich_text": [{"type": "text", "text": {"content": "File copy in company folder"}}],
-                    "checked": False
-                }
-            }
+                    "rich_text": [
+                        {
+                            "type": "text",
+                            "text": {"content": "File copy in company folder"},
+                        }
+                    ],
+                    "checked": False,
+                },
+            },
         ]
 
         page_id = self.client.upsert_page(
             database_id=self.database_id,
             external_id=external_id,
             properties=properties,
-            children=children
+            children=children,
         )
 
         logger.info(f"Synced: {entry['form']} - {entry['company']} → {page_id}")
@@ -164,7 +190,7 @@ class BIRNotionSync:
         if not os.path.exists(calendar_file):
             raise FileNotFoundError(f"Calendar file not found: {calendar_file}")
 
-        with open(calendar_file, 'r') as f:
+        with open(calendar_file, "r") as f:
             calendar_entries = json.load(f)
 
         logger.info(f"Syncing {len(calendar_entries)} BIR entries...")
@@ -177,18 +203,24 @@ class BIRNotionSync:
                 page_id = self.sync_entry(entry)
                 page_ids.append(page_id)
             except Exception as e:
-                logger.error(f"Error syncing entry {entry.get('form')} - {entry.get('company')}: {e}")
-                errors.append({'entry': entry, 'error': str(e)})
+                logger.error(
+                    f"Error syncing entry {entry.get('form')} - {entry.get('company')}: {e}"
+                )
+                errors.append({"entry": entry, "error": str(e)})
 
         stats = {
-            'total': len(calendar_entries),
-            'synced': len(page_ids),
-            'errors': len(errors),
-            'success_rate': (len(page_ids) / len(calendar_entries) * 100) if calendar_entries else 0
+            "total": len(calendar_entries),
+            "synced": len(page_ids),
+            "errors": len(errors),
+            "success_rate": (
+                (len(page_ids) / len(calendar_entries) * 100) if calendar_entries else 0
+            ),
         }
 
-        logger.info(f"✅ Sync complete: {stats['synced']}/{stats['total']} entries "
-                   f"({stats['success_rate']:.1f}% success rate)")
+        logger.info(
+            f"✅ Sync complete: {stats['synced']}/{stats['total']} entries "
+            f"({stats['success_rate']:.1f}% success rate)"
+        )
 
         if errors:
             logger.warning(f"⚠️  {len(errors)} errors occurred during sync")
@@ -198,22 +230,34 @@ class BIRNotionSync:
 
 def main():
     """Main entry point for BIR Notion sync."""
-    parser = argparse.ArgumentParser(description='Sync BIR compliance calendar to Notion')
-    parser.add_argument('--calendar', required=True, help='Path to BIR calendar JSON file')
-    parser.add_argument('--database-id', help='Notion database ID (or use NOTION_BIR_DB_ID env var)')
-    parser.add_argument('--token', help='Notion API token (or use NOTION_API_TOKEN env var)')
+    parser = argparse.ArgumentParser(
+        description="Sync BIR compliance calendar to Notion"
+    )
+    parser.add_argument(
+        "--calendar", required=True, help="Path to BIR calendar JSON file"
+    )
+    parser.add_argument(
+        "--database-id", help="Notion database ID (or use NOTION_BIR_DB_ID env var)"
+    )
+    parser.add_argument(
+        "--token", help="Notion API token (or use NOTION_API_TOKEN env var)"
+    )
     args = parser.parse_args()
 
     # Get credentials
-    notion_token = args.token or os.getenv('NOTION_API_TOKEN')
-    database_id = args.database_id or os.getenv('NOTION_BIR_DB_ID')
+    notion_token = args.token or os.getenv("NOTION_API_TOKEN")
+    database_id = args.database_id or os.getenv("NOTION_BIR_DB_ID")
 
     if not notion_token:
-        logger.error("❌ Notion API token required (--token or NOTION_API_TOKEN env var)")
+        logger.error(
+            "❌ Notion API token required (--token or NOTION_API_TOKEN env var)"
+        )
         sys.exit(1)
 
     if not database_id:
-        logger.error("❌ Notion database ID required (--database-id or NOTION_BIR_DB_ID env var)")
+        logger.error(
+            "❌ Notion database ID required (--database-id or NOTION_BIR_DB_ID env var)"
+        )
         sys.exit(1)
 
     # Run sync
@@ -231,12 +275,12 @@ def main():
         print(f"Success rate: {stats['success_rate']:.1f}%")
         print("=" * 50 + "\n")
 
-        sys.exit(0 if stats['errors'] == 0 else 1)
+        sys.exit(0 if stats["errors"] == 0 else 1)
 
     except Exception as e:
         logger.error(f"❌ Fatal error: {e}")
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

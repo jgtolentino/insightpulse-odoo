@@ -9,20 +9,19 @@ DeepSeek is significantly cheaper than Anthropic:
 - 100x cheaper than Claude!
 """
 
-import os
+import argparse
 import json
 import logging
-import argparse
-from typing import Dict, Any, List
+import os
 from pathlib import Path
+from typing import Any, Dict
 
-from openai import OpenAI  # DeepSeek uses OpenAI SDK
 from dotenv import load_dotenv
+from openai import OpenAI  # DeepSeek uses OpenAI SDK
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -57,10 +56,7 @@ class DeepSeekOdooGenerator:
             raise ValueError("DEEPSEEK_API_KEY environment variable required")
 
         # DeepSeek uses OpenAI SDK with custom base URL
-        self.client = OpenAI(
-            api_key=self.api_key,
-            base_url="https://api.deepseek.com"
-        )
+        self.client = OpenAI(api_key=self.api_key, base_url="https://api.deepseek.com")
 
         logger.info("DeepSeek Odoo Generator initialized")
 
@@ -68,7 +64,7 @@ class DeepSeekOdooGenerator:
         self,
         spec: Dict[str, Any],
         odoo_version: str = "19.0",
-        model: str = "deepseek-chat"
+        model: str = "deepseek-chat",
     ) -> Dict[str, str]:
         """
         Generate complete Odoo module from specification.
@@ -92,11 +88,11 @@ class DeepSeekOdooGenerator:
             model=model,
             messages=[
                 {"role": "system", "content": ODOO_EXPERT_PROMPT},
-                {"role": "user", "content": prompt}
+                {"role": "user", "content": prompt},
             ],
             max_tokens=8000,
             temperature=0.0,  # Deterministic for code generation
-            stream=False
+            stream=False,
         )
 
         # Extract generated code
@@ -106,7 +102,9 @@ class DeepSeekOdooGenerator:
         # Log token usage and cost
         usage = response.usage
         cost = self._calculate_cost(usage.prompt_tokens, usage.completion_tokens)
-        logger.info(f"Token usage: {usage.prompt_tokens} input + {usage.completion_tokens} output = ${cost:.4f}")
+        logger.info(
+            f"Token usage: {usage.prompt_tokens} input + {usage.completion_tokens} output = ${cost:.4f}"
+        )
 
         # Parse generated code into file structure
         files = self._parse_generated_code(response_text)
@@ -185,22 +183,22 @@ Generate the complete module now."""
         current_file = None
         current_content = []
 
-        for line in response_text.split('\n'):
+        for line in response_text.split("\n"):
             # Check for file delimiter
-            if line.startswith('===FILE:'):
+            if line.startswith("===FILE:"):
                 # Save previous file
                 if current_file:
-                    files[current_file] = '\n'.join(current_content)
+                    files[current_file] = "\n".join(current_content)
 
                 # Start new file
-                current_file = line.replace('===FILE:', '').replace('===', '').strip()
+                current_file = line.replace("===FILE:", "").replace("===", "").strip()
                 current_content = []
                 logger.debug(f"Found file: {current_file}")
 
-            elif line.startswith('===END FILE==='):
+            elif line.startswith("===END FILE==="):
                 # Save current file
                 if current_file:
-                    files[current_file] = '\n'.join(current_content)
+                    files[current_file] = "\n".join(current_content)
                     current_file = None
                     current_content = []
 
@@ -211,7 +209,7 @@ Generate the complete module now."""
 
         # Save last file if exists
         if current_file:
-            files[current_file] = '\n'.join(current_content)
+            files[current_file] = "\n".join(current_content)
 
         return files
 
@@ -236,7 +234,7 @@ Generate the complete module now."""
             full_path = output_dir / file_path
             full_path.parent.mkdir(parents=True, exist_ok=True)
 
-            with open(full_path, 'w') as f:
+            with open(full_path, "w") as f:
                 f.write(content)
 
             logger.info(f"Saved: {full_path}")
@@ -252,23 +250,21 @@ def main():
     parser.add_argument(
         "--spec",
         required=True,
-        help="Path to specification JSON file (from fetch_notion_specs.py)"
+        help="Path to specification JSON file (from fetch_notion_specs.py)",
     )
     parser.add_argument(
         "--output-dir",
         default="addons",
-        help="Output directory for generated modules (default: addons)"
+        help="Output directory for generated modules (default: addons)",
     )
     parser.add_argument(
-        "--odoo-version",
-        default="19.0",
-        help="Target Odoo version (default: 19.0)"
+        "--odoo-version", default="19.0", help="Target Odoo version (default: 19.0)"
     )
     parser.add_argument(
         "--model",
         default="deepseek-chat",
         choices=["deepseek-chat", "deepseek-coder"],
-        help="DeepSeek model to use (default: deepseek-chat)"
+        help="DeepSeek model to use (default: deepseek-chat)",
     )
 
     args = parser.parse_args()
@@ -290,9 +286,7 @@ def main():
 
         # Generate module
         files = generator.generate_module_from_spec(
-            spec,
-            odoo_version=args.odoo_version,
-            model=args.model
+            spec, odoo_version=args.odoo_version, model=args.model
         )
 
         # Derive module name from title

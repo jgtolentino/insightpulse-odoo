@@ -20,20 +20,19 @@ Output:
     - docs/GENERATED_ODOO_DOCS.html (interactive HTML)
 """
 
-import ast
-import os
-import json
 import argparse
-from pathlib import Path
-from typing import List, Dict, Optional, Set
+import ast
+import json
+from dataclasses import asdict, dataclass
 from datetime import datetime
-from dataclasses import dataclass, asdict
-import xml.etree.ElementTree as ET
+from pathlib import Path
+from typing import List, Optional
 
 
 @dataclass
 class OdooField:
     """Represents an Odoo model field"""
+
     name: str
     field_type: str
     required: bool = False
@@ -45,6 +44,7 @@ class OdooField:
 @dataclass
 class OdooModel:
     """Represents an Odoo model"""
+
     name: str
     inherit: Optional[str]
     description: str
@@ -57,6 +57,7 @@ class OdooModel:
 @dataclass
 class OdooModule:
     """Represents an Odoo module"""
+
     name: str
     version: str
     summary: str
@@ -79,12 +80,12 @@ class OdooDocsGenerator:
         self.repo_path = Path(repo_path)
         self.modules: List[OdooModule] = []
         self.stats = {
-            'total_modules': 0,
-            'total_models': 0,
-            'total_fields': 0,
-            'total_views': 0,
-            'bir_modules': 0,
-            'finance_modules': 0,
+            "total_modules": 0,
+            "total_models": 0,
+            "total_fields": 0,
+            "total_views": 0,
+            "bir_modules": 0,
+            "finance_modules": 0,
         }
 
     def scan_modules(self) -> List[OdooModule]:
@@ -112,7 +113,7 @@ class OdooDocsGenerator:
         # Scan all existing module paths
         for addons_path in existing_paths:
             for module_dir in addons_path.iterdir():
-                if not module_dir.is_dir() or module_dir.name.startswith('.'):
+                if not module_dir.is_dir() or module_dir.name.startswith("."):
                     continue
 
                 manifest = module_dir / "__manifest__.py"
@@ -123,24 +124,31 @@ class OdooDocsGenerator:
                     module_info = self.parse_manifest(manifest)
                     module_info.models = self.extract_models(module_dir / "models")
                     module_info.views = self.extract_views(module_dir / "views")
-                    module_info.security_files = self.extract_security(module_dir / "security")
-                    module_info.data_files = self.extract_data_files(module_dir / "data")
+                    module_info.security_files = self.extract_security(
+                        module_dir / "security"
+                    )
+                    module_info.data_files = self.extract_data_files(
+                        module_dir / "data"
+                    )
 
                     self.modules.append(module_info)
 
                     # Update stats
-                    self.stats['total_modules'] += 1
-                    self.stats['total_models'] += len(module_info.models)
-                    self.stats['total_views'] += len(module_info.views)
+                    self.stats["total_modules"] += 1
+                    self.stats["total_models"] += len(module_info.models)
+                    self.stats["total_views"] += len(module_info.views)
 
                     for model in module_info.models:
-                        self.stats['total_fields'] += len(model.fields)
+                        self.stats["total_fields"] += len(model.fields)
 
                     # Detect BIR/Finance modules
-                    if 'bir' in module_info.name.lower():
-                        self.stats['bir_modules'] += 1
-                    if 'finance' in module_info.category.lower() or 'account' in module_info.category.lower():
-                        self.stats['finance_modules'] += 1
+                    if "bir" in module_info.name.lower():
+                        self.stats["bir_modules"] += 1
+                    if (
+                        "finance" in module_info.category.lower()
+                        or "account" in module_info.category.lower()
+                    ):
+                        self.stats["finance_modules"] += 1
 
                     print(f"  ✅ {module_info.name} v{module_info.version}")
 
@@ -151,7 +159,7 @@ class OdooDocsGenerator:
 
     def parse_manifest(self, manifest_path: Path) -> OdooModule:
         """Parse __manifest__.py"""
-        with open(manifest_path, encoding='utf-8') as f:
+        with open(manifest_path, encoding="utf-8") as f:
             content = f.read()
 
         # Safe eval of manifest dict
@@ -162,19 +170,19 @@ class OdooDocsGenerator:
             manifest = {}
 
         return OdooModule(
-            name=manifest.get('name', 'Unknown'),
-            version=manifest.get('version', '1.0.0'),
-            summary=manifest.get('summary', ''),
-            description=manifest.get('description', ''),
-            author=manifest.get('author', 'InsightPulse AI'),
-            depends=manifest.get('depends', []),
-            category=manifest.get('category', 'Uncategorized'),
+            name=manifest.get("name", "Unknown"),
+            version=manifest.get("version", "1.0.0"),
+            summary=manifest.get("summary", ""),
+            description=manifest.get("description", ""),
+            author=manifest.get("author", "InsightPulse AI"),
+            depends=manifest.get("depends", []),
+            category=manifest.get("category", "Uncategorized"),
             models=[],
             views=[],
             security_files=[],
             data_files=[],
-            installable=manifest.get('installable', True),
-            application=manifest.get('application', False),
+            installable=manifest.get("installable", True),
+            application=manifest.get("application", False),
         )
 
     def extract_models(self, models_path: Path) -> List[OdooModel]:
@@ -189,7 +197,7 @@ class OdooDocsGenerator:
                 continue
 
             try:
-                with open(py_file, encoding='utf-8') as f:
+                with open(py_file, encoding="utf-8") as f:
                     tree = ast.parse(f.read(), filename=str(py_file))
 
                 for node in ast.walk(tree):
@@ -199,15 +207,17 @@ class OdooDocsGenerator:
                         inherit = self._get_inherit(node)
 
                         if model_name or inherit:
-                            models.append(OdooModel(
-                                name=model_name or inherit or node.name,
-                                inherit=inherit,
-                                description=self._get_docstring(node),
-                                file_path=str(py_file.relative_to(self.repo_path)),
-                                fields=self._extract_fields(node),
-                                methods=self._extract_methods(node),
-                                table_name=self._get_table_name(node)
-                            ))
+                            models.append(
+                                OdooModel(
+                                    name=model_name or inherit or node.name,
+                                    inherit=inherit,
+                                    description=self._get_docstring(node),
+                                    file_path=str(py_file.relative_to(self.repo_path)),
+                                    fields=self._extract_fields(node),
+                                    methods=self._extract_methods(node),
+                                    table_name=self._get_table_name(node),
+                                )
+                            )
             except Exception as e:
                 print(f"    ⚠️  Error parsing {py_file.name}: {e}")
 
@@ -218,7 +228,7 @@ class OdooDocsGenerator:
         for node in class_node.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id == '_name':
+                    if isinstance(target, ast.Name) and target.id == "_name":
                         if isinstance(node.value, ast.Constant):
                             return node.value.value
         return None
@@ -228,7 +238,7 @@ class OdooDocsGenerator:
         for node in class_node.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id == '_inherit':
+                    if isinstance(target, ast.Name) and target.id == "_inherit":
                         if isinstance(node.value, ast.Constant):
                             return node.value.value
         return None
@@ -238,15 +248,16 @@ class OdooDocsGenerator:
         for node in class_node.body:
             if isinstance(node, ast.Assign):
                 for target in node.targets:
-                    if isinstance(target, ast.Name) and target.id == '_table':
+                    if isinstance(target, ast.Name) and target.id == "_table":
                         if isinstance(node.value, ast.Constant):
                             return node.value.value
         return None
 
     def _get_docstring(self, class_node: ast.ClassDef) -> str:
         """Extract class docstring"""
-        if (isinstance(class_node.body[0], ast.Expr) and
-            isinstance(class_node.body[0].value, ast.Constant)):
+        if isinstance(class_node.body[0], ast.Expr) and isinstance(
+            class_node.body[0].value, ast.Constant
+        ):
             return class_node.body[0].value.value
         return ""
 
@@ -262,27 +273,29 @@ class OdooDocsGenerator:
                         if isinstance(node.value, ast.Call):
                             field_type = self._get_field_type(node.value)
                             if field_type:
-                                fields.append(OdooField(
-                                    name=target.id,
-                                    field_type=field_type,
-                                    required=self._is_required(node.value),
-                                    readonly=self._is_readonly(node.value),
-                                    help_text=self._get_help_text(node.value),
-                                    relation=self._get_relation(node.value)
-                                ))
+                                fields.append(
+                                    OdooField(
+                                        name=target.id,
+                                        field_type=field_type,
+                                        required=self._is_required(node.value),
+                                        readonly=self._is_readonly(node.value),
+                                        help_text=self._get_help_text(node.value),
+                                        relation=self._get_relation(node.value),
+                                    )
+                                )
 
         return fields
 
     def _get_field_type(self, call_node: ast.Call) -> Optional[str]:
         """Get Odoo field type"""
-        if hasattr(call_node.func, 'attr'):
+        if hasattr(call_node.func, "attr"):
             return call_node.func.attr
         return None
 
     def _is_required(self, call_node: ast.Call) -> bool:
         """Check if field is required"""
         for keyword in call_node.keywords:
-            if keyword.arg == 'required':
+            if keyword.arg == "required":
                 if isinstance(keyword.value, ast.Constant):
                     return keyword.value.value
         return False
@@ -290,7 +303,7 @@ class OdooDocsGenerator:
     def _is_readonly(self, call_node: ast.Call) -> bool:
         """Check if field is readonly"""
         for keyword in call_node.keywords:
-            if keyword.arg == 'readonly':
+            if keyword.arg == "readonly":
                 if isinstance(keyword.value, ast.Constant):
                     return keyword.value.value
         return False
@@ -298,7 +311,7 @@ class OdooDocsGenerator:
     def _get_help_text(self, call_node: ast.Call) -> str:
         """Get field help text"""
         for keyword in call_node.keywords:
-            if keyword.arg == 'help':
+            if keyword.arg == "help":
                 if isinstance(keyword.value, ast.Constant):
                     return keyword.value.value
         return ""
@@ -311,7 +324,7 @@ class OdooDocsGenerator:
 
         # Check comodel_name keyword
         for keyword in call_node.keywords:
-            if keyword.arg == 'comodel_name':
+            if keyword.arg == "comodel_name":
                 if isinstance(keyword.value, ast.Constant):
                     return keyword.value.value
         return None
@@ -321,7 +334,11 @@ class OdooDocsGenerator:
         methods = []
         for node in class_node.body:
             if isinstance(node, ast.FunctionDef):
-                if not node.name.startswith('_') or node.name in ['__init__', '_compute_', '_onchange_']:
+                if not node.name.startswith("_") or node.name in [
+                    "__init__",
+                    "_compute_",
+                    "_onchange_",
+                ]:
                     methods.append(node.name)
         return methods
 
@@ -391,7 +408,7 @@ class OdooDocsGenerator:
         # Sort modules by category
         modules_by_category = {}
         for module in self.modules:
-            category = module.category or 'Uncategorized'
+            category = module.category or "Uncategorized"
             if category not in modules_by_category:
                 modules_by_category[category] = []
             modules_by_category[category].append(module)
@@ -495,13 +512,13 @@ class OdooDocsGenerator:
         except ImportError:
             print("⚠️  markdown package not installed. Installing...")
             import subprocess
-            subprocess.check_call(['pip', 'install', 'markdown'])
+
+            subprocess.check_call(["pip", "install", "markdown"])
             import markdown
 
         md_content = self.generate_markdown()
         html_body = markdown.markdown(
-            md_content,
-            extensions=['tables', 'fenced_code', 'toc']
+            md_content, extensions=["tables", "fenced_code", "toc"]
         )
 
         return f"""<!DOCTYPE html>
@@ -639,38 +656,47 @@ class OdooDocsGenerator:
     def generate_json(self) -> str:
         """Generate JSON API documentation"""
         data = {
-            'generated': datetime.now().isoformat(),
-            'stats': self.stats,
-            'modules': [
+            "generated": datetime.now().isoformat(),
+            "stats": self.stats,
+            "modules": [
                 {
-                    'name': m.name,
-                    'version': m.version,
-                    'summary': m.summary,
-                    'category': m.category,
-                    'depends': m.depends,
-                    'models': [
+                    "name": m.name,
+                    "version": m.version,
+                    "summary": m.summary,
+                    "category": m.category,
+                    "depends": m.depends,
+                    "models": [
                         {
-                            'name': model.name,
-                            'inherit': model.inherit,
-                            'description': model.description,
-                            'fields': [asdict(f) for f in model.fields],
-                            'methods': model.methods
+                            "name": model.name,
+                            "inherit": model.inherit,
+                            "description": model.description,
+                            "fields": [asdict(f) for f in model.fields],
+                            "methods": model.methods,
                         }
                         for model in m.models
-                    ]
+                    ],
                 }
                 for m in self.modules
-            ]
+            ],
         }
         return json.dumps(data, indent=2)
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Generate InsightPulse Odoo documentation')
-    parser.add_argument('--format', choices=['markdown', 'html', 'json', 'all'], default='all',
-                        help='Output format (default: all)')
-    parser.add_argument('--output', type=str,
-                        help='Output file path (default: docs/GENERATED_ODOO_DOCS.*)')
+    parser = argparse.ArgumentParser(
+        description="Generate InsightPulse Odoo documentation"
+    )
+    parser.add_argument(
+        "--format",
+        choices=["markdown", "html", "json", "all"],
+        default="all",
+        help="Output format (default: all)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        help="Output file path (default: docs/GENERATED_ODOO_DOCS.*)",
+    )
     args = parser.parse_args()
 
     # Determine repo path
@@ -694,21 +720,33 @@ def main():
     output_dir = repo_path / "docs"
     output_dir.mkdir(exist_ok=True)
 
-    if args.format in ['markdown', 'all']:
-        md_file = args.output if args.output and args.output.endswith('.md') else output_dir / "GENERATED_ODOO_DOCS.md"
-        with open(md_file, 'w', encoding='utf-8') as f:
+    if args.format in ["markdown", "all"]:
+        md_file = (
+            args.output
+            if args.output and args.output.endswith(".md")
+            else output_dir / "GENERATED_ODOO_DOCS.md"
+        )
+        with open(md_file, "w", encoding="utf-8") as f:
             f.write(generator.generate_markdown())
         print(f"✅ Markdown: {md_file}")
 
-    if args.format in ['html', 'all']:
-        html_file = args.output if args.output and args.output.endswith('.html') else output_dir / "GENERATED_ODOO_DOCS.html"
-        with open(html_file, 'w', encoding='utf-8') as f:
+    if args.format in ["html", "all"]:
+        html_file = (
+            args.output
+            if args.output and args.output.endswith(".html")
+            else output_dir / "GENERATED_ODOO_DOCS.html"
+        )
+        with open(html_file, "w", encoding="utf-8") as f:
             f.write(generator.generate_html())
         print(f"✅ HTML: {html_file}")
 
-    if args.format in ['json', 'all']:
-        json_file = args.output if args.output and args.output.endswith('.json') else output_dir / "GENERATED_ODOO_DOCS.json"
-        with open(json_file, 'w', encoding='utf-8') as f:
+    if args.format in ["json", "all"]:
+        json_file = (
+            args.output
+            if args.output and args.output.endswith(".json")
+            else output_dir / "GENERATED_ODOO_DOCS.json"
+        )
+        with open(json_file, "w", encoding="utf-8") as f:
             f.write(generator.generate_json())
         print(f"✅ JSON: {json_file}")
 

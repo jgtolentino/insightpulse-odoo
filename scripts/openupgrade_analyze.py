@@ -11,13 +11,12 @@ Usage:
 
 import argparse
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Any, Dict, List
 
 try:
-    from openupgradelib import openupgrade_tools
+    pass
 except ImportError:
     print("ERROR: openupgradelib not installed. Run: pip install openupgradelib")
     sys.exit(1)
@@ -75,7 +74,11 @@ def analyze_module(module_path: Path) -> Dict[str, Any]:
                 result["versions"].append(version)
 
                 scripts = []
-                for script in ["pre-migration.py", "post-migration.py", "end-migration.py"]:
+                for script in [
+                    "pre-migration.py",
+                    "post-migration.py",
+                    "end-migration.py",
+                ]:
                     if (version_dir / script).exists():
                         scripts.append(script)
 
@@ -90,7 +93,9 @@ def analyze_module(module_path: Path) -> Dict[str, Any]:
     return result
 
 
-def analyze_oca_compatibility(module_name: str, dependencies: List[str]) -> Dict[str, Any]:
+def analyze_oca_compatibility(
+    module_name: str, dependencies: List[str]
+) -> Dict[str, Any]:
     """
     Check if OCA dependencies have migration scripts available.
 
@@ -103,8 +108,18 @@ def analyze_oca_compatibility(module_name: str, dependencies: List[str]) -> Dict
     """
     # Common OCA modules
     oca_modules = {
-        "account", "sale", "purchase", "stock", "mrp", "website",
-        "crm", "hr", "project", "mail", "product", "base"
+        "account",
+        "sale",
+        "purchase",
+        "stock",
+        "mrp",
+        "website",
+        "crm",
+        "hr",
+        "project",
+        "mail",
+        "product",
+        "base",
     }
 
     compatibility = {}
@@ -116,7 +131,7 @@ def analyze_oca_compatibility(module_name: str, dependencies: List[str]) -> Dict
             compatibility[dep] = {
                 "is_oca_module": True,
                 "migration_url": github_url,
-                "recommendation": f"Check {github_url} for migration scripts"
+                "recommendation": f"Check {github_url} for migration scripts",
             }
 
     return compatibility
@@ -126,7 +141,8 @@ def generate_report(analyses: List[Dict[str, Any]], output_path: Path):
     """
     Generate HTML report of analysis results.
     """
-    html = """
+    html = (
+        """
 <!DOCTYPE html>
 <html>
 <head>
@@ -146,8 +162,11 @@ def generate_report(analyses: List[Dict[str, Any]], output_path: Path):
 </head>
 <body>
     <h1>OpenUpgrade Module Analysis Report</h1>
-    <p>Generated: """ + str(Path.cwd()) + """</p>
+    <p>Generated: """
+        + str(Path.cwd())
+        + """</p>
 """
+    )
 
     for analysis in analyses:
         module_name = analysis["module_name"]
@@ -197,14 +216,16 @@ def generate_report(analyses: List[Dict[str, Any]], output_path: Path):
 </html>
 """
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         f.write(html)
 
     print(f"✅ HTML report generated: {output_path}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Analyze Odoo modules for OpenUpgrade compatibility")
+    parser = argparse.ArgumentParser(
+        description="Analyze Odoo modules for OpenUpgrade compatibility"
+    )
     parser.add_argument("--module", help="Specific module to analyze")
     parser.add_argument("--all", action="store_true", help="Analyze all custom modules")
     parser.add_argument("--output", help="Output file path", default=None)
@@ -240,7 +261,7 @@ def main():
 
     # Generate reports
     json_output = OUTPUT_DIR / "analysis.json"
-    with open(json_output, 'w') as f:
+    with open(json_output, "w") as f:
         json.dump(analyses, f, indent=2)
     print(f"✅ JSON report generated: {json_output}")
 

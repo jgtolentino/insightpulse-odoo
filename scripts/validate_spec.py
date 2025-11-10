@@ -25,7 +25,7 @@ except ImportError:
 def load_json(file_path):
     """Load and parse JSON file"""
     try:
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             return json.load(f)
     except json.JSONDecodeError as e:
         print(f"ERROR: Failed to parse {file_path}: {e}")
@@ -67,34 +67,34 @@ def validate_docs_files(spec):
     """Validate that all docs files referenced in spec exist"""
     all_exist = True
 
-    docs_sections = spec.get('docs_platform', {}).get('sections', [])
+    docs_sections = spec.get("docs_platform", {}).get("sections", [])
 
     for section in docs_sections:
-        section_id = section.get('id', 'unknown')
+        section_id = section.get("id", "unknown")
 
         # Check pages
-        for page in section.get('pages', []):
+        for page in section.get("pages", []):
             if not check_file_exists(page, f"docs page ({section_id})"):
                 all_exist = False
 
         # Check documents
-        for doc in section.get('documents', []):
+        for doc in section.get("documents", []):
             if not check_file_exists(doc, f"spec-kit document ({section_id})"):
                 all_exist = False
 
         # Check index
-        if 'index' in section:
-            if not check_file_exists(section['index'], f"index ({section_id})"):
+        if "index" in section:
+            if not check_file_exists(section["index"], f"index ({section_id})"):
                 all_exist = False
 
     # Check config file
-    config_file = spec.get('docs_platform', {}).get('config_file')
+    config_file = spec.get("docs_platform", {}).get("config_file")
     if config_file:
         if not check_file_exists(config_file, "docs config"):
             all_exist = False
 
     # Check index files
-    for index_file in spec.get('docs_platform', {}).get('index_files', []):
+    for index_file in spec.get("docs_platform", {}).get("index_files", []):
         if not check_file_exists(index_file, "docs index"):
             all_exist = False
 
@@ -105,11 +105,11 @@ def validate_workflow_files(spec):
     """Validate that all CI/CD workflow files exist"""
     all_exist = True
 
-    workflows = spec.get('ci_cd', {}).get('workflows', [])
+    workflows = spec.get("ci_cd", {}).get("workflows", [])
 
     for workflow in workflows:
-        workflow_id = workflow.get('id', 'unknown')
-        workflow_file = workflow.get('file')
+        workflow_id = workflow.get("id", "unknown")
+        workflow_file = workflow.get("file")
 
         if workflow_file:
             if not check_file_exists(workflow_file, f"workflow ({workflow_id})"):
@@ -121,8 +121,8 @@ def validate_workflow_files(spec):
 def main():
     """Main validation routine"""
     repo_root = Path(__file__).parent.parent
-    spec_file = repo_root / 'spec' / 'platform_spec.json'
-    schema_file = repo_root / 'spec' / 'platform_spec.schema.json'
+    spec_file = repo_root / "spec" / "platform_spec.json"
+    schema_file = repo_root / "spec" / "platform_spec.schema.json"
 
     print("=" * 60)
     print("Platform Spec Validation")
@@ -172,5 +172,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

@@ -4,15 +4,16 @@ deduplicate-archives.py
 Deduplicate extracted archive contents by finding and removing duplicate files
 """
 
-import os
 import hashlib
-from pathlib import Path
+import os
 from collections import defaultdict
 from datetime import datetime
+from pathlib import Path
 
 # Configuration
 EXTRACTED_DIR = Path("/Users/tbwa/insightpulse-odoo/.extracted-archives")
 LOG_FILE = EXTRACTED_DIR / "deduplication-log.txt"
+
 
 def compute_md5(file_path):
     """Compute MD5 hash of a file."""
@@ -26,6 +27,7 @@ def compute_md5(file_path):
         print(f"⚠️  Error hashing {file_path}: {e}")
         return None
 
+
 def find_duplicates():
     """Find duplicate files by hash."""
     print(f"ℹ️  Scanning: {EXTRACTED_DIR}")
@@ -36,11 +38,11 @@ def find_duplicates():
     # Compute hashes for all files
     for root, dirs, files in os.walk(EXTRACTED_DIR):
         # Skip hidden directories
-        dirs[:] = [d for d in dirs if not d.startswith('.')]
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
 
         for filename in files:
             # Skip hidden files and log files
-            if filename.startswith('.') or filename == 'deduplication-log.txt':
+            if filename.startswith(".") or filename == "deduplication-log.txt":
                 continue
 
             file_path = Path(root) / filename
@@ -54,7 +56,9 @@ def find_duplicates():
                 hash_to_files[file_hash].append(file_path)
 
     # Find duplicates
-    duplicates = {hash: files for hash, files in hash_to_files.items() if len(files) > 1}
+    duplicates = {
+        hash: files for hash, files in hash_to_files.items() if len(files) > 1
+    }
 
     print(f"\n✅ Scan complete!")
     print(f"Total files scanned: {file_count}")
@@ -64,15 +68,18 @@ def find_duplicates():
 
     return duplicates
 
+
 def write_log(duplicates):
     """Write deduplication log."""
-    with open(LOG_FILE, 'w') as f:
+    with open(LOG_FILE, "w") as f:
         f.write(f"=== Archive Deduplication Log ===\n")
         f.write(f"Date: {datetime.now()}\n")
         f.write(f"Directory: {EXTRACTED_DIR}\n\n")
 
         f.write(f"Duplicate sets: {len(duplicates)}\n")
-        f.write(f"Duplicate files: {sum(len(files) - 1 for files in duplicates.values())}\n\n")
+        f.write(
+            f"Duplicate files: {sum(len(files) - 1 for files in duplicates.values())}\n\n"
+        )
 
         f.write("=== Duplicates ===\n\n")
 
@@ -85,6 +92,7 @@ def write_log(duplicates):
             f.write("\n")
 
     print(f"📝 Log written: {LOG_FILE}")
+
 
 def delete_duplicates(duplicates, dry_run=True):
     """Delete duplicate files (keep first occurrence)."""
@@ -104,14 +112,19 @@ def delete_duplicates(duplicates, dry_run=True):
                     dup.unlink()
                 deleted_count += 1
                 space_saved += file_size
-                print(f"{'Would delete' if dry_run else 'Deleted'}: {dup.relative_to(EXTRACTED_DIR)}")
+                print(
+                    f"{'Would delete' if dry_run else 'Deleted'}: {dup.relative_to(EXTRACTED_DIR)}"
+                )
             except Exception as e:
                 print(f"⚠️  Error deleting {dup}: {e}")
 
     print(f"\n{'Would delete' if dry_run else 'Deleted'}: {deleted_count} files")
-    print(f"Space {'would be' if dry_run else ''} saved: {space_saved / 1024 / 1024:.2f} MB")
+    print(
+        f"Space {'would be' if dry_run else ''} saved: {space_saved / 1024 / 1024:.2f} MB"
+    )
 
     return deleted_count, space_saved
+
 
 def main():
     print("=== Archive Deduplication ===\n")
@@ -131,19 +144,19 @@ def main():
     write_log(duplicates)
 
     # Dry run first
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     delete_duplicates(duplicates, dry_run=True)
 
     # Prompt for actual deletion
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     response = input("\nDelete duplicate files? (y/N): ").strip().lower()
 
-    if response == 'y':
+    if response == "y":
         print("\nDeleting duplicates...")
         deleted, saved = delete_duplicates(duplicates, dry_run=False)
 
         # Update log with deletion results
-        with open(LOG_FILE, 'a') as f:
+        with open(LOG_FILE, "a") as f:
             f.write("=== Deletion Summary ===\n")
             f.write(f"Files deleted: {deleted}\n")
             f.write(f"Space saved: {saved / 1024 / 1024:.2f} MB\n")
@@ -151,6 +164,7 @@ def main():
         print(f"\n✅ Deduplication complete! Log: {LOG_FILE}")
     else:
         print("\n⏸️  Deletion cancelled. Review log for details.")
+
 
 if __name__ == "__main__":
     main()

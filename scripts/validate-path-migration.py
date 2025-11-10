@@ -6,19 +6,17 @@ This script checks for any remaining 'custom/' references in critical files
 to ensure the path migration is complete and consistent.
 """
 
+import glob
 import os
 import sys
-import re
-import glob
-from pathlib import Path
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 # ANSI color codes
-RED = '\033[0;31m'
-GREEN = '\033[0;32m'
-YELLOW = '\033[1;33m'
-BLUE = '\033[0;34m'
-NC = '\033[0m'  # No Color
+RED = "\033[0;31m"
+GREEN = "\033[0;32m"
+YELLOW = "\033[1;33m"
+BLUE = "\033[0;34m"
+NC = "\033[0m"  # No Color
 
 
 def check_path_references() -> List[Dict[str, any]]:
@@ -28,44 +26,44 @@ def check_path_references() -> List[Dict[str, any]]:
 
     # Patterns of files to check
     check_patterns = [
-        '.github/workflows/*.yml',
-        'scripts/**/*.py',
-        'scripts/**/*.sh',
-        'Makefile',
-        'docs/**/*.md',
-        '*.yml',
-        '*.yaml',
-        '.flake8',
-        '.pre-commit-config.yaml',
+        ".github/workflows/*.yml",
+        "scripts/**/*.py",
+        "scripts/**/*.sh",
+        "Makefile",
+        "docs/**/*.md",
+        "*.yml",
+        "*.yaml",
+        ".flake8",
+        ".pre-commit-config.yaml",
     ]
 
     # Patterns to exclude from checks
     exclude_patterns = [
-        'node_modules/',
-        '.git/',
-        '__pycache__/',
-        '.venv/',
-        'venv/',
-        'bundle/',
-        'claudedocs/',
-        '.superclaude/',
-        'docs/',  # Exclude documentation
-        'scripts/validate-path-migration.py',  # Exclude this script itself
-        '.github/workflows/path-migration-guard.yml',  # Exclude the guard workflow
+        "node_modules/",
+        ".git/",
+        "__pycache__/",
+        ".venv/",
+        "venv/",
+        "bundle/",
+        "claudedocs/",
+        ".superclaude/",
+        "docs/",  # Exclude documentation
+        "scripts/validate-path-migration.py",  # Exclude this script itself
+        ".github/workflows/path-migration-guard.yml",  # Exclude the guard workflow
     ]
 
     # Words that indicate this is documentation about the migration, not actual usage
     migration_doc_keywords = [
-        'migration',
-        'migrated',
-        'old path',
-        'previous',
-        'legacy',
-        'deprecated',
-        'before:',
-        'after:',
-        'from custom/',
-        'was custom/',
+        "migration",
+        "migrated",
+        "old path",
+        "previous",
+        "legacy",
+        "deprecated",
+        "before:",
+        "after:",
+        "from custom/",
+        "was custom/",
     ]
 
     print(f"{BLUE}🔍 Scanning for 'custom/' path references...{NC}\n")
@@ -83,32 +81,36 @@ def check_path_references() -> List[Dict[str, any]]:
                 continue
 
             try:
-                with open(file_path, 'r', encoding='utf-8') as f:
+                with open(file_path, "r", encoding="utf-8") as f:
                     content = f.read()
-                    lines = content.split('\n')
+                    lines = content.split("\n")
 
                     # Look for custom/ references
                     for i, line in enumerate(lines, 1):
-                        if 'custom/' in line.lower():
+                        if "custom/" in line.lower():
                             line_lower = line.lower()
 
                             # Skip if it's a comment about the migration
-                            if any(keyword in line_lower for keyword in migration_doc_keywords):
+                            if any(
+                                keyword in line_lower
+                                for keyword in migration_doc_keywords
+                            ):
                                 continue
 
                             # Skip comments in shell scripts and Python
                             stripped = line.strip()
-                            if stripped.startswith('#') or stripped.startswith('//'):
+                            if stripped.startswith("#") or stripped.startswith("//"):
                                 # Check if it's documenting the migration
-                                if any(keyword in line_lower for keyword in migration_doc_keywords):
+                                if any(
+                                    keyword in line_lower
+                                    for keyword in migration_doc_keywords
+                                ):
                                     continue
 
                             # This looks like an actual usage, not documentation
-                            issues.append({
-                                'file': file_path,
-                                'line': i,
-                                'content': line.strip()
-                            })
+                            issues.append(
+                                {"file": file_path, "line": i, "content": line.strip()}
+                            )
 
             except (UnicodeDecodeError, PermissionError) as e:
                 print(f"{YELLOW}⚠️  Skipping {file_path}: {e}{NC}")
@@ -121,10 +123,10 @@ def check_directory_structure() -> Tuple[bool, List[str]]:
     """Verify the new directory structure exists."""
 
     required_dirs = [
-        'odoo',
-        'odoo/modules',
-        'odoo/addons',
-        'odoo/custom-addons',
+        "odoo",
+        "odoo/modules",
+        "odoo/addons",
+        "odoo/custom-addons",
     ]
 
     missing = []
@@ -170,7 +172,7 @@ def main():
         # Group by file for better readability
         issues_by_file = {}
         for issue in issues:
-            file_path = issue['file']
+            file_path = issue["file"]
             if file_path not in issues_by_file:
                 issues_by_file[file_path] = []
             issues_by_file[file_path].append(issue)
@@ -200,5 +202,5 @@ def main():
         return 1
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

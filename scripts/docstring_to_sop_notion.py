@@ -11,18 +11,17 @@ External ID Format:
     Example: sop_hr_payroll_month_end_closing
 """
 
-import os
-import sys
-import json
 import argparse
 import logging
+import os
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from notion_client import NotionClient, create_notion_property
 
-logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -38,9 +37,9 @@ class SOPNotionSync:
         external_id = f"sop_{module}_{sop_name}"
 
         properties = {
-            'SOP Name': create_notion_property('title', f"{module} - {sop_name}"),
-            'Module': create_notion_property('select', module),
-            'Type': create_notion_property('select', 'Procedure')
+            "SOP Name": create_notion_property("title", f"{module} - {sop_name}"),
+            "Module": create_notion_property("select", module),
+            "Type": create_notion_property("select", "Procedure"),
         }
 
         # Convert markdown content to Notion blocks
@@ -49,8 +48,10 @@ class SOPNotionSync:
                 "object": "block",
                 "type": "paragraph",
                 "paragraph": {
-                    "rich_text": [{"type": "text", "text": {"content": sop_content[:2000]}}]
-                }
+                    "rich_text": [
+                        {"type": "text", "text": {"content": sop_content[:2000]}}
+                    ]
+                },
             }
         ]
 
@@ -58,7 +59,7 @@ class SOPNotionSync:
             database_id=self.database_id,
             external_id=external_id,
             properties=properties,
-            children=children
+            children=children,
         )
 
         logger.info(f"Synced SOP: {module}/{sop_name} → {page_id}")
@@ -66,12 +67,12 @@ class SOPNotionSync:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Sync SOPs to Notion')
-    parser.add_argument('--sop-dir', required=True, help='Path to SOPs directory')
+    parser = argparse.ArgumentParser(description="Sync SOPs to Notion")
+    parser.add_argument("--sop-dir", required=True, help="Path to SOPs directory")
     args = parser.parse_args()
 
-    notion_token = os.getenv('NOTION_API_TOKEN')
-    database_id = os.getenv('NOTION_SOP_DB_ID')
+    notion_token = os.getenv("NOTION_API_TOKEN")
+    database_id = os.getenv("NOTION_SOP_DB_ID")
 
     if not notion_token or not database_id:
         logger.error("❌ Missing credentials")
@@ -81,5 +82,5 @@ def main():
     logger.info(f"✅ SOP sync initialized")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

@@ -1,13 +1,17 @@
 """Slack Bridge API client for posting messages"""
-import requests
+
 import logging
-from odoo import models, api
+
+import requests
+
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
 
 class SlackBridge(models.AbstractModel):
     """Helper methods for Slack API interactions"""
+
     _name = "slack.bridge"
     _description = "Slack Bridge Helpers"
 
@@ -75,24 +79,23 @@ class SlackBridge(models.AbstractModel):
             return
 
         # Find agency channel mapping
-        channel_mapping = self.env["slack.channel"].search([
-            ("agency_code", "=", expense.company_id.code)
-        ], limit=1)
+        channel_mapping = self.env["slack.channel"].search(
+            [("agency_code", "=", expense.company_id.code)], limit=1
+        )
 
         if not channel_mapping:
-            _logger.warning(f"No Slack channel mapping for company {expense.company_id.name}")
+            _logger.warning(
+                f"No Slack channel mapping for company {expense.company_id.name}"
+            )
             return
 
-        emoji_map = {
-            "created": "📋",
-            "approved": "✅",
-            "rejected": "❌",
-            "paid": "💰"
-        }
+        emoji_map = {"created": "📋", "approved": "✅", "rejected": "❌", "paid": "💰"}
         emoji = emoji_map.get(action, "💼")
 
         message = f"{emoji} **Expense {action.capitalize()}**\n"
-        message += f"• Amount: {expense.currency_id.symbol}{expense.total_amount:,.2f}\n"
+        message += (
+            f"• Amount: {expense.currency_id.symbol}{expense.total_amount:,.2f}\n"
+        )
         message += f"• Employee: {expense.employee_id.name}\n"
         message += f"• Description: {expense.name}\n"
         message += f"• Date: {expense.date.strftime('%Y-%m-%d')}"
@@ -109,9 +112,9 @@ class SlackBridge(models.AbstractModel):
             days_remaining: Days until deadline
         """
         # Find finance channel
-        channel_mapping = self.env["slack.channel"].search([
-            ("channel_type", "=", "finance")
-        ], limit=1)
+        channel_mapping = self.env["slack.channel"].search(
+            [("channel_type", "=", "finance")], limit=1
+        )
 
         if not channel_mapping:
             _logger.warning("No finance Slack channel configured")
@@ -141,9 +144,9 @@ class SlackBridge(models.AbstractModel):
             return
 
         # Find sales channel
-        channel_mapping = self.env["slack.channel"].search([
-            ("channel_type", "=", "sales")
-        ], limit=1)
+        channel_mapping = self.env["slack.channel"].search(
+            [("channel_type", "=", "sales")], limit=1
+        )
 
         if not channel_mapping:
             return

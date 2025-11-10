@@ -9,10 +9,10 @@ Automates:
 4. Dashboard assembly
 """
 
-import os
-import requests
 import json
-from typing import Dict, Any
+import os
+
+import requests
 
 # Superset configuration
 SUPERSET_URL = os.getenv("SUPERSET_URL", "http://localhost:8088")
@@ -45,15 +45,15 @@ class SupersetDashboardDeployer:
                 "username": SUPERSET_USERNAME,
                 "password": SUPERSET_PASSWORD,
                 "provider": "db",
-                "refresh": True
-            }
+                "refresh": True,
+            },
         )
 
         if response.status_code == 200:
             self.access_token = response.json()["access_token"]
-            self.session.headers.update({
-                "Authorization": f"Bearer {self.access_token}"
-            })
+            self.session.headers.update(
+                {"Authorization": f"Bearer {self.access_token}"}
+            )
             print("✅ Authenticated successfully")
             return True
         else:
@@ -70,13 +70,10 @@ class SupersetDashboardDeployer:
             "expose_in_sqllab": True,
             "allow_ctas": True,
             "allow_cvas": True,
-            "allow_dml": False
+            "allow_dml": False,
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/database/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/database/", json=payload)
 
         if response.status_code in [200, 201]:
             self.database_id = response.json()["id"]
@@ -101,13 +98,10 @@ class SupersetDashboardDeployer:
         payload = {
             "database": self.database_id,
             "schema": "ops",
-            "table_name": "workflow_runs"
+            "table_name": "workflow_runs",
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/dataset/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/dataset/", json=payload)
 
         if response.status_code in [200, 201]:
             self.dataset_id = response.json()["id"]
@@ -134,21 +128,20 @@ class SupersetDashboardDeployer:
             "viz_type": "big_number_total",
             "datasource_id": self.dataset_id,
             "datasource_type": "table",
-            "params": json.dumps({
-                "metric": {
-                    "expressionType": "SQL",
-                    "sqlExpression": "COUNT(CASE WHEN status = 'success' THEN 1 END) * 100.0 / COUNT(*)",
-                    "label": "Success Rate %"
-                },
-                "adhoc_filters": [],
-                "time_range": "Last 7 days"
-            })
+            "params": json.dumps(
+                {
+                    "metric": {
+                        "expressionType": "SQL",
+                        "sqlExpression": "COUNT(CASE WHEN status = 'success' THEN 1 END) * 100.0 / COUNT(*)",
+                        "label": "Success Rate %",
+                    },
+                    "adhoc_filters": [],
+                    "time_range": "Last 7 days",
+                }
+            ),
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/chart/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/chart/", json=payload)
 
         if response.status_code in [200, 201]:
             chart_id = response.json()["id"]
@@ -168,18 +161,17 @@ class SupersetDashboardDeployer:
             "viz_type": "line",
             "datasource_id": self.dataset_id,
             "datasource_type": "table",
-            "params": json.dumps({
-                "metrics": ["AVG(duration_seconds)"],
-                "groupby": ["workflow_name"],
-                "time_range": "Last 30 days",
-                "adhoc_filters": []
-            })
+            "params": json.dumps(
+                {
+                    "metrics": ["AVG(duration_seconds)"],
+                    "groupby": ["workflow_name"],
+                    "time_range": "Last 30 days",
+                    "adhoc_filters": [],
+                }
+            ),
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/chart/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/chart/", json=payload)
 
         if response.status_code in [200, 201]:
             chart_id = response.json()["id"]
@@ -199,17 +191,12 @@ class SupersetDashboardDeployer:
             "viz_type": "pie",
             "datasource_id": self.dataset_id,
             "datasource_type": "table",
-            "params": json.dumps({
-                "metric": "COUNT(*)",
-                "groupby": ["status"],
-                "adhoc_filters": []
-            })
+            "params": json.dumps(
+                {"metric": "COUNT(*)", "groupby": ["status"], "adhoc_filters": []}
+            ),
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/chart/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/chart/", json=payload)
 
         if response.status_code in [200, 201]:
             chart_id = response.json()["id"]
@@ -228,40 +215,37 @@ class SupersetDashboardDeployer:
             "dashboard_title": "CI/CD Metrics",
             "slug": "cicd-metrics",
             "published": True,
-            "json_metadata": json.dumps({
-                "color_scheme": "supersetColors",
-                "label_colors": {},
-                "refresh_frequency": 300  # 5 minutes
-            }),
-            "position_json": json.dumps({
-                "DASHBOARD_VERSION_KEY": "v2",
-                "GRID_ID": {
-                    "type": "GRID",
-                    "id": "GRID_ID",
-                    "children": [f"CHART-{i}" for i in range(len(self.chart_ids))],
-                    "parents": ["ROOT_ID"]
-                },
-                **{
-                    f"CHART-{i}": {
-                        "type": "CHART",
-                        "id": f"CHART-{i}",
-                        "children": [],
-                        "parents": ["GRID_ID"],
-                        "meta": {
-                            "width": 4,
-                            "height": 4,
-                            "chartId": chart_id
-                        }
-                    }
-                    for i, chart_id in enumerate(self.chart_ids)
+            "json_metadata": json.dumps(
+                {
+                    "color_scheme": "supersetColors",
+                    "label_colors": {},
+                    "refresh_frequency": 300,  # 5 minutes
                 }
-            })
+            ),
+            "position_json": json.dumps(
+                {
+                    "DASHBOARD_VERSION_KEY": "v2",
+                    "GRID_ID": {
+                        "type": "GRID",
+                        "id": "GRID_ID",
+                        "children": [f"CHART-{i}" for i in range(len(self.chart_ids))],
+                        "parents": ["ROOT_ID"],
+                    },
+                    **{
+                        f"CHART-{i}": {
+                            "type": "CHART",
+                            "id": f"CHART-{i}",
+                            "children": [],
+                            "parents": ["GRID_ID"],
+                            "meta": {"width": 4, "height": 4, "chartId": chart_id},
+                        }
+                        for i, chart_id in enumerate(self.chart_ids)
+                    },
+                }
+            ),
         }
 
-        response = self.session.post(
-            f"{SUPERSET_URL}/api/v1/dashboard/",
-            json=payload
-        )
+        response = self.session.post(f"{SUPERSET_URL}/api/v1/dashboard/", json=payload)
 
         if response.status_code in [200, 201]:
             dashboard_id = response.json()["id"]
@@ -285,7 +269,7 @@ class SupersetDashboardDeployer:
             ("Create Success Rate Chart", self.create_success_rate_chart),
             ("Create Duration Chart", self.create_duration_chart),
             ("Create Status Distribution Chart", self.create_status_distribution_chart),
-            ("Assemble Dashboard", self.create_dashboard)
+            ("Assemble Dashboard", self.create_dashboard),
         ]
 
         for step_name, step_func in steps:
@@ -307,7 +291,7 @@ def main():
         "SUPERSET_PASSWORD",
         "POSTGRES_URL",
         "SUPABASE_URL",
-        "SUPABASE_SERVICE_ROLE_KEY"
+        "SUPABASE_SERVICE_ROLE_KEY",
     ]
 
     missing = [var for var in required_vars if not os.getenv(var)]

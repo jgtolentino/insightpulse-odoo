@@ -29,13 +29,13 @@ import argparse
 import json
 import os
 import sys
-import yaml
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
+
+import yaml
 
 try:
     import requests
-    from requests.auth import HTTPBasicAuth
 except ImportError:
     print("ERROR: requests not installed. Run: pip install requests")
     sys.exit(1)
@@ -56,11 +56,12 @@ DASHBOARDS_DIR = Path(__file__).parent.parent / "infra" / "superset"
 # SUPERSET API CLIENT
 # ============================================================================
 
+
 class SupersetClient:
     """Client for Superset REST API."""
 
     def __init__(self, base_url: str, username: str, password: str):
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.username = username
         self.password = password
         self.session = requests.Session()
@@ -80,12 +81,11 @@ class SupersetClient:
         login_data = {
             "username": self.username,
             "password": self.password,
-            "provider": "db"
+            "provider": "db",
         }
 
         response = self.session.post(
-            f"{self.base_url}/api/v1/security/login",
-            json=login_data
+            f"{self.base_url}/api/v1/security/login", json=login_data
         )
 
         if response.status_code != 200:
@@ -98,19 +98,20 @@ class SupersetClient:
             raise Exception("No access token received")
 
         # Set authorization header
-        self.session.headers.update({
-            "Authorization": f"Bearer {self.access_token}",
-            "Content-Type": "application/json"
-        })
+        self.session.headers.update(
+            {
+                "Authorization": f"Bearer {self.access_token}",
+                "Content-Type": "application/json",
+            }
+        )
 
         # Get CSRF token
         response = self.session.get(f"{self.base_url}/api/v1/security/csrf_token/")
         if response.status_code == 200:
             self.csrf_token = response.json().get("result")
-            self.session.headers.update({
-                "X-CSRFToken": self.csrf_token,
-                "Referer": self.base_url
-            })
+            self.session.headers.update(
+                {"X-CSRFToken": self.csrf_token, "Referer": self.base_url}
+            )
 
         print("✅ Authentication successful")
 
@@ -141,20 +142,25 @@ class SupersetClient:
         databases = self.get_databases()
         for db in databases:
             if db["database_name"] == database_config["database_name"]:
-                print(f"  ℹ️  Database '{database_config['database_name']}' already exists (ID: {db['id']})")
+                print(
+                    f"  ℹ️  Database '{database_config['database_name']}' already exists (ID: {db['id']})"
+                )
                 return db["id"]
 
         # Create new database
         response = self.session.post(
-            f"{self.base_url}/api/v1/database/",
-            json=database_config
+            f"{self.base_url}/api/v1/database/", json=database_config
         )
 
         if response.status_code not in [200, 201]:
-            raise Exception(f"Failed to create database: {response.status_code} {response.text}")
+            raise Exception(
+                f"Failed to create database: {response.status_code} {response.text}"
+            )
 
         db_id = response.json().get("id")
-        print(f"  ✅ Created database '{database_config['database_name']}' (ID: {db_id})")
+        print(
+            f"  ✅ Created database '{database_config['database_name']}' (ID: {db_id})"
+        )
         return db_id
 
     def get_datasets(self) -> List[Dict]:
@@ -184,19 +190,23 @@ class SupersetClient:
         # Check if dataset already exists
         datasets = self.get_datasets()
         for ds in datasets:
-            if (ds.get("schema") == dataset_config.get("schema") and
-                ds.get("table_name") == dataset_config.get("table_name")):
-                print(f"  ℹ️  Dataset '{dataset_config['table_name']}' already exists (ID: {ds['id']})")
+            if ds.get("schema") == dataset_config.get("schema") and ds.get(
+                "table_name"
+            ) == dataset_config.get("table_name"):
+                print(
+                    f"  ℹ️  Dataset '{dataset_config['table_name']}' already exists (ID: {ds['id']})"
+                )
                 return ds["id"]
 
         # Create new dataset
         response = self.session.post(
-            f"{self.base_url}/api/v1/dataset/",
-            json=dataset_config
+            f"{self.base_url}/api/v1/dataset/", json=dataset_config
         )
 
         if response.status_code not in [200, 201]:
-            raise Exception(f"Failed to create dataset: {response.status_code} {response.text}")
+            raise Exception(
+                f"Failed to create dataset: {response.status_code} {response.text}"
+            )
 
         ds_id = response.json().get("id")
         print(f"  ✅ Created dataset '{dataset_config['table_name']}' (ID: {ds_id})")
@@ -215,29 +225,31 @@ class SupersetClient:
         print(f"\n📊 Importing dashboard from {dashboard_file.name}...")
 
         # Read dashboard file
-        with open(dashboard_file, 'r') as f:
-            if dashboard_file.suffix in ['.yaml', '.yml']:
+        with open(dashboard_file, "r") as f:
+            if dashboard_file.suffix in [".yaml", ".yml"]:
                 dashboard_data = yaml.safe_load(f)
             else:
                 dashboard_data = json.load(f)
 
         # Import via API
         files = {
-            'formData': (dashboard_file.name, open(dashboard_file, 'rb'), 'application/json')
+            "formData": (
+                dashboard_file.name,
+                open(dashboard_file, "rb"),
+                "application/json",
+            )
         }
 
-        data = {
-            'overwrite': 'true'
-        }
+        data = {"overwrite": "true"}
 
         response = self.session.post(
-            f"{self.base_url}/api/v1/assets/import/",
-            files=files,
-            data=data
+            f"{self.base_url}/api/v1/assets/import/", files=files, data=data
         )
 
         if response.status_code not in [200, 201]:
-            raise Exception(f"Failed to import dashboard: {response.status_code} {response.text}")
+            raise Exception(
+                f"Failed to import dashboard: {response.status_code} {response.text}"
+            )
 
         print(f"  ✅ Dashboard imported successfully")
 
@@ -257,13 +269,13 @@ class SupersetClient:
 
         response = self.session.get(
             f"{self.base_url}/api/v1/dashboard/export/",
-            params={"q": f'[{dashboard_id}]'}
+            params={"q": f"[{dashboard_id}]"},
         )
 
         if response.status_code != 200:
             raise Exception(f"Failed to export dashboard: {response.status_code}")
 
-        with open(output_file, 'wb') as f:
+        with open(output_file, "wb") as f:
             f.write(response.content)
 
         print(f"  ✅ Dashboard exported to {output_file}")
@@ -282,6 +294,7 @@ class SupersetClient:
 # DASHBOARD BOOTSTRAP
 # ============================================================================
 
+
 def bootstrap_ci_cd_dashboard(client: SupersetClient):
     """
     Bootstrap the CI/CD Metrics dashboard from scratch.
@@ -296,17 +309,19 @@ def bootstrap_ci_cd_dashboard(client: SupersetClient):
         "database_name": "InsightPulse Analytics",
         "sqlalchemy_uri": os.getenv(
             "ANALYTICS_DB_URL",
-            "postgresql://postgres:password@localhost:5432/postgres?options=-csearch_path%3Danalytics"
+            "postgresql://postgres:password@localhost:5432/postgres?options=-csearch_path%3Danalytics",
         ),
         "expose_in_sqllab": True,
         "allow_dml": False,
         "force_ctas_schema": "analytics",
-        "extra": json.dumps({
-            "metadata_params": {},
-            "engine_params": {},
-            "metadata_cache_timeout": {},
-            "schemas_allowed_for_csv_upload": []
-        })
+        "extra": json.dumps(
+            {
+                "metadata_params": {},
+                "engine_params": {},
+                "metadata_cache_timeout": {},
+                "schemas_allowed_for_csv_upload": [],
+            }
+        ),
     }
 
     db_id = client.create_database(db_config)
@@ -317,20 +332,15 @@ def bootstrap_ci_cd_dashboard(client: SupersetClient):
             "database": db_id,
             "schema": "ops",
             "table_name": "workflow_runs",
-            "owners": [1]
+            "owners": [1],
         },
         {
             "database": db_id,
             "schema": "ops",
             "table_name": "workflow_success_rate",
-            "owners": [1]
+            "owners": [1],
         },
-        {
-            "database": db_id,
-            "schema": "ops",
-            "table_name": "task_queue",
-            "owners": [1]
-        }
+        {"database": db_id, "schema": "ops", "table_name": "task_queue", "owners": [1]},
     ]
 
     dataset_ids = {}
@@ -349,58 +359,35 @@ def bootstrap_ci_cd_dashboard(client: SupersetClient):
 # MAIN CLI
 # ============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Superset Dashboard Importer",
-        formatter_class=argparse.RawDescriptionHelpFormatter
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
 
     parser.add_argument(
         "command",
         choices=["import", "import-all", "export", "list", "bootstrap"],
-        help="Command to execute"
+        help="Command to execute",
+    )
+
+    parser.add_argument("--file", type=Path, help="Dashboard file to import/export")
+
+    parser.add_argument("--dir", type=Path, help="Directory containing dashboard files")
+
+    parser.add_argument("--dashboard-id", type=int, help="Dashboard ID for export")
+
+    parser.add_argument("--output", type=Path, help="Output file for export")
+
+    parser.add_argument("--url", default=SUPERSET_URL, help="Superset URL")
+
+    parser.add_argument(
+        "--username", default=SUPERSET_USERNAME, help="Superset username"
     )
 
     parser.add_argument(
-        "--file",
-        type=Path,
-        help="Dashboard file to import/export"
-    )
-
-    parser.add_argument(
-        "--dir",
-        type=Path,
-        help="Directory containing dashboard files"
-    )
-
-    parser.add_argument(
-        "--dashboard-id",
-        type=int,
-        help="Dashboard ID for export"
-    )
-
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output file for export"
-    )
-
-    parser.add_argument(
-        "--url",
-        default=SUPERSET_URL,
-        help="Superset URL"
-    )
-
-    parser.add_argument(
-        "--username",
-        default=SUPERSET_USERNAME,
-        help="Superset username"
-    )
-
-    parser.add_argument(
-        "--password",
-        default=SUPERSET_PASSWORD,
-        help="Superset password"
+        "--password", default=SUPERSET_PASSWORD, help="Superset password"
     )
 
     args = parser.parse_args()
@@ -427,7 +414,9 @@ def main():
                 print(f"ERROR: Directory not found: {import_dir}")
                 return 1
 
-            dashboard_files = list(import_dir.glob("*.yaml")) + list(import_dir.glob("*.json"))
+            dashboard_files = list(import_dir.glob("*.yaml")) + list(
+                import_dir.glob("*.json")
+            )
 
             if not dashboard_files:
                 print(f"No dashboard files found in {import_dir}")
@@ -453,15 +442,19 @@ def main():
             dashboards = client.list_dashboards()
 
             print(f"\n📊 Superset Dashboards ({len(dashboards)} total)")
-            print("\n{:<5} {:<40} {:<20} {:<10}".format(
-                "ID", "TITLE", "OWNER", "STATUS"
-            ))
+            print(
+                "\n{:<5} {:<40} {:<20} {:<10}".format("ID", "TITLE", "OWNER", "STATUS")
+            )
             print("-" * 80)
 
             for dashboard in dashboards:
                 dashboard_id = dashboard.get("id", "?")
                 title = dashboard.get("dashboard_title", "Untitled")[:38]
-                owner = dashboard.get("owners", [{}])[0].get("username", "unknown") if dashboard.get("owners") else "unknown"
+                owner = (
+                    dashboard.get("owners", [{}])[0].get("username", "unknown")
+                    if dashboard.get("owners")
+                    else "unknown"
+                )
                 status = dashboard.get("status", "unknown")
 
                 print(f"{dashboard_id:<5} {title:<40} {owner:<20} {status:<10}")
@@ -474,6 +467,7 @@ def main():
     except Exception as e:
         print(f"\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
