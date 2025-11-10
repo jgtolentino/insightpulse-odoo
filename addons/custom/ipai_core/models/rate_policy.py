@@ -1,7 +1,9 @@
-from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError
-from datetime import datetime, timedelta
 import statistics
+from datetime import datetime, timedelta
+
+from odoo.exceptions import ValidationError
+
+from odoo import _, api, fields, models
 
 
 class RatePolicy(models.Model):
@@ -45,7 +47,9 @@ class RatePolicy(models.Model):
 
     # Audit
     last_update_date = fields.Datetime(readonly=True)
-    last_update_user_id = fields.Many2one("res.users", string="Last Updated By", readonly=True)
+    last_update_user_id = fields.Many2one(
+        "res.users", string="Last Updated By", readonly=True
+    )
     update_count = fields.Integer(default=0, readonly=True)
 
     @api.model
@@ -120,13 +124,15 @@ class RatePolicy(models.Model):
 
             # Calculate percentile
             percentile_map = {"50": 50, "60": 60, "75": 75, "90": 90}
-            percentile_value = statistics.quantiles(
-                rates, n=100, method="inclusive"
-            )[percentile_map[self.percentile] - 1]
+            percentile_value = statistics.quantiles(rates, n=100, method="inclusive")[
+                percentile_map[self.percentile] - 1
+            ]
 
             # Apply markup and rounding
             public_rate = percentile_value * (1 + self.markup_percentage / 100)
-            public_rate = round(public_rate / self.rounding_amount) * self.rounding_amount
+            public_rate = (
+                round(public_rate / self.rounding_amount) * self.rounding_amount
+            )
 
             # Update or create rate band
             band = RateBand.search([("role_id", "=", role.id)], limit=1)
@@ -135,8 +141,12 @@ class RatePolicy(models.Model):
                     {
                         "public_rate": public_rate,
                         "vendor_rate_p50": statistics.median(rates),
-                        "vendor_rate_p60": percentile_value if self.percentile == "60" else None,
-                        "vendor_rate_p75": statistics.quantiles(rates, n=4, method="inclusive")[2],
+                        "vendor_rate_p60": (
+                            percentile_value if self.percentile == "60" else None
+                        ),
+                        "vendor_rate_p75": statistics.quantiles(
+                            rates, n=4, method="inclusive"
+                        )[2],
                         "sample_size": len(rates),
                         "last_update_date": fields.Datetime.now(),
                         "last_update_policy_id": self.id,
@@ -148,8 +158,12 @@ class RatePolicy(models.Model):
                         "role_id": role.id,
                         "public_rate": public_rate,
                         "vendor_rate_p50": statistics.median(rates),
-                        "vendor_rate_p60": percentile_value if self.percentile == "60" else None,
-                        "vendor_rate_p75": statistics.quantiles(rates, n=4, method="inclusive")[2],
+                        "vendor_rate_p60": (
+                            percentile_value if self.percentile == "60" else None
+                        ),
+                        "vendor_rate_p75": statistics.quantiles(
+                            rates, n=4, method="inclusive"
+                        )[2],
                         "sample_size": len(rates),
                         "last_update_policy_id": self.id,
                     }

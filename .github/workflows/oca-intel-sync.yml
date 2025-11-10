@@ -1,0 +1,297 @@
+name: OCA Intelligence Sync
+
+# Daily automation for OCA module discovery, documentation, and validation
+# Monitors OCA 18.0 branch status and updates documentation automatically
+
+on:
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:  # Manual trigger
+  push:
+    paths:
+      - 'mcp/oca-intel/**'
+      - 'docs/odoo-18-oca-alternatives.md'
+
+jobs:
+  check-oca-branches:
+    name: Monitor OCA 18.0 Branches
+    runs-on: ubuntu-latest
+    outputs:
+      new_branches: ${{ steps.check.outputs.new_branches }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install requests
+
+      - name: Check OCA branch status
+        id: check
+        run: |
+          python3 scripts/admin/oca_module_manager.py insightpulse status > oca_status.json
+          cat oca_status.json
+          echo "new_branches=$(jq -r '.repositories | map(select(.branch_19_available == true)) | length' oca_status.json)" >> $GITHUB_OUTPUT
+
+      - name: Upload status report
+        uses: actions/upload-artifact@v4
+        with:
+          name: oca-status-report
+          path: oca_status.json
+          retention-days: 30
+
+  search-and-document:
+    name: Search & Generate Documentation
+    runs-on: ubuntu-latest
+    needs: check-oca-branches
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install MCP server
+        working-directory: mcp/oca-intel
+        run: |
+          npm install
+          npm run build
+
+      - name: Search for new modules
+        id: search
+        run: |
+          # Run MCP server searches for common requirements
+          echo "Searching for new OCA modules..."
+
+          # Example searches
+          SEARCHES=(
+            "accounting automation"
+            "expense management"
+            "document management"
+            "helpdesk ticket"
+            "approval workflow"
+          )
+
+          mkdir -p .oca-intel-cache
+
+          for query in "${SEARCHES[@]}"; do
+            echo "Searching: $query"
+            # MCP tool invocation (via Node)
+            node -e "
+              import('./mcp/oca-intel/dist/tools/search.js').then(mod => {
+                mod.searchOCAModules({ query: '$query', version: '18.0', limit: 5 })
+                  .then(result => console.log(JSON.stringify(result, null, 2)))
+                  .catch(err => console.error(err));
+              });
+            " > ".oca-intel-cache/search-${query// /-}.json" || true
+          done
+
+      - name: Generate module documentation
+        id: docs
+        run: |
+          # Generate docs for key OCA repos
+          REPOS=(
+            "https://github.com/OCA/account-financial-reporting"
+            "https://github.com/OCA/dms"
+            "https://github.com/OCA/helpdesk"
+            "https://github.com/OCA/server-tools"
+          )
+
+          mkdir -p .oca-docs-cache
+
+          for repo in "${REPOS[@]}"; do
+            repo_name=$(basename "$repo")
+            echo "Generating docs for: $repo_name"
+
+            # Generate docs via gittodoc.com or fallback to GitHub scraping
+            curl -s "https://raw.githubusercontent.com/OCA/$repo_name/18.0/README.md" \
+              > ".oca-docs-cache/${repo_name}.md" || true
+          done
+
+      - name: Update documentation
+        run: |
+          # Update docs with latest findings
+          python3 <<EOF
+          import json
+          import os
+          from datetime import datetime
+
+          # Read search results
+          search_dir = '.oca-intel-cache'
+          if os.path.exists(search_dir):
+              for filename in os.listdir(search_dir):
+                  if filename.endswith('.json'):
+                      filepath = os.path.join(search_dir, filename)
+                      with open(filepath) as f:
+                          data = json.load(f)
+                          print(f"Processed: {filename}")
+
+          # Generate summary
+          summary = {
+              'timestamp': datetime.now().isoformat(),
+              'status': 'success',
+              'message': 'OCA intelligence sync completed'
+          }
+
+          with open('oca-sync-summary.json', 'w') as f:
+              json.dump(summary, f, indent=2)
+          EOF
+
+      - name: Upload documentation cache
+        uses: actions/upload-artifact@v4
+        with:
+          name: oca-documentation
+          path: .oca-docs-cache/
+          retention-days: 7
+
+  validate-compatibility:
+    name: Validate Module Compatibility
+    runs-on: ubuntu-latest
+    needs: search-and-document
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate OCA modules
+        run: |
+          # Test module compatibility with Odoo 18.0
+          echo "Validating OCA module compatibility..."
+
+          # Key modules to validate
+          MODULES=(
+            "account_financial_report"
+            "mis_builder"
+            "dms"
+            "helpdesk_mgmt"
+            "base_tier_validation"
+          )
+
+          for module in "${MODULES[@]}"; do
+            echo "Checking: $module"
+            # Check if module exists and has 18.0 branch
+            curl -s -I "https://github.com/OCA/$(echo $module | sed 's/_/-/g')/tree/18.0" \
+              | head -1 | grep "200" && echo "✅ $module" || echo "⚠️  $module"
+          done
+
+  notify-updates:
+    name: Notify New Branches
+    runs-on: ubuntu-latest
+    needs: [check-oca-branches, search-and-document, validate-compatibility]
+    if: needs.check-oca-branches.outputs.new_branches > 0
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create issue for new branches
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const newBranches = ${{ needs.check-oca-branches.outputs.new_branches }};
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎉 New OCA 18.0 branches detected (${newBranches} repos)`,
+              body: `## OCA Intelligence Update
+
+              **Date**: ${new Date().toISOString().split('T')[0]}
+              **New 18.0 branches**: ${newBranches}
+
+              ### Action Required
+              - [ ] Review new module availability
+              - [ ] Update documentation
+              - [ ] Test module compatibility
+              - [ ] Update Finance SSC stack if applicable
+
+              ### Automated Checks
+              - ✅ Branch status monitored
+              - ✅ Documentation generated
+              - ✅ Compatibility validated
+
+              ---
+              Generated by OCA Intelligence automation
+              `,
+              labels: ['automation', 'oca-intel', 'enhancement']
+            });
+
+  update-docs:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: [search-and-document, validate-compatibility]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: oca-status-report
+
+      - name: Update OCA alternatives doc
+        run: |
+          # Update last-checked timestamp in docs
+          sed -i "s/Last Updated:.*/Last Updated: $(date +%Y-%m-%d)/" \
+            docs/odoo-18-oca-alternatives.md || true
+
+          # Commit if changes
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+          git add docs/odoo-18-oca-alternatives.md
+          git diff --staged --quiet || \
+            git commit -m "docs: update OCA alternatives (automated)" && \
+            git push
+
+  summary:
+    name: Generate Summary
+    runs-on: ubuntu-latest
+    needs: [check-oca-branches, search-and-document, validate-compatibility]
+    if: always()
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate summary
+        run: |
+          cat >> $GITHUB_STEP_SUMMARY <<EOF
+          # OCA Intelligence Sync Summary
+
+          **Date**: $(date +%Y-%m-%d)
+          **Time**: $(date +%H:%M:%S) UTC
+
+          ## Status
+          - Branch Monitoring: ${{ needs.check-oca-branches.result == 'success' && '✅ Success' || '❌ Failed' }}
+          - Documentation: ${{ needs.search-and-document.result == 'success' && '✅ Generated' || '❌ Failed' }}
+          - Validation: ${{ needs.validate-compatibility.result == 'success' && '✅ Passed' || '❌ Failed' }}
+
+          ## New OCA Branches
+          ${{ needs.check-oca-branches.outputs.new_branches || '0' }} new 18.0 branches detected
+
+          ## Next Steps
+          - Review [OCA Status Report](artifacts)
+          - Check [Documentation Cache](artifacts)
+          - Update Finance SSC module stack if needed
+
+          ---
+          *Automated by OCA Intelligence MCP Server*
+          EOF

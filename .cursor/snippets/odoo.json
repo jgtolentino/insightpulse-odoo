@@ -1,0 +1,110 @@
+{
+  "Odoo Model": {
+    "prefix": "odoo-model",
+    "body": [
+      "from odoo import models, fields, api",
+      "from odoo.exceptions import ValidationError",
+      "",
+      "",
+      "class ${1:ModelName}(models.Model):",
+      "    _name = '${2:module.model}'",
+      "    _description = '${3:Model Description}'",
+      "    _inherit = ['mail.thread', 'mail.activity.mixin']",
+      "    _order = '${4:name} desc'",
+      "",
+      "    # Multi-tenant isolation",
+      "    company_id = fields.Many2one(",
+      "        'res.company',",
+      "        string='Company',",
+      "        required=True,",
+      "        default=lambda self: self.env.company,",
+      "        index=True",
+      "    )",
+      "",
+      "    name = fields.Char(string='${5:Name}', required=True, tracking=True)",
+      "    active = fields.Boolean(default=True)",
+      "    ",
+      "    $0"
+    ],
+    "description": "Odoo model template with multi-tenancy"
+  },
+
+  "Odoo View (Form)": {
+    "prefix": "odoo-view-form",
+    "body": [
+      "<record id=\"view_${1:model}_form\" model=\"ir.ui.view\">",
+      "    <field name=\"name\">${2:module}.${1:model}.form</field>",
+      "    <field name=\"model\">${2:module}.${1:model}</field>",
+      "    <field name=\"arch\" type=\"xml\">",
+      "        <form string=\"${3:Title}\">",
+      "            <header>",
+      "                <field name=\"state\" widget=\"statusbar\"/>",
+      "            </header>",
+      "            <sheet>",
+      "                <group>",
+      "                    <field name=\"name\"/>",
+      "                    $0",
+      "                </group>",
+      "            </sheet>",
+      "            <div class=\"oe_chatter\">",
+      "                <field name=\"message_follower_ids\"/>",
+      "                <field name=\"activity_ids\"/>",
+      "                <field name=\"message_ids\"/>",
+      "            </div>",
+      "        </form>",
+      "    </field>",
+      "</record>"
+    ],
+    "description": "Odoo form view template"
+  },
+
+  "OCA Module Manifest": {
+    "prefix": "oca-manifest",
+    "body": [
+      "{",
+      "    'name': '${1:Module Name}',",
+      "    'version': '18.0.1.0.0',",
+      "    'category': '${2:Category}',",
+      "    'summary': '${3:Short description}',",
+      "    'author': 'InsightPulse AI',",
+      "    'website': 'https://github.com/jgtolentino/insightpulse-odoo',",
+      "    'license': 'LGPL-3',",
+      "    'depends': [",
+      "        'base',",
+      "        $0",
+      "    ],",
+      "    'data': [",
+      "        'security/ir.model.access.csv',",
+      "        'views/${4:model}_views.xml',",
+      "    ],",
+      "    'installable': True,",
+      "    'application': ${5:False},",
+      "    'auto_install': False,",
+      "}"
+    ],
+    "description": "OCA-compliant module manifest"
+  },
+
+  "BIR Compliance Field": {
+    "prefix": "bir-field",
+    "body": [
+      "# BIR Compliance",
+      "bir_form_${1:2307} = fields.Binary(string='BIR Form ${1:2307}')",
+      "bir_form_${1:2307}_filename = fields.Char()",
+      "audit_trail = fields.Text(string='Audit Trail', readonly=True)",
+      "$0"
+    ],
+    "description": "BIR compliance fields for Philippine tax"
+  },
+
+  "OCA Search": {
+    "prefix": "oca-search",
+    "body": [
+      "# Use OCA Intelligence MCP to search for modules",
+      "# Tool: search_oca_modules",
+      "# Query: ${1:accounting reports}",
+      "$0"
+    ],
+    "description": "Reminder to use OCA MCP for module search"
+  }
+}

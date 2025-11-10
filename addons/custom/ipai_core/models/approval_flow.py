@@ -1,5 +1,6 @@
-from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+
+from odoo import _, api, fields, models
 
 
 class ApprovalFlow(models.Model):
@@ -68,9 +69,7 @@ class ApprovalFlow(models.Model):
     def _check_stage_sequence(self):
         for flow in self:
             if not flow.stage_ids:
-                raise ValidationError(
-                    _("Approval flow must have at least one stage.")
-                )
+                raise ValidationError(_("Approval flow must have at least one stage."))
 
 
 class ApprovalStage(models.Model):
@@ -201,9 +200,7 @@ class ApprovalRequest(models.Model):
     )
 
     # Logs
-    log_ids = fields.One2many(
-        "ipai.approval.log", "request_id", string="Approval Log"
-    )
+    log_ids = fields.One2many("ipai.approval.log", "request_id", string="Approval Log")
 
     # Metrics
     create_date = fields.Datetime(readonly=True, index=True)
@@ -241,7 +238,13 @@ class ApprovalRequest(models.Model):
         if not first_stage:
             raise UserError(_("Approval flow has no stages defined."))
 
-        self.write({"state": "pending", "current_stage_id": first_stage.id, "start_date": fields.Datetime.now()})
+        self.write(
+            {
+                "state": "pending",
+                "current_stage_id": first_stage.id,
+                "start_date": fields.Datetime.now(),
+            }
+        )
 
         # Create log entry
         self.env["ipai.approval.log"].create(
@@ -371,8 +374,12 @@ class ApprovalLog(models.Model):
     request_id = fields.Many2one(
         "ipai.approval.request", required=True, ondelete="cascade", index=True
     )
-    stage_id = fields.Many2one("ipai.approval.stage", required=True, ondelete="restrict")
-    user_id = fields.Many2one("res.users", required=True, default=lambda self: self.env.user)
+    stage_id = fields.Many2one(
+        "ipai.approval.stage", required=True, ondelete="restrict"
+    )
+    user_id = fields.Many2one(
+        "res.users", required=True, default=lambda self: self.env.user
+    )
     action = fields.Selection(
         [
             ("submit", "Submitted"),

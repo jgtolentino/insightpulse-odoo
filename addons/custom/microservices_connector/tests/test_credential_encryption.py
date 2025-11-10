@@ -7,7 +7,6 @@ import base64
 from unittest.mock import patch
 
 from cryptography.fernet import Fernet
-
 from odoo.tests import TransactionCase
 
 

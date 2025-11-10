@@ -1,5 +1,6 @@
-from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+from odoo import _, api, fields, models
 
 
 class PurchaseOrder(models.Model):
@@ -163,9 +164,9 @@ class PurchaseOrder(models.Model):
                         "This purchase order has not been approved yet. "
                         "Current status: %s"
                     )
-                    % dict(
-                        order.approval_request_id._fields["state"].selection
-                    ).get(order.approval_state)
+                    % dict(order.approval_request_id._fields["state"].selection).get(
+                        order.approval_state
+                    )
                 )
 
         return super().button_confirm()

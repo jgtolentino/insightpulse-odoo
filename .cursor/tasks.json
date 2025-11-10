@@ -1,0 +1,87 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Odoo: Start Development Server",
+      "type": "shell",
+      "command": "odoo-bin",
+      "args": [
+        "-d", "insightpulse",
+        "-c", "${workspaceFolder}/odoo/config/odoo.conf",
+        "--dev=all"
+      ],
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Odoo: Update Module",
+      "type": "shell",
+      "command": "odoo-bin",
+      "args": [
+        "-d", "insightpulse",
+        "-u", "${input:moduleName}",
+        "--stop-after-init"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Odoo: Install OCA Module",
+      "type": "shell",
+      "command": "python3",
+      "args": [
+        "${workspaceFolder}/scripts/admin/oca_module_manager.py",
+        "insightpulse",
+        "install"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "MCP: Build OCA Intel Server",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "build"],
+      "options": {
+        "cwd": "${workspaceFolder}/mcp/oca-intel"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "MCP: Start OCA Intel Server",
+      "type": "shell",
+      "command": "npm",
+      "args": ["run", "dev"],
+      "options": {
+        "cwd": "${workspaceFolder}/mcp/oca-intel"
+      },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Test: Run Odoo Tests",
+      "type": "shell",
+      "command": "pytest",
+      "args": [
+        "${workspaceFolder}/odoo/tests",
+        "-v"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Start Stack",
+      "type": "shell",
+      "command": "docker-compose",
+      "args": ["-f", "docker-compose.yml", "up", "-d"],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "moduleName",
+      "type": "promptString",
+      "description": "Module name to update"
+    }
+  ]
+}

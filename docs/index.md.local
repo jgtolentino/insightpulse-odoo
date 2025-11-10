@@ -1,0 +1,87 @@
+# InsightPulse Odoo 18 · InsightPulseAI
+
+This site is the public documentation entrypoint for the `insightpulse-odoo` repository.
+
+- Source code: https://github.com/jgtolentino/insightpulse-odoo
+- Wiki (roadmap, phases, OCA compliance):
+  https://github.com/jgtolentino/insightpulse-odoo/wiki
+
+## What lives here?
+
+For now this page is intentionally small. It links to:
+
+- The **Wiki**, which is the human-readable roadmap
+- The **Issues** tab, which tracks implementation work
+- The **Actions** tab, which shows CI / CD and documentation validation
+
+As the project matures, this `/docs` folder will host:
+
+- Odoo 18 CE module documentation
+- Visual Agent integration notes
+- Agent Framework cookbook references
+
+## Visual Compliance Agent
+
+The Visual Compliance Agent automates OCA compliance validation using a **Skills Registry** architecture:
+
+### Compliance Checks
+
+- **Manifest compliance** - Odoo 18.0 version format, LGPL-3 license, InsightPulseAI metadata
+- **Directory structure** - Single canonical `odoo_addons/` directory
+- **Module naming** - Standardized `ipai_*` prefix for custom modules
+- **Documentation** - README.rst files for all modules
+
+### Skills Registry Architecture
+
+The Visual Compliance Agent uses a modular, pluggable architecture:
+
+- **Skills** (`agents/skills.yaml`) - Atomic capabilities with standard interface
+- **Skill Registry** (`agents/skill_registry.py`) - Dynamic skill loader
+- **CLI Wrapper** (`agents/run_skill.py`) - Command-line skill executor
+- **Validators** - Skill wrappers around core validation tools
+
+See [agents/visual-compliance/](https://github.com/jgtolentino/insightpulse-odoo/tree/main/agents/visual-compliance) for implementation details.
+
+### Usage
+
+```bash
+# Run single skill
+python -m agents.run_skill odoo.manifest.validate --repo-path .
+
+# Run skill with auto-fix
+python -m agents.run_skill odoo.manifest.validate --repo-path . --fix
+
+# Run skill profile (multiple skills)
+python -m agents.run_skill --profile fast_check --repo-path .
+
+# List available skills
+python -m agents.run_skill --list
+
+# Full compliance scan
+python -m agents.run_skill visual_compliance.full_scan --repo-path . --json
+```
+
+### Available Skills
+
+- `odoo.manifest.validate` - Manifest compliance validation and auto-fix
+- `odoo.directory.validate` - Directory structure validation and consolidation
+- `odoo.naming.validate` - Module naming convention validation
+- `odoo.readme.validate` - README.rst generation and validation
+- `visual_compliance.full_scan` - Complete compliance scan with reporting
+
+### Skill Profiles
+
+- `fast_check` - Quick manifest + directory validation for CI
+- `full_compliance` - Complete validation suite
+- `pr_review` - Validation for PR checks (no auto-fix)
+- `weekly_audit` - Full scan with issue creation
+
+## Quick Links
+
+- [GitHub Pages Settings](https://github.com/jgtolentino/insightpulse-odoo/settings/pages) - Configure GitHub Pages to deploy from `main` branch `/docs` folder
+- [CI/CD Workflows](https://github.com/jgtolentino/insightpulse-odoo/actions) - Automated validation pipelines
+- [OCA Compliance Issues](https://github.com/jgtolentino/insightpulse-odoo/issues?q=is%3Aissue+label%3A%22OCA+compliance%22) - Track compliance work
+
+---
+
+*Last updated: 2025-11-10 by Visual Compliance Agent*

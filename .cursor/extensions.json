@@ -1,0 +1,39 @@
+{
+  "recommendations": [
+    "// Python": "",
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "ms-python.black-formatter",
+
+    "// Odoo": "",
+    "jigar-patel.odoosnippets",
+    "trinhanhngoc.odoo-owl",
+
+    "// XML/Data": "",
+    "redhat.vscode-xml",
+    "DotJoshJohnson.xml",
+
+    "// JavaScript/Web": "",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+
+    "// PostgreSQL": "",
+    "ckolkman.vscode-postgres",
+
+    "// Git": "",
+    "eamodio.gitlens",
+    "GitHub.vscode-pull-request-github",
+
+    "// Markdown/Docs": "",
+    "yzhang.markdown-all-in-one",
+    "bierner.markdown-mermaid",
+
+    "// Docker": "",
+    "ms-azuretools.vscode-docker",
+
+    "// Utils": "",
+    "streetsidesoftware.code-spell-checker",
+    "usernamehw.errorlens",
+    "wayou.vscode-todo-highlight"
+  ]
+}

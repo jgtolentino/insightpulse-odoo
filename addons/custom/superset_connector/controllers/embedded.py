@@ -5,9 +5,10 @@ import re
 from datetime import datetime
 from urllib.parse import quote, urlencode
 
-from odoo import http
 from odoo.exceptions import ValidationError
 from odoo.http import request
+
+from odoo import http
 
 _logger = logging.getLogger(__name__)
 

@@ -1,0 +1,140 @@
+name: Documentation Validation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - '.github/SECURITY.md'
+  push:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  validate-docs:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml  # Required for skill registry
+
+      - name: Validate README.rst compliance
+        id: readme
+        run: |
+          python -m agents.run_skill odoo.readme.validate \
+            --repo-path . \
+            --json > readme-results.json || true
+
+          # Check results
+          cat readme-results.json
+
+          # Set output for PR comment
+          README_OK=$(jq -r '.ok' readme-results.json)
+          COVERAGE=$(jq -r '.readme_coverage' readme-results.json)
+          VIOLATIONS=$(jq -r '.violations | length' readme-results.json)
+
+          echo "ok=$README_OK" >> $GITHUB_OUTPUT
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "violations=$VIOLATIONS" >> $GITHUB_OUTPUT
+
+      - name: Check GitHub Pages configuration
+        id: pages
+        run: |
+          # Verify docs/index.md exists
+          if [ ! -f docs/index.md ]; then
+            echo "❌ Missing docs/index.md"
+            echo "ok=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+          # Verify GitHub Pages is configured
+          if [ ! -f docs/_config.yml ]; then
+            echo "⚠️  Missing docs/_config.yml - GitHub Pages may not render correctly"
+            echo "ok=partial" >> $GITHUB_OUTPUT
+          else
+            echo "✅ GitHub Pages configuration found"
+            echo "ok=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          README_OK: ${{ steps.readme.outputs.ok }}
+          README_COVERAGE: ${{ steps.readme.outputs.coverage }}
+          README_VIOLATIONS: ${{ steps.readme.outputs.violations }}
+          PAGES_OK: ${{ steps.pages.outputs.ok }}
+        with:
+          script: |
+            const fs = require('fs');
+
+            let comment = '## 📚 Documentation Validation Report\n\n';
+
+            // README compliance
+            const readmeOk = process.env.README_OK === 'true';
+            const coverage = parseFloat(process.env.README_COVERAGE);
+            const violations = parseInt(process.env.README_VIOLATIONS);
+
+            if (readmeOk) {
+              comment += '✅ **README Compliance**: PASS\n';
+            } else {
+              comment += '❌ **README Compliance**: VIOLATIONS DETECTED\n';
+            }
+            comment += `   - Coverage: ${coverage.toFixed(1)}%\n`;
+            comment += `   - Violations: ${violations}\n\n`;
+
+            // GitHub Pages
+            const pagesOk = process.env.PAGES_OK;
+            if (pagesOk === 'true') {
+              comment += '✅ **GitHub Pages**: Configured\n';
+            } else if (pagesOk === 'partial') {
+              comment += '⚠️  **GitHub Pages**: Partially configured\n';
+            } else {
+              comment += '❌ **GitHub Pages**: Not configured\n';
+            }
+
+            comment += '\n---\n';
+            comment += '*Run `python -m agents.run_skill odoo.readme.validate --fix` to auto-generate missing READMEs*\n';
+
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+      - name: Upload validation results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: docs-validation-results
+          path: readme-results.json
+          retention-days: 30
+
+      - name: Fail on violations
+        if: steps.readme.outputs.ok != 'true'
+        run: |
+          echo "❌ Documentation validation failed"
+          exit 1

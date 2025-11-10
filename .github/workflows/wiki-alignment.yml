@@ -1,0 +1,203 @@
+name: Wiki Alignment Check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'README.md'
+      - 'PLANNING.md'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - main
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-alignment:
+    name: Check Wiki Alignment
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Check documentation freshness
+        id: freshness
+        run: |
+          # Check if docs/index.md is recent (<30 days old)
+          if [ -f docs/index.md ]; then
+            LAST_MODIFIED=$(stat -c %Y docs/index.md)
+            NOW=$(date +%s)
+            AGE_DAYS=$(( (NOW - LAST_MODIFIED) / 86400 ))
+
+            echo "age_days=$AGE_DAYS" >> $GITHUB_OUTPUT
+
+            if [ $AGE_DAYS -gt 30 ]; then
+              echo "⚠️  docs/index.md is $AGE_DAYS days old (threshold: 30 days)"
+              echo "fresh=false" >> $GITHUB_OUTPUT
+            else
+              echo "✅ docs/index.md is up to date ($AGE_DAYS days old)"
+              echo "fresh=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Missing docs/index.md"
+            echo "fresh=false" >> $GITHUB_OUTPUT
+            echo "age_days=999" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Verify Visual Compliance Agent documentation
+        id: agent_docs
+        run: |
+          # Check if Visual Compliance Agent is documented in docs/
+          if grep -r "Visual Compliance Agent" docs/ > /dev/null; then
+            echo "✅ Visual Compliance Agent documented"
+            echo "documented=true" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Visual Compliance Agent not documented in docs/"
+            echo "documented=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Check if skills.yaml is referenced
+          if grep -r "skills.yaml" docs/ > /dev/null; then
+            echo "✅ Skills registry documented"
+            echo "skills_documented=true" >> $GITHUB_OUTPUT
+          else
+            echo "⚠️  Skills registry not documented in docs/"
+            echo "skills_documented=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check SECURITY.md completeness
+        id: security
+        run: |
+          if [ -f .github/SECURITY.md ]; then
+            # Check for required sections
+            REQUIRED_SECTIONS=(
+              "Reporting a Vulnerability"
+              "Scope"
+              "Visual Compliance Agent"
+            )
+
+            MISSING_SECTIONS=()
+            for section in "${REQUIRED_SECTIONS[@]}"; do
+              if ! grep -q "$section" .github/SECURITY.md; then
+                MISSING_SECTIONS+=("$section")
+              fi
+            done
+
+            if [ ${#MISSING_SECTIONS[@]} -eq 0 ]; then
+              echo "✅ SECURITY.md complete"
+              echo "complete=true" >> $GITHUB_OUTPUT
+            else
+              echo "⚠️  SECURITY.md missing sections: ${MISSING_SECTIONS[*]}"
+              echo "complete=partial" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Missing .github/SECURITY.md"
+            echo "complete=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create tracking issue
+        if: |
+          github.event_name == 'schedule' &&
+          (steps.freshness.outputs.fresh != 'true' ||
+           steps.agent_docs.outputs.documented != 'true' ||
+           steps.security.outputs.complete != 'true')
+        uses: actions/github-script@v7
+        env:
+          FRESHNESS: ${{ steps.freshness.outputs.fresh }}
+          AGE_DAYS: ${{ steps.freshness.outputs.age_days }}
+          AGENT_DOCS: ${{ steps.agent_docs.outputs.documented }}
+          SKILLS_DOCS: ${{ steps.agent_docs.outputs.skills_documented }}
+          SECURITY_COMPLETE: ${{ steps.security.outputs.complete }}
+        with:
+          script: |
+            const issues = {
+              stale_docs: process.env.FRESHNESS !== 'true',
+              missing_agent_docs: process.env.AGENT_DOCS !== 'true',
+              missing_skills_docs: process.env.SKILLS_DOCS !== 'true',
+              incomplete_security: process.env.SECURITY_COMPLETE !== 'true'
+            };
+
+            if (!Object.values(issues).some(v => v)) {
+              console.log('✅ No wiki alignment issues detected');
+              return;
+            }
+
+            // Build issue body
+            let body = '## Wiki Alignment Issues Detected\n\n';
+            body += 'The following documentation issues were found:\n\n';
+
+            if (issues.stale_docs) {
+              const ageDays = process.env.AGE_DAYS;
+              body += `- ⚠️  **Stale Documentation**: docs/index.md is ${ageDays} days old (threshold: 30 days)\n`;
+            }
+
+            if (issues.missing_agent_docs) {
+              body += '- ❌ **Missing Visual Compliance Agent Documentation**: Agent not documented in docs/\n';
+            }
+
+            if (issues.missing_skills_docs) {
+              body += '- ⚠️  **Missing Skills Registry Documentation**: skills.yaml not referenced in docs/\n';
+            }
+
+            if (issues.incomplete_security) {
+              body += '- ⚠️  **Incomplete SECURITY.md**: Missing required sections\n';
+            }
+
+            body += '\n### Recommended Actions\n\n';
+            body += '1. Update `docs/index.md` with current project state\n';
+            body += '2. Add Visual Compliance Agent documentation to `docs/`\n';
+            body += '3. Document skills registry architecture in `docs/`\n';
+            body += '4. Complete `.github/SECURITY.md` with all required sections\n';
+
+            body += '\n---\n';
+            body += '*This issue was automatically created by the Wiki Alignment Check workflow*\n';
+
+            // Check for existing open issue
+            const existingIssues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'documentation,governance',
+              per_page: 100
+            });
+
+            const hasExisting = existingIssues.data.some(issue =>
+              issue.title.includes('Wiki Alignment Issues')
+            );
+
+            if (!hasExisting) {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: 'Wiki Alignment Issues Detected',
+                body: body,
+                labels: ['documentation', 'governance', 'automated']
+              });
+              console.log('✅ Created tracking issue');
+            } else {
+              console.log('ℹ️  Existing tracking issue found, skipping creation');
+            }
+
+      - name: Summary
+        run: |
+          echo "=== Wiki Alignment Check Summary ==="
+          echo "Documentation Freshness: ${{ steps.freshness.outputs.fresh }}"
+          echo "Agent Documentation: ${{ steps.agent_docs.outputs.documented }}"
+          echo "Skills Documentation: ${{ steps.agent_docs.outputs.skills_documented }}"
+          echo "SECURITY.md Complete: ${{ steps.security.outputs.complete }}"

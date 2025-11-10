@@ -1,0 +1,67 @@
+# Dockerfile.odoo - Official Odoo CE 18.0 with OCA and InsightPulseAI layers
+FROM odoo:18.0
+
+# Metadata
+LABEL maintainer="InsightPulseAI <jgtolentino_rn@yahoo.com>"
+LABEL description="Odoo CE 18.0 with 3-layer architecture: ipai > OCA > CE"
+LABEL version="18.0-ipai"
+
+# Switch to root for system package installation
+USER root
+
+# Install system dependencies for OCA modules and custom addons
+RUN apt-get update && apt-get install -y \
+    # Build essentials for Python packages
+    build-essential \
+    libssl-dev \
+    libffi-dev \
+    libxml2-dev \
+    libxslt1-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    zlib1g-dev \
+    # PostgreSQL client for database operations
+    postgresql-client \
+    # Git for fetching OCA modules during development
+    git \
+    # Utilities
+    wget \
+    curl \
+    vim \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies for OCA modules and custom addons
+COPY requirements.txt /tmp/requirements.txt
+RUN pip3 install --no-cache-dir -r /tmp/requirements.txt
+
+# Create directory structure for 3-layer architecture
+RUN mkdir -p /mnt/extra-addons/ipai \
+    && mkdir -p /mnt/extra-addons/custom \
+    && mkdir -p /mnt/extra-addons/oca \
+    && mkdir -p /var/log/odoo \
+    && mkdir -p /var/lib/odoo
+
+# Set proper ownership for Odoo user
+RUN chown -R odoo:odoo /mnt/extra-addons \
+    && chown -R odoo:odoo /var/log/odoo \
+    && chown -R odoo:odoo /var/lib/odoo
+
+# Copy custom configuration
+COPY --chown=odoo:odoo config/odoo.conf /etc/odoo/odoo.conf
+
+# Switch back to odoo user for security
+USER odoo
+
+# Set working directory
+WORKDIR /usr/lib/python3/dist-packages/odoo
+
+# Expose Odoo ports
+EXPOSE 8069 8072
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=60s \
+  CMD curl -f http://localhost:8069/web/health || exit 1
+
+# Default command (can be overridden in docker-compose.yml)
+CMD ["odoo"]

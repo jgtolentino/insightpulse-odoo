@@ -1,0 +1,227 @@
+name: Visual Compliance Agent
+
+on:
+  pull_request:
+    paths:
+      - 'odoo_addons/**'
+      - 'addons/**'
+      - 'custom_addons/**'
+      - 'agents/visual-compliance/**'
+  push:
+    branches:
+      - main
+      - develop
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      enable_autofix:
+        description: 'Enable automatic fixing of violations'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  compliance-check:
+    name: OCA Compliance Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest  # For running tests if needed
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || sudo apt install curl -y
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+          sudo apt install gh -y
+
+      - name: Authenticate GitHub CLI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GH_TOKEN" | gh auth login --with-token
+
+      - name: Run Visual Compliance Agent
+        id: compliance
+        run: |
+          cd agents/visual-compliance
+
+          # Determine if auto-fix should be enabled
+          ENABLE_FIX=""
+          if [[ "${{ github.event.inputs.enable_autofix }}" == "true" ]] || [[ "${{ github.event_name }}" == "schedule" ]]; then
+            ENABLE_FIX="--fix"
+            echo "Auto-fix enabled"
+          fi
+
+          # Run compliance checks
+          python src/visual_agent.py \
+            --repo-root ../../ \
+            $ENABLE_FIX \
+            --json > compliance-results.json || true
+
+          # Export results for next steps
+          cat compliance-results.json
+
+          # Check compliance status
+          IS_COMPLIANT=$(jq -r '.summary.is_compliant' compliance-results.json)
+          TOTAL_VIOLATIONS=$(jq -r '.summary.total_violations' compliance-results.json)
+          CRITICAL_COUNT=$(jq -r '.summary.violations_by_severity.critical' compliance-results.json)
+
+          echo "is_compliant=$IS_COMPLIANT" >> $GITHUB_OUTPUT
+          echo "total_violations=$TOTAL_VIOLATIONS" >> $GITHUB_OUTPUT
+          echo "critical_count=$CRITICAL_COUNT" >> $GITHUB_OUTPUT
+
+          # Set workflow status
+          if [[ "$CRITICAL_COUNT" -gt 0 ]]; then
+            echo "status=critical" >> $GITHUB_OUTPUT
+            exit 2
+          elif [[ "$IS_COMPLIANT" == "false" ]]; then
+            echo "status=warning" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "status=pass" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+        continue-on-error: true
+
+      - name: Generate GitHub annotations
+        if: always()
+        run: |
+          cd agents/visual-compliance
+
+          # Generate annotations for GitHub Actions
+          python src/visual_agent.py \
+            --repo-root ../../ \
+            --github-annotations < compliance-results.json || true
+
+      - name: Create GitHub issues for violations
+        if: github.event_name != 'pull_request' && steps.compliance.outputs.is_compliant == 'false'
+        run: |
+          cd agents/visual-compliance
+
+          # Create issues for violations (skip on PRs to avoid spam)
+          cat compliance-results.json | python src/reporters/github_reporter.py \
+            --repo ${{ github.repository }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        env:
+          IS_COMPLIANT: ${{ steps.compliance.outputs.is_compliant }}
+          TOTAL_VIOLATIONS: ${{ steps.compliance.outputs.total_violations }}
+          CRITICAL_COUNT: ${{ steps.compliance.outputs.critical_count }}
+        with:
+          script: |
+            const fs = require('fs');
+            const resultsPath = 'agents/visual-compliance/compliance-results.json';
+
+            let results;
+            try {
+              results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+            } catch (e) {
+              console.error('Failed to read compliance results:', e);
+              return;
+            }
+
+            const { summary, checks } = results;
+            const isCompliant = summary.is_compliant;
+            const totalViolations = summary.total_violations;
+            const criticalCount = summary.violations_by_severity.critical;
+            const highCount = summary.violations_by_severity.high;
+            const mediumCount = summary.violations_by_severity.medium;
+            const lowCount = summary.violations_by_severity.low;
+
+            // Build comment
+            let comment = '## 🤖 Visual Compliance Agent Report\n\n';
+
+            if (isCompliant) {
+              comment += '✅ **COMPLIANT** - All OCA compliance checks passed!\n\n';
+            } else {
+              comment += '❌ **NON-COMPLIANT** - Violations detected\n\n';
+
+              comment += `**Total Violations:** ${totalViolations}\n\n`;
+
+              comment += '**Violations by Severity:**\n';
+              comment += `- 🔴 Critical: ${criticalCount}\n`;
+              comment += `- 🟠 High: ${highCount}\n`;
+              comment += `- 🟡 Medium: ${mediumCount}\n`;
+              comment += `- 🔵 Low: ${lowCount}\n\n`;
+
+              // Add check details
+              comment += '### Check Results\n\n';
+              for (const [checkName, checkResult] of Object.entries(checks)) {
+                const checkViolations = checkResult.violations || [];
+                const status = checkViolations.length === 0 ? '✅' : '❌';
+
+                comment += `${status} **${checkName}**: `;
+                if (checkViolations.length === 0) {
+                  comment += 'PASS\n';
+                } else {
+                  comment += `${checkViolations.length} violation(s)\n`;
+                }
+              }
+
+              comment += '\n---\n';
+              comment += '*Run `python agents/visual-compliance/src/visual_agent.py --fix` to auto-fix some violations*\n';
+            }
+
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: comment
+            });
+
+      - name: Commit auto-fixes (if any)
+        if: github.event.inputs.enable_autofix == 'true' || github.event_name == 'schedule'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          if [[ -n $(git status --porcelain) ]]; then
+            git add .
+            git commit -m "chore: auto-fix OCA compliance violations [skip ci]" || true
+            git push || true
+          else
+            echo "No auto-fixes to commit"
+          fi
+
+      - name: Upload compliance results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: compliance-results
+          path: agents/visual-compliance/compliance-results.json
+          retention-days: 30
+
+      - name: Fail workflow on critical violations
+        if: steps.compliance.outputs.critical_count > 0
+        run: |
+          echo "❌ Workflow failed: ${{ steps.compliance.outputs.critical_count }} critical violations detected"
+          exit 1
+
+# Success/failure status badge can be added to README:
+# ![Visual Compliance](https://github.com/jgtolentino/insightpulse-odoo/actions/workflows/visual-compliance-agent.yml/badge.svg)

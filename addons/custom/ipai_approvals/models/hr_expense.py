@@ -1,5 +1,6 @@
-from odoo import api, fields, models, _
 from odoo.exceptions import UserError
+
+from odoo import _, api, fields, models
 
 
 class HrExpense(models.Model):
@@ -182,9 +183,9 @@ class HrExpenseSheet(models.Model):
                         "This expense sheet has not been approved yet. "
                         "Current status: %s"
                     )
-                    % dict(
-                        sheet.approval_request_id._fields["state"].selection
-                    ).get(sheet.approval_state)
+                    % dict(sheet.approval_request_id._fields["state"].selection).get(
+                        sheet.approval_state
+                    )
                 )
 
         return super().approve_expense_sheets()
