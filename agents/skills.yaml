@@ -1,0 +1,521 @@
+---
+# Skills Registry - InsightPulse Visual Compliance Agent + RAG/CAG Knowledge Graph
+# Single source of truth for all executable capabilities
+
+# Knowledge Graph Configuration
+knowledge_graph:
+  enabled: true
+  supabase_url: "${VISUAL_KG_SUPABASE_URL}"
+  embedding_model: "text-embedding-3-large"
+  embedding_dimensions: 3072
+  vector_search_threshold: 0.7
+  deduplication_threshold: 0.95
+
+# Canonical Documentation Sources (treated as "the law")
+canonical_sources:
+  - id: odoo_developer_reference
+    name: "Odoo 18.0 Developer Reference"
+    url: "https://www.odoo.com/documentation/18.0/developer/"
+    sections:
+      - "Module Manifests"
+      - "ORM API"
+      - "Views"
+      - "Security"
+      - "Testing"
+    compliance_categories: ["manifest", "python", "xml", "security", "tools"]
+
+  - id: oca_contributing_development
+    name: "OCA Contributing - Development"
+    url: "https://github.com/OCA/odoo-community.org/blob/master/website/Contribution/CONTRIBUTING.rst"
+    sections:
+      - "Git Guidelines"
+      - "Coding Guidelines"
+      - "Module Structure"
+      - "Pull Request Process"
+    compliance_categories: ["structure", "python", "tools"]
+
+  - id: oca_contributing_documentation
+    name: "OCA Contributing - Documentation"
+    url: "https://github.com/OCA/maintainer-tools/blob/master/CONTRIBUTING.md"
+    sections:
+      - "README.rst Structure"
+      - "Wiki Guidelines"
+      - "Documentation Quality"
+    compliance_categories: ["structure"]
+
+# 7 Knowledge Graph Repositories (Odoo 18.0 only - no 19.x content)
+knowledge_repositories:
+  - repo: "OCA/OpenUpgrade"
+    branch: "18.0"
+    git_url: "https://github.com/OCA/OpenUpgrade.git"
+    paths: ["docs/", "scripts/"]
+    priority: "high"
+    categories: ["structure", "dependencies"]
+
+  - repo: "OCA/oca-github-bot"
+    branch: "master"  # No version-specific branches
+    git_url: "https://github.com/OCA/oca-github-bot.git"
+    paths: ["docs/"]
+    priority: "medium"
+    categories: ["tools"]
+
+  - repo: "OCA/maintainer-tools"
+    branch: "master"  # OCA tooling - version-agnostic
+    git_url: "https://github.com/OCA/maintainer-tools.git"
+    paths: ["docs/", "template/"]
+    priority: "critical"  # THE LAW
+    categories: ["manifest", "python", "xml", "security", "structure", "tools"]
+
+  - repo: "OCA/OCB"
+    branch: "18.0"
+    git_url: "https://github.com/OCA/OCB.git"
+    paths: ["README.md"]
+    priority: "medium"
+    categories: ["structure"]
+
+  - repo: "OCA/odoo-community.org"
+    branch: "master"  # Community guidelines - version-agnostic
+    git_url: "https://github.com/OCA/odoo-community.org.git"
+    paths: ["website/Contribution/"]
+    priority: "critical"  # THE LAW
+    categories: ["structure", "python", "tools"]
+
+  - repo: "odoo/odoo"
+    branch: "18.0"
+    git_url: "https://github.com/odoo/odoo.git"
+    paths: ["doc/developer/", "doc/administration/"]
+    priority: "critical"  # THE LAW - Official Odoo 18.0 source code docs
+    categories: ["manifest", "python", "xml", "security", "tools"]
+
+  - repo: "odoo/documentation"
+    branch: "18.0"
+    git_url: "https://github.com/odoo/documentation.git"
+    paths: ["content/developer/", "content/applications/"]
+    priority: "critical"  # THE LAW - Official Odoo 18.0 documentation
+    categories: ["manifest", "python", "xml", "security", "structure"]
+
+# Compliance Category Definitions
+compliance_categories:
+  manifest:
+    description: "__manifest__.py structure, metadata, dependencies"
+    canonical_sources: ["odoo_developer_reference", "oca_contributing_development"]
+    severity_default: "CRITICAL"
+
+  python:
+    description: "Python code quality, docstrings, imports, OOP patterns"
+    canonical_sources: ["odoo_developer_reference", "oca_contributing_development"]
+    severity_default: "HIGH"
+
+  xml:
+    description: "View definitions, data files, security rules"
+    canonical_sources: ["odoo_developer_reference"]
+    severity_default: "HIGH"
+
+  security:
+    description: "Access rights, record rules, RLS, ir.model.access"
+    canonical_sources: ["odoo_developer_reference"]
+    severity_default: "CRITICAL"
+
+  structure:
+    description: "Module organization, file naming, directory layout"
+    canonical_sources: ["oca_contributing_development", "oca_contributing_documentation"]
+    severity_default: "MEDIUM"
+
+  dependencies:
+    description: "External dependencies, OCA module usage, version pinning"
+    canonical_sources: ["oca_contributing_development"]
+    severity_default: "MEDIUM"
+
+  tools:
+    description: "Testing, pre-commit, CI/CD, linting"
+    canonical_sources: ["odoo_developer_reference", "oca_contributing_development"]
+    severity_default: "LOW"
+
+skills:
+  - id: odoo.manifest.validate
+    name: "Odoo manifest validator"
+    description: "Validates __manifest__.py files for Odoo 18.0, LGPL-3, and InsightPulseAI metadata"
+    module: "visual_compliance.validators.manifest_validator"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/wiki/OCA-Compliance#manifest-validation"
+    tags: ["odoo", "oca", "compliance", "fast-check", "manifest"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+        description: "Path to repository root"
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Auto-fix violations where possible"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+        description: "Whether all manifests are compliant"
+      - name: "total_modules"
+        type: "integer"
+        description: "Total number of modules checked"
+      - name: "compliant_modules"
+        type: "integer"
+        description: "Number of compliant modules"
+      - name: "violations"
+        type: "array"
+        description: "List of violation objects"
+
+  - id: odoo.directory.validate
+    name: "Odoo directory structure validator"
+    description: "Validates single canonical odoo_addons/ directory (OCA standard)"
+    module: "visual_compliance.validators.directory_validator"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/wiki/OCA-Compliance#directory-structure"
+    tags: ["odoo", "oca", "compliance", "directory", "structure"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "addon_directories"
+        type: "object"
+        description: "Map of directory name to module list"
+      - name: "violations"
+        type: "array"
+
+  - id: odoo.naming.validate
+    name: "Odoo module naming validator"
+    description: "Validates ipai_* prefix for custom modules"
+    module: "visual_compliance.validators.naming_validator"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/wiki/OCA-Compliance#module-naming"
+    tags: ["odoo", "oca", "compliance", "naming", "ipai_prefix"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Note: Naming auto-fix requires manual intervention"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "modules_to_rename"
+        type: "object"
+        description: "Map of old_name to new_name"
+      - name: "violations"
+        type: "array"
+
+  - id: odoo.readme.validate
+    name: "Odoo README documentation validator"
+    description: "Validates README.rst files for OCA documentation standards"
+    module: "visual_compliance.validators.readme_validator"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/wiki/OCA-Compliance#documentation"
+    tags: ["odoo", "oca", "compliance", "documentation", "readme"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Auto-generate missing README.rst files"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "readme_coverage"
+        type: "number"
+        description: "Percentage of modules with README.rst"
+      - name: "violations"
+        type: "array"
+
+  - id: visual_compliance.full_scan
+    name: "Visual Compliance Full Scan"
+    description: "Runs all compliance validators and generates comprehensive report"
+    module: "visual_compliance.visual_agent"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/tree/main/agents/visual-compliance"
+    tags: ["orchestrator", "compliance", "full-scan"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+      - name: "create_issues"
+        type: "boolean"
+        required: false
+        default: false
+        description: "Create GitHub issues for violations"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "summary"
+        type: "object"
+        description: "Overall compliance summary"
+      - name: "checks"
+        type: "object"
+        description: "Results from each validator"
+
+  # === RAG/CAG-Enhanced Validators ===
+  # These validators use the knowledge graph for context-aware validation
+
+  - id: odoo.manifest.validate_rag
+    name: "RAG-Enhanced Manifest Validator"
+    description: "Validates manifests using OCA guideline vector search and GPT-4o-mini enhancement"
+    module: "visual_compliance.validators.manifest_validator_rag"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    docs: "https://github.com/jgtolentino/insightpulse-odoo/blob/main/docs/knowledge-graph-architecture.md"
+    tags: ["odoo", "oca", "compliance", "manifest", "rag", "knowledge-graph"]
+    requires_knowledge_graph: true
+    compliance_categories: ["manifest"]
+    canonical_sources: ["odoo_developer_reference", "oca_contributing_development"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+      - name: "use_llm_enhancement"
+        type: "boolean"
+        required: false
+        default: true
+        description: "Use GPT-4o-mini for enhanced violation explanations"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "violations"
+        type: "array"
+        description: "Violations with RAG context and LLM enhancements"
+      - name: "rag_context"
+        type: "object"
+        description: "Knowledge graph guidelines retrieved"
+
+  - id: odoo.python.validate_rag
+    name: "RAG-Enhanced Python Code Validator"
+    description: "Validates Python code quality using OCA examples and official Odoo patterns"
+    module: "visual_compliance.validators.python_validator_rag"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["odoo", "oca", "python", "code-quality", "rag"]
+    requires_knowledge_graph: true
+    compliance_categories: ["python"]
+    canonical_sources: ["odoo_developer_reference", "oca_contributing_development"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "violations"
+        type: "array"
+      - name: "oca_examples"
+        type: "array"
+        description: "Similar OCA code examples retrieved"
+
+  - id: odoo.xml.validate_rag
+    name: "RAG-Enhanced XML/View Validator"
+    description: "Validates XML views using Odoo official docs and OCA patterns"
+    module: "visual_compliance.validators.xml_validator_rag"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["odoo", "oca", "xml", "views", "rag"]
+    requires_knowledge_graph: true
+    compliance_categories: ["xml"]
+    canonical_sources: ["odoo_developer_reference"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "fix"
+        type: "boolean"
+        required: false
+        default: false
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "violations"
+        type: "array"
+
+  - id: odoo.security.validate_rag
+    name: "RAG-Enhanced Security Validator"
+    description: "Validates access rights and security rules using official Odoo security docs"
+    module: "visual_compliance.validators.security_validator_rag"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["odoo", "oca", "security", "access-rights", "rag"]
+    requires_knowledge_graph: true
+    compliance_categories: ["security"]
+    canonical_sources: ["odoo_developer_reference"]
+    inputs:
+      - name: "repo_path"
+        type: "string"
+        required: false
+        default: "."
+      - name: "severity_filter"
+        type: "string"
+        required: false
+        default: "CRITICAL"
+        description: "Only report violations of this severity or higher"
+    outputs:
+      - name: "ok"
+        type: "boolean"
+      - name: "violations"
+        type: "array"
+      - name: "critical_violations"
+        type: "integer"
+
+  # === Knowledge Graph Management Skills ===
+
+  - id: knowledge_graph.ingest
+    name: "Knowledge Graph Ingestion"
+    description: "Ingest OCA and Odoo documentation into knowledge graph"
+    module: "visual_compliance.tasks"
+    entrypoint: "refresh_knowledge_graph"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["knowledge-graph", "ingestion", "rag"]
+    inputs:
+      - name: "repositories"
+        type: "array"
+        required: false
+        description: "Specific repositories to ingest (default: all 7)"
+    outputs:
+      - name: "status"
+        type: "string"
+      - name: "total_chunks"
+        type: "integer"
+      - name: "total_embeddings"
+        type: "integer"
+
+  - id: knowledge_graph.search
+    name: "Knowledge Graph Search"
+    description: "Search knowledge graph using vector similarity"
+    module: "visual_compliance.validators.knowledge_graph_search"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["knowledge-graph", "search", "rag"]
+    inputs:
+      - name: "query"
+        type: "string"
+        required: true
+        description: "Natural language query"
+      - name: "category_filter"
+        type: "string"
+        required: false
+        description: "Filter by compliance category"
+      - name: "match_count"
+        type: "integer"
+        required: false
+        default: 5
+    outputs:
+      - name: "results"
+        type: "array"
+        description: "Vector search results with similarity scores"
+
+# Skill profiles for common scenarios
+profiles:
+  - id: fast_check
+    name: "Fast compliance check"
+    description: "Quick manifest + directory validation for CI"
+    skills:
+      - odoo.manifest.validate
+      - odoo.directory.validate
+
+  - id: full_compliance
+    name: "Full OCA compliance"
+    description: "Complete validation suite"
+    skills:
+      - odoo.manifest.validate
+      - odoo.directory.validate
+      - odoo.naming.validate
+      - odoo.readme.validate
+
+  - id: pr_review
+    name: "Pull request review"
+    description: "Validation for PR checks"
+    skills:
+      - odoo.manifest.validate
+      - odoo.directory.validate
+    skip_autofix: true
+
+  - id: weekly_audit
+    name: "Weekly compliance audit"
+    description: "Full scan with issue creation"
+    skills:
+      - visual_compliance.full_scan
+    options:
+      fix: true
+      create_issues: true
+
+  # === RAG-Enhanced Profiles ===
+  # Profiles that leverage knowledge graph for enhanced validation
+
+  - id: rag_full_compliance
+    name: "RAG-Enhanced Full Compliance"
+    description: "Complete RAG-enhanced validation with knowledge graph"
+    requires_knowledge_graph: true
+    skills:
+      - odoo.manifest.validate_rag
+      - odoo.python.validate_rag
+      - odoo.xml.validate_rag
+      - odoo.security.validate_rag
+      - odoo.directory.validate
+      - odoo.naming.validate
+      - odoo.readme.validate
+
+  - id: rag_security_audit
+    name: "RAG-Enhanced Security Audit"
+    description: "Deep security validation using official Odoo security docs"
+    requires_knowledge_graph: true
+    skills:
+      - odoo.security.validate_rag
+      - odoo.manifest.validate_rag
+    options:
+      severity_filter: "CRITICAL"
+      use_llm_enhancement: true
+
+  - id: rag_code_quality
+    name: "RAG-Enhanced Code Quality"
+    description: "Python and XML validation with OCA examples"
+    requires_knowledge_graph: true
+    skills:
+      - odoo.python.validate_rag
+      - odoo.xml.validate_rag
+
+  - id: knowledge_graph_bootstrap
+    name: "Knowledge Graph Bootstrap"
+    description: "Initialize knowledge graph with all 7 repositories"
+    requires_knowledge_graph: false
+    skills:
+      - knowledge_graph.ingest

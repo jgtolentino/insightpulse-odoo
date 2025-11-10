@@ -1,13 +1,31 @@
 version: '3.8'
 
 services:
-  # Main services orchestration
-  # For detailed service configurations, see infrastructure/docker/
+  # PostgreSQL database (shared by Odoo + Supabase local dev)
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
+  # Odoo CE 18.0 + OCA + ipai layers (3-layer architecture)
   odoo:
-    image: odoo:19.0
+    build:
+      context: .
+      dockerfile: Dockerfile.odoo
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     ports:
       - "8069:8069"
       - "8072:8072"  # Longpolling port for real-time features
@@ -17,52 +35,163 @@ services:
       - PASSWORD=odoo
       - HTTP_PORT=8069
       - LONGPOLLING_PORT=8072
+      - ODOO_ADMIN_PASSWORD=${ODOO_ADMIN_PASSWORD:-admin}
     volumes:
-      # Custom InsightPulse modules
-      - ./custom_addons:/mnt/extra-addons/custom:ro
+      # Layer 1: Official Odoo CE 18.0 source (if you clone odoo/odoo to odoo-ce/)
+      # - ./odoo-ce:/mnt/odoo-ce:ro
 
-      # OCA Modules - Finance & Accounting (Critical for BIR)
+      # Layer 2: OCA community modules (existing structure)
       - ./bundle/addons/oca/account-invoicing:/mnt/extra-addons/oca/account-invoicing:ro
       - ./bundle/addons/oca/account-payment:/mnt/extra-addons/oca/account-payment:ro
       - ./bundle/addons/oca/account-reconcile:/mnt/extra-addons/oca/account-reconcile:ro
       - ./bundle/addons/oca/account-financial-reporting:/mnt/extra-addons/oca/account-financial-reporting:ro
       - ./bundle/addons/oca/account-financial-tools:/mnt/extra-addons/oca/account-financial-tools:ro
       - ./bundle/addons/oca/bank-payment:/mnt/extra-addons/oca/bank-payment:ro
-
-      # OCA Modules - Server Infrastructure
       - ./bundle/addons/oca/server-auth:/mnt/extra-addons/oca/server-auth:ro
       - ./bundle/addons/oca/server-tools:/mnt/extra-addons/oca/server-tools:ro
       - ./bundle/addons/oca/server-backend:/mnt/extra-addons/oca/server-backend:ro
       - ./bundle/addons/oca/queue:/mnt/extra-addons/oca/queue:ro
       - ./bundle/addons/oca/rest-framework:/mnt/extra-addons/oca/rest-framework:ro
-
-      # OCA Modules - Web & UI
       - ./bundle/addons/oca/web:/mnt/extra-addons/oca/web:ro
-
-      # OCA Modules - Business Workflows
       - ./bundle/addons/oca/purchase-workflow:/mnt/extra-addons/oca/purchase-workflow:ro
       - ./bundle/addons/oca/partner-contact:/mnt/extra-addons/oca/partner-contact:ro
       - ./bundle/addons/oca/hr:/mnt/extra-addons/oca/hr:ro
-
-      # OCA Modules - Reporting
       - ./bundle/addons/oca/reporting-engine:/mnt/extra-addons/oca/reporting-engine:ro
       - ./bundle/addons/oca/account-budgeting:/mnt/extra-addons/oca/account-budgeting:ro
 
+      # Layer 3: InsightPulseAI custom modules (ipai_* prefix)
+      - ./odoo_addons:/mnt/extra-addons/ipai
+      - ./custom_addons:/mnt/extra-addons/custom:ro
+
       # Configuration
-      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+      - ./config/odoo.conf:/etc/odoo/odoo.conf:ro
 
       # Persistent data
       - odoo_data:/var/lib/odoo
+      - ./logs:/var/log/odoo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8069/web/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
-  postgres:
-    image: postgres:15
-    environment:
-      - POSTGRES_DB=odoo
-      - POSTGRES_USER=odoo
-      - POSTGRES_PASSWORD=odoo
+  # Redis for Celery broker (RAG/CAG workers)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     volumes:
-      - postgres_data:/ var/lib/postgresql/data
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Celery workers for knowledge graph ingestion
+  celery-ingestion:
+    build:
+      context: ./agents/visual-compliance
+      dockerfile: Dockerfile.celery
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VISUAL_KG_SUPABASE_URL=${VISUAL_KG_SUPABASE_URL}
+      - VISUAL_KG_SUPABASE_KEY=${VISUAL_KG_SUPABASE_KEY}
+      - VISUAL_KG_GITHUB_TOKEN=${VISUAL_KG_GITHUB_TOKEN}
+      - VISUAL_KG_OPENAI_API_KEY=${VISUAL_KG_OPENAI_API_KEY}
+      - VISUAL_KG_EMBED_MODEL=${VISUAL_KG_EMBED_MODEL:-text-embedding-3-large}
+      - VISUAL_KG_WORKER_CONCURRENCY=${VISUAL_KG_INGESTION_CONCURRENCY:-4}
+    command: celery -A visual_compliance.celery_app worker --loglevel=info --concurrency=${VISUAL_KG_INGESTION_CONCURRENCY:-4} -Q ingestion
+    volumes:
+      - ./agents/visual-compliance:/app
+      - ./logs/celery:/var/log/celery
+
+  # Celery workers for embedding generation
+  celery-embedding:
+    build:
+      context: ./agents/visual-compliance
+      dockerfile: Dockerfile.celery
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VISUAL_KG_SUPABASE_URL=${VISUAL_KG_SUPABASE_URL}
+      - VISUAL_KG_SUPABASE_KEY=${VISUAL_KG_SUPABASE_KEY}
+      - VISUAL_KG_OPENAI_API_KEY=${VISUAL_KG_OPENAI_API_KEY}
+      - VISUAL_KG_EMBED_MODEL=${VISUAL_KG_EMBED_MODEL:-text-embedding-3-large}
+      - VISUAL_KG_EMBED_BATCH_SIZE=${VISUAL_KG_EMBED_BATCH_SIZE:-100}
+      - VISUAL_KG_WORKER_CONCURRENCY=${VISUAL_KG_EMBEDDING_CONCURRENCY:-8}
+    command: celery -A visual_compliance.celery_app worker --loglevel=info --concurrency=${VISUAL_KG_EMBEDDING_CONCURRENCY:-8} -Q embedding
+    volumes:
+      - ./agents/visual-compliance:/app
+      - ./logs/celery:/var/log/celery
+
+  # Celery workers for validation
+  celery-validation:
+    build:
+      context: ./agents/visual-compliance
+      dockerfile: Dockerfile.celery
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - VISUAL_KG_SUPABASE_URL=${VISUAL_KG_SUPABASE_URL}
+      - VISUAL_KG_SUPABASE_KEY=${VISUAL_KG_SUPABASE_KEY}
+      - VISUAL_KG_OPENAI_API_KEY=${VISUAL_KG_OPENAI_API_KEY}
+      - VISUAL_KG_EMBED_MODEL=${VISUAL_KG_EMBED_MODEL:-text-embedding-3-large}
+      - VISUAL_KG_WORKER_CONCURRENCY=${VISUAL_KG_VALIDATION_CONCURRENCY:-4}
+    command: celery -A visual_compliance.celery_app worker --loglevel=info --concurrency=${VISUAL_KG_VALIDATION_CONCURRENCY:-4} -Q validation
+    volumes:
+      - ./agents/visual-compliance:/app
+      - ./logs/celery:/var/log/celery
+
+  # Celery Beat for scheduled tasks (knowledge graph refresh)
+  celery-beat:
+    build:
+      context: ./agents/visual-compliance
+      dockerfile: Dockerfile.celery
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A visual_compliance.celery_app beat --loglevel=info
+    volumes:
+      - ./agents/visual-compliance:/app
+      - ./logs/celery:/var/log/celery
+
+  # Flower for Celery monitoring
+  flower:
+    build:
+      context: ./agents/visual-compliance
+      dockerfile: Dockerfile.celery
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+    command: celery -A visual_compliance.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
 
 volumes:
   postgres_data:
   odoo_data:
+  redis-data:
+
+networks:
+  default:
+    name: insightpulse-network

@@ -1,0 +1,747 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "component": "visual_compliance_kg",
+  "version": "1.0.0",
+  "last_updated": "2025-11-10",
+  "description": "Machine-readable specification for Visual Compliance Knowledge Graph RAG/CAG system",
+
+  "odoo_version_target": "18.0-ce",
+  "odoo_layering": {
+    "layer_1": {
+      "name": "Official Odoo CE",
+      "version": "18.0",
+      "source": "https://github.com/odoo/odoo",
+      "branch": "18.0",
+      "priority": 3,
+      "location": "/usr/lib/python3/dist-packages/odoo/addons"
+    },
+    "layer_2": {
+      "name": "OCA Community Modules",
+      "version": "18.0",
+      "source": "https://github.com/OCA/*",
+      "priority": 2,
+      "location": "/mnt/extra-addons/oca/*",
+      "modules": [
+        "account-invoicing",
+        "account-payment",
+        "account-reconcile",
+        "account-financial-reporting",
+        "account-financial-tools",
+        "bank-payment",
+        "server-auth",
+        "server-tools",
+        "server-backend",
+        "queue",
+        "rest-framework",
+        "web",
+        "purchase-workflow",
+        "partner-contact",
+        "hr",
+        "reporting-engine",
+        "account-budgeting"
+      ]
+    },
+    "layer_3": {
+      "name": "InsightPulseAI Custom Modules",
+      "version": "18.0-ipai",
+      "source": "https://github.com/jgtolentino/insightpulse-odoo",
+      "priority": 1,
+      "location": "/mnt/extra-addons/ipai",
+      "prefix": "ipai_"
+    }
+  },
+
+  "canonical_urls": {
+    "ERP_BASE_URL": "https://erp.insightpulseai.net",
+    "DOCS_BASE_URL": "https://erp.insightpulseai.net/odoo/documentation/18.0/",
+    "GIT_REPO_ODOO": "https://github.com/odoo/odoo",
+    "GIT_REPO_IPAI": "https://github.com/jgtolentino/insightpulse-odoo",
+    "MAIL_ALIAS_DOMAIN": "insightpulseai.net"
+  },
+
+  "contact_emails": {
+    "admin": "admin@insightpulseai.com",
+    "technical": "jgtolentino.rn@gmail.com"
+  },
+
+  "db_schema": {
+    "database": "supabase_postgresql",
+    "version": "15.6",
+    "extensions": ["pgvector >= 0.5.0"],
+    "tables": [
+      {
+        "name": "oca_guidelines",
+        "description": "OCA compliance guidelines with vector embeddings",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "repository": "TEXT NOT NULL",
+          "doc_path": "TEXT NOT NULL",
+          "section": "TEXT NOT NULL",
+          "url": "TEXT NOT NULL",
+          "content_type": "TEXT NOT NULL CHECK (content_type IN ('markdown', 'rst', 'python', 'xml'))",
+          "raw_content": "TEXT NOT NULL",
+          "content_hash": "TEXT NOT NULL UNIQUE",
+          "parent_chunk_id": "UUID REFERENCES oca_guidelines(id)",
+          "chunk_index": "INTEGER DEFAULT 0",
+          "chunk_total": "INTEGER DEFAULT 1",
+          "embedding": "vector(3072)",
+          "compliance_category": "TEXT NOT NULL CHECK (compliance_category IN ('manifest', 'python', 'xml', 'security', 'structure', 'dependencies', 'tools'))",
+          "severity": "TEXT NOT NULL CHECK (severity IN ('CRITICAL', 'HIGH', 'MEDIUM', 'LOW'))",
+          "auto_fixable": "BOOLEAN DEFAULT FALSE",
+          "canonical_url": "TEXT",
+          "similarity_score": "FLOAT",
+          "created_at": "TIMESTAMPTZ DEFAULT NOW()",
+          "updated_at": "TIMESTAMPTZ DEFAULT NOW()"
+        },
+        "indexes": [
+          {
+            "name": "idx_oca_guidelines_embedding",
+            "type": "ivfflat",
+            "column": "embedding",
+            "operator_class": "vector_cosine_ops",
+            "parameters": {"lists": 100}
+          },
+          {
+            "name": "idx_oca_guidelines_category",
+            "type": "btree",
+            "column": "compliance_category"
+          },
+          {
+            "name": "idx_oca_guidelines_repo",
+            "type": "btree",
+            "column": "repository"
+          }
+        ],
+        "constraints": [
+          "UNIQUE(repository, doc_path, section, chunk_index)",
+          "UNIQUE(content_hash)"
+        ]
+      },
+      {
+        "name": "odoo_official_docs",
+        "description": "Official Odoo 18.0 documentation chunks",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "repository": "TEXT NOT NULL",
+          "doc_path": "TEXT NOT NULL",
+          "section": "TEXT NOT NULL",
+          "url": "TEXT NOT NULL",
+          "content_type": "TEXT NOT NULL",
+          "raw_content": "TEXT NOT NULL",
+          "content_hash": "TEXT NOT NULL UNIQUE",
+          "parent_chunk_id": "UUID REFERENCES odoo_official_docs(id)",
+          "chunk_index": "INTEGER DEFAULT 0",
+          "chunk_total": "INTEGER DEFAULT 1",
+          "embedding": "vector(3072)",
+          "api_version": "TEXT DEFAULT '18.0'",
+          "canonical_url": "TEXT",
+          "similarity_score": "FLOAT",
+          "created_at": "TIMESTAMPTZ DEFAULT NOW()",
+          "updated_at": "TIMESTAMPTZ DEFAULT NOW()"
+        },
+        "indexes": [
+          {
+            "name": "idx_odoo_docs_embedding",
+            "type": "ivfflat",
+            "column": "embedding",
+            "operator_class": "vector_cosine_ops",
+            "parameters": {"lists": 100}
+          }
+        ]
+      },
+      {
+        "name": "oca_module_examples",
+        "description": "Code examples from OCA modules",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "repository": "TEXT NOT NULL",
+          "file_path": "TEXT NOT NULL",
+          "function_name": "TEXT NOT NULL",
+          "code_snippet": "TEXT NOT NULL",
+          "content_hash": "TEXT NOT NULL UNIQUE",
+          "embedding": "vector(3072)",
+          "pattern_type": "TEXT",
+          "odoo_version": "TEXT DEFAULT '18.0'",
+          "similarity_score": "FLOAT",
+          "created_at": "TIMESTAMPTZ DEFAULT NOW()"
+        },
+        "indexes": [
+          {
+            "name": "idx_oca_examples_embedding",
+            "type": "ivfflat",
+            "column": "embedding",
+            "operator_class": "vector_cosine_ops",
+            "parameters": {"lists": 100}
+          },
+          {
+            "name": "idx_oca_examples_pattern",
+            "type": "btree",
+            "column": "pattern_type"
+          }
+        ]
+      },
+      {
+        "name": "compliance_violations",
+        "description": "RAG-enhanced compliance violations",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "session_id": "UUID NOT NULL",
+          "module_name": "TEXT NOT NULL",
+          "file_path": "TEXT NOT NULL",
+          "violation_type": "TEXT NOT NULL",
+          "severity": "TEXT NOT NULL",
+          "message": "TEXT NOT NULL",
+          "rag_guideline_id": "UUID REFERENCES oca_guidelines(id)",
+          "rag_context": "JSONB",
+          "llm_explanation": "TEXT",
+          "auto_fix_available": "BOOLEAN DEFAULT FALSE",
+          "auto_fix_patch": "TEXT",
+          "created_at": "TIMESTAMPTZ DEFAULT NOW()"
+        },
+        "indexes": [
+          {
+            "name": "idx_violations_session",
+            "type": "btree",
+            "column": "session_id"
+          },
+          {
+            "name": "idx_violations_module",
+            "type": "btree",
+            "column": "module_name"
+          }
+        ]
+      },
+      {
+        "name": "compliance_sessions",
+        "description": "Validation session tracking",
+        "columns": {
+          "id": "UUID PRIMARY KEY",
+          "started_at": "TIMESTAMPTZ DEFAULT NOW()",
+          "completed_at": "TIMESTAMPTZ",
+          "repo_path": "TEXT NOT NULL",
+          "profile_id": "TEXT NOT NULL",
+          "total_modules": "INTEGER",
+          "compliant_modules": "INTEGER",
+          "total_violations": "INTEGER",
+          "rag_enabled": "BOOLEAN DEFAULT FALSE",
+          "llm_model": "TEXT",
+          "status": "TEXT CHECK (status IN ('pending', 'running', 'completed', 'failed'))"
+        }
+      }
+    ]
+  },
+
+  "rpc_functions": [
+    {
+      "name": "search_oca_guidelines",
+      "description": "Search OCA compliance guidelines using vector similarity",
+      "parameters": {
+        "query_embedding": {
+          "type": "vector(3072)",
+          "required": true,
+          "description": "Query embedding vector"
+        },
+        "match_threshold": {
+          "type": "FLOAT",
+          "required": false,
+          "default": 0.7,
+          "description": "Minimum similarity score (0.0-1.0)"
+        },
+        "match_count": {
+          "type": "INT",
+          "required": false,
+          "default": 5,
+          "description": "Maximum results to return"
+        },
+        "category_filter": {
+          "type": "TEXT",
+          "required": false,
+          "default": null,
+          "description": "Filter by compliance category"
+        }
+      },
+      "returns": {
+        "type": "TABLE",
+        "columns": ["id", "repository", "section", "content", "url", "compliance_category", "severity", "similarity"]
+      }
+    },
+    {
+      "name": "search_odoo_docs",
+      "description": "Search official Odoo 18.0 documentation",
+      "parameters": {
+        "query_embedding": {
+          "type": "vector(3072)",
+          "required": true
+        },
+        "match_threshold": {
+          "type": "FLOAT",
+          "default": 0.7
+        },
+        "match_count": {
+          "type": "INT",
+          "default": 5
+        }
+      },
+      "returns": {
+        "type": "TABLE",
+        "columns": ["id", "repository", "section", "content", "url", "api_version", "similarity"]
+      }
+    },
+    {
+      "name": "search_oca_examples",
+      "description": "Search OCA code examples",
+      "parameters": {
+        "query_embedding": {
+          "type": "vector(3072)",
+          "required": true
+        },
+        "match_threshold": {
+          "type": "FLOAT",
+          "default": 0.75
+        },
+        "match_count": {
+          "type": "INT",
+          "default": 3
+        },
+        "pattern_filter": {
+          "type": "TEXT",
+          "default": null,
+          "description": "Pattern type (multi_company, state_machine, wizard, etc.)"
+        }
+      },
+      "returns": {
+        "type": "TABLE",
+        "columns": ["id", "repository", "file_path", "function_name", "code_snippet", "pattern_type", "similarity"]
+      }
+    }
+  ],
+
+  "celery_topology": {
+    "broker": {
+      "type": "redis",
+      "url": "redis://redis:6379/0",
+      "version": "7-alpine"
+    },
+    "result_backend": {
+      "type": "redis",
+      "url": "redis://redis:6379/0"
+    },
+    "queues": [
+      {
+        "name": "ingestion",
+        "description": "Repository cloning and document parsing",
+        "workers": 4,
+        "concurrency": 4,
+        "tasks": [
+          "visual_compliance.tasks.ingest_oca_repository",
+          "visual_compliance.tasks.process_oca_document",
+          "visual_compliance.tasks.ingest_odoo_docs"
+        ]
+      },
+      {
+        "name": "embedding",
+        "description": "OpenAI embedding generation and deduplication",
+        "workers": 8,
+        "concurrency": 8,
+        "tasks": [
+          "visual_compliance.tasks.generate_embeddings",
+          "visual_compliance.tasks.deduplicate_guidelines"
+        ]
+      },
+      {
+        "name": "validation",
+        "description": "RAG-enhanced compliance validation",
+        "workers": 4,
+        "concurrency": 4,
+        "tasks": [
+          "visual_compliance.tasks.validate_manifest_rag",
+          "visual_compliance.tasks.validate_python_rag",
+          "visual_compliance.tasks.validate_xml_rag",
+          "visual_compliance.tasks.validate_security_rag"
+        ]
+      }
+    ],
+    "beat_schedule": [
+      {
+        "name": "refresh-knowledge-graph",
+        "task": "visual_compliance.tasks.refresh_knowledge_graph",
+        "schedule": "crontab(hour=2, minute=0)",
+        "description": "Daily knowledge graph refresh at 2 AM UTC"
+      },
+      {
+        "name": "update-quality-scores",
+        "task": "visual_compliance.tasks.update_quality_scores",
+        "schedule": "crontab(minute=0, hour='*/6')",
+        "description": "Calculate guideline quality scores every 6 hours"
+      },
+      {
+        "name": "deduplicate-weekly",
+        "task": "visual_compliance.tasks.deduplicate_guidelines",
+        "schedule": "crontab(day_of_week='sunday', hour=3, minute=0)",
+        "description": "Semantic deduplication weekly on Sunday at 3 AM"
+      }
+    ]
+  },
+
+  "rag_skills": [
+    {
+      "id": "odoo.manifest.validate_rag",
+      "name": "RAG-Enhanced Manifest Validator",
+      "module": "visual_compliance.validators.manifest_validator_rag",
+      "entrypoint": "run_skill",
+      "requires_knowledge_graph": true,
+      "compliance_categories": ["manifest"],
+      "canonical_sources": ["odoo_developer_reference", "oca_contributing_development"],
+      "query_tables": ["oca_guidelines"],
+      "llm_enhancement": true
+    },
+    {
+      "id": "odoo.python.validate_rag",
+      "name": "RAG-Enhanced Python Code Validator",
+      "module": "visual_compliance.validators.python_validator_rag",
+      "entrypoint": "run_skill",
+      "requires_knowledge_graph": true,
+      "compliance_categories": ["python"],
+      "canonical_sources": ["odoo_developer_reference", "oca_contributing_development"],
+      "query_tables": ["oca_guidelines", "oca_module_examples"],
+      "llm_enhancement": true
+    },
+    {
+      "id": "odoo.xml.validate_rag",
+      "name": "RAG-Enhanced XML/View Validator",
+      "module": "visual_compliance.validators.xml_validator_rag",
+      "entrypoint": "run_skill",
+      "requires_knowledge_graph": true,
+      "compliance_categories": ["xml"],
+      "canonical_sources": ["odoo_developer_reference"],
+      "query_tables": ["oca_guidelines", "odoo_official_docs"],
+      "llm_enhancement": true
+    },
+    {
+      "id": "odoo.security.validate_rag",
+      "name": "RAG-Enhanced Security Validator",
+      "module": "visual_compliance.validators.security_validator_rag",
+      "entrypoint": "run_skill",
+      "requires_knowledge_graph": true,
+      "compliance_categories": ["security"],
+      "canonical_sources": ["odoo_developer_reference"],
+      "query_tables": ["oca_guidelines", "odoo_official_docs"],
+      "llm_enhancement": true,
+      "severity_filter": "CRITICAL"
+    },
+    {
+      "id": "knowledge_graph.ingest",
+      "name": "Knowledge Graph Ingestion",
+      "module": "visual_compliance.tasks",
+      "entrypoint": "refresh_knowledge_graph",
+      "requires_knowledge_graph": false,
+      "description": "Ingest OCA and Odoo documentation into knowledge graph"
+    },
+    {
+      "id": "knowledge_graph.search",
+      "name": "Knowledge Graph Search",
+      "module": "visual_compliance.validators.knowledge_graph_search",
+      "entrypoint": "run_skill",
+      "requires_knowledge_graph": true,
+      "description": "Search knowledge graph using vector similarity"
+    }
+  ],
+
+  "ingestion_repos": [
+    {
+      "repository": "OCA/maintainer-tools",
+      "priority": "CRITICAL",
+      "role": "THE LAW - OCA module standards",
+      "paths": ["docs/", "template/"],
+      "compliance_categories": ["manifest", "python", "xml", "security", "structure", "tools"],
+      "estimated_chunks": 5000,
+      "git_url": "https://github.com/OCA/maintainer-tools.git",
+      "branch": "18.0"
+    },
+    {
+      "repository": "OCA/odoo-community.org",
+      "priority": "CRITICAL",
+      "role": "THE LAW - Contributing guidelines",
+      "paths": ["website/Contribution/"],
+      "compliance_categories": ["structure", "python", "tools"],
+      "estimated_chunks": 2000,
+      "git_url": "https://github.com/OCA/odoo-community.org.git",
+      "branch": "master"
+    },
+    {
+      "repository": "odoo/odoo",
+      "priority": "CRITICAL",
+      "role": "THE LAW - Official Odoo 18.0 docs",
+      "paths": ["doc/developer/", "doc/administration/"],
+      "compliance_categories": ["manifest", "python", "xml", "security", "tools"],
+      "estimated_chunks": 15000,
+      "git_url": "https://github.com/odoo/odoo.git",
+      "branch": "18.0"
+    },
+    {
+      "repository": "odoo/documentation",
+      "priority": "CRITICAL",
+      "role": "THE LAW - Comprehensive Odoo guides",
+      "paths": ["content/developer/", "content/applications/"],
+      "compliance_categories": ["manifest", "python", "xml", "security", "structure"],
+      "estimated_chunks": 20000,
+      "git_url": "https://github.com/odoo/documentation.git",
+      "branch": "18.0"
+    },
+    {
+      "repository": "OCA/OpenUpgrade",
+      "priority": "HIGH",
+      "role": "Migration patterns and version upgrades",
+      "paths": ["docs/", "scripts/"],
+      "compliance_categories": ["structure", "dependencies"],
+      "estimated_chunks": 3000,
+      "git_url": "https://github.com/OCA/OpenUpgrade.git",
+      "branch": "18.0"
+    },
+    {
+      "repository": "OCA/oca-github-bot",
+      "priority": "MEDIUM",
+      "role": "Automation workflows",
+      "paths": ["docs/"],
+      "compliance_categories": ["tools"],
+      "estimated_chunks": 500,
+      "git_url": "https://github.com/OCA/oca-github-bot.git",
+      "branch": "master"
+    },
+    {
+      "repository": "OCA/OCB",
+      "priority": "MEDIUM",
+      "role": "OCB fork overview",
+      "paths": ["README.md"],
+      "compliance_categories": ["structure"],
+      "estimated_chunks": 50,
+      "git_url": "https://github.com/OCA/OCB.git",
+      "branch": "18.0"
+    }
+  ],
+
+  "env_vars_required": {
+    "VISUAL_KG_SUPABASE_URL": {
+      "description": "Supabase project URL",
+      "example": "https://your-project.supabase.co",
+      "required": true
+    },
+    "VISUAL_KG_SUPABASE_KEY": {
+      "description": "Supabase service role key",
+      "example": "eyJhbGci...",
+      "required": true,
+      "sensitive": true
+    },
+    "VISUAL_KG_OPENAI_API_KEY": {
+      "description": "OpenAI API key for embeddings",
+      "example": "sk-...",
+      "required": true,
+      "sensitive": true
+    },
+    "VISUAL_KG_EMBED_MODEL": {
+      "description": "OpenAI embedding model",
+      "default": "text-embedding-3-large",
+      "required": false
+    },
+    "VISUAL_KG_GITHUB_TOKEN": {
+      "description": "GitHub personal access token (optional, for private repos)",
+      "example": "ghp_...",
+      "required": false,
+      "sensitive": true
+    },
+    "VISUAL_KG_INGESTION_CONCURRENCY": {
+      "description": "Number of concurrent ingestion workers",
+      "default": 4,
+      "required": false,
+      "tuning": "small_mode:2, medium_mode:4, large_mode:8"
+    },
+    "VISUAL_KG_EMBEDDING_CONCURRENCY": {
+      "description": "Number of concurrent embedding workers",
+      "default": 8,
+      "required": false,
+      "tuning": "small_mode:4, medium_mode:8, large_mode:16"
+    },
+    "VISUAL_KG_VALIDATION_CONCURRENCY": {
+      "description": "Number of concurrent validation workers",
+      "default": 4,
+      "required": false,
+      "tuning": "small_mode:2, medium_mode:4, large_mode:8"
+    },
+    "VISUAL_KG_EMBED_BATCH_SIZE": {
+      "description": "Batch size for embedding generation",
+      "default": 100,
+      "required": false,
+      "tuning": "small_mode:50, medium_mode:100, large_mode:200"
+    },
+    "VISUAL_KG_MAX_CHUNK_SIZE": {
+      "description": "Maximum characters per document chunk",
+      "default": 1500,
+      "required": false
+    },
+    "VISUAL_KG_DEDUP_THRESHOLD": {
+      "description": "Semantic similarity threshold for deduplication (0.0-1.0)",
+      "default": 0.95,
+      "required": false
+    },
+    "VISUAL_KG_SEARCH_THRESHOLD": {
+      "description": "Vector search similarity threshold (0.0-1.0)",
+      "default": 0.7,
+      "required": false
+    }
+  },
+
+  "entrypoints": {
+    "cli": {
+      "refresh_knowledge_graph": {
+        "command": "docker-compose exec celery-beat celery -A visual_compliance.celery_app call visual_compliance.tasks.refresh_knowledge_graph",
+        "description": "Manually trigger knowledge graph refresh",
+        "duration": "2-3 hours"
+      },
+      "run_rag_validation": {
+        "command": "docker-compose exec odoo python3 -c \"from visual_compliance.validators.manifest_validator_rag import run_skill; print(run_skill(repo_path='/mnt/extra-addons/ipai'))\"",
+        "description": "Run RAG-enhanced manifest validation",
+        "duration": "5-10 minutes"
+      },
+      "search_guidelines": {
+        "command": "psql \"$VISUAL_KG_SUPABASE_URL\" -c \"SELECT * FROM search_oca_guidelines('[embedding]'::vector(3072), 0.7, 5, 'manifest');\"",
+        "description": "Search OCA guidelines via SQL",
+        "duration": "<1 second"
+      }
+    },
+    "python_api": {
+      "run_skill": {
+        "module": "visual_compliance.validators.<validator>_rag",
+        "function": "run_skill",
+        "example": "from visual_compliance.validators.manifest_validator_rag import run_skill\nresult = run_skill(repo_path='.', fix=False, use_llm_enhancement=True)"
+      },
+      "knowledge_graph_search": {
+        "module": "visual_compliance.knowledge_graph",
+        "class": "KnowledgeGraph",
+        "example": "kg = KnowledgeGraph(supabase_url, supabase_key, openai_key)\nguidelines = kg.search_guidelines(query='manifest standards', threshold=0.7, limit=5)"
+      }
+    },
+    "celery_tasks": {
+      "refresh_knowledge_graph": "visual_compliance.tasks.refresh_knowledge_graph",
+      "ingest_oca_repository": "visual_compliance.tasks.ingest_oca_repository",
+      "generate_embeddings": "visual_compliance.tasks.generate_embeddings",
+      "deduplicate_guidelines": "visual_compliance.tasks.deduplicate_guidelines"
+    }
+  },
+
+  "performance_tuning": {
+    "deployment_modes": {
+      "small_mode": {
+        "description": "Development/testing on local machine or small droplet",
+        "cpu_cores": 2,
+        "memory_gb": 4,
+        "ingestion_concurrency": 2,
+        "embedding_concurrency": 4,
+        "validation_concurrency": 2,
+        "embed_batch_size": 50,
+        "pgvector_lists": 50,
+        "estimated_cost_per_refresh": "$0.35"
+      },
+      "medium_mode": {
+        "description": "Standard production deployment",
+        "cpu_cores": 4,
+        "memory_gb": 8,
+        "ingestion_concurrency": 4,
+        "embedding_concurrency": 8,
+        "validation_concurrency": 4,
+        "embed_batch_size": 100,
+        "pgvector_lists": 100,
+        "estimated_cost_per_refresh": "$0.65"
+      },
+      "large_mode": {
+        "description": "High-throughput production with fast refresh",
+        "cpu_cores": 8,
+        "memory_gb": 16,
+        "ingestion_concurrency": 8,
+        "embedding_concurrency": 16,
+        "validation_concurrency": 8,
+        "embed_batch_size": 200,
+        "pgvector_lists": 200,
+        "estimated_cost_per_refresh": "$1.20"
+      }
+    },
+    "pgvector_tuning": {
+      "index_type": "ivfflat",
+      "operator_class": "vector_cosine_ops",
+      "lists": {
+        "description": "Number of clusters for IVFFLAT index",
+        "small_mode": 50,
+        "medium_mode": 100,
+        "large_mode": 200,
+        "formula": "SQRT(number_of_rows)"
+      },
+      "probes": {
+        "description": "Number of clusters to search at query time (SET ivfflat.probes = N)",
+        "default": 10,
+        "accuracy_tradeoff": "Higher probes = more accurate but slower"
+      }
+    },
+    "cost_optimization": {
+      "embedding_model": {
+        "text-embedding-3-large": {
+          "dimensions": 3072,
+          "cost_per_1k_tokens": 0.00013,
+          "estimated_tokens_per_chunk": 500
+        },
+        "text-embedding-3-small": {
+          "dimensions": 1536,
+          "cost_per_1k_tokens": 0.00002,
+          "estimated_tokens_per_chunk": 500,
+          "note": "5x cheaper but lower accuracy"
+        }
+      },
+      "hard_caps": {
+        "max_documents_per_run": {
+          "description": "Limit total documents ingested per refresh",
+          "default": null,
+          "example": 10000
+        },
+        "max_tokens_per_run": {
+          "description": "Limit total OpenAI API tokens per refresh",
+          "default": null,
+          "example": 25000000
+        }
+      }
+    }
+  },
+
+  "deployment": {
+    "docker_compose": {
+      "file": "docker-compose.yml",
+      "services": 8,
+      "total_workers": 16,
+      "health_checks": true
+    },
+    "digitalocean_app_platform": {
+      "spec_file": "infra/do-app-platform/visual-compliance-spec.yaml",
+      "app_id": "TBD",
+      "region": "sfo2",
+      "services": ["celery-ingestion", "celery-embedding", "celery-validation", "celery-beat", "flower"]
+    }
+  },
+
+  "monitoring": {
+    "flower_ui": {
+      "url": "http://localhost:5555",
+      "features": ["worker_status", "task_progress", "queue_metrics", "task_history"]
+    },
+    "metrics": {
+      "ingestion_duration": "Total time for repository ingestion (minutes)",
+      "embedding_duration": "Total time for embedding generation (minutes)",
+      "deduplication_rate": "Percentage of chunks marked as duplicates",
+      "search_latency": "Average vector search response time (milliseconds)",
+      "openai_api_cost": "Total OpenAI API cost per refresh (USD)"
+    }
+  },
+
+  "compliance": {
+    "odoo_version": "18.0 CE only (no 19.x content)",
+    "oca_standards": "All modules follow OCA contributing guidelines",
+    "license": "AGPL-3",
+    "data_retention": "Knowledge graph data retained indefinitely, compliance sessions 90 days"
+  }
+}
