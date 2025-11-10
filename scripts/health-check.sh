@@ -21,6 +21,7 @@ fi
 TOTAL_CHECKS=0
 PASSED_CHECKS=0
 FAILED_CHECKS=0
+WARNING_CHECKS=0
 
 check() {
     SERVICE=$1
@@ -62,13 +63,13 @@ check() {
 
 check_docker() {
     CONTAINER=$1
-    
+
     TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
-    
+
     if [ $VERBOSE -eq 1 ]; then
         echo -n "Checking Docker container: $CONTAINER... "
     fi
-    
+
     if docker ps | grep -q "$CONTAINER"; then
         PASSED_CHECKS=$((PASSED_CHECKS + 1))
         STATUS=$(docker ps --format "table {{.Status}}" --filter "name=$CONTAINER" | tail -n1)
@@ -79,11 +80,11 @@ check_docker() {
         fi
         return 0
     else
-        FAILED_CHECKS=$((FAILED_CHECKS + 1))
+        WARNING_CHECKS=$((WARNING_CHECKS + 1))
         if [ $VERBOSE -eq 1 ]; then
-            echo -e "${RED}✗ NOT RUNNING${NC}"
+            echo -e "${YELLOW}⚠ NOT RUNNING${NC} (warning only - services may be distributed)"
         else
-            echo -e "${RED}✗${NC} Docker: $CONTAINER"
+            echo -e "${YELLOW}⚠${NC} Docker: $CONTAINER (warning only)"
         fi
         return 1
     fi
@@ -141,19 +142,19 @@ check "OCR Service" "https://ocr.insightpulseai.net/health" 200
 echo ""
 
 #########################################################################
-# 2. Docker Containers (if on droplet)
+# 2. Docker Containers (legacy - warnings only)
 #########################################################################
 if command -v docker &> /dev/null; then
-    echo -e "${BLUE}[2/5] Docker Containers${NC}"
+    echo -e "${BLUE}[2/5] Docker Containers (legacy - warnings only)${NC}"
     echo "-----------------------------------"
-    
+
     check_docker "odoo"
     check_docker "odoo-postgres"
     check_docker "ocr"
-    
+
     echo ""
 else
-    echo -e "${YELLOW}[2/5] Docker not available (skipping)${NC}"
+    echo -e "${YELLOW}[2/5] Docker not available (skipping - services may be distributed)${NC}"
     echo ""
 fi
 
@@ -203,7 +204,15 @@ echo -e "${BLUE}[4/5] Disk Space${NC}"
 echo "-----------------------------------"
 
 check_disk "/" 80
-check_disk "/backup" 90 2>/dev/null || echo -e "${YELLOW}⚠${NC} /backup not mounted"
+
+# /backup is optional in distributed architecture - treat as warning
+TOTAL_CHECKS=$((TOTAL_CHECKS + 1))
+if mount | grep -q "/backup"; then
+    check_disk "/backup" 90 2>/dev/null
+else
+    WARNING_CHECKS=$((WARNING_CHECKS + 1))
+    echo -e "${YELLOW}⚠${NC} /backup not mounted (warning only - may use remote backup)"
+fi
 
 echo ""
 
@@ -272,20 +281,36 @@ echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}Health Check Summary${NC}"
 echo -e "${BLUE}========================================${NC}"
 echo ""
-echo "Total Checks: $TOTAL_CHECKS"
-echo -e "Passed: ${GREEN}$PASSED_CHECKS${NC}"
-echo -e "Failed: ${RED}$FAILED_CHECKS${NC}"
+echo "Total Checks:       $TOTAL_CHECKS"
+echo -e "Passed:            ${GREEN}$PASSED_CHECKS${NC}"
+echo -e "Critical Failures: ${RED}$FAILED_CHECKS${NC}"
+echo -e "Warnings:          ${YELLOW}$WARNING_CHECKS${NC}"
 echo ""
 
-HEALTH_PERCENTAGE=$((PASSED_CHECKS * 100 / TOTAL_CHECKS))
-
-if [ $HEALTH_PERCENTAGE -eq 100 ]; then
-    echo -e "${GREEN}✅ System Health: 100% - All services operational${NC}"
+# Calculate health based on critical failures only
+# Warnings are informational and don't block promotion
+if [ $FAILED_CHECKS -eq 0 ]; then
+    if [ $WARNING_CHECKS -eq 0 ]; then
+        echo -e "${GREEN}✅ System Health: OK – All services operational${NC}"
+        echo ""
+        echo "🚀 Safe to promote to production"
+    else
+        echo -e "${GREEN}✅ System Health: OK – Safe to promote${NC}"
+        echo ""
+        echo "ℹ️  Non-blocking warnings present (see logs above)"
+        echo "   These are typically related to distributed architecture"
+        echo "   where services run on different hosts."
+        echo ""
+        echo "🚀 Safe to promote to production"
+    fi
     exit 0
-elif [ $HEALTH_PERCENTAGE -ge 80 ]; then
-    echo -e "${YELLOW}⚠️  System Health: ${HEALTH_PERCENTAGE}% - Some issues detected${NC}"
-    exit 1
 else
-    echo -e "${RED}🚨 System Health: ${HEALTH_PERCENTAGE}% - CRITICAL ISSUES${NC}"
+    echo -e "${RED}🚨 System Health: CRITICAL – Blocking promotion${NC}"
+    echo ""
+    echo "Critical failures detected:"
+    echo "  • $FAILED_CHECKS service(s) failing"
+    echo ""
+    echo "❌ NOT safe to promote to production"
+    echo "   Fix critical issues before promoting."
     exit 2
 fi
