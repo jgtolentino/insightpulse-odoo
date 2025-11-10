@@ -134,6 +134,85 @@
             transform: translateY(0);
         }
 
+        /* OAuth Section */
+        .oauth-section {
+            margin-top: 1.5rem;
+        }
+
+        .oauth-divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+        }
+
+        .oauth-divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #E9ECEF;
+        }
+
+        .oauth-divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            color: #6C757D;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .oauth-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .btn-oauth {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            padding: 0.875rem;
+            border: 2px solid #E9ECEF;
+            border-radius: 0.5rem;
+            background: white;
+            color: #212529;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-oauth:hover {
+            border-color: #DEE2E6;
+            background: #F8F9FA;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-oauth:active {
+            transform: translateY(0);
+        }
+
+        .btn-oauth svg {
+            flex-shrink: 0;
+        }
+
+        .btn-google:hover {
+            border-color: #4285F4;
+            background: #F7FBFF;
+        }
+
+        .btn-supabase:hover {
+            border-color: #3ECF8E;
+            background: #F0FDF4;
+        }
+
         .error-message {
             background: #FEE;
             color: #DC3545;
@@ -358,6 +437,44 @@
                             Sign In to All Services
                         </button>
                     </form>
+
+                    <!-- OAuth SSO Section -->
+                    <div class="oauth-section">
+                        <div class="oauth-divider">
+                            <span>Or continue with</span>
+                        </div>
+
+                        <div class="oauth-buttons">
+                            <a href="https://erp.insightpulseai.net/auth_oauth/signin?provider=3" class="btn-oauth btn-google">
+                                <svg width="18" height="18" viewBox="0 0 18 18">
+                                    <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/>
+                                    <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/>
+                                    <path fill="#FBBC05" d="M3.964 10.707c-.18-.54-.282-1.117-.282-1.707s.102-1.167.282-1.707V4.961H.957C.347 6.175 0 7.55 0 9s.348 2.825.957 4.039l3.007-2.332z"/>
+                                    <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961L3.964 7.293C4.672 5.163 6.656 3.58 9 3.58z"/>
+                                </svg>
+                                Continue with Google
+                            </a>
+
+                            <a href="https://erp.insightpulseai.net/auth_oauth/signin?provider=4" class="btn-oauth btn-supabase">
+                                <svg width="18" height="18" viewBox="0 0 109 113" fill="none">
+                                    <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#paint0_linear)"/>
+                                    <path d="M63.7076 110.284C60.8481 113.885 55.0502 111.912 54.9813 107.314L53.9738 40.0627L99.1935 40.0627C107.384 40.0627 111.952 49.5228 106.859 55.9374L63.7076 110.284Z" fill="url(#paint1_linear)" fill-opacity="0.2"/>
+                                    <path d="M45.317 2.07103C48.1765 -1.53037 53.9745 0.442937 54.0434 5.041L54.4849 72.2922H9.83113C1.64038 72.2922 -2.92775 62.8321 2.1655 56.4175L45.317 2.07103Z" fill="#3ECF8E"/>
+                                    <defs>
+                                        <linearGradient id="paint0_linear" x1="53.9738" y1="54.974" x2="94.1635" y2="71.8295" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#249361"/>
+                                            <stop offset="1" stop-color="#3ECF8E"/>
+                                        </linearGradient>
+                                        <linearGradient id="paint1_linear" x1="36.1558" y1="30.578" x2="54.4844" y2="65.0806" gradientUnits="userSpaceOnUse">
+                                            <stop/>
+                                            <stop offset="1" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                Continue with Supabase
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="services-divider">
