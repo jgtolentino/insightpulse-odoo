@@ -1,0 +1,269 @@
+name: Auto-Fix CI Failures with Claude Code
+
+on:
+  workflow_run:
+    workflows: ["tee-mvp-ci", "ci-unified", "quality"]
+    types: [completed]
+    branches: [main, 'copilot/*']
+
+  workflow_dispatch:
+    inputs:
+      workflow_run_id:
+        description: 'Workflow run ID to analyze'
+        required: true
+        type: string
+      force_fix:
+        description: 'Force auto-fix even if confidence < 85%'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  detect-and-fix:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch || github.ref }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install ML dependencies
+        run: |
+          pip install -e '.[self-learning,agentic-verification]'
+
+      - name: Download workflow logs
+        id: download_logs
+        run: |
+          mkdir -p workflow-logs
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            RUN_ID="${{ inputs.workflow_run_id }}"
+          else
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          fi
+
+          # Download logs
+          gh run download "$RUN_ID" --name workflow-logs || true
+
+          # Fallback: fetch logs via API
+          if [ ! -f workflow-logs/*.log ]; then
+            gh run view "$RUN_ID" --log-failed > workflow-logs/failed.log 2>&1 || true
+          fi
+
+          # Extract error section (last 200 lines contain most relevant errors)
+          tail -200 workflow-logs/*.log > error-extract.txt 2>/dev/null || echo "No logs found" > error-extract.txt
+
+          echo "error_log<<EOF" >> $GITHUB_OUTPUT
+          cat error-extract.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: ML Pattern Detection
+        id: ml_detect
+        run: |
+          # Predict error category
+          ERROR_MESSAGE=$(cat error-extract.txt)
+
+          # Run ML predictor
+          python scripts/ml/error_pattern_detector.py predict "$ERROR_MESSAGE" > ml-prediction.txt
+
+          # Parse results
+          CATEGORY=$(grep "Category:" ml-prediction.txt | awk '{print $3}')
+          CONFIDENCE=$(grep "Confidence:" ml-prediction.txt | awk '{print $3}' | tr -d '%')
+
+          echo "category=$CATEGORY" >> $GITHUB_OUTPUT
+          echo "confidence=$CONFIDENCE" >> $GITHUB_OUTPUT
+
+          # Extract suggested fix
+          sed -n '/Suggested Fix:/,/Top 3 Predictions:/p' ml-prediction.txt | head -n -2 > suggested-fix.txt
+
+          echo "suggested_fix<<EOF" >> $GITHUB_OUTPUT
+          cat suggested-fix.txt >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Agentic Auto-Fix with Claude
+        if: ${{ steps.ml_detect.outputs.confidence >= 85 || inputs.force_fix }}
+        id: claude_fix
+        run: |
+          python scripts/agentic/claude_auto_fixer.py \
+            --error-log error-extract.txt \
+            --category "${{ steps.ml_detect.outputs.category }}" \
+            --confidence "${{ steps.ml_detect.outputs.confidence }}" \
+            --suggested-fix suggested-fix.txt \
+            --auto-commit ${{ steps.ml_detect.outputs.confidence >= 90 }}
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify Fix
+        if: steps.claude_fix.outcome == 'success'
+        id: verify
+        run: |
+          # Re-run the failed tests
+          if [ "${{ steps.ml_detect.outputs.category }}" = "dependency_missing" ]; then
+            pip install -e '.[all]'
+          fi
+
+          # Run tests
+          pytest tests/ \
+            --json-report \
+            --json-report-file=fix-verification.json \
+            || echo "Tests still failing"
+
+          # Check if fixed
+          if [ -f fix-verification.json ]; then
+            TESTS_PASSED=$(jq -r '.summary.passed' fix-verification.json)
+            TESTS_FAILED=$(jq -r '.summary.failed' fix-verification.json)
+
+            echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+            echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+
+            if [ "$TESTS_FAILED" -eq 0 ]; then
+              echo "fix_verified=true" >> $GITHUB_OUTPUT
+            else
+              echo "fix_verified=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Commit Fix
+        if: steps.verify.outputs.fix_verified == 'true'
+        run: |
+          git config user.name "claude-code-bot"
+          git config user.email "claude-code-bot@users.noreply.github.com"
+
+          git add .
+          git commit -m "fix(ci): auto-fix ${{ steps.ml_detect.outputs.category }}
+
+Detected by ML pattern recognition (confidence: ${{ steps.ml_detect.outputs.confidence }}%)
+Auto-fixed by Claude Code agentic system
+Verification: ${{ steps.verify.outputs.tests_passed }} tests passed
+
+Co-authored-by: Claude <noreply@anthropic.com>" || echo "No changes to commit"
+
+          git push
+
+      - name: Update Error History
+        if: steps.verify.outputs.fix_verified == 'true'
+        run: |
+          python scripts/ml/update_error_history.py \
+            --category "${{ steps.ml_detect.outputs.category }}" \
+            --fix-applied "claude-code-auto-fix" \
+            --confidence "${{ steps.ml_detect.outputs.confidence }}" \
+            --success true \
+            --timestamp "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+      - name: Retrain Model
+        if: steps.verify.outputs.fix_verified == 'true'
+        run: |
+          # Retrain with new successful fix
+          python scripts/ml/error_pattern_detector.py train
+
+          # Commit updated model
+          git add models/error_detector.pkl data/error_history.json
+          git commit -m "chore(ml): retrain error detector with new successful fix
+
+Category: ${{ steps.ml_detect.outputs.category }}
+Confidence improvement expected" || echo "Model unchanged"
+
+          git push
+
+      - name: Create Issue for Manual Review
+        if: ${{ steps.ml_detect.outputs.confidence < 85 && !inputs.force_fix }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const category = '${{ steps.ml_detect.outputs.category }}';
+            const confidence = '${{ steps.ml_detect.outputs.confidence }}';
+            const suggestedFix = `${{ steps.ml_detect.outputs.suggested_fix }}`;
+            const errorLog = `${{ steps.download_logs.outputs.error_log }}`;
+
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `[Auto-Fix] Manual review needed: ${category}`,
+              body: `## CI Failure Auto-Analysis
+
+**Error Category**: \`${category}\`
+**Confidence**: ${confidence}% (< 85% threshold for auto-fix)
+
+**ML Suggested Fix**:
+\`\`\`
+${suggestedFix}
+\`\`\`
+
+**Error Log** (last 200 lines):
+\`\`\`
+${errorLog.substring(0, 2000)}...
+\`\`\`
+
+**Workflow Run**: ${{ github.event.workflow_run.html_url || github.server_url }}/${{ github.repository }}/actions/runs/${{ inputs.workflow_run_id || github.event.workflow_run.id }}
+
+**Action Required**:
+- Review error log and suggested fix
+- Apply fix manually or run workflow with \`force_fix: true\`
+- Update error history to improve ML model
+
+/cc @${{ github.actor }}
+              `,
+              labels: ['auto-fix', 'ci-failure', category],
+              assignees: ['${{ github.actor }}']
+            });
+
+            console.log(`Created issue #${issue.data.number}`);
+
+      - name: Comment on PR
+        if: github.event.workflow_run.event == 'pull_request' && steps.verify.outputs.fix_verified == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ github.event.workflow_run.pull_requests[0].number || 0 }};
+            if (prNumber > 0) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: `## ✅ Auto-Fix Applied by Claude Code
+
+**Error Category**: \`${{ steps.ml_detect.outputs.category }}\`
+**Confidence**: ${{ steps.ml_detect.outputs.confidence }}%
+**Tests**: ${{ steps.verify.outputs.tests_passed }} passed, ${{ steps.verify.outputs.tests_failed }} failed
+
+The CI failure has been automatically fixed by the ML-powered Claude Code system.
+
+**Suggested Fix Applied**:
+\`\`\`
+${{ steps.ml_detect.outputs.suggested_fix }}
+\`\`\`
+
+Please review the auto-generated commit and verify the fix is appropriate.
+                `
+              });
+            }
+
+      - name: Upload Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: auto-fix-results
+          path: |
+            error-extract.txt
+            ml-prediction.txt
+            suggested-fix.txt
+            fix-verification.json
+          retention-days: 7

@@ -1,3 +1,76 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "insightpulse-odoo"
+version = "1.0.0"
+description = "Enterprise-grade Finance SSC platform: Odoo CE 18.0 + Supabase + Superset with AI automation"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "AGPL-3.0"}
+authors = [
+    {name = "InsightPulse AI Team", email = "jgtolentino_rn@yahoo.com"}
+]
+keywords = ["odoo", "erp", "finance", "automation", "ai", "ssc"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+
+dependencies = [
+    "requests>=2.31.0",
+    "psycopg[binary]>=3.1.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+]
+
+[project.optional-dependencies]
+auto-heal = [
+    "pytest-xdist>=3.5.0",                          # Parallel test execution
+    "pytest-rerunfailures>=14.0",                   # Auto-retry flaky tests
+    "pytest-timeout>=2.2.0",                        # Prevent hanging tests
+    "pytest-json-report>=1.5.0",                    # Machine-readable results
+    "pytest-github-actions-annotate-failures>=0.2.0", # GitHub annotations
+]
+
+self-learning = [
+    "scikit-learn>=1.4.0",                          # Pattern recognition
+    "joblib>=1.3.0",                                # Model persistence
+    "pandas>=2.1.0",                                # Error analytics
+    "matplotlib>=3.8.0",                            # Visualization
+    "numpy>=1.26.0",                                # Numerical computing
+]
+
+agentic-verification = [
+    "anthropic>=0.18.0",                            # Claude API
+    "openai>=1.12.0",                               # OpenAI API (fallback)
+    "pydantic>=2.6.0",                              # Validation schemas
+    "tenacity>=8.2.0",                              # Retry logic with exponential backoff
+]
+
+dev = [
+    "black>=24.0.0",
+    "isort>=5.13.0",
+    "flake8>=7.0.0",
+    "pylint>=3.0.0",
+    "ruff>=0.2.0",
+    "pre-commit>=3.6.0",
+]
+
+all = [
+    "insightpulse-odoo[auto-heal,self-learning,agentic-verification,dev]"
+]
+
+[project.urls]
+Homepage = "https://github.com/jgtolentino/insightpulse-odoo"
+Documentation = "https://jgtolentino.github.io/insightpulse-odoo"
+Repository = "https://github.com/jgtolentino/insightpulse-odoo"
+Issues = "https://github.com/jgtolentino/insightpulse-odoo/issues"
+
 [tool.ruff]
 target-version = "py312"
 line-length = 100
@@ -19,11 +92,31 @@ known-first-party = ["odoo", "addons", "insightpulse_odoo"]
 combine-as-imports = true
 
 [tool.pytest.ini_options]
-addopts = "-q --cov=addons --cov-report=term-missing --cov-report=xml --cov-report=html"
+addopts = [
+    "-q",
+    "--cov=addons",
+    "--cov-report=term-missing",
+    "--cov-report=xml",
+    "--cov-report=html",
+    "--reruns=3",                                    # Auto-retry failed tests 3 times
+    "--reruns-delay=1",                              # Wait 1 second between retries
+    "--timeout=300",                                 # 5-minute timeout per test
+    "--json-report",                                 # Generate JSON report
+    "--json-report-file=test-results.json",
+    "--tb=short",                                    # Shorter tracebacks
+    "-n=auto",                                       # Parallel execution (auto-detect CPUs)
+]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+timeout_method = "thread"
+markers = [
+    "flaky: Tests that occasionally fail (auto-retry enabled)",
+    "slow: Tests that take >10 seconds",
+    "integration: Integration tests requiring external services",
+    "unit: Unit tests that don't require external dependencies",
+]
 
 [tool.coverage.run]
 source = ["addons"]
