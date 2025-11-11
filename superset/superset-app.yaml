@@ -1,0 +1,126 @@
+# DigitalOcean App Platform Specification for Superset
+# Deploy with: doctl apps update <app-id> --spec superset-app.yaml
+
+name: superset-analytics
+region: sfo
+
+services:
+  - name: superset
+    # Build from GitHub repository with custom Dockerfile
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    dockerfile_path: superset/Dockerfile
+    source_dir: superset
+
+    # Environment variables
+    envs:
+      - key: SUPERSET_SECRET_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ${SUPERSET_SECRET_KEY}
+
+      - key: DATABASE_HOST
+        scope: RUN_TIME
+        value: aws-1-us-east-1.pooler.supabase.com
+
+      - key: DATABASE_PORT
+        scope: RUN_TIME
+        value: "6543"
+
+      - key: DATABASE_DB
+        scope: RUN_TIME
+        value: postgres
+
+      - key: DATABASE_USER
+        scope: RUN_TIME
+        value: postgres.spdtwktxdalcfigzeqrz
+
+      - key: DATABASE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: ${SUPABASE_DB_PASSWORD}
+
+      - key: SUPERSET_CONFIG_PATH
+        scope: RUN_TIME
+        value: /app/pythonpath/superset_config.py
+
+      - key: LOG_LEVEL
+        scope: RUN_TIME
+        value: INFO
+
+    # Health check
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 60
+      period_seconds: 30
+      timeout_seconds: 10
+      success_threshold: 1
+      failure_threshold: 3
+
+    # HTTP configuration
+    http_port: 8088
+
+    # Routes (public access)
+    routes:
+      - path: /
+
+    # Instance size and scaling
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    # Run command
+    run_command: "superset db upgrade && superset init && superset fab create-admin --username admin --firstname Admin --lastname User --email admin@insightpulseai.net --password admin || true && superset run -p 8088 -h 0.0.0.0"
+
+# Domain configuration
+domains:
+  - domain: superset.insightpulseai.net
+    type: PRIMARY
+
+# Static sites (for dashboards if needed)
+static_sites: []
+
+# Workers (for async tasks - optional)
+# workers:
+#   - name: celery-worker
+#     image:
+#       registry_type: DOCKER_HUB
+#       registry: apache
+#       repository: superset
+#       tag: latest
+#     run_command: "celery --app=superset.tasks.celery_app:app worker"
+#     envs: [] # Same as superset service
+
+# Databases (using Supabase, so no managed DB needed)
+databases: []
+
+# Jobs (for initialization)
+jobs:
+  - name: init-superset
+    kind: PRE_DEPLOY
+    image:
+      registry_type: DOCKER_HUB
+      registry: apache
+      repository: superset
+      tag: latest
+    run_command: |
+      superset db upgrade &&
+      superset init
+    envs:
+      - key: DATABASE_HOST
+        scope: RUN_TIME
+        value: aws-1-us-east-1.pooler.supabase.com
+      - key: DATABASE_PORT
+        scope: RUN_TIME
+        value: "6543"
+      - key: DATABASE_DB
+        scope: RUN_TIME
+        value: postgres
+      - key: DATABASE_USER
+        scope: RUN_TIME
+        value: postgres.spdtwktxdalcfigzeqrz
+      - key: DATABASE_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+        value: ${SUPABASE_DB_PASSWORD}
