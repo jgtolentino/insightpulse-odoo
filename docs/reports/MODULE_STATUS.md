@@ -40,7 +40,12 @@
 - IPAI: ipai_branding, ipai_bir_compliance
 
 ### Production Deployment
-1. Update SMTP password via Odoo UI: Settings → Technical → Email → Outgoing Mail Servers
+1. **SMTP Password Setup** (CRITICAL - Security Best Practice):
+   - Navigate to: Settings → Technical → Email → Outgoing Mail Servers → InsightPulse SMTP
+   - Generate Zoho App Password: Mail Settings → Security → App Passwords
+   - Update password in Odoo (NEVER commit to git)
+   - SMTP Config: smtppro.zoho.com:587 (TLS), auth required
+
 2. Start Caddy for HTTPS: `docker compose up -d caddy`
 3. Verify HTTPS: https://erp.insightpulseai.net
 4. Configure DNS: erp.insightpulseai.net → server IP
