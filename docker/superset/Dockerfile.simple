@@ -5,7 +5,13 @@ USER root
 # Install PostgreSQL driver
 RUN pip install psycopg2-binary
 
+# Copy custom Superset configuration
+COPY superset/superset_config.py /app/pythonpath/superset_config.py
+
 USER superset
+
+# Set configuration path
+ENV SUPERSET_CONFIG_PATH=/app/pythonpath/superset_config.py
 
 EXPOSE 8088
 
