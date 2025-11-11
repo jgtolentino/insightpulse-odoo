@@ -13,13 +13,14 @@ Usage:
 
 import argparse
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 # Add parent directory to path so we can import skill_registry
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from agents.skill_registry import load_anthropic_skills, ANTHROPIC_SKILLS_PATH
+from agents.skill_registry import ANTHROPIC_SKILLS_PATH, load_anthropic_skills
 
 
 def export_to_yaml(skills: dict, output_path: Path = None, append: bool = False):
@@ -60,7 +61,9 @@ def export_to_yaml(skills: dict, output_path: Path = None, append: bool = False)
             existing_skills = existing_data.get("skills", [])
 
             # Remove any existing Anthropic skills to avoid duplicates
-            existing_skills = [s for s in existing_skills if not s.get("anthropic", False)]
+            existing_skills = [
+                s for s in existing_skills if not s.get("anthropic", False)
+            ]
 
             # Append new Anthropic skills
             existing_skills.extend(skill_list)
@@ -80,14 +83,16 @@ def export_to_yaml(skills: dict, output_path: Path = None, append: bool = False)
         output_data = {
             "# Anthropic Skills Import": None,
             "# Auto-generated from anthropic_skills directory": None,
-            "skills": skill_list
+            "skills": skill_list,
         }
 
         with open(output_path, "w", encoding="utf-8") as f:
             f.write("---\n")
             f.write("# Anthropic Skills Import\n")
             f.write("# Auto-generated from anthropic_skills directory\n\n")
-            yaml.dump({"skills": skill_list}, f, default_flow_style=False, sort_keys=False)
+            yaml.dump(
+                {"skills": skill_list}, f, default_flow_style=False, sort_keys=False
+            )
 
         print(f"✅ Exported {len(skill_list)} Anthropic skills to {output_path}")
     else:
@@ -95,7 +100,9 @@ def export_to_yaml(skills: dict, output_path: Path = None, append: bool = False)
         print("---")
         print("# Anthropic Skills Import")
         print("# Auto-generated from anthropic_skills directory\n")
-        print(yaml.dump({"skills": skill_list}, default_flow_style=False, sort_keys=False))
+        print(
+            yaml.dump({"skills": skill_list}, default_flow_style=False, sort_keys=False)
+        )
 
 
 def main():
@@ -115,27 +122,22 @@ Examples:
 
   # Append to specific file
   python3 scripts/import_anthropic_skills.py --append --file agents/skills_extended.yaml
-        """
+        """,
     )
 
     parser.add_argument(
-        "--export",
-        type=str,
-        metavar="FILE",
-        help="Export to a new YAML file"
+        "--export", type=str, metavar="FILE", help="Export to a new YAML file"
     )
 
     parser.add_argument(
-        "--append",
-        action="store_true",
-        help="Append to existing skills.yaml"
+        "--append", action="store_true", help="Append to existing skills.yaml"
     )
 
     parser.add_argument(
         "--file",
         type=str,
         default="agents/skills.yaml",
-        help="Target file for --append (default: agents/skills.yaml)"
+        help="Target file for --append (default: agents/skills.yaml)",
     )
 
     args = parser.parse_args()
