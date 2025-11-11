@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, api
-import os
 import logging
+import os
+
+from odoo import api, models
 
 _logger = logging.getLogger(__name__)
 
@@ -19,8 +20,8 @@ class SupabaseClientWrapper(models.AbstractModel):
         transactions = supabase.query("scout.transactions", filters={"company_id": 1})
     """
 
-    _name = 'supabase.client'
-    _description = 'Supabase Client Wrapper'
+    _name = "supabase.client"
+    _description = "Supabase Client Wrapper"
 
     @api.model
     def get_client(self):
@@ -42,7 +43,9 @@ class SupabaseClientWrapper(models.AbstractModel):
             return client
 
         except ImportError:
-            _logger.error("❌ Failed to import SupabaseClient. Ensure ipai-agent tools are in PYTHONPATH.")
+            _logger.error(
+                "❌ Failed to import SupabaseClient. Ensure ipai-agent tools are in PYTHONPATH."
+            )
 
             # Fallback: Create inline SupabaseClient
             return self._create_inline_client()
@@ -55,10 +58,10 @@ class SupabaseClientWrapper(models.AbstractModel):
         This is a minimal implementation for Odoo-only deployments
         """
         try:
-            from supabase import create_client, Client
+            from supabase import create_client
 
-            url = os.getenv('SUPABASE_URL')
-            key = os.getenv('SUPABASE_SERVICE_ROLE_KEY')
+            url = os.getenv("SUPABASE_URL")
+            key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
 
             if not url or not key:
                 raise ValueError("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required")
@@ -72,7 +75,9 @@ class SupabaseClientWrapper(models.AbstractModel):
                     self.client = client
                     self.url = url
 
-                def query(self, table, select="*", filters=None, order=None, limit=None):
+                def query(
+                    self, table, select="*", filters=None, order=None, limit=None
+                ):
                     """Simple query helper"""
                     query_builder = self.client.table(table).select(select)
 
@@ -81,7 +86,7 @@ class SupabaseClientWrapper(models.AbstractModel):
                             query_builder = query_builder.eq(key, value)
 
                     if order:
-                        parts = order.split('.')
+                        parts = order.split(".")
                         column = parts[0]
                         ascending = len(parts) == 1 or parts[1] != "desc"
                         query_builder = query_builder.order(column, desc=not ascending)
