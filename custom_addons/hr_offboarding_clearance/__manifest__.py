@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 {
-    'name': 'HR Offboarding Clearance',
-    'version': '18.0.1.0.0',
-    'category': 'Human Resources',
-    'summary': 'Employee offboarding clearance workflow with BIR compliance',
-    'description': """
+    "name": "HR Offboarding Clearance",
+    "version": "18.0.1.0.0",
+    "category": "Human Resources",
+    "summary": "Employee offboarding clearance workflow with BIR compliance",
+    "description": """
 Employee Offboarding Clearance Management
 ==========================================
 
@@ -31,32 +31,30 @@ Technical:
 * Supabase integration for tax data
 * OCA-compliant module structure
     """,
-    'author': 'InsightPulse AI',
-    'website': 'https://insightpulseai.net',
-    'license': 'LGPL-3',
-    'depends': [
-        'hr',
-        'hr_contract',
-        'mail',
-        'portal',
+    "author": "InsightPulse AI",
+    "website": "https://insightpulseai.net",
+    "license": "LGPL-3",
+    "depends": [
+        "hr",
+        "hr_contract",
+        "mail",
+        "portal",
     ],
-    'external_dependencies': {
-        'python': [],
+    "external_dependencies": {
+        "python": [],
     },
-    'data': [
+    "data": [
         # Security
-        'security/ir.model.access.csv',
-        'security/hr_offboarding_security.xml',
-
+        "security/ir.model.access.csv",
+        "security/hr_offboarding_security.xml",
         # Data
-        'data/ir_sequence_data.xml',
-        'data/clearance_checklist_templates.xml',
-
+        "data/ir_sequence_data.xml",
+        "data/clearance_checklist_templates.xml",
         # Views
-        'views/hr_offboarding_views.xml',
+        "views/hr_offboarding_views.xml",
     ],
-    'demo': [],
-    'installable': True,
-    'application': False,
-    'auto_install': False,
+    "demo": [],
+    "installable": True,
+    "application": False,
+    "auto_install": False,
 }

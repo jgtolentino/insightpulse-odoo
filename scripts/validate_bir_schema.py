@@ -5,8 +5,8 @@ Validates that migration 004 was applied successfully
 """
 import os
 import sys
+
 import psycopg2
-from typing import List, Tuple
 
 # Supabase connection URL from environment
 POSTGRES_URL = os.getenv("POSTGRES_URL")
@@ -26,34 +26,40 @@ def check_table_exists(cursor, table_name: str) -> bool:
 
 def check_rls_enabled(cursor, table_name: str) -> bool:
     """Check if Row Level Security is enabled"""
-    cursor.execute(f"""
+    cursor.execute(
+        f"""
         SELECT relrowsecurity
         FROM pg_class
         WHERE oid = '{table_name}'::regclass;
-    """)
+    """
+    )
     result = cursor.fetchone()
     return result[0] if result else False
 
 
 def check_index_exists(cursor, index_name: str) -> bool:
     """Check if index exists"""
-    cursor.execute(f"""
+    cursor.execute(
+        f"""
         SELECT indexname
         FROM pg_indexes
         WHERE indexname = '{index_name}';
-    """)
+    """
+    )
     result = cursor.fetchone()
     return result is not None
 
 
 def check_policy_exists(cursor, table_name: str, policy_name: str) -> bool:
     """Check if RLS policy exists"""
-    cursor.execute(f"""
+    cursor.execute(
+        f"""
         SELECT polname
         FROM pg_policy
         WHERE polrelid = '{table_name}'::regclass
         AND polname = '{policy_name}';
-    """)
+    """
+    )
     result = cursor.fetchone()
     return result is not None
 
@@ -75,7 +81,7 @@ def validate_schema():
         tables = [
             "scout.transactions",
             "scout.vat_transactions",
-            "scout.bir_batch_generation"
+            "scout.bir_batch_generation",
         ]
 
         for table in tables:
@@ -100,7 +106,7 @@ def validate_schema():
             "idx_transactions_company_date",
             "idx_transactions_type",
             "idx_vat_transactions_company_period",
-            "idx_bir_batch_company"
+            "idx_bir_batch_company",
         ]
 
         for index in indexes:
@@ -118,7 +124,7 @@ def validate_schema():
             ("scout.vat_transactions", "vat_transaction_tenant_policy"),
             ("scout.vat_transactions", "vat_transaction_service_role_policy"),
             ("scout.bir_batch_generation", "bir_batch_tenant_policy"),
-            ("scout.bir_batch_generation", "bir_batch_service_role_policy")
+            ("scout.bir_batch_generation", "bir_batch_service_role_policy"),
         ]
 
         for table, policy in policies:
@@ -130,12 +136,14 @@ def validate_schema():
 
         # 5. Check trigger function exists
         print("\n⚙️  Checking trigger function...")
-        cursor.execute("""
+        cursor.execute(
+            """
             SELECT proname
             FROM pg_proc
             WHERE proname = 'update_updated_at_column'
             AND pronamespace = 'scout'::regnamespace;
-        """)
+        """
+        )
         if cursor.fetchone():
             print("   ✅ scout.update_updated_at_column() exists")
         else:
@@ -143,7 +151,7 @@ def validate_schema():
             print("   ⚠️  update_updated_at_column() MISSING")
 
         # Summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         if errors:
             print(f"\n❌ VALIDATION FAILED: {len(errors)} error(s)")
             for error in errors:
