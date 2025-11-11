@@ -1,0 +1,88 @@
+name: Stack Validation
+
+on:
+  pull_request:
+    branches: [main, feat/*]
+  push:
+    branches: [main]
+  schedule:
+    - cron: '17 2 * * *'  # Daily at 10:17 AM Philippine Time
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up environment
+        run: |
+          echo "VALIDATION_DATE=$(date -u +%Y-%m-%d_%H-%M-%S)" >> $GITHUB_ENV
+
+      - name: Health Check
+        run: bash scripts/healthcheck.sh
+        continue-on-error: true
+        id: healthcheck
+
+      - name: Routing Validation
+        run: bash scripts/validate_routing.sh
+        continue-on-error: true
+        id: routing
+
+      - name: OAuth Validation
+        run: bash scripts/validate_oauth.sh
+        continue-on-error: true
+        id: oauth
+
+      - name: Generate Summary
+        if: always()
+        run: |
+          echo "## Stack Validation Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.healthcheck.outcome }}" == "success" ]; then
+            echo "✅ **Health Check:** PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Health Check:** FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.routing.outcome }}" == "success" ]; then
+            echo "✅ **Routing:** PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Routing:** FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ steps.oauth.outcome }}" == "success" ]; then
+            echo "✅ **OAuth:** PASSED" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **OAuth:** FAILED" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Status" >> $GITHUB_STEP_SUMMARY
+          cat docs/reports/FINAL_STATUS.md >> $GITHUB_STEP_SUMMARY || echo "Status file not found" >> $GITHUB_STEP_SUMMARY
+
+      - name: Upload Validation Reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-reports-${{ env.VALIDATION_DATE }}
+          path: docs/reports/*.md
+          retention-days: 30
+
+      - name: Check Validation Status
+        if: always()
+        run: |
+          if [ "${{ steps.healthcheck.outcome }}" != "success" ] || \
+             [ "${{ steps.routing.outcome }}" != "success" ] || \
+             [ "${{ steps.oauth.outcome }}" != "success" ]; then
+            echo "❌ One or more validations failed"
+            exit 1
+          fi
+          echo "✅ All validations passed"
