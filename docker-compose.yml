@@ -5,7 +5,7 @@ services:
   # For detailed service configurations, see infrastructure/docker/
 
   odoo:
-    image: odoo:19.0
+    image: odoo:18.0
     depends_on:
       - postgres
     ports:
@@ -18,35 +18,11 @@ services:
       - HTTP_PORT=8069
       - LONGPOLLING_PORT=8072
     volumes:
-      # Custom InsightPulse modules
-      - ./custom_addons:/mnt/extra-addons/custom:ro
+      # Custom InsightPulse modules (new structure)
+      - ./addons:/mnt/addons:ro
 
-      # OCA Modules - Finance & Accounting (Critical for BIR)
-      - ./bundle/addons/oca/account-invoicing:/mnt/extra-addons/oca/account-invoicing:ro
-      - ./bundle/addons/oca/account-payment:/mnt/extra-addons/oca/account-payment:ro
-      - ./bundle/addons/oca/account-reconcile:/mnt/extra-addons/oca/account-reconcile:ro
-      - ./bundle/addons/oca/account-financial-reporting:/mnt/extra-addons/oca/account-financial-reporting:ro
-      - ./bundle/addons/oca/account-financial-tools:/mnt/extra-addons/oca/account-financial-tools:ro
-      - ./bundle/addons/oca/bank-payment:/mnt/extra-addons/oca/bank-payment:ro
-
-      # OCA Modules - Server Infrastructure
-      - ./bundle/addons/oca/server-auth:/mnt/extra-addons/oca/server-auth:ro
-      - ./bundle/addons/oca/server-tools:/mnt/extra-addons/oca/server-tools:ro
-      - ./bundle/addons/oca/server-backend:/mnt/extra-addons/oca/server-backend:ro
-      - ./bundle/addons/oca/queue:/mnt/extra-addons/oca/queue:ro
-      - ./bundle/addons/oca/rest-framework:/mnt/extra-addons/oca/rest-framework:ro
-
-      # OCA Modules - Web & UI
-      - ./bundle/addons/oca/web:/mnt/extra-addons/oca/web:ro
-
-      # OCA Modules - Business Workflows
-      - ./bundle/addons/oca/purchase-workflow:/mnt/extra-addons/oca/purchase-workflow:ro
-      - ./bundle/addons/oca/partner-contact:/mnt/extra-addons/oca/partner-contact:ro
-      - ./bundle/addons/oca/hr:/mnt/extra-addons/oca/hr:ro
-
-      # OCA Modules - Reporting
-      - ./bundle/addons/oca/reporting-engine:/mnt/extra-addons/oca/reporting-engine:ro
-      - ./bundle/addons/oca/account-budgeting:/mnt/extra-addons/oca/account-budgeting:ro
+      # OCA modules (git submodules - to be populated)
+      - ./addons/oca:/mnt/oca:ro
 
       # Configuration
       - ./odoo.conf:/etc/odoo/odoo.conf:ro
@@ -61,7 +37,7 @@ services:
       - POSTGRES_USER=odoo
       - POSTGRES_PASSWORD=odoo
     volumes:
-      - postgres_data:/ var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:
