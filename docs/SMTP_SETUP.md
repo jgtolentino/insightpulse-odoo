@@ -9,12 +9,104 @@
 
 This guide walks through configuring Zoho Mail SMTP for outgoing emails in Odoo 18 CE. The SMTP server is already configured in the database with placeholder credentials - you just need to update the password with a Zoho App Password.
 
+## Critical Domain Architecture
+
+**IMPORTANT:** Email and app domains are separate for security and deliverability:
+
+- **Email Domain:** `insightpulseai.com` (mail sending/receiving via Zoho)
+- **App Domain:** `insightpulseai.net` (Odoo ERP, Keycloak, Superset, etc.)
+
+**Why Separate?**
+- Better email deliverability (dedicated mail domain)
+- Cleaner DNS records (MX/SPF/DKIM on .com only)
+- Security isolation (email reputation separate from apps)
+- BIR compliance (professional @insightpulseai.com addresses)
+
+**Email Flow:**
+```
+Odoo ERP (erp.insightpulseai.net)
+    ↓ SMTP
+Zoho Mail (smtp.zoho.com:587)
+    ↓ Send as
+no-reply@insightpulseai.com
+```
+
 ## Prerequisites
 
 - ✅ Odoo 18 CE installed and running
 - ✅ Database `db_ckvc` initialized
 - ✅ SMTP server record created (via production hardening script)
-- ⚠️ **Need:** Zoho App Password (see step 1 below)
+- ⚠️ **Need:** Zoho App Password (see Configuration Steps below)
+- ⚠️ **Need:** DNS records configured on insightpulseai.com (see DNS Configuration below)
+
+---
+
+## DNS Configuration (insightpulseai.com)
+
+**⚠️ CRITICAL:** Add these records to **insightpulseai.com** DNS zone (NOT .net):
+
+### MX Records (Mail Routing)
+```
+Record Type    Host    Priority    Value
+MX             @       10          mx.zoho.com
+MX             @       20          mx2.zoho.com
+MX             @       50          mx3.zoho.com
+```
+
+### SPF Record (Sender Authentication)
+```
+Record Type    Host    Value
+TXT            @       v=spf1 include:zoho.com include:transmail.net ~all
+```
+**Note:** Include `transmail.net` if using ZeptoMail for transactional emails
+
+### DKIM Record (Email Signing)
+```
+Record Type                          Host    Value
+CNAME                                zselector._domainkey    zselector.domainkey.zoho.com
+```
+**Note:** Copy exact selector/value from Zoho Admin → Mail → Domains → DKIM
+
+### DMARC Record (Email Policy)
+```
+Record Type    Host     Value
+TXT            _dmarc   v=DMARC1; p=quarantine; rua=mailto:postmaster@insightpulseai.com; ruf=mailto:postmaster@insightpulseai.com; fo=1; pct=100; adkim=s; aspf=s
+```
+**Production:** Change `p=quarantine` to `p=reject` after confirming SPF/DKIM pass
+
+### DNS Verification Commands
+```bash
+# MX Records
+dig +short MX insightpulseai.com
+
+# SPF Record
+dig +short TXT insightpulseai.com | grep v=spf1
+
+# DKIM Record (replace 'zselector' with your actual selector)
+dig +short zselector._domainkey.insightpulseai.com CNAME
+
+# DMARC Record
+dig +short _dmarc.insightpulseai.com TXT
+```
+
+**Expected Output:**
+```
+# MX
+10 mx.zoho.com.
+20 mx2.zoho.com.
+50 mx3.zoho.com.
+
+# SPF
+"v=spf1 include:zoho.com include:transmail.net ~all"
+
+# DKIM
+zselector.domainkey.zoho.com.
+
+# DMARC
+"v=DMARC1; p=quarantine; rua=mailto:postmaster@insightpulseai.com..."
+```
+
+---
 
 ## Configuration Steps
 
@@ -51,16 +143,63 @@ Connection Test Succeeded!
 Everything seems properly set up!
 ```
 
-### Step 3: Verify Configuration
+### Step 3: Configure Odoo System Parameters
 
-Run test email from Odoo:
+**CRITICAL:** Set email domain parameters to ensure Odoo sends as @insightpulseai.com:
 
+1. Navigate to: **Settings → Technical → Parameters → System Parameters**
+2. Update/create these parameters:
+
+| Parameter Key | Value | Purpose |
+|---------------|-------|---------|
+| `mail.catchall.domain` | `insightpulseai.com` | Default email domain |
+| `mail.default.from` | `no-reply@insightpulseai.com` | Default FROM address |
+| `mail.force.smtp` | `True` | Force SMTP for all outgoing mail |
+| `web.base.url` | `https://erp.insightpulseai.net` | Already set (app domain) |
+| `report.url` | `https://erp.insightpulseai.net` | PDF report links (optional) |
+
+**Via Database (Alternative):**
+```bash
+docker compose exec -T postgres psql -U odoo -d db_ckvc << 'SQL'
+DELETE FROM ir_config_parameter WHERE key IN ('mail.catchall.domain', 'mail.default.from', 'mail.force.smtp');
+INSERT INTO ir_config_parameter (key, value) VALUES
+  ('mail.catchall.domain', 'insightpulseai.com'),
+  ('mail.default.from', 'no-reply@insightpulseai.com'),
+  ('mail.force.smtp', 'True');
+SQL
+```
+
+**Restart Odoo** to apply changes:
+```bash
+docker compose restart odoo
+```
+
+### Step 4: Verify Email Configuration
+
+#### Test SMTP Connection
+1. Settings → Technical → Email → Outgoing Mail Servers → InsightPulse SMTP
+2. Click **Test Connection**
+3. Expected: "Connection Test Succeeded!"
+
+#### Send Test Email
 1. Settings → Technical → Email → Send an Email
 2. To: your-email@domain.com
 3. Subject: "Odoo SMTP Test"
 4. Click **Send**
 
-Check email delivery (including spam folder).
+#### Verify Email Headers
+Check received email headers for authentication:
+```
+SPF: PASS (with IP ...)
+DKIM: PASS (signature verified)
+DMARC: PASS
+From: no-reply@insightpulseai.com
+Reply-To: no-reply@insightpulseai.com
+Mailed-By: zoho.com
+Signed-By: insightpulseai.com
+```
+
+**Gmail:** View Original → Check for "SPF=pass", "DKIM=pass", "DMARC=pass"
 
 ### Current SMTP Configuration
 
