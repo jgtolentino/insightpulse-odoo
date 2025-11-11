@@ -519,3 +519,55 @@ profiles:
     requires_knowledge_graph: false
     skills:
       - knowledge_graph.ingest
+
+  # === Master Trainer Skills (Smol) ===
+  # Skills for ML training, evaluation, and artifact management
+
+  - id: master_trainer.curate
+    name: "Curate ML Datasets"
+    description: "Curate/clean ML datasets into shards with splits"
+    module: "trainers.master_trainer.skills.curate"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["trainer", "data", "smol"]
+
+  - id: master_trainer.synthesize
+    name: "Synthesize Training Data"
+    description: "Generate synthetic pairs/prompts guided by curriculum"
+    module: "trainers.master_trainer.skills.synth_data"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["trainer", "synth", "smol"]
+
+  - id: master_trainer.ablate
+    name: "Run Ablation Studies"
+    description: "Launch ablation matrix; collect metrics/artifacts"
+    module: "trainers.master_trainer.skills.ablate"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["trainer", "ablation", "smol"]
+
+  - id: master_trainer.evaluate
+    name: "Evaluate Models"
+    description: "Run eval plan; write to smol.ml_eval_runs"
+    module: "trainers.master_trainer.skills.evaluate"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["eval", "qa", "smol"]
+
+  - id: master_trainer.gatekeep
+    name: "Quality Gate"
+    description: "Enforce thresholds; package + promote to smol-ml-artifacts"
+    module: "trainers.master_trainer.skills.gatekeeper"
+    entrypoint: "run_skill"
+    repo: "jgtolentino/insightpulse-odoo"
+    tags: ["release", "governance", "smol"]
+
+  - id: trainer_smoke
+    name: "Trainer Smoke Test"
+    description: "Fast smoke test for master trainer CI"
+    skills:
+      - master_trainer.ablate
+      - master_trainer.evaluate
+      - master_trainer.gatekeep
+    tags: ["smol", "ci", "fast"]

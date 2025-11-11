@@ -1,0 +1,23 @@
+name: Smol Master Trainer (Smoke)
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    environment: dev
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Run smoke eval
+        run: python eval/smoke_eval.py
+      - name: Upload scorecard
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-scorecard
+          path: eval/outputs/scorecard.json

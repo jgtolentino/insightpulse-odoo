@@ -28,3 +28,12 @@ openupgradelib>=3.3.0  # OCA migration support library
 
 # Documentation
 # sphinx>=7.2.0
+
+# ML/Training dependencies for Master Trainer
+numpy>=1.24
+pandas>=2.1
+scikit-learn>=1.3
+datasets>=2.19
+evaluate>=0.4.2
+tqdm>=4.66
+supabase>=2.0.0

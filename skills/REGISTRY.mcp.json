@@ -67,6 +67,45 @@
         "webhook_handle",
         "workflow_trigger"
       ]
+    },
+    "master_trainer.curate": {
+      "mcp_service": "smol_master_trainer",
+      "actions": [
+        "curate_datasets",
+        "split_data",
+        "upload_to_storage"
+      ]
+    },
+    "master_trainer.synthesize": {
+      "mcp_service": "smol_master_trainer",
+      "actions": [
+        "generate_synthetic_data",
+        "curriculum_guided_generation"
+      ]
+    },
+    "master_trainer.ablate": {
+      "mcp_service": "smol_master_trainer",
+      "actions": [
+        "run_ablation_matrix",
+        "collect_metrics",
+        "store_artifacts"
+      ]
+    },
+    "master_trainer.evaluate": {
+      "mcp_service": "smol_master_trainer",
+      "actions": [
+        "run_evaluation",
+        "write_eval_results",
+        "generate_scorecard"
+      ]
+    },
+    "master_trainer.gatekeep": {
+      "mcp_service": "smol_master_trainer",
+      "actions": [
+        "enforce_thresholds",
+        "package_artifacts",
+        "promote_to_production"
+      ]
     }
   }
 }
