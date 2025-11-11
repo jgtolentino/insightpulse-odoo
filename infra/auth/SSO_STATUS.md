@@ -44,6 +44,44 @@ curl -s https://erp.insightpulseai.net/web/login | grep "Sign in with Keycloak S
 - **User ID**: a528c149-3b24-4ac0-a965-95103a22fae5
 - **Status**: ✅ Created, email verified, enabled
 
+### 5. Google OAuth Integration
+- **Status**: ⏳ Provider Created, Needs Client Secret
+- **URL**: https://erp.insightpulseai.net/web/login
+- **Provider ID**: 6
+- **Provider Name**: Google
+- **Button Text**: "Sign in with Google" ✅
+- **Client ID**: `[GOOGLE_CLIENT_ID from credentials]` ✅
+- **Client Secret**: `[GOOGLE_CLIENT_SECRET from credentials]` ⏳ Needs to be added in Odoo Settings UI
+- **Redirect URIs** (Google Cloud Console): Already configured ✅
+  - https://erp.insightpulseai.net/auth_oauth/signin
+  - https://insightpulseai.net/auth_oauth/signin
+  - https://erp.insightpulseai.net/web/login
+
+**Testing**:
+```bash
+# OAuth button visible at login
+curl -s https://erp.insightpulseai.net/web/login | grep "Sign in with Google"
+```
+
+**⚠️ Next Steps to Complete Google OAuth**:
+Odoo's auth_oauth module uses the **implicit flow** (response_type=token) which doesn't store client secrets in the database. However, Google has deprecated implicit flow and requires **authorization code flow** which needs a client secret.
+
+**Option 1: Use Custom OAuth Module (Recommended)**
+Install `auth_oauth_with_client_secret` from OCA:
+```bash
+# On Odoo server
+docker exec odoo19 odoo -d insightpulse -i auth_oauth_multi_token --stop-after-init
+# Then configure client secret in Settings → OAuth Authentication
+```
+
+**Option 2: Manual Configuration via Odoo UI**
+1. Go to Odoo Settings → OAuth Authentication
+2. Find "Google" provider (ID: 6)
+3. Click Edit
+4. Add Client Secret from Google Cloud Console credentials
+5. Change Response Type to "code" (authorization code flow)
+6. Save and restart Odoo
+
 ---
 
 ## ⏳ Pending
