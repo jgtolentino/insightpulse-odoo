@@ -17,8 +17,8 @@ MX      @       50          mx3.zoho.com        3600
 
 ### 2. SPF Record (Sender Authentication)
 ```
-Type    Host    Value                                           TTL
-TXT     @       v=spf1 include:zoho.com include:transmail.net ~all    3600
+Type    Host    Value                                TTL
+TXT     @       v=spf1 include:zohomail.com ~all    3600
 ```
 
 ### 3. DKIM Record (Email Signing)
@@ -58,7 +58,7 @@ dig +short MX insightpulseai.com
 ```bash
 dig +short TXT insightpulseai.com | grep v=spf1
 # Expected:
-# "v=spf1 include:zoho.com include:transmail.net ~all"
+# "v=spf1 include:zohomail.com ~all"
 ```
 
 ### Check DKIM Record

@@ -61,7 +61,7 @@ MX      @       20          mx2.zoho.com        3600
 MX      @       50          mx3.zoho.com        3600
 
 # SPF Record
-TXT     @       v=spf1 include:zoho.com include:transmail.net ~all    3600
+TXT     @       v=spf1 include:zohomail.com ~all    3600
 
 # DKIM Record (get exact selector from Zoho)
 CNAME   zselector._domainkey    zselector.domainkey.zoho.com    3600

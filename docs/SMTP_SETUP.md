@@ -56,9 +56,8 @@ MX             @       50          mx3.zoho.com
 ### SPF Record (Sender Authentication)
 ```
 Record Type    Host    Value
-TXT            @       v=spf1 include:zoho.com include:transmail.net ~all
+TXT            @       v=spf1 include:zohomail.com ~all
 ```
-**Note:** Include `transmail.net` if using ZeptoMail for transactional emails
 
 ### DKIM Record (Email Signing)
 ```
@@ -97,7 +96,7 @@ dig +short _dmarc.insightpulseai.com TXT
 50 mx3.zoho.com.
 
 # SPF
-"v=spf1 include:zoho.com include:transmail.net ~all"
+"v=spf1 include:zohomail.com ~all"
 
 # DKIM
 zselector.domainkey.zoho.com.
