@@ -1,0 +1,92 @@
+{
+  "dashboard_title": "Finance SSC - Executive Dashboard",
+  "description": "Multi-agency Finance Shared Service Center overview with BIR compliance metrics",
+  "slug": "finance-ssc-executive",
+  "metadata": {
+    "color_scheme": "supersetColors",
+    "refresh_frequency": 300,
+    "timed_refresh_immune_slices": []
+  },
+  "position_json": {
+    "CHART-1": {
+      "type": "CHART",
+      "id": "CHART-1",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 50,
+        "chartId": 1
+      }
+    },
+    "CHART-2": {
+      "type": "CHART",
+      "id": "CHART-2",
+      "children": [],
+      "meta": {
+        "width": 6,
+        "height": 50,
+        "chartId": 2
+      }
+    },
+    "CHART-3": {
+      "type": "CHART",
+      "id": "CHART-3",
+      "children": [],
+      "meta": {
+        "width": 12,
+        "height": 50,
+        "chartId": 3
+      }
+    }
+  },
+  "charts": [
+    {
+      "slice_name": "Total Expense by Agency (Current Month)",
+      "viz_type": "pie",
+      "datasource_name": "expense_reports",
+      "params": {
+        "adhoc_filters": [],
+        "groupby": ["agency_name"],
+        "metric": "sum__amount",
+        "row_limit": 10,
+        "color_scheme": "supersetColors",
+        "show_legend": true,
+        "show_labels": true
+      }
+    },
+    {
+      "slice_name": "BIR Compliance Status",
+      "viz_type": "big_number_total",
+      "datasource_name": "bir_forms",
+      "params": {
+        "metric": "count",
+        "adhoc_filters": [
+          {
+            "clause": "WHERE",
+            "expressionType": "SIMPLE",
+            "subject": "status",
+            "operator": "==",
+            "comparator": "submitted"
+          }
+        ],
+        "y_axis_format": ",.0f",
+        "header_font_size": 0.4
+      }
+    },
+    {
+      "slice_name": "Expense Approval Timeline",
+      "viz_type": "line",
+      "datasource_name": "expense_reports",
+      "params": {
+        "adhoc_filters": [],
+        "groupby": [],
+        "time_grain_sqla": "P1D",
+        "metrics": ["count"],
+        "x_axis_label": "Date",
+        "y_axis_label": "Number of Expenses",
+        "show_legend": true,
+        "line_interpolation": "linear"
+      }
+    }
+  ]
+}
