@@ -1,6 +1,6 @@
 {
     "name": "IPAI Procure",
-    "version": "19.0.20251026.1",
+    "version": "18.0.20251026.1",
     "category": "Inventory/Purchase",
     "summary": "PR → RFQ → PO → GRN → 3WM with approvals, catalogs, rounds",
     "description": """

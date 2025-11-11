@@ -1,6 +1,6 @@
 {
     "name": "Apps Admin Enhancements",
-    "version": "19.0.251026.1",
+    "version": "18.0.251026.1",
     "category": "Tools",
     "summary": "Enhanced Apps management with source tracking and accessibility",
     "description": """

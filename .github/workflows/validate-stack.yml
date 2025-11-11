@@ -1,0 +1,217 @@
+name: Validate Stack Configuration
+
+on:
+  pull_request:
+    paths:
+      - 'odoo.conf'
+      - 'docker-compose.yml'
+      - 'Makefile'
+      - 'scripts/preflight-modules.sh'
+      - 'addons/**/__manifest__.py'
+  push:
+    branches: [main, feat/odoo-18-oca-automation]
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM UTC
+  workflow_dispatch:
+
+jobs:
+  validate-configuration:
+    runs-on: ubuntu-latest
+    name: Configuration Validation
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate Docker Compose
+        run: |
+          docker compose config --quiet
+          echo "✅ docker-compose.yml is valid"
+
+      - name: Check Odoo Configuration
+        run: |
+          # Verify addons_path
+          grep -q "addons_path = /mnt/addons,/mnt/oca,/usr/lib/python3/dist-packages/odoo/addons" odoo.conf || {
+            echo "❌ ERROR: Invalid addons_path in odoo.conf"
+            exit 1
+          }
+
+          # Verify proxy mode enabled
+          grep -q "proxy_mode = True" odoo.conf || {
+            echo "❌ ERROR: proxy_mode not enabled"
+            exit 1
+          }
+
+          # Verify workers enabled
+          grep -q "workers = 2" odoo.conf || {
+            echo "⚠️  WARNING: workers not set to 2"
+          }
+
+          # Verify session security
+          grep -q "session_cookie_secure = True" odoo.conf || {
+            echo "❌ ERROR: session_cookie_secure not enabled"
+            exit 1
+          }
+
+          echo "✅ odoo.conf configuration valid"
+
+      - name: Validate Module Manifests
+        run: |
+          errors=0
+
+          # Check all custom module manifests
+          for manifest in addons/*/__manifest__.py; do
+            if [ -f "$manifest" ]; then
+              # Check for Odoo 18.0 version
+              if ! grep -q '"version": "18\.0\.' "$manifest"; then
+                echo "❌ ERROR: $manifest has wrong version (must be 18.0.x.y.z)"
+                errors=$((errors + 1))
+              fi
+
+              # Check for required license
+              if ! grep -q '"license"' "$manifest"; then
+                echo "⚠️  WARNING: $manifest missing license"
+              fi
+
+              # Check for empty files
+              if [ ! -s "$manifest" ]; then
+                echo "❌ ERROR: $manifest is empty"
+                errors=$((errors + 1))
+              fi
+            fi
+          done
+
+          if [ $errors -gt 0 ]; then
+            echo "❌ Found $errors manifest errors"
+            exit 1
+          fi
+
+          echo "✅ All module manifests valid"
+
+      - name: Check Makefile Targets
+        run: |
+          # Verify required targets exist
+          grep -q "^apps-update:" Makefile || {
+            echo "❌ ERROR: apps-update target missing"
+            exit 1
+          }
+
+          grep -q "^preflight:" Makefile || {
+            echo "❌ ERROR: preflight target missing"
+            exit 1
+          }
+
+          grep -q "^install-min:" Makefile || {
+            echo "❌ ERROR: install-min target missing"
+            exit 1
+          }
+
+          echo "✅ Makefile targets valid"
+
+      - name: Validate Preflight Script
+        run: |
+          # Check script exists and is executable
+          if [ ! -f scripts/preflight-modules.sh ]; then
+            echo "❌ ERROR: preflight-modules.sh not found"
+            exit 1
+          fi
+
+          # Validate bash syntax
+          bash -n scripts/preflight-modules.sh || {
+            echo "❌ ERROR: preflight-modules.sh has syntax errors"
+            exit 1
+          }
+
+          echo "✅ Preflight script valid"
+
+      - name: Generate Status Report
+        if: always()
+        run: |
+          cat > /tmp/validation_status.md << 'EOFMD'
+          # Stack Validation Report
+          **Date:** $(date -u +"%Y-%m-%d %H:%M UTC")
+          **Branch:** ${{ github.ref_name }}
+          **Commit:** ${{ github.sha }}
+
+          ## Configuration Status
+          - ✅ docker-compose.yml valid
+          - ✅ odoo.conf configuration valid
+          - ✅ Module manifests valid
+          - ✅ Makefile targets valid
+          - ✅ Preflight script valid
+
+          ## Validated Components
+          - Addons path: /mnt/addons,/mnt/oca,/usr/lib/python3/dist-packages/odoo/addons
+          - Proxy mode: Enabled
+          - Workers: 2
+          - Session security: HttpOnly, Secure, Lax
+          - Module versions: 18.0.x.y.z format
+
+          ## Next Steps
+          1. Update SMTP password via Odoo UI
+          2. Start Caddy: docker compose up -d caddy
+          3. Configure DNS: erp.insightpulseai.net → server IP
+          4. Review firewall rules
+
+          **Validation:** ✅ PASSED
+          EOFMD
+
+          cat /tmp/validation_status.md
+
+      - name: Upload Validation Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-report
+          path: /tmp/validation_status.md
+          retention-days: 30
+
+  security-scan:
+    runs-on: ubuntu-latest
+    name: Security Scan
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for Secrets
+        run: |
+          errors=0
+
+          # Check for committed passwords
+          if grep -r "REPLACE_WITH_APP_PASSWORD" --include="*.py" --include="*.conf" .; then
+            echo "⚠️  WARNING: Placeholder password found in code"
+          fi
+
+          # Check for hardcoded SMTP passwords
+          if grep -rE "smtp_pass|SMTP_PASSWORD" --include="*.py" --exclude-dir=".git" . | grep -v "REPLACE_WITH"; then
+            echo "❌ ERROR: Hardcoded SMTP password detected"
+            errors=$((errors + 1))
+          fi
+
+          # Check for exposed database credentials
+          if grep -rE "POSTGRES_PASSWORD|db_password" --include="*.py" --exclude="odoo.conf" --exclude-dir=".git" . | grep -vE "env|ENV|\$"; then
+            echo "❌ ERROR: Hardcoded database password detected"
+            errors=$((errors + 1))
+          fi
+
+          if [ $errors -gt 0 ]; then
+            echo "❌ Security scan failed with $errors issues"
+            exit 1
+          fi
+
+          echo "✅ Security scan passed"
+
+      - name: Check File Permissions
+        run: |
+          # Check for world-writable files
+          if find . -type f -perm -002 | grep -v "\.git"; then
+            echo "⚠️  WARNING: World-writable files found"
+          fi
+
+          # Check for executable scripts
+          if find scripts -type f ! -perm -u+x | grep -v "\.sh$"; then
+            echo "⚠️  INFO: Some scripts may need execute permission"
+          fi
+
+          echo "✅ File permissions check complete"

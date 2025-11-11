@@ -1,6 +1,6 @@
 {
     "name": "Pulser Hub Sync",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Tools",
     "summary": "GitHub App integration for Pulser Hub webhook and OAuth",
     "description": """

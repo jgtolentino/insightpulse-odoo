@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Finance SSC Month-End Closing",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Accounting/Finance",
     "summary": "Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center",
     "description": """

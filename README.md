@@ -2,6 +2,7 @@
 
 [![CI Status](https://github.com/jgtolentino/insightpulse-odoo/workflows/CI/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
 [![Deploy Status](https://github.com/jgtolentino/insightpulse-odoo/workflows/Deploy/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
+[![Stack Validation](https://github.com/jgtolentino/insightpulse-odoo/workflows/Stack%20Validation/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
 [![SaaS Parity](https://img.shields.io/badge/SaaS%20Parity-87%25-green)](docs/saas-parity/)
 [![Test Coverage](https://img.shields.io/badge/tests-134%20methods-blue)](tests/)
 [![License](https://img.shields.io/badge/license-LGPL--3.0-blue)](LICENSE)

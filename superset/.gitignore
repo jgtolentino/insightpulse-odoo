@@ -1,0 +1,13 @@
+# Superset secrets
+.env
+.env.local
+.env.production
+
+# Superset data
+superset_home/
+uploads/
+thumbnails/
+logs/
+
+# Docker volumes
+*.sqlite

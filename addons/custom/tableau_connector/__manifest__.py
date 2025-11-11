@@ -1,6 +1,6 @@
 {
     "name": "Tableau Connector",
-    "version": "19.0.251026.1",
+    "version": "18.0.251026.1",
     "category": "Connectors",
     "summary": "Tableau analytics integration for Odoo",
     "description": """

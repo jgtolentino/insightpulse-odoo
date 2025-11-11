@@ -1,0 +1,6 @@
+erp.insightpulseai.net {
+  encode zstd gzip
+  route {
+    reverse_proxy odoo:8069
+  }
+}
