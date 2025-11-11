@@ -9,10 +9,10 @@ services:
     # Build from GitHub repository with custom Dockerfile
     github:
       repo: jgtolentino/insightpulse-odoo
-      branch: main
+      branch: feat/odoo-18-oca-automation
       deploy_on_push: true
     dockerfile_path: superset/Dockerfile
-    source_dir: superset
+    context_dir: superset
 
     # Environment variables
     envs:
