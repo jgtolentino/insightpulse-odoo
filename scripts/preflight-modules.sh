@@ -8,8 +8,7 @@ if [[ -z "$LIST" ]]; then
 fi
 
 echo "→ Preflight on DB=${DB}"
-# Ensure registry is current (caller already runs apps-update; this is a safety net)
-docker compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d "$DB" -u base --stop-after-init >/dev/null
+# Note: apps-update target handles registry refresh
 
 MISSING=()
 # Check presence in ir_module_module (means Odoo can see the addon)

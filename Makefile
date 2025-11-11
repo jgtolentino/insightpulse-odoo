@@ -15,7 +15,8 @@ ALL_FULL  = $(CORE_MODS),$(IPAI_MODS),$(OCA_MODS)
 .PHONY: apps-update preflight verify install-min install-full install-oca
 
 apps-update: ## Refresh Apps registry (same as Update Apps List)
-	$(ODOO_BIN) -u base --stop-after-init
+	@echo "Note: Use Odoo web UI Settings > Update Apps List for registry refresh"
+	@echo "Alternatively: docker compose restart odoo"
 
 preflight: apps-update ## Ensure modules exist & are visible to Odoo
 	bash scripts/preflight-modules.sh "$(DB)" "$(shell echo $(ALL_FULL) | tr -d ' ')"
@@ -24,10 +25,13 @@ verify: ## Show availability state of modules
 	$(PSQL) -Atc "select name,state from ir_module_module where name in ($(shell echo '$(ALL_FULL)' | sed 's/,/','/g;s/^/'\''/;s/$/'\''/'));"
 
 install-min: preflight ## Install CE core + ipai_*
-	$(ODOO_BIN) -i $(ALL_MIN) --stop-after-init
+	@echo "Installing: $(ALL_MIN)"
+	$(ODOO_BIN) --init $(ALL_MIN) --stop-after-init
 
 install-oca: preflight ## Install OCA parity set only
-	$(ODOO_BIN) -i $(OCA_MODS) --stop-after-init
+	@echo "Installing: $(OCA_MODS)"
+	$(ODOO_BIN) --init $(OCA_MODS) --stop-after-init
 
 install-full: preflight ## Install everything (CE + ipai_* + OCA)
-	$(ODOO_BIN) -i $(ALL_FULL) --stop-after-init
+	@echo "Installing: $(ALL_FULL)"
+	$(ODOO_BIN) --init $(ALL_FULL) --stop-after-init
