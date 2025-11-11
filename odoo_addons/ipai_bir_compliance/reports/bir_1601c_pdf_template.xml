@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_bir_1601c_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>BIR Form 1601-C</h2>
+                        <h3>Monthly Remittance Return of Income Taxes Withheld</h3>
+
+                        <div class="row mt32">
+                            <div class="col-6">
+                                <strong>TIN:</strong> <span t-field="o.company_id.vat"/><br/>
+                                <strong>Company:</strong> <span t-field="o.company_id.name"/><br/>
+                                <strong>Address:</strong> <span t-field="o.company_id.partner_id.contact_address"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>For the Month of:</strong> <span t-esc="o.period_month"/>/2025<span t-esc="o.period_year"/><br/>
+                                <strong>Filing Deadline:</strong> <span t-field="o.deadline"/>
+                            </div>
+                        </div>
+
+                        <div class="row mt32">
+                            <div class="col-12">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Description</th>
+                                            <th class="text-right">Amount (PHP)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Tax Withheld - Compensation</td>
+                                            <td class="text-right">
+                                                <span t-field="o.tax_withheld_compensation" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Tax Withheld - Expanded</td>
+                                            <td class="text-right">
+                                                <span t-field="o.tax_withheld_expanded" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td><strong>Total Tax Withheld</strong></td>
+                                            <td class="text-right">
+                                                <strong><span t-field="o.tax_withheld_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></strong>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Add: Penalties</td>
+                                            <td class="text-right">
+                                                <span t-field="o.penalties" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td>Add: Interest</td>
+                                            <td class="text-right">
+                                                <span t-field="o.interest" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                            </td>
+                                        </tr>
+                                        <tr class="border-black">
+                                            <td><strong>TOTAL AMOUNT DUE</strong></td>
+                                            <td class="text-right">
+                                                <strong><span t-field="o.total_amount_due" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/></strong>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="row mt64">
+                            <div class="col-6">
+                                <p>
+                                    Generated on: <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d %H:%M:%S')"/><br/>
+                                    Status: <span t-field="o.state"/>
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- TODO: Add proper BIR form layout in M1 -->
+                        <div class="text-center mt32">
+                            <p class="text-muted">
+                                This is a simplified template. Full BIR-compliant layout to be implemented in M1.
+                            </p>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

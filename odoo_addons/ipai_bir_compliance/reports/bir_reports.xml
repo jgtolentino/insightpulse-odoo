@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- BIR Form 1601-C PDF Report -->
+    <report
+        id="report_bir_1601c"
+        model="bir.form.1601c"
+        string="BIR Form 1601-C"
+        report_type="qweb-pdf"
+        name="ipai_bir_compliance.report_bir_1601c_document"
+        file="ipai_bir_compliance.report_bir_1601c_document"
+        print_report_name="'BIR_1601C_%s_%s' % (object.period_year, object.period_month)"
+        attachment_use="False"
+    />
+
+    <!-- Report template will be defined in separate file -->
+</odoo>

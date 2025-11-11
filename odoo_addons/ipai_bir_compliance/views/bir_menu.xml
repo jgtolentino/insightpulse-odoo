@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Top-level menu -->
+    <menuitem
+        id="menu_bir_compliance_root"
+        name="BIR Compliance"
+        sequence="100"
+        web_icon="ipai_bir_compliance,static/description/icon.png"/>
+
+    <!-- Forms submenu -->
+    <menuitem
+        id="menu_bir_forms"
+        name="Tax Forms"
+        parent="menu_bir_compliance_root"
+        sequence="10"/>
+
+    <!-- 1601-C Monthly -->
+    <menuitem
+        id="menu_bir_form_1601c"
+        name="1601-C (Monthly Withholding)"
+        parent="menu_bir_forms"
+        action="action_bir_form_1601c"
+        sequence="10"/>
+
+    <!-- 2550Q Quarterly -->
+    <menuitem
+        id="menu_bir_form_2550q"
+        name="2550Q (Quarterly VAT)"
+        parent="menu_bir_forms"
+        action="action_bir_form_2550q"
+        sequence="20"/>
+
+    <!-- 1702-RT Annual -->
+    <menuitem
+        id="menu_bir_form_1702rt"
+        name="1702-RT (Annual Income Tax)"
+        parent="menu_bir_forms"
+        action="action_bir_form_1702rt"
+        sequence="30"/>
+
+    <!-- Configuration submenu -->
+    <menuitem
+        id="menu_bir_configuration"
+        name="Configuration"
+        parent="menu_bir_compliance_root"
+        sequence="90"/>
+
+    <!-- Reporting submenu -->
+    <menuitem
+        id="menu_bir_reporting"
+        name="Reports"
+        parent="menu_bir_compliance_root"
+        sequence="50"/>
+</odoo>

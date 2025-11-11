@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- BIR Validation Rules - to be populated in M1 -->
+        <!-- This file will contain validation rules from BIR regulations -->
+    </data>
+</odoo>

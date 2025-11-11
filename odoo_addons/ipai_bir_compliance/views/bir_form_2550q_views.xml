@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Stub views for 2550Q - to be implemented in M1 -->
+    <record id="action_bir_form_2550q" model="ir.actions.act_window">
+        <field name="name">BIR Form 2550Q</field>
+        <field name="res_model">bir.form.2550q</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
