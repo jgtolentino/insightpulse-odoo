@@ -1,0 +1,59 @@
+# Grafana Datasource Provisioning
+# Auto-configured datasources for InsightPulse Odoo
+
+apiVersion: 1
+
+datasources:
+  # Production Odoo PostgreSQL Database
+  - name: Odoo Production DB
+    type: postgres
+    access: proxy
+    url: postgres-prod:5432
+    database: odoo_production
+    user: odoo
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    isDefault: true
+    editable: true
+
+  # Staging Odoo PostgreSQL Database
+  - name: Odoo Staging DB
+    type: postgres
+    access: proxy
+    url: postgres-stage:5432
+    database: odoo_staging
+    user: odoo
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500
+      timescaledb: false
+    editable: true
+
+  # Supabase PostgreSQL (if using)
+  # - name: Supabase DB
+  #   type: postgres
+  #   access: proxy
+  #   url: aws-1-us-east-1.pooler.supabase.com:6543
+  #   database: postgres
+  #   user: postgres.spdtwktxdalcfigzeqrz
+  #   secureJsonData:
+  #     password: ${SUPABASE_PASSWORD}
+  #   jsonData:
+  #     sslmode: require
+  #     postgresVersion: 1506
+  #     timescaledb: false
+  #   editable: true
+
+  # Optional: Prometheus for system metrics
+  # - name: Prometheus
+  #   type: prometheus
+  #   access: proxy
+  #   url: http://prometheus:9090
+  #   isDefault: false
+  #   editable: true

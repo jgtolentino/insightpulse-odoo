@@ -33,6 +33,24 @@ Build a complete, self-hosted **Enterprise SaaS Parity Platform** providing 95% 
 - Maintain 99.5%+ uptime in production
 - Complete Waves 1-9 by Q1 2027
 
+### Key Links
+
+**Production Services**:
+- **GitHub Repository**: https://github.com/jgtolentino/insightpulse-odoo
+- **Production ERP**: https://erp.insightpulseai.net (also: https://api.insightpulseai.net)
+- **Analytics Dashboard**: https://superset.insightpulseai.net (also: https://bi.insightpulseai.net)
+- **MCP Coordinator**: https://mcp.insightpulseai.net
+- **AI Agent Platform**: https://agent.insightpulseai.net
+- **OCR Service**: https://ocr.insightpulseai.net
+
+**Staging & Monitoring** (M1+):
+- **Staging ERP**: https://staging.insightpulseai.net
+- **Metrics Dashboard**: https://metrics.insightpulseai.net (Grafana)
+
+**Communication & Automation**:
+- **Team Chat**: https://chat.insightpulseai.net (Mattermost)
+- **Workflow Automation**: https://n8n.insightpulseai.net
+
 ---
 
 ## 1. Product Overview
@@ -451,7 +469,7 @@ A **complete enterprise operations platform** built on Odoo CE 18 that replaces:
                       │
 ┌─────────────────────┴───────────────────────────────────────────┐
 │              Apache Superset 3.0 (Analytics)                    │
-│              https://insightpulseai.net/superset                │
+│              https://superset.insightpulseai.net                │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -518,9 +536,9 @@ Supabase PostgreSQL 15.6
 | Service | Purpose | Endpoint | Auth |
 |---------|---------|----------|------|
 | **OpenAI API** | GPT-4o-mini (LLM) | https://api.openai.com/v1 | API Key |
-| **PaddleOCR-VL** | OCR processing | https://ade-ocr-backend-d9dru.ondigitalocean.app | None (internal) |
+| **PaddleOCR-VL** | OCR processing | https://ocr.insightpulseai.net | None (internal) |
 | **Supabase** | PostgreSQL + pgvector | aws-1-us-east-1.pooler.supabase.com:6543 | Service role key |
-| **Apache Superset** | BI dashboards | https://insightpulseai.net/superset | OAuth |
+| **Apache Superset** | BI dashboards | https://superset.insightpulseai.net | OAuth |
 | **DigitalOcean** | App Platform | https://api.digitalocean.com | Access token |
 
 ### MCP Server Integration
