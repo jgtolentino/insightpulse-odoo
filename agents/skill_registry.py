@@ -4,21 +4,110 @@ Skill Registry Loader
 
 Loads skill definitions from skills.yaml and provides dynamic import.
 Single source of truth for all Visual Compliance Agent capabilities.
+Also supports loading external Anthropic-format skills from SKILL.md files.
 """
 
 import importlib
 import yaml
+import re
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 
 
 _SKILLS = None
 _PROFILES = None
+_ANTHROPIC_SKILLS = None
+
+# Path to Anthropic skills repository
+ANTHROPIC_SKILLS_PATH = Path(__file__).resolve().parent.parent / "anthropic_skills"
+
+
+def parse_skill_md(skill_path: Path) -> Optional[Dict[str, Any]]:
+    """
+    Parse a SKILL.md file in Anthropic format.
+
+    Args:
+        skill_path: Path to directory containing SKILL.md
+
+    Returns:
+        Dict with skill metadata or None if parsing fails
+    """
+    skill_md = skill_path / "SKILL.md"
+    if not skill_md.exists():
+        return None
+
+    content = skill_md.read_text(encoding="utf-8")
+
+    # Extract YAML frontmatter
+    frontmatter_match = re.match(r'^---\n(.*?)\n---\n(.*)$', content, re.DOTALL)
+    if not frontmatter_match:
+        return None
+
+    frontmatter_text = frontmatter_match.group(1)
+    markdown_body = frontmatter_match.group(2)
+
+    try:
+        metadata = yaml.safe_load(frontmatter_text)
+    except yaml.YAMLError:
+        return None
+
+    # Build skill metadata in our format
+    skill_id = f"anthropic.{metadata.get('name', skill_path.name)}"
+
+    return {
+        "id": skill_id,
+        "name": metadata.get("name", skill_path.name),
+        "description": metadata.get("description", ""),
+        "module": None,  # Anthropic skills don't have Python modules
+        "entrypoint": None,  # They are prompt-based
+        "repo": "anthropics/skills",
+        "path": str(skill_path),
+        "skill_md_path": str(skill_md),
+        "tags": ["anthropic", "external"] + metadata.get("metadata", {}).get("tags", []),
+        "license": metadata.get("license", "Apache-2.0"),
+        "allowed_tools": metadata.get("allowed-tools", []),
+        "anthropic": True,
+        "markdown_instructions": markdown_body.strip(),
+    }
+
+
+def load_anthropic_skills() -> Dict[str, Dict[str, Any]]:
+    """
+    Load Anthropic-format skills from anthropic_skills directory.
+
+    Returns:
+        Dict mapping skill_id to skill metadata
+    """
+    global _ANTHROPIC_SKILLS
+
+    if _ANTHROPIC_SKILLS is not None:
+        return _ANTHROPIC_SKILLS
+
+    _ANTHROPIC_SKILLS = {}
+
+    if not ANTHROPIC_SKILLS_PATH.exists():
+        return _ANTHROPIC_SKILLS
+
+    # Iterate through directories in anthropic_skills
+    for skill_dir in ANTHROPIC_SKILLS_PATH.iterdir():
+        if not skill_dir.is_dir():
+            continue
+
+        # Skip hidden directories and git
+        if skill_dir.name.startswith('.'):
+            continue
+
+        # Parse SKILL.md
+        skill_meta = parse_skill_md(skill_dir)
+        if skill_meta:
+            _ANTHROPIC_SKILLS[skill_meta["id"]] = skill_meta
+
+    return _ANTHROPIC_SKILLS
 
 
 def load_registry() -> Dict[str, Dict[str, Any]]:
     """
-    Load skills registry from skills.yaml.
+    Load skills registry from skills.yaml and merge with Anthropic skills.
 
     Returns:
         Dict mapping skill_id to skill metadata
@@ -38,6 +127,10 @@ def load_registry() -> Dict[str, Dict[str, Any]]:
 
         _SKILLS = {s["id"]: s for s in data.get("skills", [])}
         _PROFILES = {p["id"]: p for p in data.get("profiles", [])}
+
+        # Merge Anthropic skills into the registry
+        anthropic_skills = load_anthropic_skills()
+        _SKILLS.update(anthropic_skills)
 
     return _SKILLS
 
@@ -196,9 +289,20 @@ if __name__ == "__main__":
     print("=== Skills Registry Demo ===\n")
 
     # List all skills
-    print("All Skills:")
-    for skill_id, meta in load_registry().items():
-        print(f"  - {skill_id}: {meta['description']}")
+    all_skills = load_registry()
+    print(f"Total Skills Loaded: {len(all_skills)}")
+
+    # Separate Anthropic and native skills
+    anthropic_skills = {k: v for k, v in all_skills.items() if v.get("anthropic", False)}
+    native_skills = {k: v for k, v in all_skills.items() if not v.get("anthropic", False)}
+
+    print(f"\nNative Skills ({len(native_skills)}):")
+    for skill_id, meta in list(native_skills.items())[:5]:
+        print(f"  - {skill_id}: {meta['description'][:60]}...")
+
+    print(f"\nAnthropic Skills ({len(anthropic_skills)}):")
+    for skill_id, meta in list(anthropic_skills.items())[:5]:
+        print(f"  - {skill_id}: {meta['description'][:60]}...")
 
     print("\nFast Check Skills:")
     for skill_id, meta in list_skills(tag="fast-check").items():
@@ -209,6 +313,14 @@ if __name__ == "__main__":
         print(f"  - {profile_id}: {profile['description']}")
         print(f"    Skills: {', '.join(profile['skills'])}")
 
-    print("\nSkill Metadata Example:")
-    _, meta = get_skill("odoo.manifest.validate")
-    print(json.dumps(meta, indent=2))
+    print("\nNative Skill Metadata Example:")
+    if "odoo.manifest.validate" in native_skills:
+        # Just show metadata, don't try to import the module
+        meta = native_skills["odoo.manifest.validate"]
+        print(json.dumps({k: v for k, v in meta.items() if k != "markdown_instructions"}, indent=2))
+
+    print("\nAnthropic Skill Metadata Example:")
+    if anthropic_skills:
+        first_anthropic = list(anthropic_skills.keys())[0]
+        meta = anthropic_skills[first_anthropic]
+        print(json.dumps({k: v for k, v in meta.items() if k != "markdown_instructions"}, indent=2))

@@ -1,0 +1,107 @@
+name: Skills - Fast Check
+
+on:
+  pull_request:
+    branches: [ main, develop, 'ipai-*' ]
+    paths:
+      - 'odoo_addons/**'
+      - 'agents/**'
+      - 'anthropic_skills/**'
+  push:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  fast-check:
+    name: Fast Compliance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml requests python-dotenv
+
+      - name: Clone Anthropic Skills (if not present)
+        run: |
+          if [ ! -d "anthropic_skills" ]; then
+            git clone --depth 1 https://github.com/anthropics/skills.git anthropic_skills
+            cd anthropic_skills && git remote rename origin upstream
+          fi
+
+      - name: Run Fast Check Profile
+        id: fast-check
+        run: |
+          echo "Running fast_check profile..."
+          python3 -m agents.run_skill --profile fast_check --repo-path . --json > results.json
+          cat results.json
+
+      - name: Upload Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fast-check-results
+          path: results.json
+          retention-days: 30
+
+      - name: Parse Results and Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const results = JSON.parse(fs.readFileSync('results.json', 'utf8'));
+
+            let comment = '## 🔍 Fast Compliance Check Results\n\n';
+            comment += '| Skill | Status |\n';
+            comment += '|-------|--------|\n';
+
+            let hasViolations = false;
+
+            for (const [skill, exitCode] of Object.entries(results.results || {})) {
+              const status = exitCode === 0 ? '✅ Pass' : '❌ Fail';
+              if (exitCode !== 0) hasViolations = true;
+              comment += `| ${skill} | ${status} |\n`;
+            }
+
+            if (hasViolations) {
+              comment += '\n⚠️ **Violations detected.** Please review the full logs.\n';
+            } else {
+              comment += '\n✅ **All checks passed!**\n';
+            }
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Fail if violations found
+        if: always()
+        run: |
+          if [ -f results.json ]; then
+            violations=$(python3 -c "import json; data=json.load(open('results.json')); print(sum(1 for v in data.get('results', {}).values() if v != 0))")
+            if [ "$violations" -gt 0 ]; then
+              echo "❌ Found $violations violations"
+              exit 1
+            fi
+          fi

@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "insightpulse-skills": {
+      "command": "python3",
+      "args": ["-m", "agents.mcp_skill_server"],
+      "cwd": "/path/to/insightpulse-odoo",
+      "env": {
+        "PYTHONPATH": "/path/to/insightpulse-odoo",
+        "VISUAL_KG_SUPABASE_URL": "https://your-project.supabase.co",
+        "VISUAL_KG_SUPABASE_KEY": "your-supabase-key",
+        "OPENAI_API_KEY": "your-openai-key"
+      }
+    }
+  }
+}

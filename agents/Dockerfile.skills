@@ -1,0 +1,44 @@
+# Dockerfile for InsightPulse AI Skills Runner
+# Supports both native Python-based skills and Anthropic prompt-based skills
+
+FROM python:3.11-slim
+
+LABEL maintainer="InsightPulse AI <support@insightpulseai.net>"
+LABEL description="Skills runner for OCA compliance validation and Anthropic skills"
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /app
+
+# Copy requirements first for better caching
+COPY requirements.txt /app/
+RUN pip install --no-cache-dir -r requirements.txt || echo "No requirements.txt, skipping"
+
+# Copy agents directory
+COPY agents/ /app/agents/
+COPY scripts/ /app/scripts/
+
+# Copy anthropic_skills directory
+COPY anthropic_skills/ /app/anthropic_skills/
+
+# Install visual_compliance dependencies (if exists)
+RUN pip install --no-cache-dir \
+    pyyaml \
+    requests \
+    python-dotenv \
+    || true
+
+# Set Python path
+ENV PYTHONPATH=/app:$PYTHONPATH
+
+# Default command: show help
+CMD ["python3", "-m", "agents.run_skill", "--help"]
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python3 -m agents.skill_registry --help || exit 1
