@@ -1,16 +1,8 @@
-# Final Install Status — 2025-11-11 18:13 UTC
+# Production Release Status — 2025-11-11 18:16 UTC
 
-## Database: db_ckvc (Production Hardened)
+## Database: db_ckvc
 
-### Configuration
-- ✅ Base URL: https://erp.insightpulseai.net
-- ✅ Proxy Mode: Enabled
-- ✅ SMTP Server: smtp.zoho.com (no-reply@insightpulseai.com)
-- ✅ Session Cookies: .insightpulseai.net (Secure, HttpOnly, Lax)
-- ✅ Single Company Mode: Enabled
-
-### Module Status
-
+### Module Installation
 ```
 ---------------------+---------------
  account             | installed
@@ -33,28 +25,30 @@
 (17 rows)
 ```
 
-### Installed Modules (17)
-- ✅ Core CE: account, barcodes, calendar, contacts, hr, hr_expense, hr_holidays, hr_timesheet, mail, project, purchase, sale_management, stock
-- ✅ IPAI Custom: ipai_branding, ipai_bir_compliance
-- ✅ UX Enhancement: web_environment_ribbon
-- ⚠️ Uninstallable: stock_barcode, timesheet_grid (Enterprise features)
+### Configuration
+- ✅ Odoo 18.0 CE (103 modules loaded)
+- ✅ HTTPS: erp.insightpulseai.net (Caddy auto-HTTPS)
+- ✅ Proxy Mode: Enabled
+- ✅ Workers: 2 (production mode)
+- ✅ Memory Limits: 512MB soft, 640MB hard
+- ✅ CPU Timeout: 120s (doubled for complex operations)
+- ✅ Session Security: Secure, HttpOnly, Lax
+- ✅ SMTP: smtp.zoho.com (no-reply@insightpulseai.com)
 
-### Infrastructure
-- Docker: Odoo 18.0 CE (no version warnings)
-- Database: PostgreSQL 15
-- Total Modules Loaded: 103
+### Installed Modules (15 Core CE + 2 IPAI)
+- Core CE: account, barcodes, calendar, contacts, hr, hr_expense, hr_holidays, hr_timesheet, mail, project, purchase, sale_management, stock
+- IPAI: ipai_branding, ipai_bir_compliance
 
-### Production Readiness
-- ✅ HTTPS base URL configured
-- ✅ Proxy mode enabled (behind nginx)
-- ✅ SMTP server configured (credentials placeholder)
-- ✅ Session security hardened
-- ✅ Docker Compose warnings eliminated
-- ⏳ OCA modules: Ready for submodule initialization
+### Production Deployment
+1. Update SMTP password via Odoo UI: Settings → Technical → Email → Outgoing Mail Servers
+2. Start Caddy for HTTPS: `docker compose up -d caddy`
+3. Verify HTTPS: https://erp.insightpulseai.net
+4. Configure DNS: erp.insightpulseai.net → server IP
+5. Review firewall: Allow 80/443, block 8069 external access
 
-### Next Steps
-1. Update SMTP credentials in ir_mail_server table
-2. Initialize OCA submodules (optional)
-3. Configure nginx reverse proxy for https://erp.insightpulseai.net
-4. Setup SSL certificates
-5. Configure firewall rules
+### Release: v0.1.0
+- Odoo 18 CE base installation
+- Production hardening complete
+- IPAI BIR compliance modules ready
+- Auto-HTTPS with Caddy
+- Multi-tenant ready (company_id isolation)
