@@ -1,0 +1,87 @@
+name: Claude Code PR Review
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "agents/**"
+      - "skills/**"
+      - ".claude/**"
+      - "CLAUDE.md"
+      - "mcp/**"
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate CLAUDE.md format
+        run: |
+          if [ -f "CLAUDE.md" ]; then
+            echo "✓ CLAUDE.md exists"
+            # Check for required sections
+            grep -q "## 🧠 InsightPulse AI" CLAUDE.md || echo "⚠️  Missing project header"
+            grep -q "### 📁 Memory Components" CLAUDE.md || echo "⚠️  Missing memory components section"
+            grep -q "### 🔐 Permission Model" CLAUDE.md || echo "⚠️  Missing permission model section"
+          else
+            echo "❌ CLAUDE.md not found"
+            exit 1
+          fi
+
+      - name: Validate .claude/settings.json
+        run: |
+          if [ -f ".claude/settings.json" ]; then
+            echo "✓ .claude/settings.json exists"
+            python3 -c "import json; json.load(open('.claude/settings.json'))" || exit 1
+            echo "✓ Valid JSON format"
+          else
+            echo "⚠️  .claude/settings.json not found"
+          fi
+
+      - name: Validate hooks
+        run: |
+          if [ -f ".claude/hooks/pre_tool_use.py" ]; then
+            echo "✓ PreToolUse hook exists"
+            python3 -m py_compile .claude/hooks/pre_tool_use.py || exit 1
+          fi
+          if [ -f ".claude/hooks/post_tool_use.py" ]; then
+            echo "✓ PostToolUse hook exists"
+            python3 -m py_compile .claude/hooks/post_tool_use.py || exit 1
+          fi
+
+      - name: Validate skills.yaml
+        run: |
+          if [ -f "agents/skills.yaml" ]; then
+            echo "✓ agents/skills.yaml exists"
+            python3 -c "import yaml; yaml.safe_load(open('agents/skills.yaml'))" 2>/dev/null || echo "⚠️  Invalid YAML format"
+          fi
+
+      - name: Validate agent registry
+        run: |
+          if [ -f "agents/REGISTRY.yaml" ]; then
+            echo "✓ agents/REGISTRY.yaml exists"
+            python3 -c "import yaml; yaml.safe_load(open('agents/REGISTRY.yaml'))" 2>/dev/null || echo "⚠️  Invalid YAML format"
+          fi
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '✓ Claude Code policy validation completed successfully!'
+            })

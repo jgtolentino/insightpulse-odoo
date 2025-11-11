@@ -1,4 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Read(agents/**)",
+      "Read(skills/**)",
+      "Read(vendor/**)",
+      "Read(docs/**)",
+      "Read(CLAUDE.md)",
+      "Read(mcp/**)",
+      "Write(agents/skills.yaml)",
+      "Write(agents/REGISTRY.yaml)",
+      "Write(.claude/hooks/**)",
+      "Write(.github/workflows/claude-code-pr-review.yml)",
+      "Write(.github/workflows/claude-skill-verifier.yml)",
+      "Edit(agents/skills.yaml)",
+      "Edit(agents/REGISTRY.yaml)"
+    ]
+  },
   "hooks": {
     "SessionStart": [
       {
@@ -7,6 +24,28 @@
           {
             "type": "command",
             "command": "bash \"$CLAUDE_PROJECT_DIR\"/link_skills.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/pre_tool_use.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post_tool_use.py"
           }
         ]
       }

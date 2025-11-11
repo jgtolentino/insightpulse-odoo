@@ -1,0 +1,22 @@
+{
+  "id": "claude-code",
+  "type": "file",
+  "description": "Claude Code MCP server for agent orchestration and skill sync",
+  "enabled": true,
+  "settings": {
+    "root_path": "./",
+    "skills_path": "agents/skills.yaml",
+    "registry_path": "agents/REGISTRY.yaml",
+    "memory_path": "CLAUDE.md",
+    "config_path": ".claude/settings.json"
+  },
+  "capabilities": [
+    "skill_discovery",
+    "agent_orchestration",
+    "memory_sync",
+    "config_validation"
+  ],
+  "version": "1.0.0",
+  "author": "InsightPulse AI",
+  "license": "MIT"
+}
