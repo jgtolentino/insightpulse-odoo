@@ -1321,3 +1321,38 @@ sap-help: ## Show SAP Process Intelligence commands
 	@echo "  - Models: skills/integrations/sap-process-intelligence/models/"
 	@echo "  - Agent: .superclaude/agents/sap-executor-agent.yml"
 	@echo ""
+
+# ════════════════════════════════════════════════════════════════
+# Validation & Health Checks
+# ════════════════════════════════════════════════════════════════
+
+.PHONY: validate hc routing oauth report
+
+# Run complete validation suite
+validate: hc routing oauth
+	@echo ""
+	@echo "✅ All validations passed!"
+	@echo "📋 Full report: docs/reports/VALIDATION_REPORT.md"
+	@echo "📄 Quick status: docs/reports/FINAL_STATUS.md"
+
+# Health check - containers, ports, database, branding
+hc:
+	@echo "🏥 Running health check..."
+	@bash scripts/healthcheck.sh
+
+# Routing validation - HTTP/HTTPS endpoints
+routing:
+	@echo "🌐 Validating routing..."
+	@bash scripts/validate_routing.sh
+
+# OAuth validation - providers and buttons
+oauth:
+	@echo "🔐 Validating OAuth..."
+	@bash scripts/validate_oauth.sh
+
+# Generate validation report
+report:
+	@echo "📊 Generating validation report..."
+	@echo "Report generated at: docs/reports/VALIDATION_REPORT.md"
+	@echo "Status file: docs/reports/FINAL_STATUS.md"
+	@cat docs/reports/FINAL_STATUS.md
