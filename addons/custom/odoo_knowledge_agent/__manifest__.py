@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Odoo Knowledge Agent",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Tools",
     "summary": "Forum scraper and error prevention for Odoo custom modules",
     "description": """

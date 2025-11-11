@@ -1,6 +1,6 @@
 {
     "name": "IPAI Subscriptions",
-    "version": "19.0.20251026.1",
+    "version": "18.0.20251026.1",
     "category": "Sales/Subscriptions",
     "summary": "Recurring revenue management with MRR/ARR tracking",
     "description": """
