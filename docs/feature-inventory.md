@@ -1,14 +1,16 @@
 # Feature Inventory
-Generated: 2025-11-11T06:08:50.970513+00:00Z
+Generated: 2025-11-11T06:21:16.559273+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
 | apps_admin_enhancements | Custom | 19.0.251026.1 | unknown | Enhanced Apps management with source tracking and accessibility | base | addons/custom/apps_admin_enhancements |
 | finance_ssc_closing | Custom | 19.0.1.0.0 | unknown | Month-end closing checklist and BIR compliance tracking for Finance Shared Service Center | base,account,account_accountant,project,mail,hr,web | addons/custom/finance_ssc_closing |
 | github_integration | Custom | 1.0.0 | unknown | GitHub webhook and OAuth integration via pulser-hub app | base,project,web | addons/insightpulse/ops/github_integration |
+| hr_offboarding_clearance | Custom | 18.0.1.0.0 | unknown | Employee offboarding clearance workflow with BIR compliance | hr,hr_contract,mail,portal | custom_addons/hr_offboarding_clearance |
 | insightpulse_app_sources | Custom | 19.0.1.0.0 | unknown | Display addon sources (OCA, Custom, Community) in Apps list | base | addons/insightpulse/insightpulse_app_sources |
 | ip_expense_mvp | Custom |  | unknown |  |  | addons/ip_expense_mvp |
 | ip_expense_mvp | Custom | 0.1.0 | unknown | Mobile receipt capture + OCR, cash advance/liquidation scaffolds, admin dashboard | base,web,hr,hr_expense | custom_addons/ip_expense_mvp |
+| ip_superset_integration | Custom | 18.0.1.0.0 | unknown | Apache Superset BI dashboards integration - Tableau alternative | base,web | custom_addons/ip_superset_integration |
 | ipai_agent | Custom | 1.0.0 | unknown | AI-powered chatbot for Odoo Discuss with automation capabilities | base,mail,hr_expense,account | addons/ipai_agent |
 | ipai_agent_hybrid | Custom | 19.0.1.0.0 | unknown | Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration | base,web,mail,project,calendar | addons/ipai_agent_hybrid |
 | ipai_approvals | Custom | 19.0.1.0.0 | unknown | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) | ipai_core,purchase,hr_expense,account,queue_job | addons/custom/ipai_approvals |
