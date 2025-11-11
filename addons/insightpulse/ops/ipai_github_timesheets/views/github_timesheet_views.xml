@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Extend timesheet views to show GitHub fields -->
+    <record id="view_timesheet_tree_github" model="ir.ui.view">
+        <field name="name">account.analytic.line.tree.github</field>
+        <field name="model">account.analytic.line</field>
+        <field name="inherit_id" ref="hr_timesheet.hr_timesheet_line_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='project_id']" position="after">
+                <field name="github_pr_id" optional="hide"/>
+                <field name="github_project_id" optional="hide"/>
+                <field name="expense_type" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

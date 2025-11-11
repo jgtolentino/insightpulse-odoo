@@ -1,0 +1,12 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_github_config_user,github.config.user,model_github_config,base.group_user,1,0,0,0
+access_github_config_manager,github.config.manager,model_github_config,base.group_system,1,1,1,1
+access_github_project_user,github.project.user,model_github_project,base.group_user,1,0,0,0
+access_github_project_manager,github.project.manager,model_github_project,project.group_project_manager,1,1,1,0
+access_github_project_admin,github.project.admin,model_github_project,base.group_system,1,1,1,1
+access_github_pull_request_user,github.pull.request.user,model_github_pull_request,base.group_user,1,1,1,0
+access_github_pull_request_manager,github.pull.request.manager,model_github_pull_request,project.group_project_manager,1,1,1,1
+access_github_issue_user,github.issue.user,model_github_issue,base.group_user,1,1,1,0
+access_github_issue_manager,github.issue.manager,model_github_issue,project.group_project_manager,1,1,1,1
+access_github_sync_log_user,github.sync.log.user,model_github_sync_log,base.group_user,1,0,0,0
+access_github_sync_log_manager,github.sync.log.manager,model_github_sync_log,base.group_system,1,1,1,1

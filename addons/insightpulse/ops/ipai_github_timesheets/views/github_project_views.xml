@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GitHub Project Views -->
+
+    <!-- Tree View -->
+    <record id="view_github_project_tree" model="ir.ui.view">
+        <field name="name">github.project.tree</field>
+        <field name="model">github.project</field>
+        <field name="arch" type="xml">
+            <tree string="GitHub Projects" decoration-danger="budget_utilization_pct &gt; 100">
+                <field name="project_number"/>
+                <field name="title"/>
+                <field name="expense_type"/>
+                <field name="project_budget" widget="monetary"/>
+                <field name="project_spend" widget="monetary"/>
+                <field name="remaining_budget" widget="monetary"/>
+                <field name="budget_utilization_pct" widget="progressbar"/>
+                <field name="github_state"/>
+                <field name="odoo_project_id"/>
+                <field name="task_count"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_github_project_form" model="ir.ui.view">
+        <field name="name">github.project.form</field>
+        <field name="model">github.project</field>
+        <field name="arch" type="xml">
+            <form string="GitHub Project">
+                <header>
+                    <button name="sync_cost_to_github" string="Sync Cost to GitHub" type="object" class="btn-primary"/>
+                    <button name="action_view_tasks" string="View Tasks" type="object" class="btn-secondary"/>
+                    <button name="action_view_timesheets" string="View Timesheets" type="object" class="btn-secondary"/>
+                    <field name="github_state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" widget="statinfo" string="Tasks"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="title"/>
+                            <field name="project_number"/>
+                            <field name="github_url" widget="url"/>
+                            <field name="odoo_project_id"/>
+                            <field name="expense_type"/>
+                        </group>
+                        <group>
+                            <field name="github_project_id"/>
+                            <field name="github_node_id"/>
+                            <field name="config_id"/>
+                            <field name="last_synced"/>
+                        </group>
+                    </group>
+                    <group string="Financial Tracking">
+                        <group>
+                            <field name="currency_id" invisible="1"/>
+                            <field name="project_budget" widget="monetary"/>
+                            <field name="project_spend" widget="monetary"/>
+                            <field name="remaining_budget" widget="monetary"/>
+                        </group>
+                        <group>
+                            <field name="budget_utilization_pct" widget="progressbar"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description">
+                            <field name="description"/>
+                        </page>
+                        <page string="Tasks">
+                            <field name="task_ids">
+                                <tree>
+                                    <field name="name"/>
+                                    <field name="github_pr_id"/>
+                                    <field name="user_ids" widget="many2many_tags"/>
+                                    <field name="stage_id"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Timesheets">
+                            <field name="timesheet_ids" readonly="1">
+                                <tree>
+                                    <field name="date"/>
+                                    <field name="employee_id"/>
+                                    <field name="name"/>
+                                    <field name="unit_amount" string="Hours"/>
+                                    <field name="amount" widget="monetary"/>
+                                    <field name="expense_type"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_github_project" model="ir.actions.act_window">
+        <field name="name">GitHub Projects</field>
+        <field name="res_model">github.project</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_github_config_form" model="ir.ui.view">
+        <field name="name">github.config.form</field>
+        <field name="model">github.config</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="test_connection" string="Test Connection" type="object" class="btn-primary"/>
+                    <button name="action_sync_now" string="Sync Now" type="object" class="btn-secondary"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="github_org"/>
+                            <field name="github_repo"/>
+                            <field name="github_token" password="True"/>
+                        </group>
+                        <group>
+                            <field name="sync_pull_requests"/>
+                            <field name="sync_issues"/>
+                            <field name="sync_projects"/>
+                            <field name="auto_create_tasks"/>
+                            <field name="prompt_timesheet_on_merge"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_github_config" model="ir.actions.act_window">
+        <field name="name">GitHub Configuration</field>
+        <field name="res_model">github.config</field>
+        <field name="view_mode">form</field>
+    </record>
+</odoo>

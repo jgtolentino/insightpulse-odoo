@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Default expense type data (for CapEx/OpEx classification) -->
+    <!-- This file is loaded during module installation -->
+
+    <!-- Note: Expense types are defined as Selection field in github.project model -->
+    <!-- This file can be used for additional data like default budgets, etc. -->
+
+</odoo>

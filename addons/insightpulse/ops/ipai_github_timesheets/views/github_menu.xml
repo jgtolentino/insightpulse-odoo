@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- GitHub Integration Menu -->
+
+    <menuitem
+        id="menu_github_root"
+        name="GitHub"
+        sequence="100"
+        web_icon="ipai_github_timesheets,static/description/icon.png"
+    />
+
+    <menuitem
+        id="menu_github_projects"
+        name="GitHub Projects"
+        parent="menu_github_root"
+        action="action_github_project"
+        sequence="10"
+    />
+
+    <menuitem
+        id="menu_github_pull_requests"
+        name="Pull Requests"
+        parent="menu_github_root"
+        action="action_github_pull_request"
+        sequence="20"
+    />
+
+    <menuitem
+        id="menu_github_issues"
+        name="Issues"
+        parent="menu_github_root"
+        action="action_github_issue"
+        sequence="30"
+    />
+
+    <menuitem
+        id="menu_github_config"
+        name="Configuration"
+        parent="menu_github_root"
+        action="action_github_config"
+        sequence="90"
+        groups="base.group_system"
+    />
+
+    <menuitem
+        id="menu_github_sync_log"
+        name="Sync Logs"
+        parent="menu_github_root"
+        action="action_github_sync_log"
+        sequence="95"
+        groups="base.group_system"
+    />
+
+</odoo>

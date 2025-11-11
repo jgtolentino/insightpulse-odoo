@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_github_pull_request_tree" model="ir.ui.view">
+        <field name="name">github.pull.request.tree</field>
+        <field name="model">github.pull.request</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="github_pr_number"/>
+                <field name="title"/>
+                <field name="github_author"/>
+                <field name="github_state"/>
+                <field name="task_id"/>
+                <field name="timesheet_hours"/>
+                <field name="timesheet_cost" widget="monetary"/>
+                <field name="timesheet_prompted"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_github_pull_request_form" model="ir.ui.view">
+        <field name="name">github.pull.request.form</field>
+        <field name="model">github.pull.request</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_create_task" string="Create Task" type="object" attrs="{'invisible': [('task_id', '!=', False)]}"/>
+                    <button name="action_prompt_timesheet" string="Prompt Timesheet" type="object" attrs="{'invisible': ['|', ('github_state', '!=', 'merged'), ('timesheet_prompted', '=', True)]}"/>
+                    <field name="github_state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="github_pr_number"/>
+                        <field name="title"/>
+                        <field name="github_url" widget="url"/>
+                        <field name="github_author"/>
+                        <field name="task_id"/>
+                        <field name="employee_id"/>
+                        <field name="currency_id" invisible="1"/>
+                    </group>
+                    <group string="Timesheets">
+                        <field name="timesheet_hours"/>
+                        <field name="timesheet_cost"/>
+                        <field name="timesheet_prompted"/>
+                    </group>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_github_pull_request" model="ir.actions.act_window">
+        <field name="name">Pull Requests</field>
+        <field name="res_model">github.pull.request</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

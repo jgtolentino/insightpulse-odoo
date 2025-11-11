@@ -1,0 +1,114 @@
+name: Timesheet Prompt on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+      - develop
+
+jobs:
+  prompt-timesheet:
+    name: Prompt Timesheet Entry
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Post Timesheet Reminder Comment
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            const prNumber = pr.number;
+
+            // Construct Odoo task URL (if you have a mapping)
+            const odooBaseUrl = '${{ secrets.ODOO_BASE_URL }}' || 'https://your-odoo-domain.com';
+            const odooTaskUrl = `${odooBaseUrl}/web#model=project.task&view_type=list&cids=1&menu_id=XXX`;
+
+            const commentBody = `## 📝 Timesheet Reminder
+
+            Hi @${author}! This PR has been merged. Please log your time in Odoo:
+
+            **Odoo Task**: ${odooTaskUrl}
+
+            **Instructions**:
+            1. Navigate to Odoo: ${odooBaseUrl}
+            2. Go to **Project → Tasks**
+            3. Find task: "PR #${prNumber}: ${pr.title}"
+            4. Click **Timesheets** tab
+            5. Log your hours spent on this PR
+
+            **Why?** This helps us:
+            - Track project costs accurately
+            - Calculate feature ROI
+            - Report R&D expenses (CapEx/OpEx)
+            - Understand developer productivity
+
+            **What to log:**
+            - **Date**: Day(s) you worked on this
+            - **Hours**: Total time spent (e.g., 8.5)
+            - **Description**: Brief summary of work done
+
+            **Example:**
+            \`\`\`
+            Date: 2025-01-15
+            Hours: 8.5
+            Description: Implemented GitHub timesheet integration with webhook receiver
+            \`\`\`
+
+            ---
+
+            *This is an automated reminder from InsightPulse GitHub Integration*
+
+            **Need help?** Contact support@insightpulseai.net`;
+
+            // Post comment
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody
+            });
+
+            console.log(`Posted timesheet reminder on PR #${prNumber}`);
+
+      - name: Notify Odoo via Webhook
+        if: ${{ secrets.ODOO_WEBHOOK_URL }}
+        run: |
+          curl -X POST "${{ secrets.ODOO_WEBHOOK_URL }}/github/webhook" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: pull_request" \
+            -H "X-Hub-Signature-256: ${{ secrets.GITHUB_WEBHOOK_SECRET }}" \
+            -d '{
+              "action": "closed",
+              "pull_request": {
+                "id": ${{ github.event.pull_request.id }},
+                "number": ${{ github.event.pull_request.number }},
+                "title": "${{ github.event.pull_request.title }}",
+                "state": "closed",
+                "merged": true,
+                "merged_at": "${{ github.event.pull_request.merged_at }}",
+                "user": {
+                  "login": "${{ github.event.pull_request.user.login }}"
+                },
+                "html_url": "${{ github.event.pull_request.html_url }}"
+              }
+            }'
+
+      - name: Log Success
+        if: success()
+        run: |
+          echo "✅ Timesheet prompt posted for PR #${{ github.event.pull_request.number }}"
+          echo "Author: @${{ github.event.pull_request.user.login }}"
+          echo "Title: ${{ github.event.pull_request.title }}"
+
+      - name: Log Failure
+        if: failure()
+        run: |
+          echo "❌ Failed to post timesheet prompt for PR #${{ github.event.pull_request.number }}"
+          echo "Please check logs and notify platform team"

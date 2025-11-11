@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Demo data for GitHub Projects -->
+    <data noupdate="1">
+        <!-- Demo projects would go here -->
+    </data>
+</odoo>

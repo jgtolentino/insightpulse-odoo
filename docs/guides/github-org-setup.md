@@ -371,6 +371,154 @@ gh project field-create 1 --name "Area" --data-type SINGLE_SELECT --single-selec
 gh project field-create 1 --name "Priority" --data-type SINGLE_SELECT --single-select-options "P0 - Critical,P1 - High,P2 - Medium,P3 - Low"
 ```
 
+### 3. Financial Tracking Fields (GitHub → Odoo Integration)
+
+**Purpose**: Track development costs, budgets, and ROI for CFO visibility
+
+To integrate GitHub Projects with Odoo financial tracking (using `ipai_github_timesheets` module), add these custom fields to your org-level GitHub Projects:
+
+**Financial Fields Schema:**
+
+```yaml
+financial_fields:
+  - name: "Project Budget ($)"
+    type: number
+    description: "Total allocated budget for this project"
+    example: 50000
+    required: true
+    usage: "Set at project planning stage"
+
+  - name: "Project Spend ($)"
+    type: number
+    description: "Actual spend from Odoo timesheets (auto-synced)"
+    example: 12500
+    required: false
+    usage: "Auto-updated by Odoo via API (read-only in GitHub)"
+
+  - name: "Remaining Budget ($)"
+    type: number
+    description: "Budget - Spend (calculated field)"
+    formula: "Project Budget ($) - Project Spend ($)"
+    example: 37500
+    required: false
+    usage: "Calculated automatically"
+
+  - name: "Budget Utilization %"
+    type: number
+    description: "Spend / Budget × 100"
+    formula: "(Project Spend ($) / Project Budget ($)) × 100"
+    example: 25
+    required: false
+    usage: "Calculated automatically"
+
+  - name: "Expense Type"
+    type: single_select
+    description: "Classification for financial reporting (CapEx vs OpEx)"
+    options:
+      - "R&D (OpEx)" # Research & experimental features
+      - "Capitalizable Feature (CapEx)" # Production-ready features
+      - "Maintenance (OpEx)" # Bug fixes, refactoring
+      - "Bug Fix (OpEx)" # Bug fixes only
+    required: true
+    usage: "Set at project creation for accounting"
+
+  - name: "Odoo Project ID"
+    type: text
+    description: "Link to Odoo project.project record ID"
+    example: "456"
+    required: false
+    usage: "Auto-populated by ipai_github_timesheets module"
+
+  - name: "Timesheet Hours"
+    type: number
+    description: "Total logged hours from Odoo timesheets"
+    example: 167.5
+    required: false
+    usage: "Auto-synced from Odoo"
+
+  - name: "Avg Hourly Rate ($)"
+    type: number
+    description: "Average developer hourly rate for this project"
+    example: 75
+    required: false
+    usage: "Auto-calculated from Odoo employee rates"
+```
+
+**GitHub CLI Setup (Financial Fields):**
+
+```bash
+# Add financial tracking fields to your GitHub Project
+PROJECT_ID=1  # Your GitHub Project ID
+
+# Budget fields
+gh project field-create $PROJECT_ID \
+  --name "Project Budget ($)" \
+  --data-type NUMBER
+
+gh project field-create $PROJECT_ID \
+  --name "Project Spend ($)" \
+  --data-type NUMBER
+
+# Expense classification
+gh project field-create $PROJECT_ID \
+  --name "Expense Type" \
+  --data-type SINGLE_SELECT \
+  --single-select-options "R&D (OpEx),Capitalizable Feature (CapEx),Maintenance (OpEx),Bug Fix (OpEx)"
+
+# Odoo linkage
+gh project field-create $PROJECT_ID \
+  --name "Odoo Project ID" \
+  --data-type TEXT
+
+# Timesheet tracking
+gh project field-create $PROJECT_ID \
+  --name "Timesheet Hours" \
+  --data-type NUMBER
+
+gh project field-create $PROJECT_ID \
+  --name "Avg Hourly Rate ($)" \
+  --data-type NUMBER
+```
+
+**Integration Workflow:**
+
+```mermaid
+graph LR
+    A[GitHub Project] --> B[Odoo ipai_github_timesheets]
+    B --> C[Developer Logs Time]
+    C --> D[Cost Calculated]
+    D --> E[Sync Back to GitHub]
+    E --> A
+```
+
+**Step-by-step:**
+
+1. **Create GitHub Project** with financial fields
+2. **Install Odoo module**: `ipai_github_timesheets`
+3. **Configure GitHub API** in Odoo: Settings → GitHub Config
+4. **Sync Projects**: Odoo fetches GitHub Projects
+5. **Developer works on PR** → PR merged
+6. **Timesheet prompt** posted on GitHub PR
+7. **Developer logs time** in Odoo (hours × rate)
+8. **Cost synced back** to GitHub Project "Project Spend ($)" field
+9. **CFO views dashboard** in Superset with burn rate, CapEx/OpEx split
+
+**Example GitHub Project with Financial Tracking:**
+
+| Project | Budget | Spend | Remaining | Utilization | Expense Type | Hours | Avg Rate |
+|---------|--------|-------|-----------|-------------|--------------|-------|----------|
+| Q1 2025 Features | $50,000 | $12,500 | $37,500 | 25% | CapEx | 167.5 | $75 |
+| Bug Fixes Sprint 3 | $10,000 | $8,900 | $1,100 | 89% | OpEx | 118.7 | $75 |
+| R&D: AI Agents | $25,000 | $18,750 | $6,250 | 75% | R&D (OpEx) | 250.0 | $75 |
+
+**Financial Reporting (Superset Dashboards):**
+
+See [Superset CFO Dashboard Documentation](../superset/github-financial-dashboards.md) for:
+- Project burn rate analysis
+- CapEx vs OpEx split
+- Feature ROI calculations
+- Developer productivity metrics
+
 ---
 
 ## Dependency Management Strategy
