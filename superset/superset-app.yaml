@@ -11,8 +11,8 @@ services:
       repo: jgtolentino/insightpulse-odoo
       branch: feat/odoo-18-oca-automation
       deploy_on_push: true
-    dockerfile_path: superset/Dockerfile
-    context_dir: superset
+    dockerfile_path: Dockerfile
+    source_dir: superset
 
     # Environment variables
     envs:
