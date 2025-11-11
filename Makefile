@@ -22,7 +22,8 @@ preflight: apps-update ## Ensure modules exist & are visible to Odoo
 	bash scripts/preflight-modules.sh "$(DB)" "$(shell echo $(ALL_FULL) | tr -d ' ')"
 
 verify: ## Show availability state of modules
-	$(PSQL) -Atc "select name,state from ir_module_module where name in ($(shell echo '$(ALL_FULL)' | sed 's/,/','/g;s/^/'\''/;s/$/'\''/'));"
+	@echo "Checking module states in $(DB)..."
+	$(PSQL) -c "SELECT name, state FROM ir_module_module WHERE name = ANY(string_to_array('$(ALL_FULL)', ',')) ORDER BY name;"
 
 install-min: preflight ## Install CE core + ipai_*
 	@echo "Installing: $(ALL_MIN)"
