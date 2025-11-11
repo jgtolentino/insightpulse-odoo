@@ -1,0 +1,76 @@
+{
+  "agencies": [
+    {
+      "code": "rim",
+      "name": "Refugee International Mission",
+      "tin": "123-456-789-000",
+      "description": "Humanitarian aid organization",
+      "address": "Quezon City, Metro Manila, Philippines",
+      "email": "info@rim.org.ph",
+      "phone": "+63 2 8123 4567"
+    },
+    {
+      "code": "ckvc",
+      "name": "CKVC Foundation",
+      "tin": "234-567-890-000",
+      "description": "Educational and community foundation",
+      "address": "Makati City, Metro Manila, Philippines",
+      "email": "info@ckvc.org.ph",
+      "phone": "+63 2 8234 5678"
+    },
+    {
+      "code": "bom",
+      "name": "BOM Organization",
+      "tin": "345-678-901-000",
+      "description": "Business operations management",
+      "address": "Pasig City, Metro Manila, Philippines",
+      "email": "info@bom.org.ph",
+      "phone": "+63 2 8345 6789"
+    },
+    {
+      "code": "jpal",
+      "name": "J-PAL Philippines",
+      "tin": "456-789-012-000",
+      "description": "Poverty action research lab",
+      "address": "Bonifacio Global City, Taguig, Philippines",
+      "email": "info@jpal.org.ph",
+      "phone": "+63 2 8456 7890"
+    },
+    {
+      "code": "jli",
+      "name": "JLI Institute",
+      "tin": "567-890-123-000",
+      "description": "Leadership and innovation institute",
+      "address": "Ortigas Center, Pasig City, Philippines",
+      "email": "info@jli.org.ph",
+      "phone": "+63 2 8567 8901"
+    },
+    {
+      "code": "jap",
+      "name": "JAP Association",
+      "tin": "678-901-234-000",
+      "description": "Professional association",
+      "address": "Mandaluyong City, Metro Manila, Philippines",
+      "email": "info@jap.org.ph",
+      "phone": "+63 2 8678 9012"
+    },
+    {
+      "code": "las",
+      "name": "LAS Services",
+      "tin": "789-012-345-000",
+      "description": "Legal and administrative services",
+      "address": "Manila, Metro Manila, Philippines",
+      "email": "info@las.org.ph",
+      "phone": "+63 2 8789 0123"
+    },
+    {
+      "code": "rmqb",
+      "name": "RMQB Corporation",
+      "tin": "890-123-456-000",
+      "description": "Resource management and quality",
+      "address": "Alabang, Muntinlupa City, Philippines",
+      "email": "info@rmqb.com.ph",
+      "phone": "+63 2 8890 1234"
+    }
+  ]
+}

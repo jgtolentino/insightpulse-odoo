@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form 1601-C Tree View -->
+    <record id="view_bir_form_1601c_tree" model="ir.ui.view">
+        <field name="name">bir.form.1601c.tree</field>
+        <field name="model">bir.form.1601c</field>
+        <field name="arch" type="xml">
+            <tree string="BIR Form 1601-C" decoration-success="state=='filed'" decoration-info="state=='validated'" decoration-danger="state=='rejected'">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="period_year"/>
+                <field name="period_month"/>
+                <field name="deadline"/>
+                <field name="tax_withheld_total" widget="monetary"/>
+                <field name="total_amount_due" widget="monetary"/>
+                <field name="state" widget="badge"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form 1601-C Form View -->
+    <record id="view_bir_form_1601c_form" model="ir.ui.view">
+        <field name="name">bir.form.1601c.form</field>
+        <field name="model">bir.form.1601c</field>
+        <field name="arch" type="xml">
+            <form string="BIR Form 1601-C">
+                <header>
+                    <button name="action_generate_pdf" string="Generate PDF" type="object" class="oe_highlight" invisible="state not in ['draft', 'validated']"/>
+                    <button name="action_generate_xml" string="Generate XML" type="object" class="oe_highlight" invisible="state not in ['draft', 'validated']"/>
+                    <button name="action_validate" string="Validate" type="object" class="oe_highlight" invisible="state not in ['draft']"/>
+                    <button name="action_mark_as_filed" string="Mark as Filed" type="object" class="oe_highlight" invisible="state != 'validated'" confirm="Are you sure you have filed this form with BIR?"/>
+                    <button name="action_reset_to_draft" string="Reset to Draft" type="object" invisible="state not in ['validated', 'rejected']"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,validated,filed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Future: Add smart buttons for related documents -->
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Company & Period">
+                            <field name="company_id" options="{'no_create': True}"/>
+                            <field name="period_year"/>
+                            <field name="period_month"/>
+                            <field name="period_start" readonly="1"/>
+                            <field name="period_end" readonly="1"/>
+                            <field name="deadline" readonly="1"/>
+                        </group>
+                        <group string="Tax Amounts">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="tax_withheld_compensation" readonly="1"/>
+                            <field name="tax_withheld_expanded" readonly="1"/>
+                            <field name="tax_withheld_total" readonly="1"/>
+                            <field name="penalties"/>
+                            <field name="interest"/>
+                            <field name="total_amount_due" readonly="1" class="oe_subtotal_footer_separator"/>
+                        </group>
+                    </group>
+                    <group string="Validation">
+                        <field name="validation_date" readonly="1"/>
+                        <field name="validation_errors" readonly="1" invisible="state != 'rejected'"/>
+                    </group>
+                    <group string="Generated Files">
+                        <field name="pdf_file" filename="pdf_filename" readonly="1"/>
+                        <field name="pdf_filename" invisible="1"/>
+                        <field name="xml_file" filename="xml_filename" readonly="1"/>
+                        <field name="xml_filename" invisible="1"/>
+                    </group>
+                    <group string="Filing Information" invisible="state != 'filed'">
+                        <field name="filed_date" readonly="1"/>
+                        <field name="filed_by" readonly="1"/>
+                    </group>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" groups="base.group_user"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Form 1601-C Action -->
+    <record id="action_bir_form_1601c" model="ir.actions.act_window">
+        <field name="name">BIR Form 1601-C</field>
+        <field name="res_model">bir.form.1601c</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first BIR Form 1601-C
+            </p>
+            <p>
+                Monthly Remittance Return of Income Taxes Withheld<br/>
+                Filing Deadline: 10th day of the following month
+            </p>
+        </field>
+    </record>
+</odoo>

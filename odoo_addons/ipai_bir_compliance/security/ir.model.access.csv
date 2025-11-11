@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_bir_form_1601c_user,bir.form.1601c.user,model_bir_form_1601c,account.group_account_user,1,1,1,0
+access_bir_form_1601c_manager,bir.form.1601c.manager,model_bir_form_1601c,account.group_account_manager,1,1,1,1
+access_bir_form_2550q_user,bir.form.2550q.user,model_bir_form_2550q,account.group_account_user,1,1,1,0
+access_bir_form_2550q_manager,bir.form.2550q.manager,model_bir_form_2550q,account.group_account_manager,1,1,1,1
+access_bir_form_1702rt_user,bir.form.1702rt.user,model_bir_form_1702rt,account.group_account_user,1,1,1,0
+access_bir_form_1702rt_manager,bir.form.1702rt.manager,model_bir_form_1702rt,account.group_account_manager,1,1,1,1
