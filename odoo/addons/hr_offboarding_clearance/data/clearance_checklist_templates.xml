@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- IT Department Checklist Templates -->
+    <record id="checklist_template_it_001" model="hr.offboarding.checklist.template">
+        <field name="name">Return laptop and charger</field>
+        <field name="department">it</field>
+        <field name="sequence">10</field>
+        <field name="description">Employee must return company-issued laptop, charger, and accessories</field>
+    </record>
+
+    <record id="checklist_template_it_002" model="hr.offboarding.checklist.template">
+        <field name="name">Return access card and ID</field>
+        <field name="department">it</field>
+        <field name="sequence">20</field>
+        <field name="description">Return all access cards, ID badges, and security tokens</field>
+    </record>
+
+    <record id="checklist_template_it_003" model="hr.offboarding.checklist.template">
+        <field name="name">Disable system accounts</field>
+        <field name="department">it</field>
+        <field name="sequence">30</field>
+        <field name="description">Disable email, VPN, and all system access accounts</field>
+    </record>
+
+    <record id="checklist_template_it_004" model="hr.offboarding.checklist.template">
+        <field name="name">Transfer files and handover documentation</field>
+        <field name="department">it</field>
+        <field name="sequence">40</field>
+        <field name="description">Ensure all work files are transferred to designated successor</field>
+    </record>
+
+    <!-- Finance Department Checklist Templates -->
+    <record id="checklist_template_finance_001" model="hr.offboarding.checklist.template">
+        <field name="name">Settle outstanding cash advances</field>
+        <field name="department">finance</field>
+        <field name="sequence">10</field>
+        <field name="description">Verify and settle all outstanding cash advances and expense claims</field>
+    </record>
+
+    <record id="checklist_template_finance_002" model="hr.offboarding.checklist.template">
+        <field name="name">Return company credit card</field>
+        <field name="department">finance</field>
+        <field name="sequence">20</field>
+        <field name="description">Return corporate credit card and verify final statement</field>
+    </record>
+
+    <record id="checklist_template_finance_003" model="hr.offboarding.checklist.template">
+        <field name="name">Finalize payroll adjustments</field>
+        <field name="department">finance</field>
+        <field name="sequence">30</field>
+        <field name="description">Process final salary, 13th month, and unused leave credits</field>
+    </record>
+
+    <record id="checklist_template_finance_004" model="hr.offboarding.checklist.template">
+        <field name="name">Generate BIR Form 2316</field>
+        <field name="department">finance</field>
+        <field name="sequence">40</field>
+        <field name="description">Generate Certificate of Compensation Payment/Tax Withheld for the year</field>
+    </record>
+
+    <!-- Admin Department Checklist Templates -->
+    <record id="checklist_template_admin_001" model="hr.offboarding.checklist.template">
+        <field name="name">Return office keys and parking pass</field>
+        <field name="department">admin</field>
+        <field name="sequence">10</field>
+        <field name="description">Return all office keys, parking pass, and access fobs</field>
+    </record>
+
+    <record id="checklist_template_admin_002" model="hr.offboarding.checklist.template">
+        <field name="name">Clear office desk and locker</field>
+        <field name="department">admin</field>
+        <field name="sequence">20</field>
+        <field name="description">Ensure all personal belongings are removed from desk and locker</field>
+    </record>
+
+    <record id="checklist_template_admin_003" model="hr.offboarding.checklist.template">
+        <field name="name">Return company phone and SIM card</field>
+        <field name="department">admin</field>
+        <field name="sequence">30</field>
+        <field name="description">Return company-issued phone and verify SIM deactivation</field>
+    </record>
+
+    <!-- HR Department Checklist Templates -->
+    <record id="checklist_template_hr_001" model="hr.offboarding.checklist.template">
+        <field name="name">Conduct exit interview</field>
+        <field name="department">hr</field>
+        <field name="sequence">10</field>
+        <field name="description">Schedule and complete exit interview with departing employee</field>
+    </record>
+
+    <record id="checklist_template_hr_002" model="hr.offboarding.checklist.template">
+        <field name="name">Prepare Certificate of Employment</field>
+        <field name="department">hr</field>
+        <field name="sequence">20</field>
+        <field name="description">Generate and sign Certificate of Employment upon request</field>
+    </record>
+
+    <record id="checklist_template_hr_003" model="hr.offboarding.checklist.template">
+        <field name="name">Update employee records to separated</field>
+        <field name="department">hr</field>
+        <field name="sequence">30</field>
+        <field name="description">Update HRIS status and archive employee record</field>
+    </record>
+
+    <record id="checklist_template_hr_004" model="hr.offboarding.checklist.template">
+        <field name="name">Coordinate final clearance signature</field>
+        <field name="department">hr</field>
+        <field name="sequence">40</field>
+        <field name="description">Ensure all department clearances are complete before final signature</field>
+    </record>
+</odoo>

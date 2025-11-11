@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_offboarding_user,hr.offboarding.user,model_hr_offboarding,hr.group_hr_user,1,1,1,0
+access_hr_offboarding_manager,hr.offboarding.manager,model_hr_offboarding,hr.group_hr_manager,1,1,1,1
+access_hr_offboarding_checklist_user,hr.offboarding.checklist.user,model_hr_offboarding_checklist,hr.group_hr_user,1,1,1,0
+access_hr_offboarding_checklist_manager,hr.offboarding.checklist.manager,model_hr_offboarding_checklist,hr.group_hr_manager,1,1,1,1
+access_hr_offboarding_checklist_template_user,hr.offboarding.checklist.template.user,model_hr_offboarding_checklist_template,hr.group_hr_user,1,0,0,0
+access_hr_offboarding_checklist_template_manager,hr.offboarding.checklist.template.manager,model_hr_offboarding_checklist_template,hr.group_hr_manager,1,1,1,1
+access_hr_final_pay_computation_user,hr.final.pay.computation.user,model_hr_final_pay_computation,hr.group_hr_user,1,0,0,0
+access_hr_final_pay_computation_manager,hr.final.pay.computation.manager,model_hr_final_pay_computation,hr.group_hr_manager,1,1,1,1
+access_supabase_client_all,supabase.client.all,model_supabase_client,base.group_user,1,0,0,0

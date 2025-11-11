@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Multi-Company Record Rules -->
+
+    <record id="hr_offboarding_comp_rule" model="ir.rule">
+        <field name="name">HR Offboarding Multi-Company</field>
+        <field name="model_id" ref="model_hr_offboarding"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="hr_final_pay_comp_rule" model="ir.rule">
+        <field name="name">Final Pay Computation Multi-Company</field>
+        <field name="model_id" ref="model_hr_final_pay_computation"/>
+        <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+    </record>
+
+    <record id="hr_checklist_template_comp_rule" model="ir.rule">
+        <field name="name">Checklist Template Multi-Company</field>
+        <field name="model_id" ref="model_hr_offboarding_checklist_template"/>
+        <field name="domain_force">['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]</field>
+    </record>
+</odoo>

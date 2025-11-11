@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Form View -->
+    <record id="view_hr_offboarding_form" model="ir.ui.view">
+        <field name="name">hr.offboarding.form</field>
+        <field name="model">hr.offboarding</field>
+        <field name="arch" type="xml">
+            <form string="Employee Offboarding">
+                <header>
+                    <button name="action_submit" string="Submit for Clearance" type="object"
+                            class="btn-primary" attrs="{'invisible': [('state', '!=', 'draft')]}"/>
+                    <button name="action_initiate_clearance" string="Initiate Clearance" type="object"
+                            attrs="{'invisible': [('state', '!=', 'submitted')]}"/>
+                    <button name="action_mark_it_cleared" string="IT Cleared" type="object"
+                            attrs="{'invisible': [('state', '!=', 'clearance_pending')]}"/>
+                    <button name="action_mark_finance_cleared" string="Finance Cleared" type="object"
+                            attrs="{'invisible': [('state', '!=', 'it_cleared')]}"/>
+                    <button name="action_mark_admin_cleared" string="Admin Cleared" type="object"
+                            attrs="{'invisible': [('state', '!=', 'finance_cleared')]}"/>
+                    <button name="action_complete" string="Complete" type="object"
+                            attrs="{'invisible': [('state', '!=', 'bir_generated')]}"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,submitted,clearance_pending,it_cleared,finance_cleared,admin_cleared,final_pay_pending,final_pay_computed,bir_generated,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button class="oe_stat_button" type="object" name="action_view_final_pay"
+                                icon="fa-money" attrs="{'invisible': [('final_pay_id', '=', False)]}">
+                            <field name="final_pay_id" invisible="1"/>
+                            <div class="o_stat_info">
+                                <span class="o_stat_text">Final Pay</span>
+                            </div>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="exit_date" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                            <field name="exit_reason" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="last_working_day"/>
+                            <field name="notice_period_days"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Clearance Checklist" name="checklist">
+                            <field name="checklist_ids" mode="tree">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="department"/>
+                                    <field name="responsible_user_id"/>
+                                    <field name="completed" widget="boolean_toggle"/>
+                                    <field name="completed_date"/>
+                                    <field name="notes"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Final Pay" name="final_pay" attrs="{'invisible': [('final_pay_id', '=', False)]}">
+                            <group>
+                                <field name="final_pay_id" invisible="1"/>
+                                <group>
+                                    <field name="prorated_salary" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="prorated_13th_month" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="leave_credits_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                </group>
+                                <group>
+                                    <field name="withholding_tax" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="total_deductions" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="total_amount" widget="monetary" options="{'currency_field': 'currency_id'}"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </group>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Tree View -->
+    <record id="view_hr_offboarding_tree" model="ir.ui.view">
+        <field name="name">hr.offboarding.tree</field>
+        <field name="model">hr.offboarding</field>
+        <field name="arch" type="xml">
+            <tree string="Employee Offboarding">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="exit_date"/>
+                <field name="exit_reason"/>
+                <field name="state" decoration-info="state == 'draft'"
+                       decoration-warning="state in ('submitted', 'clearance_pending')"
+                       decoration-success="state == 'done'" widget="badge"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_hr_offboarding_search" model="ir.ui.view">
+        <field name="name">hr.offboarding.search</field>
+        <field name="model">hr.offboarding</field>
+        <field name="arch" type="xml">
+            <search string="Employee Offboarding">
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="exit_date"/>
+                <filter name="draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="in_progress" string="In Progress"
+                        domain="[('state', 'in', ['submitted', 'clearance_pending', 'it_cleared', 'finance_cleared', 'admin_cleared'])]"/>
+                <filter name="completed" string="Completed" domain="[('state', '=', 'done')]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_company" string="Company" context="{'group_by': 'company_id'}" groups="base.group_multi_company"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_hr_offboarding" model="ir.actions.act_window">
+        <field name="name">Employee Offboarding</field>
+        <field name="res_model">hr.offboarding</field>
+        <field name="view_mode">tree,form</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first offboarding record
+            </p>
+            <p>
+                Manage employee exit process with clearance checklist,
+                final pay computation, and BIR compliance.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu Items -->
+    <menuitem id="menu_hr_offboarding_root"
+              name="Offboarding"
+              parent="hr.menu_hr_root"
+              sequence="50"/>
+
+    <menuitem id="menu_hr_offboarding"
+              name="Offboarding Records"
+              parent="menu_hr_offboarding_root"
+              action="action_hr_offboarding"
+              sequence="10"/>
+</odoo>

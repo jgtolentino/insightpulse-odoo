@@ -1,0 +1,890 @@
+[
+  {
+    "name": "account",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"Invoices, Payments, Follow-ups & Bank Synchronization\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Invoicing\"}",
+    "dependencies": [
+      "base_setup",
+      "onboarding",
+      "product",
+      "analytic",
+      "portal",
+      "digest"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "account_edi_ubl_cii",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Invoicing\"}",
+    "dependencies": [
+      "account"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "account_financial_report",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"OCA Financial Reports\"}",
+    "author": "Camptocamp,initOS GmbH,redCOR AG,ForgeFlow,Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Reporting\"}",
+    "dependencies": [
+      "account",
+      "date_range",
+      "report_xlsx"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "account_multicompany_easy_creation",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"This module adds a wizard to create companies easily\"}",
+    "author": "Tecnativa, Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Multicompany\"}",
+    "dependencies": [
+      "account"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "account_payment",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Enable customers to pay invoices on the portal and post payments when transactions are processed.\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Invoicing\"}",
+    "dependencies": [
+      "account",
+      "payment"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "analytic",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Invoicing\"}",
+    "dependencies": [
+      "base",
+      "mail",
+      "uom"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "auditlog",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "ABF OSIELL, Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "base"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "auth_oauth",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "base",
+      "web",
+      "base_setup",
+      "auth_signup"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "auth_signup",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "base_setup",
+      "mail",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "auth_supabase",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"OAuth2 authentication with Supabase\"}",
+    "author": "InsightPulse AI",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Authentication\"}",
+    "dependencies": [
+      "auth_oauth",
+      "base"
+    ],
+    "source": "custom"
+  },
+  {
+    "name": "auth_totp",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Extra Tools\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "auth_totp_mail",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Extra Tools\"}",
+    "dependencies": [
+      "auth_totp",
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "auth_totp_portal",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "portal",
+      "auth_totp"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "base",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": null,
+    "source": "core"
+  },
+  {
+    "name": "base_import",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "base_import_module",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "base_install_request",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "base_setup",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "board",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Build your own dashboards\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Productivity\"}",
+    "dependencies": [
+      "spreadsheet_dashboard"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "bus",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "date_range",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Manage all kind of date range\"}",
+    "author": "ACSONE SA/NV, Odoo Community Association (OCA)",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Uncategorized\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "date_range_account",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Add Date Range menu entry in Invoicing app\"}",
+    "author": "Akretion,Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Accounting\"}",
+    "dependencies": [
+      "account",
+      "date_range"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "digest",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Marketing\"}",
+    "dependencies": [
+      "mail",
+      "portal",
+      "resource"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "google_gmail",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "hr",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"Centralize employee information\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Employees\"}",
+    "dependencies": [
+      "base_setup",
+      "digest",
+      "phone_validation",
+      "resource_mail",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "hr_contract",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Contracts\"}",
+    "dependencies": [
+      "hr"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "hr_expense",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"Submit, validate and reinvoice employee expenses\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Expenses\"}",
+    "dependencies": [
+      "web_tour",
+      "hr",
+      "account"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "hr_expense_advance_clearing",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Ecosoft, Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Human Resources\"}",
+    "dependencies": [
+      "hr_expense"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "hr_offboarding_clearance",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Employee offboarding clearance workflow with BIR compliance\"}",
+    "author": "InsightPulse AI",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Human Resources\"}",
+    "dependencies": [
+      "portal",
+      "mail",
+      "hr_contract",
+      "hr"
+    ],
+    "source": "custom"
+  },
+  {
+    "name": "hr_org_chart",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web_hierarchy",
+      "hr"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "hr_skills",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"Manage skills, knowledge and resume of your employees\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Employees\"}",
+    "dependencies": [
+      "hr"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "html_editor",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\\n        A Html Editor component and plugin system\\n    \"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base",
+      "bus",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "http_routing",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Web Routing\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "iap",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Basic models and helpers to support In-App purchases.\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "web",
+      "base_setup"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "iap_mail",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Bridge between IAP and mail\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "mail",
+      "iap"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "ipai_auth_fix",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Ensures OAuth providers appear on /web/login + JSON fallback\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Uncategorized\"}",
+    "dependencies": [
+      "auth_signup",
+      "web",
+      "auth_oauth"
+    ],
+    "source": "custom"
+  },
+  {
+    "name": "mail",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"Chat, mail gateway and private channels\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Discuss\"}",
+    "dependencies": [
+      "base",
+      "base_setup",
+      "bus",
+      "web_tour",
+      "html_editor"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "mail_bot",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Add OdooBot in discussions\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Discuss\"}",
+    "dependencies": [
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "mail_bot_hr",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Bridge module between hr and mailbot.\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Discuss\"}",
+    "dependencies": [
+      "mail_bot",
+      "hr"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "mis_builder",
+    "state": "installed",
+    "application": true,
+    "summary": "{\"en_US\": \"\\n        Build 'Management Information System' Reports and Dashboards\\n    \"}",
+    "author": "ACSONE SA/NV, Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Reporting\"}",
+    "dependencies": [
+      "account",
+      "board",
+      "report_xlsx",
+      "date_range"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "onboarding",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "partner_autocomplete",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Auto-complete partner companies' data\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "iap_mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "payment",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"The payment engine used by payment provider modules.\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "onboarding",
+      "portal"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "phone_validation",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Validate and format phone numbers\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base",
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "portal",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Customer Portal\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web",
+      "web_editor",
+      "http_routing",
+      "mail",
+      "auth_signup"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "privacy_lookup",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "product",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Sales\"}",
+    "dependencies": [
+      "base",
+      "mail",
+      "uom"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "report_xlsx",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Base module to create xlsx report\"}",
+    "author": "ACSONE SA/NV,Creu Blanca,Odoo Community Association (OCA)",
+    "license": "AGPL-3",
+    "category": "{\"en_US\": \"Reporting\"}",
+    "dependencies": [
+      "base",
+      "web"
+    ],
+    "source": "oca"
+  },
+  {
+    "name": "resource",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base",
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "resource_mail",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "resource",
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "sms",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"SMS Text Messaging\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "base",
+      "iap_mail",
+      "mail",
+      "phone_validation"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "snailmail",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "iap_mail",
+      "mail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "snailmail_account",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Tools\"}",
+    "dependencies": [
+      "account",
+      "snailmail"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "spreadsheet",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Spreadsheet\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "bus",
+      "web",
+      "portal"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "spreadsheet_account",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Spreadsheet Accounting formulas\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Accounting\"}",
+    "dependencies": [
+      "spreadsheet",
+      "account"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "spreadsheet_dashboard",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Spreadsheet\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Dashboard\"}",
+    "dependencies": [
+      "spreadsheet"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "spreadsheet_dashboard_account",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Spreadsheet\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "spreadsheet_dashboard",
+      "account"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "uom",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Sales\"}",
+    "dependencies": [
+      "base"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "web",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "base"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "web_editor",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "bus",
+      "web",
+      "html_editor"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "web_hierarchy",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "web_tour",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web"
+    ],
+    "source": "core"
+  },
+  {
+    "name": "web_unsplash",
+    "state": "installed",
+    "application": false,
+    "summary": "{\"en_US\": \"Find free high-resolution images from Unsplash\"}",
+    "author": "Odoo S.A.",
+    "license": "LGPL-3",
+    "category": "{\"en_US\": \"Technical\"}",
+    "dependencies": [
+      "web_editor",
+      "base_setup",
+      "html_editor"
+    ],
+    "source": "core"
+  }
+]
