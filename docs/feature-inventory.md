@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-11T05:43:05.004024+00:00Z
+Generated: 2025-11-11T05:44:17.574673+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -14,6 +14,7 @@ Generated: 2025-11-11T05:43:05.004024+00:00Z
 | ipai_approvals | Custom | 19.0.1.0.0 | unknown | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) | ipai_core,purchase,hr_expense,account,queue_job | addons/custom/ipai_approvals |
 | ipai_ariba_cxml | Custom | 19.0.1.0.0 | unknown | SAP Ariba cXML (PO/Invoice) → purchase/account.move | base,purchase,account | odoo_addons/ipai_ariba_cxml |
 | ipai_audit_discovery | Custom | 19.0.1.0.0 | unknown | Immutable audit trail, legal hold, eDiscovery export | ipai_chat_core,auditlog | odoo_addons/ipai_audit_discovery |
+| ipai_bir_compliance | Custom | 18.0.1.0.0 | unknown | Philippine BIR Tax Forms Automation (1601-C, 2550Q, 1702-RT) | base,account,account_accountant,l10n_ph | odoo_addons/ipai_bir_compliance |
 | ipai_chat_core | Custom | 19.0.1.0.0 | unknown | Enterprise-grade chat foundation - RBAC, channel policies, thread UX | mail,base,web | odoo_addons/ipai_chat_core |
 | ipai_clarity_ppm_sync | Custom | 19.0.1.0.0 | unknown | Clarity PPM projects/tasks/timesheets → Odoo | base,project,hr_timesheet | odoo_addons/ipai_clarity_ppm_sync |
 | ipai_concur_bridge | Custom | 19.0.1.0.0 | unknown | SAP Concur SAE → Odoo hr.expense & bank statements | base,hr_expense,account | odoo_addons/ipai_concur_bridge |
