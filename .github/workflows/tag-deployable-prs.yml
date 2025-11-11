@@ -1,0 +1,39 @@
+name: Tag Deployable PRs
+on:
+  pull_request:
+    types: [labeled, unlabeled, synchronize]
+
+jobs:
+  tag-ready:
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'status:ready')
+    permissions:
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+
+            // Check if all required checks have passed
+            const { data: checks } = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            });
+
+            const allPassed = checks.check_runs.every(check =>
+              check.status === 'completed' && check.conclusion === 'success'
+            );
+
+            if (allPassed) {
+              console.log('All checks passed, adding can-deploy label');
+              await github.rest.issues.addLabels({
+                issue_number: pr.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: ['can-deploy']
+              });
+            } else {
+              console.log('Not all checks passed yet');
+            }

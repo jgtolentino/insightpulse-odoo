@@ -1,0 +1,42 @@
+name: Deploy to Production
+on:
+  push:
+    branches:
+      - main
+      - release/**
+
+jobs:
+  deploy:
+    if: github.event.head_commit.message != ''  # Skip empty commits
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v3
+
+      - name: Authenticate (optional: your registry or provider)
+        run: echo "Auth stub (optional)"  # e.g., echo ${{ secrets.DOCKER_PASSWORD }} | docker login...
+
+      - name: Run Deployment
+        run: ./deploy.sh
+        env:
+          DIGITALOCEAN_APP_ID: ${{ secrets.DIGITALOCEAN_APP_ID }}
+          PROD_SERVER: ${{ secrets.PROD_SERVER }}
+          PROD_PATH: ${{ secrets.PROD_PATH }}
+
+      - name: Notify via Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1.25.0
+        with:
+          payload: |
+            {
+              "text": "✅ Deployed `${{ github.ref_name }}` → Production",
+              "attachments": [
+                {
+                  "text": "Triggered by: ${{ github.actor }}\nRepo: ${{ github.repository }}\nCommit: ${{ github.sha }}"
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
