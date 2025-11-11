@@ -1,0 +1,41 @@
+# Grafana Dashboard Provisioning
+# Auto-load dashboards from filesystem
+
+apiVersion: 1
+
+providers:
+  # Default dashboard provider
+  - name: 'Default'
+    orgId: 1
+    folder: 'InsightPulse'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/json
+
+  # System Metrics
+  - name: 'System'
+    orgId: 1
+    folder: 'System Metrics'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/system
+
+  # Business Metrics (from Odoo DB)
+  - name: 'Business'
+    orgId: 1
+    folder: 'Business Metrics'
+    type: file
+    disableDeletion: false
+    editable: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/business

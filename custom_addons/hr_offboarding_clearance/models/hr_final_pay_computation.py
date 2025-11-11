@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 
-from odoo import models, fields, api, _
-from odoo.exceptions import UserError, ValidationError
+import base64
+import logging
 from datetime import datetime, timedelta
 from decimal import Decimal
-import logging
-import base64
+
+from odoo.exceptions import UserError
+
+from odoo import _, api, fields, models
 
 _logger = logging.getLogger(__name__)
 
@@ -24,194 +26,194 @@ class HRFinalPayComputation(models.Model):
     Integrates with Supabase scout.transactions for YTD tax data
     """
 
-    _name = 'hr.final.pay.computation'
-    _description = 'Final Pay Computation'
-    _inherit = ['mail.thread', 'mail.activity.mixin']
-    _order = 'exit_date desc, id desc'
+    _name = "hr.final.pay.computation"
+    _description = "Final Pay Computation"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
+    _order = "exit_date desc, id desc"
 
     # ========================
     # Fields
     # ========================
 
     name = fields.Char(
-        string='Reference',
+        string="Reference",
         required=True,
         copy=False,
         readonly=True,
         index=True,
-        default=lambda self: _('New')
+        default=lambda self: _("New"),
     )
 
     offboarding_id = fields.Many2one(
-        'hr.offboarding',
-        string='Offboarding',
+        "hr.offboarding",
+        string="Offboarding",
         required=True,
-        ondelete='cascade',
-        index=True
+        ondelete="cascade",
+        index=True,
     )
 
     employee_id = fields.Many2one(
-        'hr.employee',
-        string='Employee',
-        required=True,
-        index=True
+        "hr.employee", string="Employee", required=True, index=True
     )
 
-    exit_date = fields.Date(
-        string='Exit Date',
-        required=True
-    )
+    exit_date = fields.Date(string="Exit Date", required=True)
 
     company_id = fields.Many2one(
-        'res.company',
-        string='Company',
+        "res.company",
+        string="Company",
         required=True,
         default=lambda self: self.env.company,
-        index=True
+        index=True,
     )
 
     currency_id = fields.Many2one(
-        'res.currency',
-        string='Currency',
-        related='company_id.currency_id',
-        readonly=True
+        "res.currency",
+        string="Currency",
+        related="company_id.currency_id",
+        readonly=True,
     )
 
     # Salary Components
     monthly_salary = fields.Monetary(
-        string='Monthly Salary',
-        currency_field='currency_id',
+        string="Monthly Salary",
+        currency_field="currency_id",
         readonly=True,
-        help="Basic monthly salary from contract"
+        help="Basic monthly salary from contract",
     )
 
     prorated_salary = fields.Monetary(
-        string='Prorated Salary',
-        currency_field='currency_id',
-        compute='_compute_prorated_salary',
+        string="Prorated Salary",
+        currency_field="currency_id",
+        compute="_compute_prorated_salary",
         store=True,
-        help="Salary for worked days in exit month"
+        help="Salary for worked days in exit month",
     )
 
     prorated_13th_month = fields.Monetary(
-        string='13th Month Pay',
-        currency_field='currency_id',
-        compute='_compute_13th_month',
+        string="13th Month Pay",
+        currency_field="currency_id",
+        compute="_compute_13th_month",
         store=True,
-        help="Prorated 13th month pay"
+        help="Prorated 13th month pay",
     )
 
     leave_credits_amount = fields.Monetary(
-        string='Unused Leave Credits',
-        currency_field='currency_id',
-        help="Monetized value of unused leave credits"
+        string="Unused Leave Credits",
+        currency_field="currency_id",
+        help="Monetized value of unused leave credits",
     )
 
     other_earnings = fields.Monetary(
-        string='Other Earnings',
-        currency_field='currency_id',
-        help="Other taxable earnings"
+        string="Other Earnings",
+        currency_field="currency_id",
+        help="Other taxable earnings",
     )
 
     # Deductions
     withholding_tax = fields.Monetary(
-        string='Withholding Tax',
-        currency_field='currency_id',
+        string="Withholding Tax",
+        currency_field="currency_id",
         readonly=True,
-        help="BIR withholding tax from scout.transactions"
+        help="BIR withholding tax from scout.transactions",
     )
 
     sss_contribution = fields.Monetary(
-        string='SSS Contribution',
-        currency_field='currency_id'
+        string="SSS Contribution", currency_field="currency_id"
     )
 
     philhealth_contribution = fields.Monetary(
-        string='PhilHealth Contribution',
-        currency_field='currency_id'
+        string="PhilHealth Contribution", currency_field="currency_id"
     )
 
     pagibig_contribution = fields.Monetary(
-        string='Pag-IBIG Contribution',
-        currency_field='currency_id'
+        string="Pag-IBIG Contribution", currency_field="currency_id"
     )
 
     other_deductions = fields.Monetary(
-        string='Other Deductions',
-        currency_field='currency_id',
-        help="Loans, cash advances, etc."
+        string="Other Deductions",
+        currency_field="currency_id",
+        help="Loans, cash advances, etc.",
     )
 
     # Totals
     total_earnings = fields.Monetary(
-        string='Total Earnings',
-        currency_field='currency_id',
-        compute='_compute_totals',
-        store=True
+        string="Total Earnings",
+        currency_field="currency_id",
+        compute="_compute_totals",
+        store=True,
     )
 
     total_deductions = fields.Monetary(
-        string='Total Deductions',
-        currency_field='currency_id',
-        compute='_compute_totals',
-        store=True
+        string="Total Deductions",
+        currency_field="currency_id",
+        compute="_compute_totals",
+        store=True,
     )
 
     total_amount = fields.Monetary(
-        string='Net Final Pay',
-        currency_field='currency_id',
-        compute='_compute_totals',
+        string="Net Final Pay",
+        currency_field="currency_id",
+        compute="_compute_totals",
         store=True,
-        tracking=True
+        tracking=True,
     )
 
     # Computation Details
     worked_days = fields.Integer(
-        string='Worked Days',
-        compute='_compute_worked_days',
+        string="Worked Days",
+        compute="_compute_worked_days",
         store=True,
-        help="Number of days worked in exit month"
+        help="Number of days worked in exit month",
     )
 
-    cutoff_period = fields.Selection([
-        ('first_half', '1st-15th'),
-        ('second_half', '16th-30th/31st'),
-        ('full_month', 'Full Month'),
-    ], string='Cutoff Period', compute='_compute_cutoff_period', store=True)
+    cutoff_period = fields.Selection(
+        [
+            ("first_half", "1st-15th"),
+            ("second_half", "16th-30th/31st"),
+            ("full_month", "Full Month"),
+        ],
+        string="Cutoff Period",
+        compute="_compute_cutoff_period",
+        store=True,
+    )
 
     # BIR Integration
     ytd_income = fields.Monetary(
-        string='YTD Gross Income',
-        currency_field='currency_id',
+        string="YTD Gross Income",
+        currency_field="currency_id",
         readonly=True,
-        help="Year-to-date gross income from scout.transactions"
+        help="Year-to-date gross income from scout.transactions",
     )
 
     ytd_tax_withheld = fields.Monetary(
-        string='YTD Tax Withheld',
-        currency_field='currency_id',
+        string="YTD Tax Withheld",
+        currency_field="currency_id",
         readonly=True,
-        help="Year-to-date withholding tax from scout.transactions"
+        help="Year-to-date withholding tax from scout.transactions",
     )
 
     # State
-    state = fields.Selection([
-        ('draft', 'Draft'),
-        ('computed', 'Computed'),
-        ('validated', 'Validated'),
-        ('paid', 'Paid'),
-    ], string='Status', default='draft', required=True, tracking=True)
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("computed", "Computed"),
+            ("validated", "Validated"),
+            ("paid", "Paid"),
+        ],
+        string="Status",
+        default="draft",
+        required=True,
+        tracking=True,
+    )
 
     # Notes
-    computation_notes = fields.Html(
-        string='Computation Notes'
-    )
+    computation_notes = fields.Html(string="Computation Notes")
 
     # ========================
     # Computed Fields
     # ========================
 
-    @api.depends('exit_date', 'employee_id')
+    @api.depends("exit_date", "employee_id")
     def _compute_worked_days(self):
         """Calculate number of worked days in exit month"""
         for record in self:
@@ -236,7 +238,7 @@ class HRFinalPayComputation(models.Model):
 
             record.worked_days = worked_days
 
-    @api.depends('exit_date')
+    @api.depends("exit_date")
     def _compute_cutoff_period(self):
         """Determine payroll cutoff period based on exit date"""
         for record in self:
@@ -247,11 +249,11 @@ class HRFinalPayComputation(models.Model):
             day = record.exit_date.day
 
             if day <= 15:
-                record.cutoff_period = 'first_half'
+                record.cutoff_period = "first_half"
             elif day >= 16:
-                record.cutoff_period = 'second_half'
+                record.cutoff_period = "second_half"
 
-    @api.depends('monthly_salary', 'worked_days', 'exit_date')
+    @api.depends("monthly_salary", "worked_days", "exit_date")
     def _compute_prorated_salary(self):
         """
         Calculate prorated salary using 15th/30th cutoff logic
@@ -275,7 +277,7 @@ class HRFinalPayComputation(models.Model):
                 # Both halves
                 record.prorated_salary = record.monthly_salary
 
-    @api.depends('monthly_salary', 'exit_date')
+    @api.depends("monthly_salary", "exit_date")
     def _compute_13th_month(self):
         """
         Calculate prorated 13th month pay
@@ -297,7 +299,9 @@ class HRFinalPayComputation(models.Model):
             exit_date = record.exit_date
 
             # Calculate months worked
-            months_worked = (exit_date.year - start_date.year) * 12 + (exit_date.month - start_date.month)
+            months_worked = (exit_date.year - start_date.year) * 12 + (
+                exit_date.month - start_date.month
+            )
 
             # Add fraction for exit month
             days_in_exit_month = 30  # Simplified
@@ -307,25 +311,33 @@ class HRFinalPayComputation(models.Model):
 
             record.prorated_13th_month = (record.monthly_salary / 12) * total_months
 
-    @api.depends('prorated_salary', 'prorated_13th_month', 'leave_credits_amount', 'other_earnings',
-                 'withholding_tax', 'sss_contribution', 'philhealth_contribution',
-                 'pagibig_contribution', 'other_deductions')
+    @api.depends(
+        "prorated_salary",
+        "prorated_13th_month",
+        "leave_credits_amount",
+        "other_earnings",
+        "withholding_tax",
+        "sss_contribution",
+        "philhealth_contribution",
+        "pagibig_contribution",
+        "other_deductions",
+    )
     def _compute_totals(self):
         """Calculate total earnings, deductions, and net amount"""
         for record in self:
             record.total_earnings = (
-                record.prorated_salary +
-                record.prorated_13th_month +
-                record.leave_credits_amount +
-                record.other_earnings
+                record.prorated_salary
+                + record.prorated_13th_month
+                + record.leave_credits_amount
+                + record.other_earnings
             )
 
             record.total_deductions = (
-                record.withholding_tax +
-                record.sss_contribution +
-                record.philhealth_contribution +
-                record.pagibig_contribution +
-                record.other_deductions
+                record.withholding_tax
+                + record.sss_contribution
+                + record.philhealth_contribution
+                + record.pagibig_contribution
+                + record.other_deductions
             )
 
             record.total_amount = record.total_earnings - record.total_deductions
@@ -338,8 +350,10 @@ class HRFinalPayComputation(models.Model):
     def create(self, vals_list):
         """Override create to generate sequence"""
         for vals in vals_list:
-            if vals.get('name', _('New')) == _('New'):
-                vals['name'] = self.env['ir.sequence'].next_by_code('hr.final.pay') or _('New')
+            if vals.get("name", _("New")) == _("New"):
+                vals["name"] = self.env["ir.sequence"].next_by_code(
+                    "hr.final.pay"
+                ) or _("New")
 
         return super().create(vals_list)
 
@@ -361,7 +375,10 @@ class HRFinalPayComputation(models.Model):
             # 1. Get contract data
             contract = record.employee_id.contract_id
             if not contract:
-                raise UserError(_('No active contract found for employee %s') % record.employee_id.name)
+                raise UserError(
+                    _("No active contract found for employee %s")
+                    % record.employee_id.name
+                )
 
             record.monthly_salary = contract.wage
 
@@ -372,11 +389,12 @@ class HRFinalPayComputation(models.Model):
             record._compute_leave_credits()
 
             # 4. Update state
-            record.state = 'computed'
+            record.state = "computed"
 
             # 5. Log computation
             record.message_post(
-                body=_("""
+                body=_(
+                    """
                     <p>Final pay computed successfully:</p>
                     <ul>
                         <li>Prorated Salary: %s</li>
@@ -385,12 +403,14 @@ class HRFinalPayComputation(models.Model):
                         <li>Withholding Tax: %s</li>
                         <li><strong>Net Amount: %s</strong></li>
                     </ul>
-                """) % (
+                """
+                )
+                % (
                     record.prorated_salary,
                     record.prorated_13th_month,
                     record.leave_credits_amount,
                     record.withholding_tax,
-                    record.total_amount
+                    record.total_amount,
                 )
             )
 
@@ -406,7 +426,7 @@ class HRFinalPayComputation(models.Model):
         self.ensure_one()
 
         try:
-            supabase_client = self.env['supabase.client'].get_client()
+            supabase_client = self.env["supabase.client"].get_client()
 
             # Query scout.transactions
             transactions = supabase_client.query(
@@ -415,30 +435,40 @@ class HRFinalPayComputation(models.Model):
                     "company_id": self.company_id.id,
                     "payee_tin": self.employee_id.identification_id,
                 },
-                select="income_payment,amount_withheld,transaction_date"
+                select="income_payment,amount_withheld,transaction_date",
             )
 
             # Filter for current year
             year = self.exit_date.year
             ytd_transactions = [
-                t for t in transactions
-                if datetime.strptime(t['transaction_date'], '%Y-%m-%d').year == year
+                t
+                for t in transactions
+                if datetime.strptime(t["transaction_date"], "%Y-%m-%d").year == year
             ]
 
             # Calculate YTD totals
-            self.ytd_income = sum(Decimal(str(t['income_payment'])) for t in ytd_transactions)
-            self.ytd_tax_withheld = sum(Decimal(str(t['amount_withheld'])) for t in ytd_transactions)
+            self.ytd_income = sum(
+                Decimal(str(t["income_payment"])) for t in ytd_transactions
+            )
+            self.ytd_tax_withheld = sum(
+                Decimal(str(t["amount_withheld"])) for t in ytd_transactions
+            )
 
             # For final month, withholding tax is already included in YTD
             # No additional tax for final pay (already withheld in prior payslips)
             self.withholding_tax = 0.0
 
-            _logger.info(f"Fetched BIR tax data for {self.employee_id.name}: YTD Income={self.ytd_income}, YTD Tax={self.ytd_tax_withheld}")
+            _logger.info(
+                f"Fetched BIR tax data for {self.employee_id.name}: YTD Income={self.ytd_income}, YTD Tax={self.ytd_tax_withheld}"
+            )
 
         except Exception as e:
             _logger.error(f"Failed to fetch BIR withholding tax: {str(e)}")
             raise UserError(
-                _('Failed to fetch BIR withholding tax data from Supabase.\n\nError: %s') % str(e)
+                _(
+                    "Failed to fetch BIR withholding tax data from Supabase.\n\nError: %s"
+                )
+                % str(e)
             )
 
     def _compute_leave_credits(self):
@@ -446,10 +476,12 @@ class HRFinalPayComputation(models.Model):
         self.ensure_one()
 
         # Get unused leave allocations
-        leave_allocations = self.env['hr.leave.allocation'].search([
-            ('employee_id', '=', self.employee_id.id),
-            ('state', '=', 'validate'),
-        ])
+        leave_allocations = self.env["hr.leave.allocation"].search(
+            [
+                ("employee_id", "=", self.employee_id.id),
+                ("state", "=", "validate"),
+            ]
+        )
 
         total_unused_days = 0.0
         for allocation in leave_allocations:
@@ -457,7 +489,7 @@ class HRFinalPayComputation(models.Model):
             remaining = allocation.number_of_days - allocation.leaves_taken
 
             # Only monetize vacation leaves (not sick leave)
-            if allocation.holiday_status_id.code == 'VAC':
+            if allocation.holiday_status_id.code == "VAC":
                 total_unused_days += remaining
 
         # Monetize: Daily rate = Monthly Salary / 30
@@ -499,24 +531,24 @@ class HRFinalPayComputation(models.Model):
 </eBIRForm2316>
 """
 
-        return base64.b64encode(xml_content.encode('utf-8'))
+        return base64.b64encode(xml_content.encode("utf-8"))
 
     def action_validate_computation(self):
         """Validate final pay computation"""
         for record in self:
-            if record.state != 'computed':
-                raise UserError(_('Only computed records can be validated.'))
+            if record.state != "computed":
+                raise UserError(_("Only computed records can be validated."))
 
-            record.state = 'validated'
+            record.state = "validated"
 
     def action_mark_paid(self):
         """Mark final pay as paid"""
         for record in self:
-            if record.state != 'validated':
-                raise UserError(_('Only validated records can be marked as paid.'))
+            if record.state != "validated":
+                raise UserError(_("Only validated records can be marked as paid."))
 
-            record.state = 'paid'
+            record.state = "paid"
 
             # Update offboarding state
             if record.offboarding_id:
-                record.offboarding_id.state = 'final_pay_computed'
+                record.offboarding_id.state = "final_pay_computed"

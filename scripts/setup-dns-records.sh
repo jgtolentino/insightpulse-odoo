@@ -71,14 +71,46 @@ echo "2. WWW subdomain (CNAME)"
 create_dns_record "CNAME" "www" "$DOMAIN"
 sleep 1
 
-# 3. Local services (A records pointing to Nginx server)
+# 3. Production & Staging ERP (A records)
 echo ""
-echo "3. Local services (A records)"
+echo "3. Production & Staging ERP (A records)"
+
+ERP_SERVICES=(
+    "erp:Production Odoo ERP"
+    "staging:Staging Odoo ERP"
+)
+
+for service in "${ERP_SERVICES[@]}"; do
+    IFS=':' read -r subdomain description <<< "$service"
+    echo ""
+    echo "   $description"
+    create_dns_record "A" "$subdomain" "$SERVER_IP"
+    sleep 1
+done
+
+# 4. Monitoring & Observability (A records)
+echo ""
+echo "4. Monitoring & Observability (A records)"
+
+METRICS_SERVICES=(
+    "metrics:Grafana Metrics Dashboard"
+)
+
+for service in "${METRICS_SERVICES[@]}"; do
+    IFS=':' read -r subdomain description <<< "$service"
+    echo ""
+    echo "   $description"
+    create_dns_record "A" "$subdomain" "$SERVER_IP"
+    sleep 1
+done
+
+# 5. Communication & Automation (A records)
+echo ""
+echo "5. Communication & Automation (A records)"
 
 LOCAL_SERVICES=(
     "chat:Mattermost Chat"
     "n8n:n8n Workflow Automation"
-    "ocr:OCR Backend"
     "gittodoc:Git to Docs"
 )
 
@@ -90,9 +122,16 @@ for service in "${LOCAL_SERVICES[@]}"; do
     sleep 1
 done
 
-# 4. DigitalOcean App Platform services (CNAME records)
+# 6. OCR Service (A record - different IP)
 echo ""
-echo "4. DigitalOcean App Platform services (CNAME)"
+echo "6. OCR Service (A record - SGP1 droplet)"
+OCR_IP="188.166.237.231"
+create_dns_record "A" "ocr" "$OCR_IP"
+sleep 1
+
+# 7. DigitalOcean App Platform services (CNAME records)
+echo ""
+echo "7. DigitalOcean App Platform services (CNAME)"
 
 DO_APPS=(
     "superset:superset-nlavf.ondigitalocean.app:Superset Analytics"
@@ -107,10 +146,28 @@ for app in "${DO_APPS[@]}"; do
     sleep 1
 done
 
-# 5. DigitalOcean Gradient AI Agent (CNAME record)
+# 8. DigitalOcean Gradient AI Agent (CNAME record)
 echo ""
-echo "5. DigitalOcean Gradient AI Agent (CNAME)"
+echo "8. DigitalOcean Gradient AI Agent (CNAME)"
 create_dns_record "CNAME" "agent" "wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run"
+sleep 1
+
+# 9. PRD Compatibility Aliases (CNAME records)
+echo ""
+echo "9. PRD Compatibility Aliases (CNAME)"
+
+CNAME_ALIASES=(
+    "bi:superset.insightpulseai.net:BI Dashboard Alias (→ Superset)"
+    "api:erp.insightpulseai.net:API Endpoint Alias (→ ERP)"
+)
+
+for alias in "${CNAME_ALIASES[@]}"; do
+    IFS=':' read -r subdomain target description <<< "$alias"
+    echo ""
+    echo "   $description"
+    create_dns_record "CNAME" "$subdomain" "$target"
+    sleep 1
+done
 
 echo ""
 echo "==============================="
