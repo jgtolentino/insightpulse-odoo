@@ -1,7 +1,7 @@
 # Makefile
 DB ?= db_ckvc
-ODOO_BIN = docker compose exec -T odoo odoo -c /etc/odoo/odoo.conf -d $(DB)
-PSQL     = docker compose exec -T db psql -U odoo -d $(DB)
+ODOO_BIN = docker compose exec -T odoo odoo --config /etc/odoo/odoo.conf --database $(DB)
+PSQL     = docker compose exec -T postgres psql -U odoo -d $(DB)
 
 # ── Module sets ────────────────────────────────────────────────────────────────
 CORE_MODS = contacts,mail,calendar,account,purchase,sale_management,stock,stock_barcode,hr,hr_holidays,hr_expense,timesheet_grid,project,documents
