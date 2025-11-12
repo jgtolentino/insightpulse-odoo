@@ -12,6 +12,66 @@ interface WebhookJob {
   attempts: number;
 }
 
+/**
+ * Route webhook to appropriate destination based on topic
+ */
+async function routeWebhook(topic: string, payload: any): Promise<void> {
+  // Define routing rules based on topic patterns
+  const routes: Record<string, string> = {
+    // GitHub events → Odoo webhook endpoint
+    "github.issue": "https://erp.insightpulseai.net/pulser_hub/github/issue",
+    "github.pull_request": "https://erp.insightpulseai.net/pulser_hub/github/pr",
+
+    // Security events → Security dashboard
+    "security": "https://erp.insightpulseai.net/api/security/alert",
+
+    // Invoice events → Accounting integrations
+    "invoice": "https://erp.insightpulseai.net/api/alerts/invoice",
+
+    // Ticket events → Notification service (Slack/Teams)
+    "ticket": Deno.env.get("SLACK_WEBHOOK_URL") || "",
+
+    // Workflow events → Notion sync
+    "workflow": "https://api.notion.com/v1/pages",
+  };
+
+  // Find matching route (supports prefix matching)
+  let destinationUrl = "";
+  for (const [prefix, url] of Object.entries(routes)) {
+    if (topic.startsWith(prefix)) {
+      destinationUrl = url;
+      break;
+    }
+  }
+
+  // If no route found, log and skip
+  if (!destinationUrl) {
+    console.warn(`No route configured for topic: ${topic}`);
+    return;
+  }
+
+  // Send webhook to destination
+  const response = await fetch(destinationUrl, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-Webhook-Topic": topic,
+      "X-Webhook-Source": "supabase-drain",
+    },
+    body: JSON.stringify({
+      topic,
+      timestamp: new Date().toISOString(),
+      data: payload,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(
+      `Webhook delivery failed: ${response.status} ${response.statusText}`
+    );
+  }
+}
+
 Deno.serve(async (_req) => {
   const supabase = createClient(supabaseUrl, supabaseKey, {
     auth: { persistSession: false },
@@ -40,9 +100,8 @@ Deno.serve(async (_req) => {
         .eq("id", job.id);
 
       try {
-        // TODO: Route by job.topic to actual destinations
-        // For now, just simulate processing
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        // Route webhook to destination based on topic
+        await routeWebhook(job.topic, job.payload);
 
         // Mark as done
         await supabase
