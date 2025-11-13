@@ -6,9 +6,14 @@
 
 ## Executive Summary
 
-This document packages proven automation patterns from leading platforms (n8n, Make, Zapier) as replicable services for InsightPulse AI (IPA). Each service is designed to leverage IPA's existing multi-interface architecture (Odoo Discuss, Pulse Hub UI, AI Agent API, GitHub PR Bot).
+This document packages proven automation patterns from leading platforms (n8n, Make, Zapier) as replicable services using InsightPulse AI (IPA) native automation via the `ipai` CLI. Each service is designed to leverage IPA's multi-interface architecture (Odoo Discuss, Pulse Hub UI, AI Agent API, GitHub PR Bot, IPA CLI).
 
-**Key Benefit**: Replicate $300-500/month SaaS automation costs with self-hosted IPA services at ~$50/month.
+**Key Benefit**: Replicate $300-500/month SaaS automation costs with self-hosted IPA CLI automation at ~$50/month.
+
+**Implementation Options**: Each pattern can be implemented via:
+1. **IPA CLI** (`ipai` command) - Recommended native automation
+2. **GitHub Actions** - CI/CD-based automation
+3. **n8n workflows** - Alternative for those preferring GUI workflow builders
 
 ---
 
@@ -92,7 +97,20 @@ This document packages proven automation patterns from leading platforms (n8n, M
 └─────────────────────────────────────────────────────────────┘
 ```
 
-#### Implementation: n8n Workflow
+#### Implementation Options
+
+**Option A: IPA Native Implementation (Recommended)**
+
+Use the `ipai` CLI for native InsightPulse automation:
+```bash
+# Via IPA CLI
+ipai pr check-conflicts 42
+ipai pr auto-resolve 42
+```
+
+**Option B: n8n Workflow (Alternative)**
+
+If using n8n as your workflow automation tool:
 
 **File**: `workflows/n8n/github_merge_conflict_resolver.json`
 
@@ -503,9 +521,22 @@ Last 30 Days:
 
 **Inspired by**: n8n Template #4463 (Automated Workflow Backups)
 
-**Purpose**: Automatically backup n8n workflows, IPA configurations, and Odoo customizations to GitHub
+**Purpose**: Automatically backup IPA configurations, Odoo customizations, and workflow definitions to GitHub
 
-**Implementation**: Coming soon
+**IPA Implementation**:
+
+```bash
+# Backup all configurations
+ipai backup configs --target github --repo insightpulse-odoo
+
+# Backup Odoo customizations
+ipai backup odoo --modules custom --target s3
+
+# Automated daily backups
+ipai backup schedule --frequency daily --retention 30d
+```
+
+**Status**: ✅ Available via IPA CLI
 
 ---
 
@@ -517,9 +548,21 @@ Last 30 Days:
 
 **Use Case**: Sync orders, products, customers from e-commerce platforms to Odoo
 
-**Replication**:
+**IPA Implementation**:
 
-```python
+```bash
+# Using IPA CLI for automated sync
+ipai sync ecommerce --platform shopify --target odoo --models orders,products,customers
+
+# Or via AI agent
+ipai ask "Sync all Shopify orders to Odoo"
+```
+
+**Alternative: n8n Workflow**:
+
+For those preferring n8n workflow automation:
+
+```json
 # File: workflows/n8n/ecommerce_odoo_sync.json
 {
   "name": "E-Commerce to Odoo Sync",
@@ -574,7 +617,28 @@ Last 30 Days:
 
 ### Quick Start: Deploy Merge Conflict Service
 
-**Option 1: GitHub Actions (Recommended)**
+**Option 1: IPA CLI (Recommended)**
+
+Use InsightPulse native automation via `ipai` command:
+
+```bash
+# 1. Install ipai CLI
+cd cli/
+pip install -e .
+
+# 2. Configure environment
+export DO_ACCESS_TOKEN=your_token
+export ANTHROPIC_API_KEY=your_key
+
+# 3. Deploy merge conflict service
+ipai deploy merge-conflict-service --env production
+
+# 4. Test
+ipai pr check-conflicts 42
+ipai pr auto-resolve 42
+```
+
+**Option 2: GitHub Actions**
 
 ```bash
 # 1. Copy workflow file
@@ -592,7 +656,9 @@ gh pr create --title "Test: Merge Conflict Auto-Resolution"
 # 4. Watch Actions tab for execution
 ```
 
-**Option 2: n8n Self-Hosted**
+**Option 3: n8n Self-Hosted (Alternative)**
+
+If you prefer using n8n workflow automation tool:
 
 ```bash
 # 1. Deploy n8n to DigitalOcean
@@ -608,23 +674,6 @@ docker-compose up -d
 # Credentials → Add → Anthropic API
 
 # 4. Activate workflow
-```
-
-**Option 3: IPA Native Service**
-
-```bash
-# 1. Install ipai-cli
-pip install -e cli/
-
-# 2. Configure service
-ipai config set MERGE_CONFLICT_SERVICE=enabled
-
-# 3. Deploy service
-ipai deploy merge-conflict-service --region sgp
-
-# 4. Test
-ipai pr check-conflicts 42
-ipai pr auto-resolve 42
 ```
 
 ---
