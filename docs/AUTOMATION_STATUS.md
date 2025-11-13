@@ -12,7 +12,7 @@ InsightPulse Odoo employs a **Validation Pyramid** approach to automation, ensur
 
 **Current Automation Health:** 🟢 Healthy (78% coverage)
 
-| Layer | Status | Coverage | Last Run | 2025-11-12 |
+| Layer | Status | Coverage | Last Run | 2025-11-13 |
 |-------|--------|----------|----------|---------------|
 | 🔍 Static | 🟢 Healthy | 92% | 2025-11-09 | ✅ 8/8 |
 | 🤖 Automated | 🟢 Healthy | 87% | 2025-11-09 | ✅ 12/12 |
