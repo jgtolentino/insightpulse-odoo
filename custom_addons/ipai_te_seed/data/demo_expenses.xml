@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Demo Employee for Expense Testing -->
+        <record id="employee_demo_te" model="hr.employee">
+            <field name="name">Juan dela Cruz</field>
+            <field name="company_id" ref="company_rim"/>
+        </record>
+
+        <!-- Demo Expense: Business Travel -->
+        <record id="expense_demo_travel_manila_cebu" model="hr.expense">
+            <field name="name">Manila-Cebu Business Trip</field>
+            <field name="employee_id" ref="employee_demo_te"/>
+            <field name="product_id" ref="product_travel_airfare"/>
+            <field name="unit_amount">4500.00</field>
+            <field name="quantity">1</field>
+            <field name="date" eval="(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')"/>
+            <field name="company_id" ref="company_rim"/>
+        </record>
+
+        <!-- Demo Expense: Hotel Accommodation -->
+        <record id="expense_demo_hotel" model="hr.expense">
+            <field name="name">Hotel Stay - Cebu</field>
+            <field name="employee_id" ref="employee_demo_te"/>
+            <field name="product_id" ref="product_travel_accommodation"/>
+            <field name="unit_amount">3200.00</field>
+            <field name="quantity">2</field>
+            <field name="date" eval="(datetime.now() - timedelta(days=6)).strftime('%Y-%m-%d')"/>
+            <field name="company_id" ref="company_rim"/>
+        </record>
+
+        <!-- Demo Expense: Client Meal -->
+        <record id="expense_demo_client_meal" model="hr.expense">
+            <field name="name">Client Dinner - Project Discussion</field>
+            <field name="employee_id" ref="employee_demo_te"/>
+            <field name="product_id" ref="product_meals_client"/>
+            <field name="unit_amount">2800.00</field>
+            <field name="quantity">1</field>
+            <field name="date" eval="(datetime.now() - timedelta(days=5)).strftime('%Y-%m-%d')"/>
+            <field name="company_id" ref="company_rim"/>
+        </record>
+
+        <!-- Demo Expense: Transportation -->
+        <record id="expense_demo_taxi" model="hr.expense">
+            <field name="name">Airport Transfer</field>
+            <field name="employee_id" ref="employee_demo_te"/>
+            <field name="product_id" ref="product_travel_taxi"/>
+            <field name="unit_amount">450.00</field>
+            <field name="quantity">2</field>
+            <field name="date" eval="(datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')"/>
+            <field name="company_id" ref="company_rim"/>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,133 @@
+name: Visual Regression Testing (PR)
+
+on:
+  pull_request:
+    branches: [main, develop, 'claude/**']
+    paths:
+      - '**.tsx'
+      - '**.ts'
+      - '**.css'
+      - '**.scss'
+      - 'package.json'
+      - 'package-lock.json'
+
+jobs:
+  visual-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for baseline comparison
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Download baseline screenshots
+        uses: actions/download-artifact@v4
+        continue-on-error: true  # First run won't have baselines
+        with:
+          name: visual-baselines
+          path: __image_snapshots__/baseline
+
+      - name: Start development server
+        run: |
+          npm run dev &
+          echo $! > .dev-server.pid
+        env:
+          CI: true
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5173 --timeout 60000
+
+      - name: Run visual regression tests
+        id: visual_test
+        run: npm run visual:test
+        continue-on-error: true
+
+      - name: Stop development server
+        if: always()
+        run: |
+          if [ -f .dev-server.pid ]; then
+            kill $(cat .dev-server.pid) || true
+            rm .dev-server.pid
+          fi
+
+      - name: Generate visual diff report
+        if: steps.visual_test.outcome == 'failure'
+        run: npm run visual:report
+
+      - name: Upload visual diff screenshots
+        if: steps.visual_test.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-diffs-${{ github.event.pull_request.number }}
+          path: |
+            __image_snapshots__/diff/
+            __image_snapshots__/current/
+            visual-report.html
+          retention-days: 30
+
+      - name: Upload full report
+        if: steps.visual_test.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-report-${{ github.event.pull_request.number }}
+          path: visual-report.html
+          retention-days: 30
+
+      - name: Comment PR with visual diff results
+        if: steps.visual_test.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read the generated markdown report
+            let reportBody = '## 🎨 Visual Regression Detected\n\n';
+            reportBody += 'Visual differences were detected in this PR. Please review the changes:\n\n';
+
+            if (fs.existsSync('visual-report.md')) {
+              const report = fs.readFileSync('visual-report.md', 'utf8');
+              reportBody += report;
+            } else {
+              reportBody += '**Summary**: Visual differences found. Download artifacts for detailed comparison.\n\n';
+            }
+
+            reportBody += `\n### 📊 Artifacts\n\n`;
+            reportBody += `- [Visual Diff Screenshots](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n`;
+            reportBody += `- [Full HTML Report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})\n\n`;
+            reportBody += `### ✅ Next Steps\n\n`;
+            reportBody += `1. Download the artifacts to review visual diffs\n`;
+            reportBody += `2. If changes are intentional, update baselines: \`npm run visual:update-baseline\`\n`;
+            reportBody += `3. If changes are bugs, fix the implementation\n`;
+            reportBody += `4. Re-run tests to verify\n`;
+
+            // Post comment
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reportBody
+            });
+
+      - name: Fail job if visual regression detected
+        if: steps.visual_test.outcome == 'failure'
+        run: |
+          echo "::error::Visual regression detected. Review the diff artifacts and update baselines if changes are intentional."
+          exit 1
+
+      - name: Success message
+        if: steps.visual_test.outcome == 'success'
+        run: echo "✅ No visual regressions detected!"

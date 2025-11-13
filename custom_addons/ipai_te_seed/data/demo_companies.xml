@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Multi-Agency Company Structure for InsightPulse AI -->
+
+        <!-- Parent Holding Company -->
+        <record id="company_ipai_holding" model="res.company">
+            <field name="name">InsightPulse AI Holdings</field>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- RIM - Research & Innovation Management -->
+        <record id="company_rim" model="res.company">
+            <field name="name">RIM - Research &amp; Innovation</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- CKVC - Connectivity & Virtual Collaboration -->
+        <record id="company_ckvc" model="res.company">
+            <field name="name">CKVC - Connectivity &amp; Collaboration</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- BOM - Business Operations Management -->
+        <record id="company_bom" model="res.company">
+            <field name="name">BOM - Business Operations</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- JPAL - Joint Procurement & Logistics -->
+        <record id="company_jpal" model="res.company">
+            <field name="name">JPAL - Procurement &amp; Logistics</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- JLI - Joint Legal & IP -->
+        <record id="company_jli" model="res.company">
+            <field name="name">JLI - Legal &amp; IP</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- JAP - Joint Audit & Process -->
+        <record id="company_jap" model="res.company">
+            <field name="name">JAP - Audit &amp; Process</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- LAS - Learning & Skills -->
+        <record id="company_las" model="res.company">
+            <field name="name">LAS - Learning &amp; Skills</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+        <!-- RMQB - Risk Management & Quality Bench -->
+        <record id="company_rmqb" model="res.company">
+            <field name="name">RMQB - Risk &amp; Quality</field>
+            <field name="parent_id" ref="company_ipai_holding"/>
+            <field name="currency_id" ref="base.PHP"/>
+            <field name="country_id" ref="base.ph"/>
+        </record>
+
+    </data>
+</odoo>

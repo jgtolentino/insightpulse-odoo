@@ -1,0 +1,15 @@
+# .github/workflows/claude-skill-verifier.yml
+name: Claude Skill Registry Check
+on:
+  push:
+    paths:
+      - "agents/skills.yaml"
+      - "skills/claude_sync.py"
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Skills File
+        run: |
+          python -c "import yaml; yaml.safe_load(open('agents/skills.yaml'))"

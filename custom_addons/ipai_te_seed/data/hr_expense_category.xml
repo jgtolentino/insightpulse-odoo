@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Expense Products for common T&E categories -->
+
+        <record id="product_travel_airfare" model="product.product">
+            <field name="name">Airfare</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_travel"/>
+        </record>
+
+        <record id="product_travel_accommodation" model="product.product">
+            <field name="name">Hotel/Accommodation</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_accommodation"/>
+        </record>
+
+        <record id="product_travel_taxi" model="product.product">
+            <field name="name">Taxi/Ride Share</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_transport"/>
+        </record>
+
+        <record id="product_travel_mileage" model="product.product">
+            <field name="name">Mileage Reimbursement</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_transport"/>
+        </record>
+
+        <record id="product_meals_client" model="product.product">
+            <field name="name">Client Meals</field>
+            <field name="categ_id" ref="product_category_meals"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_meals"/>
+        </record>
+
+        <record id="product_meals_per_diem" model="product.product">
+            <field name="name">Per Diem - Meals</field>
+            <field name="categ_id" ref="product_category_meals"/>
+            <field name="type">service</field>
+            <field name="can_be_expensed" eval="True"/>
+            <field name="list_price">0.0</field>
+            <field name="property_account_expense_id" ref="account_expense_meals"/>
+        </record>
+
+    </data>
+</odoo>

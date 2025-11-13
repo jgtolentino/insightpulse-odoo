@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-11T18:56:12.637156+00:00Z
+Generated: 2025-11-13T09:47:16.016326+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -43,6 +43,7 @@ Generated: 2025-11-11T18:56:12.637156+00:00Z
 | ipai_slack_bridge | Custom | 19.0.1.0.0 | unknown | Bidirectional Slack integration - OAuth, Events API, message sync | ipai_chat_core,base_rest | odoo_addons/ipai_slack_bridge |
 | ipai_statement_engine | Custom | 19.0.1.0.0 | unknown | Statements of Account + email dispatch | base,account,mail | odoo_addons/ipai_statement_engine |
 | ipai_subscriptions | Custom | 18.0.20251026.1 | unknown | Recurring revenue management with MRR/ARR tracking | base,mail,account,product,uom,contract,contract_sale,contract_invoice,queue_job | addons/custom/ipai_subscriptions |
+| ipai_te_seed | Custom | 1.0.0 | unknown | IPAI seed: T&E accounts, journals, categories, MIS KPIs | account,hr_expense,mis_builder | custom_addons/ipai_te_seed |
 | ipai_visual_gate | Custom | 19.0.1.0.0 | unknown | Percy-style visual snapshot gating | base | odoo_addons/ipai_visual_gate |
 | ipai_workflow_bot | Custom | 19.0.1.0.0 | unknown | Slash commands, interactive dialogs, workflow automation | ipai_chat_core,base_automation | odoo_addons/ipai_workflow_bot |
 | mcp_integration | Custom | 18.0.1.0.0 | unknown | Model Context Protocol integration for Odoo workflows | base,web | addons/mcp_integration |

@@ -1,0 +1,42 @@
+name: Auto Merge Approved Deployables
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # Every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  merge_ready:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch PRs
+        id: fetch
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            const deployable = prs.filter(pr =>
+              pr.labels.some(label => label.name === 'can-deploy') &&
+              (pr.base.ref === 'main' || pr.base.ref.startsWith('release/')) &&
+              pr.mergeable_state === 'clean'
+            );
+            core.setOutput('deployable', JSON.stringify(deployable.map(pr => pr.number)));
+
+      - name: Merge PRs
+        if: steps.fetch.outputs.deployable != '[]'
+        run: |
+          echo "Merging deployables..."
+          echo "${{ steps.fetch.outputs.deployable }}" | jq -r '.[]' | while read pr; do
+            gh pr merge $pr --admin --merge --delete-branch || true
+          done
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
