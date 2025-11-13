@@ -1,0 +1,27 @@
+name: Merge Conflict Detection
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - develop
+      - release/**
+
+jobs:
+  detect-conflicts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for merge conflict markers
+        run: |
+          chmod +x scripts/detect_conflicts.sh
+          ./scripts/detect_conflicts.sh
+
+      - name: Fail if conflicts found
+        if: failure()
+        run: |
+          echo "::error::Merge conflicts detected. Please resolve before merging."
+          exit 1
