@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Expense Journal for Travel & Entertainment -->
+        <record id="journal_expense_te" model="account.journal">
+            <field name="name">Travel &amp; Expense</field>
+            <field name="code">EXP</field>
+            <field name="type">purchase</field>
+            <field name="show_on_dashboard" eval="True"/>
+        </record>
+
+        <!-- Cash Advance Journal -->
+        <record id="journal_cash_advance" model="account.journal">
+            <field name="name">Cash Advances</field>
+            <field name="code">CADV</field>
+            <field name="type">cash</field>
+            <field name="show_on_dashboard" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

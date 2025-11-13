@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Product Categories for Expense Items -->
+        <record id="product_category_expense" model="product.category">
+            <field name="name">Expense Products</field>
+            <field name="property_cost_method">standard</field>
+            <field name="property_valuation">manual_periodic</field>
+        </record>
+
+        <record id="product_category_travel" model="product.category">
+            <field name="name">Travel Expenses</field>
+            <field name="parent_id" ref="product_category_expense"/>
+        </record>
+
+        <record id="product_category_meals" model="product.category">
+            <field name="name">Meals &amp; Entertainment</field>
+            <field name="parent_id" ref="product_category_expense"/>
+        </record>
+
+    </data>
+</odoo>
