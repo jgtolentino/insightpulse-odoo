@@ -10,6 +10,10 @@ SECRET_KEY = os.getenv('SUPERSET_SECRET_KEY', 'CHANGE_ME_IN_PRODUCTION')
 WTF_CSRF_ENABLED = True
 WTF_CSRF_TIME_LIMIT = None
 
+# JWT Secret for async queries (must be at least 32 bytes)
+# Superset 4.0 uses GLOBAL_ASYNC_QUERIES_JWT_SECRET for async query tokens
+GLOBAL_ASYNC_QUERIES_JWT_SECRET = SECRET_KEY
+
 # Database (Superset metadata store)
 SQLALCHEMY_DATABASE_URI = (
     f"postgresql://{os.getenv('DATABASE_USER', 'postgres')}:"
@@ -168,11 +172,11 @@ THUMBNAIL_CACHE_CONFIG = {
 
 # Logging configuration
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-ENABLE_TIME_ROTATE = True
-FILENAME = '/app/superset_home/logs/superset.log'
-ROLLOVER = 'midnight'
-INTERVAL = 1
-BACKUP_COUNT = 30
+ENABLE_TIME_ROTATE = False  # Disable file logging for now
+# FILENAME = '/app/superset_home/logs/superset.log'
+# ROLLOVER = 'midnight'
+# INTERVAL = 1
+# BACKUP_COUNT = 30
 
 # API and CORS
 ENABLE_CORS = True
@@ -245,9 +249,55 @@ PUBLIC_ROLE_LIKE = 'Gamma'
 ALERT_REPORTS_NOTIFICATION_DRY_RUN = False
 ALERT_MINIMUM_INTERVAL = 60  # seconds
 
-# Custom OAuth configuration (optional)
-# AUTH_TYPE = AUTH_OAUTH
-# OAUTH_PROVIDERS = [...]
+# Custom OAuth configuration for Keycloak SSO
+from flask_appbuilder.security.manager import AUTH_OAUTH
+
+if os.getenv('OAUTH_ENABLE', 'false').lower() == 'true':
+    AUTH_TYPE = AUTH_OAUTH
+
+    OAUTH_PROVIDERS = [{
+        'name': 'keycloak',
+        'icon': 'fa-key',
+        'token_key': 'access_token',
+        'remote_app': {
+            'client_id': os.getenv('OAUTH_CLIENT_ID', 'superset-analytics'),
+            'client_secret': os.getenv('OAUTH_CLIENT_SECRET', ''),
+            'api_base_url': 'https://auth.insightpulseai.net/realms/insightpulse/protocol/openid-connect',
+            'access_token_url': os.getenv('OAUTH_TOKEN_URL', 'https://auth.insightpulseai.net/realms/insightpulse/protocol/openid-connect/token'),
+            'authorize_url': os.getenv('OAUTH_AUTHORIZATION_URL', 'https://auth.insightpulseai.net/realms/insightpulse/protocol/openid-connect/auth'),
+            'request_token_url': None,
+            'client_kwargs': {
+                'scope': os.getenv('OAUTH_SCOPE', 'openid email profile')
+            },
+        }
+    }]
+
+    # Auto-register users from OAuth
+    AUTH_USER_REGISTRATION = True
+    AUTH_USER_REGISTRATION_ROLE = "Public"
+
+    # Custom security manager to map OAuth user info
+    from superset.security import SupersetSecurityManager
+
+    class CustomSupersetSecurityManager(SupersetSecurityManager):
+        def oauth_user_info(self, provider, response=None):
+            if provider == 'keycloak':
+                me = self.appbuilder.sm.oauth_remotes[provider].get(
+                    os.getenv('OAUTH_USERINFO_URL', 'https://auth.insightpulseai.net/realms/insightpulse/protocol/openid-connect/userinfo')
+                )
+                data = me.json()
+                return {
+                    'username': data.get('preferred_username', data.get('email')),
+                    'email': data.get('email'),
+                    'first_name': data.get('given_name', ''),
+                    'last_name': data.get('family_name', '')
+                }
+            return {}
+
+    CUSTOM_SECURITY_MANAGER = CustomSupersetSecurityManager
+    print("✅ OAuth/OIDC authentication enabled (Keycloak)")
+else:
+    print("ℹ️  Using database authentication (set OAUTH_ENABLE=true for SSO)")
 
 print("✅ Superset configuration loaded successfully")
 print(f"📊 Database: {SQLALCHEMY_DATABASE_URI.split('@')[1] if '@' in SQLALCHEMY_DATABASE_URI else 'Not configured'}")

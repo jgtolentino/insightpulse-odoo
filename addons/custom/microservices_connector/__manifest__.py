@@ -1,6 +1,6 @@
 {
     "name": "Microservices Connector",
-    "version": "19.0.251027.1",
+    "version": "18.0.251027.1",
     "category": "Connectors",
     "summary": "Integration with OCR, LLM, and Agent microservices",
     "description": """

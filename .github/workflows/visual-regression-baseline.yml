@@ -1,0 +1,92 @@
+name: Update Visual Regression Baselines
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**.tsx'
+      - '**.ts'
+      - '**.css'
+      - '**.scss'
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-baselines:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Start development server
+        run: |
+          npm run dev &
+          echo $! > .dev-server.pid
+        env:
+          CI: true
+
+      - name: Wait for server to be ready
+        run: npx wait-on http://localhost:5173 --timeout 60000
+
+      - name: Generate baseline screenshots
+        run: npm run visual:baseline
+
+      - name: Stop development server
+        if: always()
+        run: |
+          if [ -f .dev-server.pid ]; then
+            kill $(cat .dev-server.pid) || true
+            rm .dev-server.pid
+          fi
+
+      - name: Upload baseline screenshots as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baselines
+          path: __image_snapshots__/baseline/
+          retention-days: 90
+
+      - name: Check for baseline changes
+        id: check_changes
+        run: |
+          if git diff --quiet __image_snapshots__/baseline/; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and push updated baselines
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+          git add __image_snapshots__/baseline/
+          git commit -m "chore: update visual regression baselines [skip ci]"
+          git push
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check_changes.outputs.changed }}" == "true" ]; then
+            echo "✅ Baseline screenshots updated and committed"
+          else
+            echo "ℹ️ No changes to baseline screenshots"
+          fi

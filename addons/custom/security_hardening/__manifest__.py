@@ -1,6 +1,6 @@
 {
     "name": "Security Hardening",
-    "version": "19.0.251026.1",
+    "version": "18.0.251026.1",
     "category": "Security",
     "summary": "Security hardening features for Odoo deployment",
     "description": """

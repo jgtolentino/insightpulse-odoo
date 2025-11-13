@@ -73,8 +73,6 @@ RUN mkdir -p \
 # Copy custom Superset configuration
 COPY --chown=superset:superset ./superset_config.py /app/pythonpath/
 COPY --chown=superset:superset ./init-superset.sh /app/docker/
-COPY --chown=superset:superset ./odoo-datasource.yaml /app/config/ || true
-COPY --chown=superset:superset ./custom-dashboards/* /app/superset_home/dashboards/ || true
 
 # Make scripts executable
 RUN chmod +x /app/docker/init-superset.sh

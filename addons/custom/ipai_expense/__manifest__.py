@@ -1,6 +1,6 @@
 {
     "name": "IPAI Expense",
-    "version": "19.0.20251026.1",
+    "version": "18.0.20251026.1",
     "category": "Accounting/Expenses",
     "summary": "Cash advance lifecycle, expense policy, OCR audit",
     "description": """

@@ -1,0 +1,146 @@
+version: '3.8'
+
+# Grafana Metrics Dashboard
+# Domain: metrics.insightpulseai.net
+# Purpose: System monitoring and observability
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-metrics
+    environment:
+      # Server configuration
+      GF_SERVER_ROOT_URL: https://metrics.insightpulseai.net
+      GF_SERVER_DOMAIN: metrics.insightpulseai.net
+      GF_SERVER_HTTP_PORT: 3000
+      GF_SERVER_PROTOCOL: http
+      GF_SERVER_ENFORCE_DOMAIN: "false"
+
+      # Security
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_SECURITY_SECRET_KEY: ${GRAFANA_SECRET_KEY}
+      GF_SECURITY_DISABLE_GRAVATAR: "true"
+
+      # Database (optional - use PostgreSQL for production)
+      # GF_DATABASE_TYPE: postgres
+      # GF_DATABASE_HOST: postgres-prod:5432
+      # GF_DATABASE_NAME: grafana
+      # GF_DATABASE_USER: grafana
+      # GF_DATABASE_PASSWORD: ${GRAFANA_DB_PASSWORD}
+
+      # Authentication (optional - integrate with Odoo SSO later)
+      # GF_AUTH_DISABLE_LOGIN_FORM: "false"
+      # GF_AUTH_DISABLE_SIGNOUT_MENU: "false"
+
+      # Users
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_USERS_ALLOW_ORG_CREATE: "false"
+      GF_USERS_AUTO_ASSIGN_ORG: "true"
+      GF_USERS_AUTO_ASSIGN_ORG_ROLE: Viewer
+
+      # Anonymous access (optional - for public dashboards)
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+      # GF_AUTH_ANONYMOUS_ORG_NAME: InsightPulse
+      # GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+
+      # Snapshots
+      GF_SNAPSHOTS_EXTERNAL_ENABLED: "false"
+
+      # Alerting (optional - configure SMTP for email alerts)
+      # GF_SMTP_ENABLED: "true"
+      # GF_SMTP_HOST: smtp.gmail.com:587
+      # GF_SMTP_USER: ${SMTP_USER}
+      # GF_SMTP_PASSWORD: ${SMTP_PASSWORD}
+      # GF_SMTP_FROM_ADDRESS: alerts@insightpulseai.net
+      # GF_SMTP_FROM_NAME: InsightPulse Alerts
+
+      # Plugins (auto-install on startup)
+      GF_INSTALL_PLUGINS: >
+        grafana-clock-panel,
+        grafana-simple-json-datasource,
+        grafana-worldmap-panel,
+        grafana-piechart-panel
+
+      # Logging
+      GF_LOG_MODE: console file
+      GF_LOG_LEVEL: info
+
+      # Paths
+      GF_PATHS_DATA: /var/lib/grafana
+      GF_PATHS_LOGS: /var/log/grafana
+      GF_PATHS_PLUGINS: /var/lib/grafana/plugins
+      GF_PATHS_PROVISIONING: /etc/grafana/provisioning
+
+    volumes:
+      # Persistent data
+      - grafana-data:/var/lib/grafana
+      - grafana-logs:/var/log/grafana
+
+      # Provisioning (datasources, dashboards, plugins)
+      - ./provisioning:/etc/grafana/provisioning:ro
+
+      # Custom configuration (optional)
+      # - ./grafana.ini:/etc/grafana/grafana.ini:ro
+
+    ports:
+      - "3000:3000"
+
+    restart: unless-stopped
+
+    networks:
+      - monitoring-network
+      - odoo-prod-network  # Connect to Odoo production for metrics
+
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Optional: Prometheus for metrics collection
+  # prometheus:
+  #   image: prom/prometheus:latest
+  #   container_name: prometheus
+  #   command:
+  #     - '--config.file=/etc/prometheus/prometheus.yml'
+  #     - '--storage.tsdb.path=/prometheus'
+  #     - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+  #     - '--web.console.templates=/usr/share/prometheus/consoles'
+  #   volumes:
+  #     - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - prometheus-data:/prometheus
+  #   ports:
+  #     - "9090:9090"
+  #   restart: unless-stopped
+  #   networks:
+  #     - monitoring-network
+
+  # Optional: Node Exporter for system metrics
+  # node-exporter:
+  #   image: prom/node-exporter:latest
+  #   container_name: node-exporter
+  #   command:
+  #     - '--path.rootfs=/host'
+  #   volumes:
+  #     - /:/host:ro,rslave
+  #   ports:
+  #     - "9100:9100"
+  #   restart: unless-stopped
+  #   networks:
+  #     - monitoring-network
+
+volumes:
+  grafana-data:
+    driver: local
+  grafana-logs:
+    driver: local
+  # prometheus-data:
+  #   driver: local
+
+networks:
+  monitoring-network:
+    driver: bridge
+  odoo-prod-network:
+    external: true  # Connect to existing Odoo production network

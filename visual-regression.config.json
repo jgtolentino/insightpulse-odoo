@@ -1,0 +1,37 @@
+{
+  "components": [
+    {
+      "name": "homepage",
+      "url": "/",
+      "viewports": ["desktop", "tablet", "mobile"],
+      "fullPage": true,
+      "description": "Main homepage with hero and features"
+    },
+    {
+      "name": "about",
+      "url": "/about",
+      "viewports": ["desktop"],
+      "fullPage": true,
+      "description": "About page"
+    }
+  ],
+  "defaultThreshold": 0.1,
+  "viewports": {
+    "mobile": { "width": 375, "height": 667 },
+    "tablet": { "width": 768, "height": 1024 },
+    "desktop": { "width": 1920, "height": 1080 },
+    "desktopWide": { "width": 2560, "height": 1440 }
+  },
+  "hideSelectors": [
+    "[data-testid='timestamp']",
+    "[data-testid='date']",
+    ".timestamp",
+    ".date-time",
+    "[class*='animation']",
+    "[class*='loading']"
+  ],
+  "storage": {
+    "provider": "local",
+    "outputDir": "public/visual-regression"
+  }
+}

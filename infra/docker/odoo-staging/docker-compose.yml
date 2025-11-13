@@ -1,0 +1,85 @@
+version: '3.8'
+
+# Staging Odoo Environment
+# Domain: staging.insightpulseai.net
+# Purpose: Pre-production testing and validation
+
+services:
+  postgres-stage:
+    image: postgres:15
+    container_name: odoo-staging-db
+    environment:
+      POSTGRES_DB: odoo_staging
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-stage-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+    networks:
+      - odoo-staging-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d odoo_staging"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  odoo-staging:
+    image: odoo:18.0
+    container_name: odoo-staging
+    depends_on:
+      postgres-stage:
+        condition: service_healthy
+    environment:
+      HOST: postgres-stage
+      PORT: 5432
+      USER: odoo
+      PASSWORD: ${POSTGRES_PASSWORD}
+      # Odoo config overrides
+      ODOO_RC: /etc/odoo/odoo.conf
+    volumes:
+      # Odoo data
+      - odoo-stage-data:/var/lib/odoo
+      - odoo-stage-logs:/var/log/odoo
+
+      # Custom addons (read-only from production)
+      - /mnt/addons:/mnt/addons:ro
+      - /mnt/oca:/mnt/oca:ro
+
+      # Staging-specific configuration
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+
+      # Optional: separate custom addons for staging
+      # - ./staging-addons:/mnt/staging-addons
+    ports:
+      - "8070:8069"  # HTTP port
+      - "8073:8072"  # Longpolling port
+    restart: unless-stopped
+    networks:
+      - odoo-staging-network
+    command: >
+      odoo
+      --config=/etc/odoo/odoo.conf
+      --db-filter=^odoo_staging$$
+      --without-demo=all
+      --load-language=en_US
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  postgres-stage-data:
+    driver: local
+  odoo-stage-data:
+    driver: local
+  odoo-stage-logs:
+    driver: local
+
+networks:
+  odoo-staging-network:
+    driver: bridge

@@ -3,7 +3,7 @@
 
 {
     "name": "InsightPulse Rate Policy Automation",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Finance",
     "summary": "Automated rate calculation with P60 + 25% markup",
     "author": "InsightPulse AI",

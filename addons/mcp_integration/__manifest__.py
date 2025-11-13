@@ -1,6 +1,6 @@
 {
     "name": "MCP Integration",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Tools",
     "license": "AGPL-3",
     "summary": "Model Context Protocol integration for Odoo workflows",

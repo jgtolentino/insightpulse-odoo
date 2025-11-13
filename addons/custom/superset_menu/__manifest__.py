@@ -1,6 +1,6 @@
 {
     "name": "Superset BI Integration",
-    "version": "19.0.1.0.0",
+    "version": "18.0.1.0.0",
     "category": "Reporting",
     "summary": "Replace native Odoo dashboards with Superset BI analytics",
     "description": """
