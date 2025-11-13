@@ -156,3 +156,22 @@ curl-format.txt
 scripts/ci/remediation/restart-services.sh
 scripts/ci/remediation/clear-caches.sh
 
+# ══════════════════════════════════════════════════════════════
+# VISUAL REGRESSION TESTING
+# ══════════════════════════════════════════════════════════════
+
+# Playwright artifacts
+playwright-report/
+test-results/
+test-results.json
+
+# Visual regression - ignore current/diff, keep baselines
+__image_snapshots__/current/
+__image_snapshots__/diff/
+visual-report.html
+visual-report.md
+visual-artifact-urls.json
+
+# Note: Baseline screenshots are committed for version control
+# __image_snapshots__/baseline/ is tracked
+
