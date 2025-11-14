@@ -224,14 +224,41 @@ class HRFinalPayComputation(models.Model):
             # Get first day of exit month
             first_day = record.exit_date.replace(day=1)
 
-            # Count working days (Mon-Sat, excluding holidays)
+            # Get employee's resource calendar for public holiday checking
+            calendar = False
+            if record.employee_id and record.employee_id.contract_id:
+                calendar = record.employee_id.contract_id.resource_calendar_id
+
+            # If no calendar from contract, try to get company default calendar
+            if not calendar:
+                calendar = record.company_id.resource_calendar_id
+
+            # Fetch public holidays (global leaves) for the exit month
+            public_holidays = set()
+            if calendar:
+                global_leaves = self.env['resource.calendar.leaves'].search([
+                    ('calendar_id', '=', calendar.id),
+                    ('resource_id', '=', False),  # Global leaves (public holidays)
+                    ('date_from', '>=', datetime.combine(first_day, datetime.min.time())),
+                    ('date_to', '<=', datetime.combine(record.exit_date, datetime.max.time()))
+                ])
+
+                # Build set of public holiday dates
+                for leave in global_leaves:
+                    leave_start = leave.date_from.date()
+                    leave_end = leave.date_to.date()
+                    current = leave_start
+                    while current <= leave_end:
+                        public_holidays.add(current)
+                        current += timedelta(days=1)
+
+            # Count working days (Mon-Sat, excluding public holidays)
             worked_days = 0
             current_day = first_day
 
             while current_day <= record.exit_date:
-                # Check if it's a working day (Mon-Sat)
-                if current_day.weekday() < 6:  # 0-5 = Mon-Sat
-                    # TODO: Check against public holidays
+                # Check if it's a working day (Mon-Sat) and not a public holiday
+                if current_day.weekday() < 6 and current_day not in public_holidays:
                     worked_days += 1
 
                 current_day += timedelta(days=1)
