@@ -85,6 +85,16 @@ services:
         type: SECRET
         # Set in DO dashboard (optional)
 
+      # n8n integration
+      - key: N8N_URL
+        scope: RUN_TIME
+        value: "https://ipa.insightpulseai.net"
+
+      - key: N8N_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        # Set in DO dashboard: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+
       # Odoo integration
       - key: ODOO_URL
         scope: RUN_TIME
@@ -147,6 +157,7 @@ domains:
 #    - DO_AGENT_KEY (DigitalOcean Gradient AI agent key)
 #    - DO_MODEL_ACCESS_KEY (DigitalOcean Gradient AI model key)
 #    - NOTION_TOKEN (optional, for Notion integration)
+#    - N8N_API_KEY (for n8n workflow automation)
 #
 # 2. Total cost estimate:
 #    - mcp-hub (basic-xxs: 512MB RAM): $5/month
@@ -159,8 +170,9 @@ domains:
 # 4. Architecture:
 #    - FastAPI coordinator service
 #    - Orchestrates multi-agent workflows
-#    - Integrates with Odoo, Superset, GitHub, Supabase
+#    - Integrates with Odoo, Superset, GitHub, Supabase, n8n
 #    - Provides unified API for MCP protocol
+#    - 7 integrated services: GitHub, DigitalOcean, Supabase, Notion, Superset, Tableau, n8n
 #
 # 5. Health checks:
 #    - Endpoint: /health

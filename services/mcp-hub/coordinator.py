@@ -43,6 +43,8 @@ DO_API_TOKEN = os.getenv("DO_API_TOKEN", "")
 SUPERSET_URL = os.getenv("SUPERSET_URL", "http://localhost:8088")
 SUPERSET_USERNAME = os.getenv("SUPERSET_USERNAME", "admin")
 SUPERSET_PASSWORD = os.getenv("SUPERSET_PASSWORD", "")
+N8N_URL = os.getenv("N8N_URL", "https://ipa.insightpulseai.net")
+N8N_API_KEY = os.getenv("N8N_API_KEY", "")
 
 
 class MCPRequest(BaseModel):
@@ -68,7 +70,8 @@ class MCPCoordinator:
             'supabase': self._get_supabase_client(),
             'notion': self._get_notion_client(),
             'superset': self._get_superset_client(),
-            'tableau': self._get_tableau_client()
+            'tableau': self._get_tableau_client(),
+            'n8n': self._get_n8n_client()
         }
 
     def _get_github_client(self):
@@ -130,6 +133,19 @@ class MCPCoordinator:
             'operations': ['query_datasource', 'get_workbook', 'get_view']
         }
 
+    def _get_n8n_client(self):
+        """n8n workflow automation client."""
+        return {
+            'url': N8N_URL,
+            'headers': {
+                'X-N8N-API-KEY': N8N_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            'domains': ['n8n', 'workflow', 'automation', 'finance', 'bir', 'expense'],
+            'operations': ['trigger_workflow', 'list_workflows', 'get_execution',
+                          'finance_month_end', 'bir_compliance', 'expense_approval']
+        }
+
     async def route_request(self, method: str, params: Dict[str, Any], server_hint: Optional[str] = None) -> Dict[str, Any]:
         """
         Intelligently route request to appropriate MCP server.
@@ -160,6 +176,8 @@ class MCPCoordinator:
             return await self._call_supabase(tool_name, arguments)
         elif target_server == 'superset':
             return await self._call_superset(tool_name, arguments)
+        elif target_server == 'n8n':
+            return await self._call_n8n(tool_name, arguments)
         else:
             raise ValueError(f"Unsupported server: {target_server}")
 
@@ -169,7 +187,7 @@ class MCPCoordinator:
             return hint
 
         # Pattern-based routing
-        if any(x in tool_name.lower() for x in ['github', 'branch', 'pr', 'issue', 'repo', 'workflow']):
+        if any(x in tool_name.lower() for x in ['github', 'branch', 'pr', 'issue', 'repo']):
             return 'github'
         elif any(x in tool_name.lower() for x in ['deploy', 'app', 'digitalocean']):
             return 'digitalocean'
@@ -179,6 +197,8 @@ class MCPCoordinator:
             return 'superset'
         elif any(x in tool_name.lower() for x in ['notion', 'page']):
             return 'notion'
+        elif any(x in tool_name.lower() for x in ['n8n', 'workflow', 'automation', 'bir', 'finance', 'expense']):
+            return 'n8n'
         else:
             # Default to GitHub for unknown operations
             return 'github'
@@ -314,6 +334,40 @@ class MCPCoordinator:
             response.raise_for_status()
             return response.json()['access_token']
 
+    async def _call_n8n(self, operation: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Call n8n API."""
+        client_config = self.servers['n8n']
+
+        # Map operations to n8n API endpoints
+        endpoint_map = {
+            'list_workflows': '/api/v1/workflows',
+            'trigger_workflow': '/webhook/{workflow_id}',
+            'get_execution': '/api/v1/executions/{execution_id}'
+        }
+
+        endpoint = endpoint_map.get(operation)
+        if not endpoint:
+            raise ValueError(f"Unknown n8n operation: {operation}")
+
+        # Replace path parameters
+        endpoint = endpoint.format(**arguments)
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            if operation == 'trigger_workflow':
+                # Webhook trigger
+                response = await client.post(
+                    f"{client_config['url']}{endpoint}",
+                    json=arguments.get('data', {})
+                )
+            else:
+                # API call
+                response = await client.get(
+                    f"{client_config['url']}{endpoint}",
+                    headers=client_config['headers']
+                )
+            response.raise_for_status()
+            return response.json()
+
 
 # Initialize coordinator
 coordinator = MCPCoordinator()
@@ -389,6 +443,15 @@ async def handle_tools_list() -> List[Dict[str, Any]]:
         {"name": "superset_create_chart", "server": "superset"},
     ])
 
+    # Add n8n tools
+    all_tools.extend([
+        {"name": "n8n_list_workflows", "server": "n8n"},
+        {"name": "n8n_trigger_workflow", "server": "n8n"},
+        {"name": "finance_month_end_closing", "server": "n8n"},
+        {"name": "bir_compliance", "server": "n8n"},
+        {"name": "expense_approval", "server": "n8n"},
+    ])
+
     return all_tools
 
 
@@ -430,7 +493,8 @@ async def root():
             "supabase": "PostgreSQL REST API",
             "notion": "Workspace API",
             "superset": "Apache Superset",
-            "tableau": "Tableau Cloud"
+            "tableau": "Tableau Cloud",
+            "n8n": "n8n Workflow Automation"
         },
         "endpoints": {
             "mcp": "/mcp",
