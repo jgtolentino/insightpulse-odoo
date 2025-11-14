@@ -1,0 +1,68 @@
+{
+  "summary": {
+    "modules_scanned": 2,
+    "hard_failures": 3,
+    "security_risks": 2,
+    "style_violations": 1,
+    "perf_warnings": 0
+  },
+  "findings": [
+    {
+      "severity": "HIGH",
+      "rule": "PYTHON.MISSING_IMPORT",
+      "file": "addons/ipai_agent/models/agent_api.py",
+      "line": 211,
+      "message": "AccessError is raised but not imported, so hitting the permission gate triggers a NameError and blocks agent actions.",
+      "evidence": "_check_action_permission() raises AccessError while the module only imports UserError.",
+      "fix": "Import AccessError from odoo.exceptions alongside UserError.",
+      "autofix_diff": "--- a/addons/ipai_agent/models/agent_api.py\n+++ b/addons/ipai_agent/models/agent_api.py\n@@\n-import requests\n-from odoo.exceptions import UserError\n+import requests\n+from odoo.exceptions import AccessError, UserError\n"
+    },
+    {
+      "severity": "HIGH",
+      "rule": "SECURITY.SUBPROCESS_UNSANITIZED",
+      "file": "addons/ipai_agent/models/agent_api.py",
+      "line": 248,
+      "message": "Deployment handler builds a subprocess command directly from agent payload, enabling remote command execution when the webhook or agent is compromised.",
+      "evidence": "_action_deploy_service() concatenates service/environment inputs into cmd and runs subprocess.run().",
+      "fix": "Replace direct subprocess invocation with a queued Odoo job that validates the requested service against an allowlist or triggers a secured server action." 
+    },
+    {
+      "severity": "MEDIUM",
+      "rule": "MANIFEST.VERSION_FORMAT",
+      "file": "addons/ipai_agent/__manifest__.py",
+      "line": 4,
+      "message": "Module version must follow 18.0.x.y.z per Odoo 18/OCA guidelines; manifest still declares 1.0.0.",
+      "evidence": "Version key is set to '1.0.0'.",
+      "fix": "Update the version to an 18.0.* semantic version such as 18.0.1.0.0.",
+      "autofix_diff": "--- a/addons/ipai_agent/__manifest__.py\n+++ b/addons/ipai_agent/__manifest__.py\n@@\n-    \"version\": \"1.0.0\",\n+    \"version\": \"18.0.1.0.0\",\n"
+    },
+    {
+      "severity": "HIGH",
+      "rule": "MANIFEST.MISSING_DATA",
+      "file": "addons/ipai_agent_hybrid/__manifest__.py",
+      "line": 54,
+      "message": "Manifest references security/data/view files that are absent, so the module cannot install.",
+      "evidence": "The module directory only contains README, manifest, and models without the declared security or data files.",
+      "fix": "Add the referenced security and data XML/CSV files or drop them from the manifest until they exist."
+    },
+    {
+      "severity": "HIGH",
+      "rule": "MODULE.INIT_IMPORT",
+      "file": "addons/ipai_agent_hybrid/models/__init__.py",
+      "line": 1,
+      "message": "models/__init__.py is empty, so ip_page.py is never imported and the ORM does not register the models.",
+      "evidence": "__init__ contains only the coding header with no imports.",
+      "fix": "Import ip_page inside models/__init__.py so Odoo loads the model class.",
+      "autofix_diff": "--- a/addons/ipai_agent_hybrid/models/__init__.py\n+++ b/addons/ipai_agent_hybrid/models/__init__.py\n@@\n-# -*- coding: utf-8 -*-\n+# -*- coding: utf-8 -*-\n+from . import ip_page\n"
+    },
+    {
+      "severity": "MEDIUM",
+      "rule": "SECURITY.PUBLIC_ENDPOINT",
+      "file": "addons/ipai_agent/controllers/main.py",
+      "line": 19,
+      "message": "Webhook endpoint is exposed with auth='public' and relies solely on a static API key stored in ir.config_parameter, which is weak protection for high-privilege actions.",
+      "evidence": "agent_webhook route declares auth='public' and compares kwargs['api_key'] to a parameter before sudo() actions.",
+      "fix": "Restrict the route to auth='user' with signed tokens or implement a hashed HMAC signature check and rate limiting." 
+    }
+  ]
+}
