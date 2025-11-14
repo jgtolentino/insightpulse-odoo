@@ -1,0 +1,62 @@
+# -*- coding: utf-8 -*-
+from odoo import models, fields, api
+{% if model.validators %}
+from odoo.exceptions import ValidationError
+{% endif %}
+
+
+class {{ model.name.replace('.', '') | title | replace(' ', '') }}(models.Model):
+    """{{ model.description }}"""
+
+    _name = '{{ model.name }}'
+    _description = '{{ model.description }}'
+    {% if model.inherits %}
+    _inherit = [{% for inherit in model.inherits %}'{{ inherit }}'{% if not loop.last %}, {% endif %}{% endfor %}]
+    {% endif %}
+    {% if model.order %}
+    _order = '{{ model.order }}'
+    {% endif %}
+
+    # Fields
+    {% for field in model.fields %}
+    {{ field.name }} = fields.{{ field.type }}(
+        {% if field.string %}
+        string='{{ field.string }}',
+        {% endif %}
+        {% if field.required %}
+        required={{ field.required }},
+        {% endif %}
+        {% if field.default %}
+        default={{ field.default }},
+        {% endif %}
+        {% if field.help %}
+        help='{{ field.help }}',
+        {% endif %}
+        {% if field.related %}
+        related='{{ field.related }}',
+        {% endif %}
+        {% if field.compute %}
+        compute='{{ field.compute }}',
+        {% endif %}
+        {% if field.store %}
+        store={{ field.store }},
+        {% endif %}
+    )
+    {% endfor %}
+
+    {% if model.methods %}
+    # Methods
+    {% for method in model.methods %}
+
+    {% if method.decorator %}
+    {{ method.decorator }}
+    {% endif %}
+    def {{ method.name }}(self{% if method.params %}, {{ method.params }}{% endif %}):
+        """{{ method.description }}"""
+        {% if method.body %}
+        {{ method.body | indent(8) }}
+        {% else %}
+        pass
+        {% endif %}
+    {% endfor %}
+    {% endif %}

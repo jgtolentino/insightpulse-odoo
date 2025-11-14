@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+{% for access in security.access_rights %}
+{{ access.id }},{{ access.name }},{{ access.model_id }},,{{ 1 if access.perm_read else 0 }},{{ 1 if access.perm_write else 0 }},{{ 1 if access.perm_create else 0 }},{{ 1 if access.perm_unlink else 0 }}
+{% endfor %}

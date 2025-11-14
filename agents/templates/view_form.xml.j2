@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_{{ model_name.replace('.', '_') }}_form" model="ir.ui.view">
+        <field name="name">{{ model_name }}.form</field>
+        <field name="model">{{ model_name }}</field>
+        <field name="arch" type="xml">
+            <form string="{{ view.title | default(model_name.replace('.', ' ').title()) }}">
+                <header>
+                    {% if view.states %}
+                    <field name="state" widget="statusbar" statusbar_visible="{{ view.states }}"/>
+                    {% endif %}
+                </header>
+                <sheet>
+                    <group>
+                        {% for field in view.fields | default([]) %}
+                        <field name="{{ field.name }}"{% if field.widget %} widget="{{ field.widget }}"{% endif %}{% if field.required %} required="1"{% endif %}/>
+                        {% endfor %}
+                    </group>
+                </sheet>
+                {% if view.chatter | default(true) %}
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+                {% endif %}
+            </form>
+        </field>
+    </record>
+</odoo>
