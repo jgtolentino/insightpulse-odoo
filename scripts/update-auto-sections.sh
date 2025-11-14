@@ -73,14 +73,14 @@ if [[ -d "odoo/addons" ]]; then
 
     for module in odoo/addons/*; do
         if [[ -d "$module" ]] && [[ -f "$module/__manifest__.py" ]]; then
-            ((TOTAL++))
+            TOTAL=$((TOTAL + 1))
             MODULE_NAME=$(basename "$module")
 
             # Extract description from __manifest__.py
             DESCRIPTION=$(grep -m1 "'summary':" "$module/__manifest__.py" 2>/dev/null | sed "s/.*'summary':\s*'\(.*\)'.*/\1/" || echo "N/A")
 
             if [[ -f "$module/README.md" ]]; then
-                ((WITH_DOCS++))
+                WITH_DOCS=$((WITH_DOCS + 1))
                 echo "| [$MODULE_NAME](../odoo/addons/$MODULE_NAME) | ✅ | $DESCRIPTION |" >> docs/MODULE_INDEX.md
             else
                 MISSING+=("$MODULE_NAME")
