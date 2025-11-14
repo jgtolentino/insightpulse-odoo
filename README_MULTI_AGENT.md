@@ -3,7 +3,7 @@
 ## 🎯 Executive Summary
 
 The InsightPulse Odoo Multi-Agent Orchestrator is a **hybrid AI architecture** that upgrades your existing DigitalOcean AI Agent with 4 specialized sub-agents for:
-- **Odoo 19.0 Development** (OCA-compliant modules)
+- **Odoo 18 CE Development** (OCA-compliant modules)
 - **Philippine BIR Compliance** (Tax forms, multi-agency finance)
 - **Business Intelligence** (Superset dashboards, SQL optimization)
 - **DevOps Automation** (DO App Platform deployments, CI/CD)
@@ -23,7 +23,7 @@ The InsightPulse Odoo Multi-Agent Orchestrator is a **hybrid AI architecture** t
 ```
 insightpulse-odoo/
 ├── services/                          # Specialist FastAPI microservices
-│   ├── odoo-developer-agent/          # Odoo 19.0 development specialist
+│   ├── odoo-developer-agent/          # Odoo 18 CE development specialist
 │   │   ├── main.py                    # FastAPI service with Claude integration
 │   │   └── requirements.txt
 │   ├── finance-ssc-expert/            # BIR compliance specialist

@@ -83,7 +83,7 @@ The InsightPulse Odoo Multi-Agent Orchestrator is a **hybrid architecture** that
 **URL**: https://odoo-developer-agent.ondigitalocean.app
 
 **Expertise**:
-- Odoo 19.0 Enterprise module development
+- Odoo 18 CE Enterprise module development
 - OCA (Odoo Community Association) compliance
 - Python 3.11+ with type hints
 - PostgreSQL ORM modeling
@@ -92,7 +92,7 @@ The InsightPulse Odoo Multi-Agent Orchestrator is a **hybrid architecture** that
 
 **Triggers**: odoo module, scaffold, model, view, workflow, automation
 
-**Knowledge Base**: OCA guidelines, Odoo 19 documentation, module patterns
+**Knowledge Base**: OCA guidelines, Odoo 18 documentation, module patterns
 
 #### finance_ssc_expert Agent
 **URL**: https://finance-ssc-expert.ondigitalocean.app

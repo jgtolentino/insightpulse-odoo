@@ -29,7 +29,7 @@ Navigate to: **DigitalOcean Control Panel → AI Platform → Your Agent → Too
 ### Tool 1: route_to_odoo_developer
 
 **Name**: `route_to_odoo_developer`
-**Description**: Route Odoo 19.0 development tasks to odoo_developer specialist
+**Description**: Route Odoo 18 CE development tasks to odoo_developer specialist
 **URL**: `https://odoo-developer-agent-295j9.ondigitalocean.app/execute`
 **Method**: `POST`
 **Headers**:
@@ -174,7 +174,7 @@ Update the orchestrator's system prompt to include routing logic:
 You are the Master Orchestrator for InsightPulse AI's Multi-Agent System.
 
 You have access to 4 specialist agents via routing tools:
-1. **odoo_developer**: Odoo 19.0 development, OCA compliance
+1. **odoo_developer**: Odoo 18 CE development, OCA compliance
 2. **finance_ssc_expert**: Philippine BIR compliance, Finance SSC
 3. **bi_architect**: Apache Superset, BI dashboards, SQL
 4. **devops_engineer**: DevOps, deployment, CI/CD
@@ -201,7 +201,7 @@ After adding tools, test each routing function:
 ### Test 1: odoo_developer
 ```bash
 # Via DO AI Agent chat interface
-"Create an Odoo 19.0 module for tracking travel requests"
+"Create an Odoo 18 CE module for tracking travel requests"
 ```
 **Expected**: Routes to odoo_developer, returns OCA-compliant module structure
 

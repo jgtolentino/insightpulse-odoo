@@ -1,6 +1,6 @@
 """
 Odoo Developer Specialist Agent
-FastAPI service for Odoo 19.0 module development following OCA standards
+FastAPI service for Odoo 18 CE module development following OCA standards
 """
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
@@ -13,7 +13,7 @@ from datetime import datetime
 
 app = FastAPI(
     title="Odoo Developer Agent",
-    description="Specialized agent for Odoo 19.0 Enterprise development with OCA compliance",
+    description="Specialized agent for Odoo 18 CE Enterprise development with OCA compliance",
     version="1.0.0"
 )
 
@@ -51,7 +51,7 @@ class HealthResponse(BaseModel):
 ODOO_DEVELOPER_SYSTEM_PROMPT = """You are the odoo_developer specialist agent from the SuperClaude Multi-Agent Framework.
 
 **Core Expertise**:
-- Odoo 19.0 Enterprise module development
+- Odoo 18 CE Enterprise module development
 - OCA (Odoo Community Association) compliance standards
 - Python 3.11+ with type hints
 - PostgreSQL database modeling
@@ -118,7 +118,7 @@ async def execute_task(
 Context:
 {context_str}
 
-Please analyze this task and provide OCA-compliant Odoo 19.0 implementation guidance."""
+Please analyze this task and provide OCA-compliant Odoo 18 CE implementation guidance."""
 
         # Call Claude with specialized system prompt
         message = client.messages.create(
@@ -190,7 +190,7 @@ async def get_capabilities():
     """Return agent capabilities for orchestrator discovery"""
     return {
         "agent_name": "odoo_developer",
-        "specialization": "Odoo 19.0 Enterprise module development",
+        "specialization": "Odoo 18 CE Enterprise module development",
         "standards": ["OCA compliance", "AGPL-3.0", "PEP8", "Type hints"],
         "capabilities": [
             "Module scaffolding",

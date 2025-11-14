@@ -90,7 +90,7 @@ curl https://odoo-developer-agent.ondigitalocean.app/capabilities
 ```json
 {
   "agent_name": "odoo_developer",
-  "specialization": "Odoo 19.0 Enterprise module development",
+  "specialization": "Odoo 18 CE Enterprise module development",
   "standards": ["OCA compliance", "AGPL-3.0", "PEP8", "Type hints"],
   "capabilities": [
     "Module scaffolding",
@@ -219,7 +219,7 @@ psql "$POSTGRES_URL" -c "SELECT * FROM scout.agent_knowledge_stats;"
 ```json
 {
   "name": "route_to_odoo_developer",
-  "description": "Route Odoo 19.0 module development tasks to specialized agent. Use for: module creation, OCA compliance, Python models, XML views, security configuration, workflow automation.",
+  "description": "Route Odoo 18 CE module development tasks to specialized agent. Use for: module creation, OCA compliance, Python models, XML views, security configuration, workflow automation.",
   "parameters": {
     "type": "object",
     "properties": {
@@ -339,7 +339,7 @@ psql "$POSTGRES_URL" -c "SELECT * FROM scout.agent_knowledge_stats;"
 
 You have access to 4 specialist agents via routing tools:
 
-1. **route_to_odoo_developer** - Odoo 19.0 module development, OCA compliance
+1. **route_to_odoo_developer** - Odoo 18 CE module development, OCA compliance
    - Triggers: odoo module, scaffold, model, view, workflow, automation
 
 2. **route_to_finance_ssc_expert** - BIR compliance, tax filing, multi-agency finance
