@@ -8,3 +8,12 @@ repos:
       - id: ruff
         args: [--fix]
       - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pytest-check
+        name: pytest-check
+        entry: pytest tests/unit -q --maxfail=1
+        language: system
+        pass_filenames: false
+        always_run: true
