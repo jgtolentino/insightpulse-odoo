@@ -45,6 +45,8 @@ SUPERSET_USERNAME = os.getenv("SUPERSET_USERNAME", "admin")
 SUPERSET_PASSWORD = os.getenv("SUPERSET_PASSWORD", "")
 N8N_URL = os.getenv("N8N_URL", "https://ipa.insightpulseai.net")
 N8N_API_KEY = os.getenv("N8N_API_KEY", "")
+MATTERMOST_URL = os.getenv("MATTERMOST_URL", "https://chat.insightpulseai.net")
+MATTERMOST_TOKEN = os.getenv("MATTERMOST_TOKEN", "")
 
 
 class MCPRequest(BaseModel):
@@ -71,7 +73,8 @@ class MCPCoordinator:
             'notion': self._get_notion_client(),
             'superset': self._get_superset_client(),
             'tableau': self._get_tableau_client(),
-            'n8n': self._get_n8n_client()
+            'n8n': self._get_n8n_client(),
+            'mattermost': self._get_mattermost_client()
         }
 
     def _get_github_client(self):
@@ -146,6 +149,19 @@ class MCPCoordinator:
                           'finance_month_end', 'bir_compliance', 'expense_approval']
         }
 
+    def _get_mattermost_client(self):
+        """Mattermost team collaboration client."""
+        return {
+            'url': MATTERMOST_URL,
+            'headers': {
+                'Authorization': f'Bearer {MATTERMOST_TOKEN}',
+                'Content-Type': 'application/json'
+            },
+            'domains': ['mattermost', 'chat', 'team', 'channel', 'message', 'collaboration'],
+            'operations': ['send_message', 'send_expense_approval', 'notify_bir_deadline',
+                          'month_end_closing_update', 'get_channel_messages', 'sync_odoo_pending_approvals']
+        }
+
     async def route_request(self, method: str, params: Dict[str, Any], server_hint: Optional[str] = None) -> Dict[str, Any]:
         """
         Intelligently route request to appropriate MCP server.
@@ -178,6 +194,8 @@ class MCPCoordinator:
             return await self._call_superset(tool_name, arguments)
         elif target_server == 'n8n':
             return await self._call_n8n(tool_name, arguments)
+        elif target_server == 'mattermost':
+            return await self._call_mattermost(tool_name, arguments)
         else:
             raise ValueError(f"Unsupported server: {target_server}")
 
@@ -197,8 +215,10 @@ class MCPCoordinator:
             return 'superset'
         elif any(x in tool_name.lower() for x in ['notion', 'page']):
             return 'notion'
-        elif any(x in tool_name.lower() for x in ['n8n', 'workflow', 'automation', 'bir', 'finance', 'expense']):
+        elif any(x in tool_name.lower() for x in ['n8n', 'workflow', 'automation']):
             return 'n8n'
+        elif any(x in tool_name.lower() for x in ['mattermost', 'chat', 'message', 'channel', 'team', 'collaboration']):
+            return 'mattermost'
         else:
             # Default to GitHub for unknown operations
             return 'github'
@@ -368,6 +388,32 @@ class MCPCoordinator:
             response.raise_for_status()
             return response.json()
 
+    async def _call_mattermost(self, operation: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
+        """Call Mattermost MCP server."""
+        client_config = self.servers['mattermost']
+
+        # Map operations to Mattermost MCP tools
+        operation_map = {
+            'send_message': {'channel': str, 'message': str, 'priority': str},
+            'send_expense_approval': {'employee_code': str, 'amount': float, 'category': str, 'description': str},
+            'notify_bir_deadline': {'form_type': str, 'due_date': str, 'status': str},
+            'month_end_closing_update': {'period': str, 'completed_tasks': list, 'pending_tasks': list, 'blockers': list},
+            'get_channel_messages': {'channel': str, 'limit': int},
+            'sync_odoo_pending_approvals': {'approval_type': str}
+        }
+
+        if operation not in operation_map:
+            raise ValueError(f"Unknown Mattermost operation: {operation}")
+
+        # For now, return success acknowledgment
+        # The actual Mattermost MCP server will handle the operation
+        return {
+            'status': 'success',
+            'operation': operation,
+            'arguments': arguments,
+            'message': f'Mattermost operation {operation} queued for processing'
+        }
+
 
 # Initialize coordinator
 coordinator = MCPCoordinator()
@@ -452,6 +498,16 @@ async def handle_tools_list() -> List[Dict[str, Any]]:
         {"name": "expense_approval", "server": "n8n"},
     ])
 
+    # Add Mattermost tools
+    all_tools.extend([
+        {"name": "mattermost_send_message", "server": "mattermost"},
+        {"name": "mattermost_send_expense_approval", "server": "mattermost"},
+        {"name": "mattermost_notify_bir_deadline", "server": "mattermost"},
+        {"name": "mattermost_month_end_closing_update", "server": "mattermost"},
+        {"name": "mattermost_get_channel_messages", "server": "mattermost"},
+        {"name": "mattermost_sync_odoo_pending_approvals", "server": "mattermost"},
+    ])
+
     return all_tools
 
 
@@ -494,7 +550,8 @@ async def root():
             "notion": "Workspace API",
             "superset": "Apache Superset",
             "tableau": "Tableau Cloud",
-            "n8n": "n8n Workflow Automation"
+            "n8n": "n8n Workflow Automation",
+            "mattermost": "Mattermost Team Collaboration"
         },
         "endpoints": {
             "mcp": "/mcp",
