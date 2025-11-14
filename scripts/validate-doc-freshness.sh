@@ -32,10 +32,10 @@ if [[ -f "claude.md" ]]; then
 
     if [[ $CLAUDE_AGE -gt 7 ]]; then
         echo -e "   ${RED}❌ FAIL: claude.md is stale (>7 days old)${NC}"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     elif [[ $CLAUDE_AGE -gt 5 ]]; then
         echo -e "   ${YELLOW}⚠️  WARN: claude.md is getting old ($CLAUDE_AGE days)${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     else
         echo -e "   ${GREEN}✅ PASS: claude.md is fresh ($CLAUDE_AGE days old)${NC}"
     fi
@@ -43,21 +43,21 @@ if [[ -f "claude.md" ]]; then
     # Check required sections
     if ! grep -q "## Section 0: Repository Overview" claude.md; then
         echo -e "   ${RED}❌ FAIL: Missing Section 0${NC}"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 
     if ! grep -q "## Section 10: Code Generation Guidelines" claude.md; then
         echo -e "   ${RED}❌ FAIL: Missing Section 10${NC}"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 
     if ! grep -q "## Section 11: Conditional Deployment Mode" claude.md; then
         echo -e "   ${RED}❌ FAIL: Missing Section 11${NC}"
-        ((ERRORS++))
+        ERRORS=$((ERRORS + 1))
     fi
 else
     echo -e "   ${RED}❌ FAIL: claude.md not found${NC}"
-    ((ERRORS++))
+    ERRORS=$((ERRORS + 1))
 fi
 echo ""
 
@@ -69,12 +69,12 @@ if [[ -f "README.md" ]]; then
 
     if ! grep -qi "## Quick Start\|## Installation" README.md; then
         echo -e "   ${YELLOW}⚠️  WARN: Missing Quick Start/Installation section${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     fi
 
     if ! grep -qiE "Features|What.*Included" README.md; then
         echo -e "   ${YELLOW}⚠️  WARN: Missing Features section${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     fi
 
     if [[ $WARNINGS -eq 0 ]]; then
@@ -82,7 +82,7 @@ if [[ -f "README.md" ]]; then
     fi
 else
     echo -e "   ${RED}❌ FAIL: README.md not found${NC}"
-    ((ERRORS++))
+    ERRORS=$((ERRORS + 1))
 fi
 echo ""
 
@@ -94,13 +94,13 @@ if [[ -f ".github/PLANNING.md" ]]; then
 
     if [[ $PLANNING_AGE -gt 30 ]]; then
         echo -e "   ${YELLOW}⚠️  WARN: PLANNING.md is stale (>30 days old)${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     else
         echo -e "   ${GREEN}✅ PASS: PLANNING.md is fresh ($PLANNING_AGE days old)${NC}"
     fi
 else
     echo -e "   ${YELLOW}⚠️  WARN: .github/PLANNING.md not found${NC}"
-    ((WARNINGS++))
+    WARNINGS=$((WARNINGS + 1))
 fi
 echo ""
 
@@ -114,7 +114,7 @@ if [[ -f "claude.md" ]]; then
         echo -e "   ${GREEN}✅ claude.md → README.md${NC}"
     else
         echo -e "   ${YELLOW}⚠️  claude.md should reference README.md${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     fi
 fi
 
@@ -124,7 +124,7 @@ if [[ -f "README.md" ]]; then
         echo -e "   ${GREEN}✅ README.md → claude.md${NC}"
     else
         echo -e "   ${YELLOW}⚠️  README.md should reference claude.md${NC}"
-        ((WARNINGS++))
+        WARNINGS=$((WARNINGS + 1))
     fi
 fi
 
@@ -141,9 +141,9 @@ if [[ -d "odoo/addons" ]]; then
 
     for module in odoo/addons/*; do
         if [[ -d "$module" ]] && [[ -f "$module/__manifest__.py" ]]; then
-            ((TOTAL_MODULES++))
+            TOTAL_MODULES=$((TOTAL_MODULES + 1))
             if [[ -f "$module/README.md" ]]; then
-                ((DOCUMENTED_MODULES++))
+                DOCUMENTED_MODULES=$((DOCUMENTED_MODULES + 1))
             fi
         fi
     done
@@ -154,7 +154,7 @@ if [[ -d "odoo/addons" ]]; then
 
         if [[ $COVERAGE -lt 80 ]]; then
             echo -e "   ${YELLOW}⚠️  WARN: Documentation coverage <80%${NC}"
-            ((WARNINGS++))
+            WARNINGS=$((WARNINGS + 1))
         else
             echo -e "   ${GREEN}✅ PASS: Documentation coverage ≥80%${NC}"
         fi
