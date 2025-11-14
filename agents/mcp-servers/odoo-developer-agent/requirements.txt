@@ -1,0 +1,39 @@
+# Odoo Developer Agent Dependencies
+
+# MCP Protocol
+mcp>=0.9.0
+
+# Anthropic API
+anthropic>=0.40.0
+
+# Database & Vector Search
+supabase>=2.9.0
+pgvector>=0.3.0
+
+# Odoo Integration
+odoorpc>=0.10.0
+xmltodict>=0.13.0
+
+# Code Analysis & Generation
+astroid>=3.0.0
+pylint>=3.0.0
+black>=24.0.0
+isort>=5.13.0
+flake8>=7.0.0
+
+# Testing
+pytest>=8.0.0
+pytest-asyncio>=0.23.0
+pytest-cov>=4.1.0
+
+# Utilities
+pydantic>=2.5.0
+python-dotenv>=1.0.0
+jinja2>=3.1.0
+pyyaml>=6.0.0
+httpx>=0.27.0
+tenacity>=8.2.0
+
+# Monitoring
+structlog>=24.1.0
+prometheus-client>=0.20.0
