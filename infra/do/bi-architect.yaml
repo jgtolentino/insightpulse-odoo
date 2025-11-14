@@ -1,0 +1,56 @@
+# DigitalOcean App Platform Specification
+# BI Architect Specialist Agent
+# Estimated cost: $5/month (basic-xxs tier)
+
+name: bi-architect
+region: sfo
+
+services:
+  - name: bi-architect-api
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    source_dir: services/bi-architect
+
+    build_command: pip install --upgrade pip && pip install -r requirements.txt
+    run_command: uvicorn main:app --host 0.0.0.0 --port 8080
+
+    instance_count: 1
+    instance_size_slug: basic-xxs
+
+    http_port: 8080
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    envs:
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ${ANTHROPIC_API_KEY}
+
+      - key: SUPABASE_URL
+        scope: RUN_TIME
+        value: https://spdtwktxdalcfigzeqrz.supabase.co
+
+      - key: POSTGRES_URL
+        scope: RUN_TIME
+        type: SECRET
+        value: ${POSTGRES_URL}
+
+      - key: SUPERSET_BASE_URL
+        scope: RUN_TIME
+        value: https://superset-app-d9gyl.ondigitalocean.app
+
+    routes:
+      - path: /
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED

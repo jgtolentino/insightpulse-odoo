@@ -1,0 +1,78 @@
+# DigitalOcean App Platform Specification
+# Odoo Developer Specialist Agent
+#
+# Deploy with:
+# doctl apps create --spec infra/do/odoo-developer-agent.yaml
+#
+# Update with:
+# doctl apps update <APP_ID> --spec infra/do/odoo-developer-agent.yaml
+#
+# Estimated cost: $5/month (basic-xxs tier)
+
+name: odoo-developer-agent
+region: sfo  # San Francisco (low latency to orchestrator)
+
+services:
+  - name: odoo-developer-api
+    github:
+      repo: jgtolentino/insightpulse-odoo
+      branch: main
+      deploy_on_push: true
+    source_dir: services/odoo-developer-agent
+
+    build_command: pip install --upgrade pip && pip install -r requirements.txt
+    run_command: uvicorn main:app --host 0.0.0.0 --port 8080
+
+    instance_count: 1
+    instance_size_slug: basic-xxs  # $5/month - sufficient for specialist agent
+
+    http_port: 8080
+
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 30
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+
+    envs:
+      # Anthropic API for Claude calls
+      - key: ANTHROPIC_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ${ANTHROPIC_API_KEY}
+
+      # Orchestrator authentication (optional - enable in production)
+      # - key: ORCHESTRATOR_API_KEY
+      #   scope: RUN_TIME
+      #   type: SECRET
+      #   value: ${ORCHESTRATOR_API_KEY}
+
+      # Odoo instance URL for context
+      - key: ODOO_BASE_URL
+        scope: RUN_TIME
+        value: https://erp.insightpulseai.net
+
+      # GitHub for repository operations
+      - key: GITHUB_TOKEN
+        scope: RUN_TIME
+        type: SECRET
+        value: ${GITHUB_TOKEN}
+
+      # Supabase for knowledge base access
+      - key: SUPABASE_URL
+        scope: RUN_TIME
+        value: https://spdtwktxdalcfigzeqrz.supabase.co
+
+      - key: SUPABASE_ANON_KEY
+        scope: RUN_TIME
+        type: SECRET
+        value: ${SUPABASE_ANON_KEY}
+
+    routes:
+      - path: /
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
