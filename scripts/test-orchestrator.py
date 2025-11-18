@@ -3,18 +3,19 @@
 Multi-Agent Orchestrator Integration Tests
 Tests routing, coordination, and end-to-end workflows
 """
-import requests
-import json
 import sys
 import time
-from typing import Dict, List, Any
 from dataclasses import dataclass
+from typing import Dict, List
+
+import requests
 
 # ANSI color codes
-GREEN = '\033[0;32m'
-YELLOW = '\033[1;33m'
-RED = '\033[0;31m'
-NC = '\033[0m'
+GREEN = "\033[0;32m"
+YELLOW = "\033[1;33m"
+RED = "\033[0;31m"
+NC = "\033[0m"
+
 
 @dataclass
 class TestResult:
@@ -22,6 +23,7 @@ class TestResult:
     passed: bool
     message: str
     response_time: float
+
 
 class OrchestratorTester:
     def __init__(self, base_urls: Dict[str, str]):
@@ -40,34 +42,42 @@ class OrchestratorTester:
                 if response.status_code == 200:
                     data = response.json()
                     if data.get("status") == "ok":
-                        results.append(TestResult(
-                            name=f"{agent_name}_health",
-                            passed=True,
-                            message=f"Health check passed (model: {data.get('model', 'unknown')})",
-                            response_time=elapsed
-                        ))
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_health",
+                                passed=True,
+                                message=f"Health check passed (model: {data.get('model', 'unknown')})",
+                                response_time=elapsed,
+                            )
+                        )
                     else:
-                        results.append(TestResult(
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_health",
+                                passed=False,
+                                message=f"Unexpected status: {data.get('status')}",
+                                response_time=elapsed,
+                            )
+                        )
+                else:
+                    results.append(
+                        TestResult(
                             name=f"{agent_name}_health",
                             passed=False,
-                            message=f"Unexpected status: {data.get('status')}",
-                            response_time=elapsed
-                        ))
-                else:
-                    results.append(TestResult(
-                        name=f"{agent_name}_health",
-                        passed=False,
-                        message=f"HTTP {response.status_code}",
-                        response_time=elapsed
-                    ))
+                            message=f"HTTP {response.status_code}",
+                            response_time=elapsed,
+                        )
+                    )
             except requests.exceptions.RequestException as e:
                 elapsed = time.time() - start
-                results.append(TestResult(
-                    name=f"{agent_name}_health",
-                    passed=False,
-                    message=f"Connection error: {str(e)}",
-                    response_time=elapsed
-                ))
+                results.append(
+                    TestResult(
+                        name=f"{agent_name}_health",
+                        passed=False,
+                        message=f"Connection error: {str(e)}",
+                        response_time=elapsed,
+                    )
+                )
 
         return results
 
@@ -83,34 +93,42 @@ class OrchestratorTester:
                 if response.status_code == 200:
                     data = response.json()
                     if "agent_name" in data and "capabilities" in data:
-                        results.append(TestResult(
-                            name=f"{agent_name}_capabilities",
-                            passed=True,
-                            message=f"Capabilities: {len(data['capabilities'])} items",
-                            response_time=elapsed
-                        ))
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_capabilities",
+                                passed=True,
+                                message=f"Capabilities: {len(data['capabilities'])} items",
+                                response_time=elapsed,
+                            )
+                        )
                     else:
-                        results.append(TestResult(
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_capabilities",
+                                passed=False,
+                                message="Missing required fields (agent_name, capabilities)",
+                                response_time=elapsed,
+                            )
+                        )
+                else:
+                    results.append(
+                        TestResult(
                             name=f"{agent_name}_capabilities",
                             passed=False,
-                            message="Missing required fields (agent_name, capabilities)",
-                            response_time=elapsed
-                        ))
-                else:
-                    results.append(TestResult(
-                        name=f"{agent_name}_capabilities",
-                        passed=False,
-                        message=f"HTTP {response.status_code}",
-                        response_time=elapsed
-                    ))
+                            message=f"HTTP {response.status_code}",
+                            response_time=elapsed,
+                        )
+                    )
             except requests.exceptions.RequestException as e:
                 elapsed = time.time() - start
-                results.append(TestResult(
-                    name=f"{agent_name}_capabilities",
-                    passed=False,
-                    message=f"Connection error: {str(e)}",
-                    response_time=elapsed
-                ))
+                results.append(
+                    TestResult(
+                        name=f"{agent_name}_capabilities",
+                        passed=False,
+                        message=f"Connection error: {str(e)}",
+                        response_time=elapsed,
+                    )
+                )
 
         return results
 
@@ -122,23 +140,23 @@ class OrchestratorTester:
             {
                 "agent": "odoo_developer",
                 "task": "Create a simple Odoo module for tracking expenses",
-                "expected_keywords": ["module", "model", "__manifest__.py"]
+                "expected_keywords": ["module", "model", "__manifest__.py"],
             },
             {
                 "agent": "finance_ssc_expert",
                 "task": "Generate BIR Form 1601-C for January 2025 for RIM agency",
-                "expected_keywords": ["1601-C", "January", "withholding"]
+                "expected_keywords": ["1601-C", "January", "withholding"],
             },
             {
                 "agent": "bi_architect",
                 "task": "Design a Superset dashboard for expense analytics",
-                "expected_keywords": ["dashboard", "chart", "sql"]
+                "expected_keywords": ["dashboard", "chart", "sql"],
             },
             {
                 "agent": "devops_engineer",
                 "task": "Create deployment spec for a new API service",
-                "expected_keywords": ["deploy", "app platform", "yaml"]
-            }
+                "expected_keywords": ["deploy", "app platform", "yaml"],
+            },
         ]
 
         for test_case in test_cases:
@@ -155,9 +173,9 @@ class OrchestratorTester:
                     json={
                         "task": test_case["task"],
                         "context": {},
-                        "conversation_id": f"test_{agent_name}_{int(time.time())}"
+                        "conversation_id": f"test_{agent_name}_{int(time.time())}",
                     },
-                    timeout=30
+                    timeout=30,
                 )
                 elapsed = time.time() - start
 
@@ -166,38 +184,50 @@ class OrchestratorTester:
                     result_text = data.get("result", "").lower()
 
                     # Check if expected keywords are present
-                    keywords_found = sum(1 for kw in test_case["expected_keywords"] if kw.lower() in result_text)
+                    keywords_found = sum(
+                        1
+                        for kw in test_case["expected_keywords"]
+                        if kw.lower() in result_text
+                    )
                     confidence = data.get("confidence", 0)
 
                     if keywords_found > 0 and confidence > 0.7:
-                        results.append(TestResult(
-                            name=f"{agent_name}_execution",
-                            passed=True,
-                            message=f"Execution successful (confidence: {confidence:.2f}, keywords: {keywords_found}/{len(test_case['expected_keywords'])})",
-                            response_time=elapsed
-                        ))
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_execution",
+                                passed=True,
+                                message=f"Execution successful (confidence: {confidence:.2f}, keywords: {keywords_found}/{len(test_case['expected_keywords'])})",
+                                response_time=elapsed,
+                            )
+                        )
                     else:
-                        results.append(TestResult(
+                        results.append(
+                            TestResult(
+                                name=f"{agent_name}_execution",
+                                passed=False,
+                                message=f"Low quality response (confidence: {confidence:.2f}, keywords: {keywords_found}/{len(test_case['expected_keywords'])})",
+                                response_time=elapsed,
+                            )
+                        )
+                else:
+                    results.append(
+                        TestResult(
                             name=f"{agent_name}_execution",
                             passed=False,
-                            message=f"Low quality response (confidence: {confidence:.2f}, keywords: {keywords_found}/{len(test_case['expected_keywords'])})",
-                            response_time=elapsed
-                        ))
-                else:
-                    results.append(TestResult(
-                        name=f"{agent_name}_execution",
-                        passed=False,
-                        message=f"HTTP {response.status_code}: {response.text[:100]}",
-                        response_time=elapsed
-                    ))
+                            message=f"HTTP {response.status_code}: {response.text[:100]}",
+                            response_time=elapsed,
+                        )
+                    )
             except requests.exceptions.RequestException as e:
                 elapsed = time.time() - start
-                results.append(TestResult(
-                    name=f"{agent_name}_execution",
-                    passed=False,
-                    message=f"Connection error: {str(e)}",
-                    response_time=elapsed
-                ))
+                results.append(
+                    TestResult(
+                        name=f"{agent_name}_execution",
+                        passed=False,
+                        message=f"Connection error: {str(e)}",
+                        response_time=elapsed,
+                    )
+                )
 
         return results
 
@@ -235,7 +265,9 @@ class OrchestratorTester:
         """Print test results"""
         for result in results:
             status = f"{GREEN}✓{NC}" if result.passed else f"{RED}✗{NC}"
-            print(f"  {status} {result.name}: {result.message} ({result.response_time:.2f}s)")
+            print(
+                f"  {status} {result.name}: {result.message} ({result.response_time:.2f}s)"
+            )
 
     def print_summary(self):
         """Print test summary"""
@@ -253,6 +285,7 @@ class OrchestratorTester:
         else:
             print(f"\n{RED}Some tests failed. Review output above.{NC}")
 
+
 if __name__ == "__main__":
     # Define specialist service URLs
     # Update these with actual deployed URLs
@@ -260,7 +293,7 @@ if __name__ == "__main__":
         "odoo_developer": "https://odoo-developer-agent.ondigitalocean.app",
         "finance_ssc_expert": "https://finance-ssc-expert.ondigitalocean.app",
         "bi_architect": "https://bi-architect.ondigitalocean.app",
-        "devops_engineer": "https://devops-engineer.ondigitalocean.app"
+        "devops_engineer": "https://devops-engineer.ondigitalocean.app",
     }
 
     # Allow URL override via command line

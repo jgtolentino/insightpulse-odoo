@@ -3,21 +3,24 @@
 Agent Knowledge Base Indexer
 Generates embeddings for agent-specific documentation and stores in Supabase
 """
+import argparse
+import json
 import os
 import sys
-import json
-import argparse
-from pathlib import Path
-from typing import List, Dict, Any
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any, Dict, List
+
 import openai
-from supabase import create_client, Client
+
+from supabase import Client, create_client
 
 # ANSI colors
-GREEN = '\033[0;32m'
-YELLOW = '\033[1;33m'
-RED = '\033[0;31m'
-NC = '\033[0m'
+GREEN = "\033[0;32m"
+YELLOW = "\033[1;33m"
+RED = "\033[0;31m"
+NC = "\033[0m"
+
 
 @dataclass
 class Document:
@@ -28,6 +31,7 @@ class Document:
     metadata: Dict[str, Any]
     source_url: str = ""
 
+
 class AgentKnowledgeIndexer:
     def __init__(self, supabase_url: str, supabase_key: str, openai_api_key: str):
         self.supabase: Client = create_client(supabase_url, supabase_key)
@@ -37,10 +41,7 @@ class AgentKnowledgeIndexer:
     def generate_embedding(self, text: str) -> List[float]:
         """Generate embedding using OpenAI API"""
         try:
-            response = openai.embeddings.create(
-                model=self.embedding_model,
-                input=text
-            )
+            response = openai.embeddings.create(model=self.embedding_model, input=text)
             return response.data[0].embedding
         except Exception as e:
             print(f"{RED}Error generating embedding: {e}{NC}")
@@ -48,7 +49,9 @@ class AgentKnowledgeIndexer:
 
     def index_document(self, doc: Document) -> bool:
         """Index a single document"""
-        print(f"{YELLOW}Indexing: {doc.title} ({doc.agent_domain}/{doc.content_type}){NC}")
+        print(
+            f"{YELLOW}Indexing: {doc.title} ({doc.agent_domain}/{doc.content_type}){NC}"
+        )
 
         # Generate embedding for content
         embedding = self.generate_embedding(doc.content)
@@ -63,11 +66,17 @@ class AgentKnowledgeIndexer:
                 "title": doc.title,
                 "content": doc.content,
                 "embedding": embedding,
-                "metadata": json.dumps(doc.metadata) if isinstance(doc.metadata, dict) else doc.metadata,
-                "source_url": doc.source_url
+                "metadata": (
+                    json.dumps(doc.metadata)
+                    if isinstance(doc.metadata, dict)
+                    else doc.metadata
+                ),
+                "source_url": doc.source_url,
             }
 
-            result = self.supabase.table("agent_domain_embeddings").insert(data).execute()
+            result = (
+                self.supabase.table("agent_domain_embeddings").insert(data).execute()
+            )
 
             if result.data:
                 print(f"{GREEN}✓ Indexed successfully (ID: {result.data[0]['id']}){NC}")
@@ -80,12 +89,14 @@ class AgentKnowledgeIndexer:
             print(f"{RED}✗ Error indexing document: {e}{NC}")
             return False
 
-    def index_from_file(self, file_path: Path, agent_domain: str, content_type: str) -> int:
+    def index_from_file(
+        self, file_path: Path, agent_domain: str, content_type: str
+    ) -> int:
         """Index documents from a JSON file"""
         print(f"{YELLOW}Loading documents from {file_path}{NC}")
 
         try:
-            with open(file_path, 'r') as f:
+            with open(file_path, "r") as f:
                 docs_data = json.load(f)
 
             if not isinstance(docs_data, list):
@@ -99,7 +110,7 @@ class AgentKnowledgeIndexer:
                     title=doc_data.get("title", "Untitled"),
                     content=doc_data.get("content", ""),
                     metadata=doc_data.get("metadata", {}),
-                    source_url=doc_data.get("source_url", "")
+                    source_url=doc_data.get("source_url", ""),
                 )
 
                 if self.index_document(doc):
@@ -111,7 +122,9 @@ class AgentKnowledgeIndexer:
             print(f"{RED}Error loading file {file_path}: {e}{NC}")
             return 0
 
-    def index_directory(self, directory: Path, agent_domain: str, content_type: str) -> int:
+    def index_directory(
+        self, directory: Path, agent_domain: str, content_type: str
+    ) -> int:
         """Index all JSON files in a directory"""
         print(f"{YELLOW}Indexing directory: {directory}{NC}")
 
@@ -134,12 +147,42 @@ class AgentKnowledgeIndexer:
             print(f"{RED}Error fetching statistics: {e}{NC}")
             return []
 
+
 def main():
     parser = argparse.ArgumentParser(description="Index agent-specific knowledge base")
-    parser.add_argument("--source", required=True, help="Source file or directory to index")
-    parser.add_argument("--agent", required=True, choices=["odoo_developer", "finance_ssc_expert", "bi_architect", "devops_engineer", "orchestrator"], help="Agent domain")
-    parser.add_argument("--content-type", required=True, choices=["odoo_doc", "bir_regulation", "superset_doc", "infra_doc", "oca_guideline", "general"], help="Content type")
-    parser.add_argument("--embedding-model", default="text-embedding-3-small", help="OpenAI embedding model")
+    parser.add_argument(
+        "--source", required=True, help="Source file or directory to index"
+    )
+    parser.add_argument(
+        "--agent",
+        required=True,
+        choices=[
+            "odoo_developer",
+            "finance_ssc_expert",
+            "bi_architect",
+            "devops_engineer",
+            "orchestrator",
+        ],
+        help="Agent domain",
+    )
+    parser.add_argument(
+        "--content-type",
+        required=True,
+        choices=[
+            "odoo_doc",
+            "bir_regulation",
+            "superset_doc",
+            "infra_doc",
+            "oca_guideline",
+            "general",
+        ],
+        help="Content type",
+    )
+    parser.add_argument(
+        "--embedding-model",
+        default="text-embedding-3-small",
+        help="OpenAI embedding model",
+    )
 
     args = parser.parse_args()
 
@@ -183,7 +226,10 @@ def main():
     if stats:
         print(f"\n{YELLOW}Knowledge Base Statistics:{NC}")
         for stat in stats:
-            print(f"  {stat['agent_domain']}/{stat['content_type']}: {stat['document_count']} documents")
+            print(
+                f"  {stat['agent_domain']}/{stat['content_type']}: {stat['document_count']} documents"
+            )
+
 
 if __name__ == "__main__":
     main()
