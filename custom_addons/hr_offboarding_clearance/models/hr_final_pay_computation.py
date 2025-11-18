@@ -236,12 +236,22 @@ class HRFinalPayComputation(models.Model):
             # Fetch public holidays (global leaves) for the exit month
             public_holidays = set()
             if calendar:
-                global_leaves = self.env['resource.calendar.leaves'].search([
-                    ('calendar_id', '=', calendar.id),
-                    ('resource_id', '=', False),  # Global leaves (public holidays)
-                    ('date_from', '>=', datetime.combine(first_day, datetime.min.time())),
-                    ('date_to', '<=', datetime.combine(record.exit_date, datetime.max.time()))
-                ])
+                global_leaves = self.env["resource.calendar.leaves"].search(
+                    [
+                        ("calendar_id", "=", calendar.id),
+                        ("resource_id", "=", False),  # Global leaves (public holidays)
+                        (
+                            "date_from",
+                            ">=",
+                            datetime.combine(first_day, datetime.min.time()),
+                        ),
+                        (
+                            "date_to",
+                            "<=",
+                            datetime.combine(record.exit_date, datetime.max.time()),
+                        ),
+                    ]
+                )
 
                 # Build set of public holiday dates
                 for leave in global_leaves:
