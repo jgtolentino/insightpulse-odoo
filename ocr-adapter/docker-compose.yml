@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  ocr-adapter:
+    build: .
+    container_name: ocr-adapter
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      # IMPORTANT: Configure these for your environment
+      - UPSTREAM_OCR_URL=http://localhost:8000/ocr
+      - IPAI_OCR_API_KEY=your-secure-api-key-here
+      - OCR_TIMEOUT=60
+      - PORT=8001
+    networks:
+      - ocr-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import httpx; httpx.get('http://localhost:8001/health', timeout=5).raise_for_status()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  ocr-network:
+    driver: bridge

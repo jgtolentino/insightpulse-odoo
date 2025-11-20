@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <data noupdate="1">
+    <data>
         <!--
-        Placeholder for CE/IAP cleanup.
+        IPAI CE Cleaner: Hide Enterprise/IAP Upsells
 
-        Here you will later:
-        - Inherit settings and app views to hide "Upgrade to Enterprise" banners.
-        - Remove any menus that open IAP or odoo.com flows.
-        - Replace doc/support links with InsightPulse/OCA URLs.
+        This module uses CSS to hide Enterprise badges, odoo.com links,
+        and upgrade prompts across the Odoo CE interface.
 
-        Keep it empty for now so the module installs cleanly.
+        CSS rules are in static/src/css/ipai_ce_cleaner.css
+        Assets loaded via ipai_ce_cleaner_assets.xml
         -->
     </data>
 </odoo>

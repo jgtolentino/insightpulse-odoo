@@ -14,6 +14,11 @@
     "data": [
         "views/ipai_ce_cleaner_views.xml",
     ],
+    "assets": {
+        "web._assets_primary_variables": [
+            ("prepend", "ipai_ce_cleaner/static/src/css/ipai_ce_cleaner.css"),
+        ],
+    },
     "installable": True,
     "application": False,
     "auto_install": False,

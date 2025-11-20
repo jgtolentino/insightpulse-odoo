@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <record id="ipai_ocr_hr_expense_form_inherit" model="ir.ui.view">
+      <field name="name">hr.expense.form.ipai.ocr</field>
+      <field name="model">hr.expense</field>
+      <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
+      <field name="arch" type="xml">
+        <!-- Put OCR button in header -->
+        <xpath expr="//header" position="inside">
+          <button name="action_ipai_ocr_scan"
+                  type="object"
+                  string="Scan with InsightPulse OCR"
+                  class="btn-secondary"
+                  invisible="state not in ('draft', 'refused')"/>
+          <field name="ocr_status" widget="statusbar" statusbar_visible="none,pending,done,error"/>
+        </xpath>
+      </field>
+    </record>
+
+  </data>
+</odoo>
