@@ -57,6 +57,9 @@ secrets/
 # Deployment
 deploy/.env
 deploy/*.local
+deploy_m1.sh
+deploy/*.log
+deploy/*.backup.*
 
 # OCA submodules (tracked separately)
 oca/*

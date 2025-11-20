@@ -13,13 +13,27 @@ services:
       - odoo-db-data:/var/lib/postgresql/data
     networks:
       - odoo_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   odoo:
     image: odoo:18.0
     container_name: odoo-ce
     restart: unless-stopped
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       # Odoo talks to Postgres using these
       HOST: db
@@ -42,6 +56,20 @@ services:
       - "127.0.0.1:8069:8069"
     networks:
       - odoo_backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
 
 networks:
   odoo_backend:

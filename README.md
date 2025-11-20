@@ -42,13 +42,53 @@ odoo-ce/
 
 ## Quick Start
 
-### Prerequisites
+### M1 One-Shot Deployment (Recommended)
 
+**For fresh DigitalOcean Ubuntu 22.04/24.04 droplets:**
+
+1. **Prepare DNS**
+   - Point `erp.insightpulseai.net` A record to your droplet IP
+   - Wait for DNS propagation (check with `host erp.insightpulseai.net`)
+
+2. **SSH into droplet as root**
+   ```bash
+   ssh root@your-droplet-ip
+   ```
+
+3. **Download and run deployment script**
+   ```bash
+   curl -fsSL https://raw.githubusercontent.com/jgtolentino/odoo-ce/main/deploy_m1.sh.template -o deploy_m1.sh
+   chmod +x deploy_m1.sh
+   sudo ./deploy_m1.sh
+   ```
+
+4. **What it does**
+   - ✅ Installs Docker, Nginx, Certbot, UFW firewall
+   - ✅ Auto-generates strong database and admin passwords
+   - ✅ Clones repository and configures Odoo
+   - ✅ Obtains Let's Encrypt SSL certificate
+   - ✅ Starts Odoo stack with health checks
+   - ✅ Configures automated daily backups (2 AM UTC)
+   - ✅ Handles existing deployments safely (prompt: Update/Redeploy/Exit)
+
+5. **Access Odoo**
+   - Navigate to `https://erp.insightpulseai.net/web`
+   - Use admin password from deployment output
+   - Create database: `odoo` or `insightpulse`
+   - Install modules: `IPAI Expense & Travel`, `IPAI Equipment Management`
+
+6. **Credentials location**
+   ```bash
+   cat /opt/odoo-ce/deploy/.env  # Auto-generated secrets
+   tail -f /var/log/odoo_deploy.log  # Deployment logs
+   ```
+
+### Manual Deployment (Advanced)
+
+**Prerequisites:**
 - Docker & Docker Compose
 - Domain pointing to your server: `erp.insightpulseai.net`
 - Nginx (for SSL termination and reverse proxy)
-
-### Deployment
 
 1. **Clone repository**
    ```bash
@@ -59,8 +99,13 @@ odoo-ce/
 2. **Configure secrets**
    ```bash
    cd deploy
-   # Edit docker-compose.yml and odoo.conf
-   # Replace CHANGE_ME_* placeholders with real secrets
+   # Generate strong passwords
+   DB_PASSWORD=$(openssl rand -base64 32)
+   ADMIN_PASSWORD=$(openssl rand -base64 32)
+
+   # Replace placeholders
+   sed -i "s/CHANGE_ME_STRONG_DB_PASSWORD/$DB_PASSWORD/g" odoo.conf docker-compose.yml
+   sed -i "s/CHANGE_ME_SUPERMASTER_PASSWORD/$ADMIN_PASSWORD/g" odoo.conf
    ```
 
 3. **Start stack**
@@ -78,10 +123,10 @@ odoo-ce/
 
 5. **Obtain SSL certificate**
    ```bash
-   sudo mkdir -p /var/www/letsencrypt
-   sudo certbot certonly --webroot \
-     -w /var/www/letsencrypt \
+   sudo certbot certonly --standalone \
+     --email jgtolentino_rn@yahoo.com \
      -d erp.insightpulseai.net
+   sudo systemctl reload nginx
    ```
 
 6. **Access Odoo**
