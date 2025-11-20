@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Main IPAI Expense menu -->
+        <menuitem
+            id="ipai_expense_root_menu"
+            name="IPAI Expense"
+            parent="hr_expense.menu_hr_expense_root"
+            sequence="50"
+        />
+
+        <!-- Travel Requests menu -->
+        <menuitem
+            id="ipai_travel_request_menu"
+            name="Travel Requests"
+            parent="ipai_expense_root_menu"
+            action="ipai_travel_request_action"
+            sequence="10"
+        />
+
+    </data>
+</odoo>

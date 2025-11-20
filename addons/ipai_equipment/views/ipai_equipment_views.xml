@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Assets -->
+        <record id="ipai_equipment_asset_tree" model="ir.ui.view">
+            <field name="name">ipai.equipment.asset.tree</field>
+            <field name="model">ipai.equipment.asset</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="category_id"/>
+                    <field name="serial_number"/>
+                    <field name="location_id"/>
+                    <field name="condition"/>
+                    <field name="status"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_asset_form" model="ir.ui.view">
+            <field name="name">ipai.equipment.asset.form</field>
+            <field name="model">ipai.equipment.asset</field>
+            <field name="arch" type="xml">
+                <form string="Equipment Asset">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="product_id"/>
+                            <field name="category_id"/>
+                        </group>
+                        <group>
+                            <field name="serial_number"/>
+                            <field name="location_id"/>
+                            <field name="condition"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="image_1920" widget="image"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_asset_action" model="ir.actions.act_window">
+            <field name="name">Assets</field>
+            <field name="res_model">ipai.equipment.asset</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Bookings -->
+        <record id="ipai_equipment_booking_tree" model="ir.ui.view">
+            <field name="name">ipai.equipment.booking.tree</field>
+            <field name="model">ipai.equipment.booking</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="asset_id"/>
+                    <field name="borrower_id"/>
+                    <field name="project_id"/>
+                    <field name="start_datetime"/>
+                    <field name="end_datetime"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_booking_form" model="ir.ui.view">
+            <field name="name">ipai.equipment.booking.form</field>
+            <field name="model">ipai.equipment.booking</field>
+            <field name="arch" type="xml">
+                <form string="Equipment Booking">
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="asset_id"/>
+                            <field name="borrower_id"/>
+                            <field name="project_id"/>
+                        </group>
+                        <group>
+                            <field name="start_datetime"/>
+                            <field name="end_datetime"/>
+                            <field name="state" readonly="1"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_reserve" type="object" string="Reserve"
+                                states="draft" class="btn-primary"/>
+                        <button name="action_check_out" type="object" string="Check Out"
+                                states="reserved" class="btn-primary"/>
+                        <button name="action_return" type="object" string="Return"
+                                states="checked_out" class="btn-primary"/>
+                        <button name="action_cancel" type="object" string="Cancel"
+                                states="draft,reserved" class="btn-secondary"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_booking_action" model="ir.actions.act_window">
+            <field name="name">Bookings</field>
+            <field name="res_model">ipai.equipment.booking</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Incidents -->
+        <record id="ipai_equipment_incident_tree" model="ir.ui.view">
+            <field name="name">ipai.equipment.incident.tree</field>
+            <field name="model">ipai.equipment.incident</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="asset_id"/>
+                    <field name="booking_id"/>
+                    <field name="reported_by"/>
+                    <field name="severity"/>
+                    <field name="status"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_incident_form" model="ir.ui.view">
+            <field name="name">ipai.equipment.incident.form</field>
+            <field name="model">ipai.equipment.incident</field>
+            <field name="arch" type="xml">
+                <form string="Equipment Incident">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                            <field name="asset_id"/>
+                            <field name="booking_id"/>
+                            <field name="reported_by"/>
+                        </group>
+                        <group>
+                            <field name="severity"/>
+                            <field name="status"/>
+                        </group>
+                        <group>
+                            <field name="description"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="ipai_equipment_incident_action" model="ir.actions.act_window">
+            <field name="name">Incidents</field>
+            <field name="res_model">ipai.equipment.incident</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+    </data>
+</odoo>
