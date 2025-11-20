@@ -11,6 +11,8 @@ import os
 import logging
 from datetime import datetime
 from typing import Optional
+import re
+from dateutil import parser as date_parser
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -122,9 +124,90 @@ async def ocr_expense(
         )
 
 
+# PH-specific vendor normalization map
+VENDOR_NORMALIZATION = {
+    "sm store": "SM Supermarket",
+    "sm dept": "SM Department Store",
+    "sm supermarket": "SM Supermarket",
+    "jollibee foods": "Jollibee",
+    "jfc": "Jollibee",
+    "7 eleven": "7-Eleven",
+    "seven eleven": "7-Eleven",
+    "711": "7-Eleven",
+    "max's": "Max's Restaurant",
+    "maxs restaurant": "Max's Restaurant",
+    "puregold": "Puregold",
+    "puregold price club": "Puregold",
+    "robinsons": "Robinsons Supermarket",
+    "ministop": "Ministop",
+    "mercury drug": "Mercury Drug",
+    "watsons": "Watsons",
+}
+
+# PH local vendor patterns for currency defaulting
+PH_LOCAL_VENDORS = {
+    "sm", "jollibee", "7-eleven", "max's", "puregold",
+    "robinsons", "ministop", "mercury", "watsons", "mercury drug",
+    "savemore", "alfamart", "familymart", "lawson", "supermarket",
+    "sari-sari", "carinderia", "kfc", "mcdonald", "chowking"
+}
+
+
+def normalize_vendor_name(vendor: str) -> str:
+    """Normalize PH vendor names to canonical form"""
+    if not vendor:
+        return "Unknown Merchant"
+
+    vendor_lower = vendor.lower().strip()
+
+    # Check exact match in normalization map
+    if vendor_lower in VENDOR_NORMALIZATION:
+        return VENDOR_NORMALIZATION[vendor_lower]
+
+    # Return original with title case
+    return vendor.strip()
+
+
+def normalize_date(date_str: str) -> Optional[str]:
+    """
+    Normalize various date formats to YYYY-MM-DD
+
+    Supports:
+    - YYYY-MM-DD
+    - DD/MM/YYYY
+    - MM/DD/YYYY
+    - PH-style: "15 Nov 2025", "Nov 15, 2025"
+    """
+    if not date_str:
+        return None
+
+    try:
+        # Use dateutil parser for flexible parsing
+        parsed = date_parser.parse(date_str, dayfirst=True)  # PH uses DD/MM/YYYY commonly
+        return parsed.strftime("%Y-%m-%d")
+    except (ValueError, TypeError) as e:
+        logger.warning(f"Date parsing failed for '{date_str}': {e}")
+        return None
+
+
+def should_default_to_php(vendor_name: str) -> bool:
+    """Check if vendor is likely PH-local and should default to PHP"""
+    if not vendor_name:
+        return True  # Default to PHP if no vendor
+
+    vendor_lower = vendor_name.lower()
+    return any(ph_vendor in vendor_lower for ph_vendor in PH_LOCAL_VENDORS)
+
+
 def normalize_ocr_response(raw: dict) -> dict:
     """
     Normalize OCR service response to Odoo contract
+
+    Deliberate normalization passes:
+    1. Vendor normalization (PH-specific variants)
+    2. Date normalization (multiple formats → YYYY-MM-DD)
+    3. Total tolerance (keep raw vs normalized)
+    4. Currency defaulting (PHP for local vendors)
 
     Adjust these mappings based on your actual OCR service response format.
     Common patterns:
@@ -140,36 +223,66 @@ def normalize_ocr_response(raw: dict) -> dict:
         "total_amount": 0.0,
     }
 
-    # Pattern 1: Direct fields (adjust to your OCR service format)
+    # Extract raw fields from different OCR response formats
+    raw_vendor = None
+    raw_date = None
+    raw_total = None
+    raw_currency = None
+
+    # Pattern 1: Direct fields (PaddleOCR-VL format)
     if "merchant" in raw or "merchant_name" in raw:
-        result["merchant_name"] = raw.get("merchant") or raw.get("merchant_name", "Unknown Merchant")
+        raw_vendor = raw.get("merchant") or raw.get("merchant_name")
 
     if "date" in raw or "invoice_date" in raw:
-        result["invoice_date"] = raw.get("date") or raw.get("invoice_date")
+        raw_date = raw.get("date") or raw.get("invoice_date")
 
     if "total" in raw or "total_amount" in raw:
-        result["total_amount"] = float(raw.get("total") or raw.get("total_amount", 0.0))
+        raw_total = raw.get("total") or raw.get("total_amount")
 
     if "currency" in raw:
-        result["currency"] = raw.get("currency", "PHP")
+        raw_currency = raw.get("currency")
 
-    # Pattern 2: Azure Document Intelligence format (example)
+    # Pattern 2: Azure Document Intelligence format
     if "fields" in raw:
         fields = raw["fields"]
         if "MerchantName" in fields and "value" in fields["MerchantName"]:
-            result["merchant_name"] = fields["MerchantName"]["value"]
+            raw_vendor = fields["MerchantName"]["value"]
         if "TransactionDate" in fields and "value" in fields["TransactionDate"]:
-            result["invoice_date"] = fields["TransactionDate"]["value"]
+            raw_date = fields["TransactionDate"]["value"]
         if "Total" in fields and "value" in fields["Total"]:
-            result["total_amount"] = float(fields["Total"]["value"])
+            raw_total = fields["Total"]["value"]
 
-    # Pattern 3: Structured extraction (example)
+    # Pattern 3: Structured extraction
     if "extracted" in raw and isinstance(raw["extracted"], dict):
         ext = raw["extracted"]
-        result["merchant_name"] = ext.get("merchant", result["merchant_name"])
-        result["invoice_date"] = ext.get("date", result["invoice_date"])
-        result["total_amount"] = float(ext.get("total", result["total_amount"]))
-        result["currency"] = ext.get("currency", result["currency"])
+        raw_vendor = ext.get("merchant", raw_vendor)
+        raw_date = ext.get("date", raw_date)
+        raw_total = ext.get("total", raw_total)
+        raw_currency = ext.get("currency", raw_currency)
+
+    # === NORMALIZATION PASS 1: Vendor ===
+    if raw_vendor:
+        result["merchant_name"] = normalize_vendor_name(raw_vendor)
+
+    # === NORMALIZATION PASS 2: Date ===
+    if raw_date:
+        result["invoice_date"] = normalize_date(raw_date)
+
+    # === NORMALIZATION PASS 3: Total ===
+    if raw_total:
+        try:
+            result["total_amount"] = float(raw_total)
+        except (ValueError, TypeError):
+            logger.warning(f"Total parsing failed for '{raw_total}'")
+            result["total_amount"] = 0.0
+
+    # === NORMALIZATION PASS 4: Currency ===
+    if raw_currency:
+        result["currency"] = raw_currency.upper()
+    elif should_default_to_php(result["merchant_name"]):
+        result["currency"] = "PHP"
+
+    logger.info(f"Normalization: {raw_vendor} → {result['merchant_name']}, {raw_date} → {result['invoice_date']}, {raw_total} → {result['total_amount']} {result['currency']}")
 
     return result
 
