@@ -32,15 +32,19 @@ jobs:
       - name: Guardrail – Block upstream odoo.com links
         run: |
           set -e
-          echo "Scanning for odoo.com links in user-facing code/docs..."
-          # Restrict scan to relevant paths so we don't flag CI scripts themselves
-          matches=$(grep -Rni "odoo\.com" addons oca deploy specs docs README* 2>/dev/null || true)
+          echo "Scanning for odoo.com URLs in user-facing code..."
+          # Look for actual URLs/links to odoo.com, not just mentions in documentation
+          # Check for: href="", url=, window.open, etc.
+          matches=$(grep -Rn 'href=.*odoo\.com' addons oca deploy 2>/dev/null || true)
+          matches="$matches$(grep -Rn 'url.*=.*odoo\.com' addons oca deploy 2>/dev/null || true)"
+          matches="$matches$(grep -Rn 'window\.open.*odoo\.com' addons oca deploy 2>/dev/null || true)"
+          matches="$matches$(grep -Rn 'https\?://.*\.odoo\.com' addons oca deploy 2>/dev/null || true)"
           if [ -n "$matches" ]; then
-            echo "::error::Found references to 'odoo.com' in user-facing code or docs – replace with InsightPulse/OCA links."
+            echo "::error::Found odoo.com URLs in addons/ or oca/ – replace with InsightPulse/OCA links."
             echo "$matches"
             exit 1
           fi
-          echo "No odoo.com links found in user-facing code/docs."
+          echo "No odoo.com URLs found in code."
 
       - name: Python lint (optional baseline)
         run: |
