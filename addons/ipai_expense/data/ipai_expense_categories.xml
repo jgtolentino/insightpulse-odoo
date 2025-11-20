@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- Product Categories for PH Expense Types -->
+
+        <record id="product_category_meals" model="product.category">
+            <field name="name">Meals & Entertainment</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_transport" model="product.category">
+            <field name="name">Local Transportation</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_travel" model="product.category">
+            <field name="name">Travel & Accommodation</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <record id="product_category_office" model="product.category">
+            <field name="name">Office & Supplies</field>
+            <field name="parent_id" ref="product.product_category_all"/>
+        </record>
+
+        <!-- PH-Specific Expense Products -->
+
+        <record id="product_expense_meals" model="product.product">
+            <field name="name">Meals & Client Entertainment</field>
+            <field name="categ_id" ref="product_category_meals"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Business meals, client dinners, team lunches</field>
+        </record>
+
+        <record id="product_expense_grab" model="product.product">
+            <field name="name">Grab / Taxi Fare</field>
+            <field name="categ_id" ref="product_category_transport"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Grab, taxi, or rideshare within Metro Manila or provinces</field>
+        </record>
+
+        <record id="product_expense_parking" model="product.product">
+            <field name="name">Parking & Tolls</field>
+            <field name="categ_id" ref="product_category_transport"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Parking fees, toll fees (NLEX, SLEX, etc.)</field>
+        </record>
+
+        <record id="product_expense_fuel" model="product.product">
+            <field name="name">Fuel / Gas</field>
+            <field name="categ_id" ref="product_category_transport"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Fuel for company or personal vehicle (with mileage log)</field>
+        </record>
+
+        <record id="product_expense_flights" model="product.product">
+            <field name="name">Domestic Flights</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Domestic air travel (Manila-Cebu, Manila-Davao, etc.)</field>
+        </record>
+
+        <record id="product_expense_hotels" model="product.product">
+            <field name="name">Hotel Accommodation</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Hotel stays during business travel</field>
+        </record>
+
+        <record id="product_expense_perdiem" model="product.product">
+            <field name="name">Per Diem Allowance</field>
+            <field name="categ_id" ref="product_category_travel"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Daily allowance for meals and incidentals during travel</field>
+        </record>
+
+        <record id="product_expense_office" model="product.product">
+            <field name="name">Office Supplies</field>
+            <field name="categ_id" ref="product_category_office"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Paper, pens, folders, and other office supplies</field>
+        </record>
+
+        <record id="product_expense_internet" model="product.product">
+            <field name="name">Internet / Mobile Data</field>
+            <field name="categ_id" ref="product_category_office"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Mobile data load, internet reimbursement for WFH</field>
+        </record>
+
+        <record id="product_expense_misc" model="product.product">
+            <field name="name">Miscellaneous Expense</field>
+            <field name="categ_id" ref="product.product_category_all"/>
+            <field name="type">service</field>
+            <field name="list_price">0.0</field>
+            <field name="standard_price">0.0</field>
+            <field name="can_be_expensed">True</field>
+            <field name="description">Other business-related expenses (requires manager approval)</field>
+        </record>
+
+        <!-- Expense Journals (for GL posting) -->
+
+        <record id="account_journal_expense_ph" model="account.journal">
+            <field name="name">PH Employee Expenses</field>
+            <field name="code">EXPH</field>
+            <field name="type">purchase</field>
+            <field name="default_account_type">expense</field>
+            <field name="show_on_dashboard">True</field>
+        </record>
+
+        <record id="account_journal_travel_ph" model="account.journal">
+            <field name="name">PH Travel & Per Diem</field>
+            <field name="code">TVPH</field>
+            <field name="type">purchase</field>
+            <field name="default_account_type">expense</field>
+            <field name="show_on_dashboard">True</field>
+        </record>
+
+    </data>
+</odoo>

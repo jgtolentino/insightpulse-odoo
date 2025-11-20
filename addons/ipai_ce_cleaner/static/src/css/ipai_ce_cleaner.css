@@ -1,0 +1,39 @@
+/**
+ * IPAI CE Cleaner CSS
+ * Hides Enterprise/IAP upsells and odoo.com links
+ */
+
+/* Hide all links to odoo.com */
+a[href*="odoo.com"],
+a[href*="apps.odoo.com"],
+a[href*="iap.odoo.com"] {
+    display: none !important;
+}
+
+/* Hide upgrade links and database manager */
+a[href*="/web/database/manager"],
+a[href*="upgrade"],
+button[name="button_choose_version"] {
+    display: none !important;
+}
+
+/* Hide payment acquirer onboarding */
+.o_onboarding_payment_acquirer,
+.o_onboarding_payment_acquirer_item {
+    display: none !important;
+}
+
+/* Hide upgrade banners in settings */
+.alert-info > a[href*="upgrade"] {
+    display: none !important;
+}
+
+/* Hide parent alert if it only contains upgrade link */
+.alert-info:empty {
+    display: none !important;
+}
+
+/* Hide database selector link in debug menu */
+.dropdown-item[href*="/web/database/manager"] {
+    display: none !important;
+}

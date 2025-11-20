@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <!-- Tree view -->
+    <record id="view_ocr_expense_log_tree" model="ir.ui.view">
+      <field name="name">ocr.expense.log.tree</field>
+      <field name="model">ocr.expense.log</field>
+      <field name="arch" type="xml">
+        <tree string="OCR Expense Logs" create="false" edit="false">
+          <field name="created_at"/>
+          <field name="expense_id"/>
+          <field name="employee_id"/>
+          <field name="status" decoration-success="status == 'success'" decoration-danger="status == 'failed'" decoration-warning="status == 'partial'"/>
+          <field name="vendor_name_extracted"/>
+          <field name="total_extracted"/>
+          <field name="currency_extracted"/>
+          <field name="duration_ms"/>
+          <field name="confidence"/>
+        </tree>
+      </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_ocr_expense_log_form" model="ir.ui.view">
+      <field name="name">ocr.expense.log.form</field>
+      <field name="model">ocr.expense.log</field>
+      <field name="arch" type="xml">
+        <form string="OCR Expense Log" create="false" edit="false">
+          <sheet>
+            <group>
+              <group name="request_info" string="Request Information">
+                <field name="created_at"/>
+                <field name="expense_id"/>
+                <field name="user_id"/>
+                <field name="employee_id"/>
+                <field name="source"/>
+                <field name="request_id"/>
+              </group>
+              <group name="result_info" string="Result Information">
+                <field name="status"/>
+                <field name="duration_ms"/>
+                <field name="confidence"/>
+                <field name="error_message" invisible="status == 'success'"/>
+              </group>
+            </group>
+            <group string="Extracted Data">
+              <group>
+                <field name="vendor_name_extracted"/>
+                <field name="date_extracted"/>
+              </group>
+              <group>
+                <field name="total_extracted"/>
+                <field name="currency_extracted"/>
+              </group>
+            </group>
+            <group string="Technical Details" invisible="not raw_payload_path">
+              <field name="raw_payload_path"/>
+            </group>
+          </sheet>
+        </form>
+      </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_ocr_expense_log_search" model="ir.ui.view">
+      <field name="name">ocr.expense.log.search</field>
+      <field name="model">ocr.expense.log</field>
+      <field name="arch" type="xml">
+        <search string="OCR Expense Logs">
+          <field name="expense_id"/>
+          <field name="employee_id"/>
+          <field name="vendor_name_extracted"/>
+          <filter name="filter_success" string="Success" domain="[('status', '=', 'success')]"/>
+          <filter name="filter_failed" string="Failed" domain="[('status', '=', 'failed')]"/>
+          <filter name="filter_partial" string="Partial" domain="[('status', '=', 'partial')]"/>
+          <separator/>
+          <filter name="filter_today" string="Today" domain="[('created_at', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+          <filter name="filter_week" string="This Week" domain="[('created_at', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+          <group expand="0" string="Group By">
+            <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
+            <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+            <filter name="group_date" string="Date" context="{'group_by': 'created_at:day'}"/>
+          </group>
+        </search>
+      </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_ocr_expense_log" model="ir.actions.act_window">
+      <field name="name">OCR Logs</field>
+      <field name="res_model">ocr.expense.log</field>
+      <field name="view_mode">tree,form</field>
+      <field name="context">{'search_default_filter_week': 1}</field>
+      <field name="help" type="html">
+        <p class="o_view_nocontent_smiling_face">
+          No OCR logs yet
+        </p>
+        <p>
+          OCR logs will appear here when expenses are scanned with InsightPulse OCR.
+        </p>
+      </field>
+    </record>
+
+    <!-- Menu Item -->
+    <menuitem id="menu_ocr_expense_log"
+              name="OCR Logs"
+              parent="hr_expense.menu_hr_expense_configuration"
+              action="action_ocr_expense_log"
+              sequence="100"/>
+
+  </data>
+</odoo>

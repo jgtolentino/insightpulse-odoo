@@ -37,6 +37,56 @@ class IpaiEquipmentAsset(models.Model):
         "res.company", string="Company", default=lambda self: self.env.company.id
     )
 
+    # Smart button fields
+    booking_count = fields.Integer(
+        string="Bookings",
+        compute="_compute_booking_count",
+        help="Number of bookings for this asset"
+    )
+    incident_count = fields.Integer(
+        string="Incidents",
+        compute="_compute_incident_count",
+        help="Number of incidents reported for this asset"
+    )
+
+    @api.depends('name')
+    def _compute_booking_count(self):
+        """Count bookings for this asset"""
+        for asset in self:
+            asset.booking_count = self.env['ipai.equipment.booking'].search_count([
+                ('asset_id', '=', asset.id)
+            ])
+
+    @api.depends('name')
+    def _compute_incident_count(self):
+        """Count incidents for this asset"""
+        for asset in self:
+            asset.incident_count = self.env['ipai.equipment.incident'].search_count([
+                ('asset_id', '=', asset.id)
+            ])
+
+    def action_view_bookings(self):
+        """Smart button action to view bookings"""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Bookings',
+            'res_model': 'ipai.equipment.booking',
+            'view_mode': 'tree,form',
+            'domain': [('asset_id', '=', self.id)],
+            'context': {'default_asset_id': self.id},
+        }
+
+    def action_view_incidents(self):
+        """Smart button action to view incidents"""
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Incidents',
+            'res_model': 'ipai.equipment.incident',
+            'view_mode': 'tree,form',
+            'domain': [('asset_id', '=', self.id)],
+            'context': {'default_asset_id': self.id},
+        }
+
 
 class IpaiEquipmentBooking(models.Model):
     _name = "ipai.equipment.booking"
@@ -65,6 +115,23 @@ class IpaiEquipmentBooking(models.Model):
         required=True,
         tracking=True,
     )
+    is_overdue = fields.Boolean(
+        string="Overdue",
+        compute="_compute_is_overdue",
+        store=True,
+        help="Booking is past end_datetime and still checked out"
+    )
+
+    @api.depends('end_datetime', 'state')
+    def _compute_is_overdue(self):
+        """Check if booking is overdue (past end date and still checked out)"""
+        now = fields.Datetime.now()
+        for booking in self:
+            booking.is_overdue = (
+                booking.state == 'checked_out' and
+                booking.end_datetime and
+                booking.end_datetime < now
+            )
 
     @api.constrains("asset_id", "start_datetime", "end_datetime", "state")
     def _check_booking_conflict(self):

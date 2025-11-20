@@ -14,7 +14,9 @@
         "project",
     ],
     "data": [
+        "security/ipai_expense_security.xml",
         "security/ir.model.access.csv",
+        "data/ipai_expense_categories.xml",
         "views/ipai_expense_menus.xml",
         "views/ipai_expense_views.xml",
     ],

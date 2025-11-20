@@ -33,5 +33,13 @@
             sequence="30"
         />
 
+        <menuitem
+            id="ipai_equipment_utilization_menu"
+            name="Utilization Analysis"
+            parent="ipai_equipment_root_menu"
+            action="ipai_equipment_utilization_action"
+            sequence="40"
+        />
+
     </data>
 </odoo>
