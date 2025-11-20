@@ -11,8 +11,10 @@
         "hr_expense",
     ],
     "data": [
+        "security/ir.model.access.csv",
         "views/ipai_ocr_settings_views.xml",
         "views/ipai_ocr_expense_views.xml",
+        "views/ocr_expense_log_views.xml",
     ],
     "installable": True,
     "application": False,
