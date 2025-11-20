@@ -16,22 +16,27 @@ jobs:
       - name: Guardrail – Block Enterprise modules
         run: |
           set -e
-          echo "Scanning for Enterprise modules..."
-          if grep -Rni "enterprise" addons oca || true; then
+          echo "Scanning for Enterprise modules in code directories..."
+          matches=$(grep -Rni "enterprise" addons oca 2>/dev/null || true)
+          if [ -n "$matches" ]; then
             echo "::error::Found references to 'enterprise' in addons/ or oca/ – CE-only policy violated."
+            echo "$matches"
             exit 1
           fi
           echo "No Enterprise references found in addons/ or oca/."
 
-      - name: Guardrail – Block odoo.com links
+      - name: Guardrail – Block upstream odoo.com links
         run: |
           set -e
-          echo "Scanning for odoo.com links..."
-          if grep -Rni "odoo.com" . || true; then
-            echo "::error::Found references to 'odoo.com' – all user-facing links must be InsightPulse or OCA."
+          echo "Scanning for odoo.com links in user-facing code/docs..."
+          # Restrict scan to relevant paths so we don't flag CI scripts themselves
+          matches=$(grep -Rni "odoo\.com" addons oca deploy specs docs README* 2>/dev/null || true)
+          if [ -n "$matches" ]; then
+            echo "::error::Found references to 'odoo.com' in user-facing code or docs – replace with InsightPulse/OCA links."
+            echo "$matches"
             exit 1
           fi
-          echo "No odoo.com links found."
+          echo "No odoo.com links found in user-facing code/docs."
 
       - name: Python lint (optional baseline)
         run: |
