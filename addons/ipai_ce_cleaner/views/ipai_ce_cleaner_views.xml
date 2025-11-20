@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!--
+        Placeholder for CE/IAP cleanup.
+
+        Here you will later:
+        - Inherit settings and app views to hide "Upgrade to Enterprise" banners.
+        - Remove any menus that open IAP or odoo.com flows.
+        - Replace doc/support links with InsightPulse/OCA URLs.
+
+        Keep it empty for now so the module installs cleanly.
+        -->
+    </data>
+</odoo>

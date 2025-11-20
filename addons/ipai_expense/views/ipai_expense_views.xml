@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Travel Request tree -->
+        <record id="ipai_travel_request_tree" model="ir.ui.view">
+            <field name="name">ipai.travel.request.tree</field>
+            <field name="model">ipai.travel.request</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="employee_id"/>
+                    <field name="project_id"/>
+                    <field name="destination"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="estimated_budget"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Travel Request form -->
+        <record id="ipai_travel_request_form" model="ir.ui.view">
+            <field name="name">ipai.travel.request.form</field>
+            <field name="model">ipai.travel.request</field>
+            <field name="arch" type="xml">
+                <form string="Travel Request">
+                    <sheet>
+                        <group>
+                            <field name="name" readonly="1"/>
+                            <field name="employee_id"/>
+                            <field name="project_id"/>
+                            <field name="destination"/>
+                        </group>
+                        <group>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="estimated_budget"/>
+                            <field name="currency_id"/>
+                        </group>
+                        <group>
+                            <field name="purpose"/>
+                            <field name="state" readonly="1"/>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="action_submit" type="object"
+                                string="Submit" states="draft"
+                                class="btn-primary"/>
+                        <button name="action_manager_approve" type="object"
+                                string="Manager Approve" states="submitted"
+                                class="btn-primary"/>
+                        <button name="action_finance_approve" type="object"
+                                string="Finance Approve" states="manager_approved"
+                                class="btn-primary"/>
+                        <button name="action_reject" type="object"
+                                string="Reject"
+                                states="submitted,manager_approved"
+                                class="btn-secondary"/>
+                        <button string="Close" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <!-- Travel Request action -->
+        <record id="ipai_travel_request_action" model="ir.actions.act_window">
+            <field name="name">Travel Requests</field>
+            <field name="res_model">ipai.travel.request</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Extend hr.expense form with travel + project -->
+        <record id="view_hr_expense_form_inherit_ipai" model="ir.ui.view">
+            <field name="name">hr.expense.form.ipai.inherit</field>
+            <field name="model">hr.expense</field>
+            <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group" position="inside">
+                    <field name="project_id"/>
+                    <field name="travel_request_id"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

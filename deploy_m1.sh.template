@@ -1,0 +1,385 @@
+#!/usr/bin/env bash
+################################################################################
+# DEPLOY M1 – One-Shot Odoo CE 18 Deployment Script
+# Purpose: Deploy InsightPulse Odoo CE 18 (no Enterprise/IAP) on fresh DO droplet
+# Usage: bash deploy_m1.sh.template
+# Requirements: Fresh Ubuntu 22.04/24.04 droplet, DNS pointing to this IP
+################################################################################
+
+set -euo pipefail
+IFS=$'\n\t'
+
+# Trap errors for rollback
+trap 'error_handler $? $LINENO' ERR
+
+################################################################################
+# Configuration Variables
+################################################################################
+
+DOMAIN="erp.insightpulseai.net"
+EMAIL="jgtolentino_rn@yahoo.com"
+REPO_URL="https://github.com/jgtolentino/odoo-ce.git"
+INSTALL_DIR="/opt/odoo-ce"
+BACKUP_DIR="/opt/odoo-backups"
+LOGFILE="/var/log/odoo_deploy.log"
+
+# Auto-generated secrets (no manual editing required)
+DB_PASSWORD=""
+ADMIN_PASSWORD=""
+
+################################################################################
+# Helper Functions
+################################################################################
+
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOGFILE"
+}
+
+error_handler() {
+    local exit_code=$1
+    local line_number=$2
+    log "ERROR: Command failed with exit code $exit_code at line $line_number"
+    log "Rolling back changes..."
+
+    # Rollback: stop containers if running
+    if [ -d "$INSTALL_DIR/deploy" ]; then
+        cd "$INSTALL_DIR/deploy"
+        docker compose down 2>/dev/null || true
+    fi
+
+    log "Rollback complete. Check $LOGFILE for details."
+    exit "$exit_code"
+}
+
+generate_password() {
+    openssl rand -base64 32 | tr -d "=+/" | cut -c1-32
+}
+
+check_prerequisites() {
+    log "Checking prerequisites..."
+
+    # Check if running as root
+    if [ "$EUID" -ne 0 ]; then
+        log "ERROR: Please run as root"
+        exit 1
+    fi
+
+    # Check OS version
+    if ! grep -qE "(Ubuntu 22.04|Ubuntu 24.04)" /etc/os-release; then
+        log "WARNING: This script is tested on Ubuntu 22.04/24.04"
+    fi
+
+    # Check DNS resolution
+    if ! host "$DOMAIN" > /dev/null 2>&1; then
+        log "ERROR: DNS for $DOMAIN not resolving to this server"
+        log "Please configure DNS A record before proceeding"
+        exit 1
+    fi
+
+    log "Prerequisites check passed"
+}
+
+detect_existing_deployment() {
+    if [ -d "$INSTALL_DIR" ]; then
+        log "WARNING: Existing deployment detected at $INSTALL_DIR"
+        echo ""
+        echo "Existing deployment found. What would you like to do?"
+        echo "1) Update configuration only (safe)"
+        echo "2) Redeploy from scratch (DANGEROUS - data loss)"
+        echo "3) Exit"
+        read -rp "Choose an option [1-3]: " choice
+
+        case $choice in
+            1)
+                log "User chose: Update configuration only"
+                return 0
+                ;;
+            2)
+                log "User chose: Redeploy from scratch"
+                read -rp "Are you sure? This will DELETE all data. Type 'YES' to confirm: " confirm
+                if [ "$confirm" != "YES" ]; then
+                    log "Redeployment cancelled"
+                    exit 0
+                fi
+                log "Proceeding with full redeployment..."
+                cd "$INSTALL_DIR/deploy"
+                docker compose down -v
+                cd /
+                rm -rf "$INSTALL_DIR"
+                ;;
+            3)
+                log "User chose: Exit"
+                exit 0
+                ;;
+            *)
+                log "Invalid choice. Exiting."
+                exit 1
+                ;;
+        esac
+    fi
+}
+
+install_system_dependencies() {
+    log "Installing system dependencies..."
+
+    apt-get update
+    apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release \
+        git \
+        ufw \
+        nginx \
+        certbot \
+        python3-certbot-nginx
+
+    log "System dependencies installed"
+}
+
+install_docker() {
+    log "Installing Docker..."
+
+    # Add Docker's official GPG key
+    install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/ubuntu/gpg | gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    chmod a+r /etc/apt/keyrings/docker.gpg
+
+    # Add Docker repository
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu \
+      $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+      tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+    # Install Docker Engine
+    apt-get update
+    apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+
+    # Enable and start Docker
+    systemctl enable docker
+    systemctl start docker
+
+    log "Docker installed successfully"
+}
+
+configure_firewall() {
+    log "Configuring UFW firewall..."
+
+    # Reset UFW to default state
+    ufw --force reset
+
+    # Default policies
+    ufw default deny incoming
+    ufw default allow outgoing
+
+    # Allow SSH (prevent lockout)
+    ufw allow 22/tcp comment 'SSH'
+
+    # Allow HTTP/HTTPS
+    ufw allow 80/tcp comment 'HTTP'
+    ufw allow 443/tcp comment 'HTTPS'
+
+    # Enable UFW
+    ufw --force enable
+
+    log "Firewall configured successfully"
+}
+
+clone_repository() {
+    log "Cloning repository..."
+
+    if [ ! -d "$INSTALL_DIR" ]; then
+        git clone "$REPO_URL" "$INSTALL_DIR"
+    else
+        cd "$INSTALL_DIR"
+        git pull origin main
+    fi
+
+    log "Repository cloned/updated"
+}
+
+generate_secrets() {
+    log "Generating secure passwords..."
+
+    DB_PASSWORD=$(generate_password)
+    ADMIN_PASSWORD=$(generate_password)
+
+    log "Secrets generated successfully"
+}
+
+configure_odoo() {
+    log "Configuring Odoo with generated secrets..."
+
+    cd "$INSTALL_DIR/deploy"
+
+    # Replace placeholders in odoo.conf
+    sed -i "s/CHANGE_ME_STRONG_DB_PASSWORD/$DB_PASSWORD/g" odoo.conf
+    sed -i "s/CHANGE_ME_SUPERMASTER_PASSWORD/$ADMIN_PASSWORD/g" odoo.conf
+
+    # Replace placeholders in docker-compose.yml
+    sed -i "s/CHANGE_ME_STRONG_DB_PASSWORD/$DB_PASSWORD/g" docker-compose.yml
+
+    # Create .env file with secrets
+    cat > .env << EOF
+# Auto-generated secrets - $(date)
+# DO NOT COMMIT TO GIT
+
+POSTGRES_PASSWORD=$DB_PASSWORD
+ADMIN_PASSWORD=$ADMIN_PASSWORD
+DOMAIN=$DOMAIN
+EOF
+
+    chmod 600 .env
+
+    log "Odoo configuration complete"
+}
+
+configure_nginx() {
+    log "Configuring Nginx reverse proxy..."
+
+    # Copy nginx config to sites-available
+    cp "$INSTALL_DIR/deploy/nginx/$DOMAIN.conf" "/etc/nginx/sites-available/$DOMAIN"
+
+    # Create symlink to sites-enabled
+    ln -sf "/etc/nginx/sites-available/$DOMAIN" "/etc/nginx/sites-enabled/$DOMAIN"
+
+    # Remove default site
+    rm -f /etc/nginx/sites-enabled/default
+
+    # Test nginx configuration
+    nginx -t
+
+    # Reload nginx
+    systemctl reload nginx
+
+    log "Nginx configured successfully"
+}
+
+obtain_ssl_certificate() {
+    log "Obtaining Let's Encrypt SSL certificate..."
+
+    # Stop nginx temporarily for standalone mode
+    systemctl stop nginx
+
+    # Obtain certificate using standalone mode
+    certbot certonly --standalone \
+        --non-interactive \
+        --agree-tos \
+        --email "$EMAIL" \
+        -d "$DOMAIN"
+
+    # Start nginx again
+    systemctl start nginx
+
+    # Setup auto-renewal
+    systemctl enable certbot.timer
+    systemctl start certbot.timer
+
+    log "SSL certificate obtained and auto-renewal configured"
+}
+
+start_odoo_stack() {
+    log "Starting Odoo stack..."
+
+    cd "$INSTALL_DIR/deploy"
+
+    # Pull latest images
+    docker compose pull
+
+    # Start containers
+    docker compose up -d
+
+    log "Odoo stack started"
+}
+
+health_check() {
+    log "Running health checks..."
+
+    local max_attempts=30
+    local attempt=1
+
+    while [ $attempt -le $max_attempts ]; do
+        log "Health check attempt $attempt/$max_attempts..."
+
+        if curl -sf http://127.0.0.1:8069/web/health > /dev/null; then
+            log "✅ Odoo is healthy!"
+            return 0
+        fi
+
+        sleep 10
+        ((attempt++))
+    done
+
+    log "❌ Health check failed after $max_attempts attempts"
+    return 1
+}
+
+setup_automated_backups() {
+    log "Setting up automated backups..."
+
+    # Create backup directory
+    mkdir -p "$BACKUP_DIR"
+
+    # Copy backup script
+    cp "$INSTALL_DIR/scripts/backup_odoo.sh" /usr/local/bin/backup_odoo.sh
+    chmod +x /usr/local/bin/backup_odoo.sh
+
+    # Setup daily cron job at 2 AM
+    (crontab -l 2>/dev/null; echo "0 2 * * * /usr/local/bin/backup_odoo.sh >> /var/log/odoo_backup.log 2>&1") | crontab -
+
+    log "Automated backups configured (daily at 2 AM)"
+}
+
+print_summary() {
+    log "========================================="
+    log "✅ Deployment Complete!"
+    log "========================================="
+    log ""
+    log "Odoo URL: https://$DOMAIN"
+    log "Admin Email: admin"
+    log "Master Password: $ADMIN_PASSWORD"
+    log ""
+    log "Database Password: $DB_PASSWORD"
+    log ""
+    log "Secrets saved to: $INSTALL_DIR/deploy/.env"
+    log "Logs: $LOGFILE"
+    log "Backups: $BACKUP_DIR (daily at 2 AM)"
+    log ""
+    log "Next steps:"
+    log "1. Visit https://$DOMAIN to access Odoo"
+    log "2. Create your first database"
+    log "3. Install ipai_* modules from Apps menu"
+    log ""
+    log "========================================="
+}
+
+################################################################################
+# Main Execution
+################################################################################
+
+main() {
+    log "========================================="
+    log "Starting Odoo CE 18 Deployment"
+    log "========================================="
+
+    check_prerequisites
+    detect_existing_deployment
+    install_system_dependencies
+    install_docker
+    configure_firewall
+    clone_repository
+    generate_secrets
+    configure_odoo
+    configure_nginx
+    obtain_ssl_certificate
+    start_odoo_stack
+    health_check
+    setup_automated_backups
+    print_summary
+
+    log "Deployment script completed successfully!"
+}
+
+# Run main function
+main "$@"

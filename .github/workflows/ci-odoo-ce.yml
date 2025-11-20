@@ -1,0 +1,51 @@
+name: odoo-ce-ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  guardrails:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Guardrail – Block Enterprise modules
+        run: |
+          set -e
+          echo "Scanning for Enterprise module dependencies in code..."
+          # Look for actual Enterprise dependencies, not just the word "enterprise" in docs
+          # Check for: import statements, module dependencies in __manifest__.py
+          matches=$(grep -Rn "from odoo\.addons\..*_enterprise" addons oca 2>/dev/null || true)
+          matches="$matches$(grep -Rn "import odoo\.addons\..*_enterprise" addons oca 2>/dev/null || true)"
+          matches="$matches$(grep -A5 '"depends"' addons/*/__manifest__.py oca/*/__manifest__.py 2>/dev/null | grep -i "enterprise" || true)"
+          if [ -n "$matches" ]; then
+            echo "::error::Found Enterprise module dependencies in addons/ or oca/ – CE-only policy violated."
+            echo "$matches"
+            exit 1
+          fi
+          echo "No Enterprise module dependencies found."
+
+      - name: Guardrail – Block upstream odoo.com links
+        run: |
+          set -e
+          echo "Scanning for odoo.com URLs in user-facing code..."
+          # Look for actual URLs/links to odoo.com, not just mentions in documentation
+          # Check for: href="", url=, window.open, etc.
+          matches=$(grep -Rn 'href=.*odoo\.com' addons oca deploy 2>/dev/null || true)
+          matches="$matches$(grep -Rn 'url.*=.*odoo\.com' addons oca deploy 2>/dev/null || true)"
+          matches="$matches$(grep -Rn 'window\.open.*odoo\.com' addons oca deploy 2>/dev/null || true)"
+          matches="$matches$(grep -Rn 'https\?://.*\.odoo\.com' addons oca deploy 2>/dev/null || true)"
+          if [ -n "$matches" ]; then
+            echo "::error::Found odoo.com URLs in addons/ or oca/ – replace with InsightPulse/OCA links."
+            echo "$matches"
+            exit 1
+          fi
+          echo "No odoo.com URLs found in code."
+
+      - name: Python lint (optional baseline)
+        run: |
+          python -m compileall addons || true
