@@ -78,9 +78,98 @@
             <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//group" position="inside">
-                    <field name="project_id"/>
+                    <field name="project_id" attrs="{'required': [('requires_project', '=', True)]}"/>
                     <field name="travel_request_id"/>
+                    <field name="requires_project" invisible="1"/>
                 </xpath>
+            </field>
+        </record>
+
+        <!-- Expense Graph View (by category, employee, project) -->
+        <record id="view_hr_expense_graph_ipai" model="ir.ui.view">
+            <field name="name">hr.expense.graph.ipai</field>
+            <field name="model">hr.expense</field>
+            <field name="arch" type="xml">
+                <graph string="Expense Analysis" type="bar" stacked="True">
+                    <field name="product_id" type="row"/>
+                    <field name="employee_id" type="col"/>
+                    <field name="total_amount" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Expense Pivot View (by category, project, employee, month) -->
+        <record id="view_hr_expense_pivot_ipai" model="ir.ui.view">
+            <field name="name">hr.expense.pivot.ipai</field>
+            <field name="model">hr.expense</field>
+            <field name="arch" type="xml">
+                <pivot string="Expense Pivot Analysis">
+                    <field name="date" interval="month" type="col"/>
+                    <field name="product_id" type="row"/>
+                    <field name="employee_id" type="row"/>
+                    <field name="project_id" type="row"/>
+                    <field name="total_amount" type="measure"/>
+                    <field name="quantity" type="measure"/>
+                </pivot>
+            </field>
+        </record>
+
+        <!-- Expense Action with Graph and Pivot -->
+        <record id="hr_expense_action_ipai_analysis" model="ir.actions.act_window">
+            <field name="name">Expense Analysis</field>
+            <field name="res_model">hr.expense</field>
+            <field name="view_mode">pivot,graph,tree,form</field>
+            <field name="domain">[('state', 'in', ['approved', 'done'])]</field>
+            <field name="context">{
+                'search_default_group_employee': 1,
+                'search_default_group_product': 1,
+            }</field>
+        </record>
+
+        <!-- Travel Request Graph View (by employee, destination) -->
+        <record id="ipai_travel_request_graph" model="ir.ui.view">
+            <field name="name">ipai.travel.request.graph</field>
+            <field name="model">ipai.travel.request</field>
+            <field name="arch" type="xml">
+                <graph string="Travel Analysis" type="bar">
+                    <field name="employee_id" type="row"/>
+                    <field name="destination" type="col"/>
+                    <field name="estimated_budget" type="measure"/>
+                </graph>
+            </field>
+        </record>
+
+        <!-- Travel Request Search View with Filters -->
+        <record id="ipai_travel_request_search" model="ir.ui.view">
+            <field name="name">ipai.travel.request.search</field>
+            <field name="model">ipai.travel.request</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="name"/>
+                    <field name="employee_id"/>
+                    <field name="destination"/>
+                    <field name="project_id"/>
+                    <filter string="My Requests" name="my_requests"
+                            domain="[('employee_id.user_id', '=', uid)]"/>
+                    <filter string="Draft" name="draft"
+                            domain="[('state', '=', 'draft')]"/>
+                    <filter string="Submitted" name="submitted"
+                            domain="[('state', '=', 'submitted')]"/>
+                    <filter string="Manager Approved" name="manager_approved"
+                            domain="[('state', '=', 'manager_approved')]"/>
+                    <filter string="Finance Approved" name="finance_approved"
+                            domain="[('state', '=', 'finance_approved')]"/>
+                    <group expand="0" string="Group By">
+                        <filter string="Employee" name="group_employee"
+                                context="{'group_by': 'employee_id'}"/>
+                        <filter string="Project" name="group_project"
+                                context="{'group_by': 'project_id'}"/>
+                        <filter string="State" name="group_state"
+                                context="{'group_by': 'state'}"/>
+                        <filter string="Month" name="group_month"
+                                context="{'group_by': 'start_date:month'}"/>
+                    </group>
+                </search>
             </field>
         </record>
 

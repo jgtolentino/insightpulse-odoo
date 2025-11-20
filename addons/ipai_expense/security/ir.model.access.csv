@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_ipai_travel_request_user,access_ipai_travel_request_user,model_ipai_travel_request,base.group_user,1,1,1,0
+access_ipai_travel_request_user,IPAI Travel Request User,model_ipai_travel_request,group_ipai_expense_user,1,1,1,1
+access_ipai_travel_request_manager,IPAI Travel Request Manager,model_ipai_travel_request,group_ipai_expense_manager,1,1,1,0
+access_ipai_travel_request_finance,IPAI Travel Request Finance,model_ipai_travel_request,group_ipai_expense_finance,1,1,1,1
