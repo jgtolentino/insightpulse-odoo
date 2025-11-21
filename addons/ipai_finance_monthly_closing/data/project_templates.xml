@@ -4,7 +4,6 @@
 
     <record id="project_month_end_template" model="project.project">
       <field name="name">Month-end Closing – Template</field>
-      <field name="allow_timesheets">False</field>
       <field name="active">True</field>
     </record>
 
