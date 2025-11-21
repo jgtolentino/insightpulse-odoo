@@ -101,8 +101,8 @@
             <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_name_extracted'}"/>
             <filter name="group_date" string="Date" context="{'group_by': 'created_at:day'}"/>
             <separator/>
-            <filter name="group_status_employee" string="Status → Employee" context="{'group_by': ['status', 'employee_id']}"/>
-            <filter name="group_status_vendor" string="Status → Vendor" context="{'group_by': ['status', 'vendor_name_extracted']}"/>
+            <filter name="group_status_employee" string="Status then Employee" context="{'group_by': 'status:employee_id'}"/>
+            <filter name="group_status_vendor" string="Status then Vendor" context="{'group_by': 'status:vendor_name_extracted'}"/>
           </group>
         </search>
       </field>

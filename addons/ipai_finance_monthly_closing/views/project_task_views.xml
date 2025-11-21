@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+
+    <!-- Extend task form with Finance & BIR tabs -->
+    <record id="view_task_form_finance_closing" model="ir.ui.view">
+      <field name="name">project.task.form.finance.closing</field>
+      <field name="model">project.task</field>
+      <field name="inherit_id" ref="project.view_task_form2"/>
+      <field name="arch" type="xml">
+        <xpath expr="//sheet/notebook" position="inside">
+          <page string="Finance Closing">
+            <group>
+              <field name="cluster"/>
+              <field name="relative_due"/>
+              <field name="closing_due_date"/>
+            </group>
+            <group>
+              <field name="owner_code"/>
+              <field name="reviewer_id"/>
+              <field name="approver_id"/>
+            </group>
+            <group>
+              <field name="auto_sync"/>
+              <field name="erp_ref"/>
+            </group>
+          </page>
+          <page string="BIR Filing">
+            <group>
+              <field name="bir_related"/>
+              <field name="bir_form"/>
+              <field name="bir_period_label"/>
+            </group>
+            <group>
+              <field name="bir_deadline"/>
+              <field name="bir_prep_due_date"/>
+              <field name="bir_approval_due_date"/>
+              <field name="bir_payment_due_date"/>
+            </group>
+            <group>
+              <field name="finance_supervisor_id"/>
+              <field name="sfm_id"/>
+              <field name="fd_id"/>
+            </group>
+          </page>
+        </xpath>
+      </field>
+    </record>
+
+    <!-- Optional: list view with finance fields visible -->
+    <record id="view_task_finance_list" model="ir.ui.view">
+      <field name="name">project.task.list.finance</field>
+      <field name="model">project.task</field>
+      <field name="inherit_id" ref="project.view_task_tree2"/>
+      <field name="arch" type="xml">
+        <xpath expr="//list" position="attributes">
+          <attribute name="create">true</attribute>
+        </xpath>
+        <xpath expr="//field[@name='name']" position="after">
+          <field name="cluster"/>
+          <field name="relative_due"/>
+          <field name="closing_due_date"/>
+          <field name="owner_code"/>
+          <field name="reviewer_id"/>
+          <field name="approver_id"/>
+          <field name="bir_form"/>
+          <field name="bir_period_label"/>
+          <field name="bir_deadline"/>
+        </xpath>
+      </field>
+    </record>
+
+  </data>
+</odoo>
