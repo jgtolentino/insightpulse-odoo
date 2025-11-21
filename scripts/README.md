@@ -148,6 +148,101 @@ python3 scripts/check_project_tasks.py
 
 ---
 
+## Data Import Scripts
+
+### 5. `import_month_end_tasks.py`
+
+Import and deduplicate month-end closing tasks from CSV.
+
+**Usage:**
+```bash
+export POSTGRES_URL="postgres://postgres.xkxyvboeubffxxbebsll:${SUPABASE_SERVICE_ROLE_KEY}@aws-1-us-east-1.pooler.supabase.com:6543/postgres?sslmode=require"
+
+python3 scripts/import_month_end_tasks.py --csv data/month_end_tasks.csv --month-end 2025-01-31
+```
+
+**What it does:**
+- Loads tasks from CSV file
+- Deduplicates tasks by name (case-insensitive)
+- Validates employee codes, cluster codes, and relative due dates
+- Calculates actual due dates from month-end and relative dates (M-5, M+4, etc.)
+- Inserts validated tasks into Supabase `month_end_tasks` table
+- Provides detailed import summary with inserted/skipped counts
+
+**CSV Format:**
+```csv
+Task Name,Owner,Reviewer,Approver,Cluster,Due Date
+Create Google Drive folder,RIM,CKVC,CKVC,A,M-5
+Month-end collection of receipts,RIM,CKVC,CKVC,A,M-5
+```
+
+**Options:**
+- `--csv CSV_PATH` - Path to CSV file (required)
+- `--month-end YYYY-MM-DD` - Month-end date for due date calculations (required)
+- `--dry-run` - Validate without committing changes
+
+**Prerequisites:**
+- `POSTGRES_URL` environment variable with Supabase service role key
+- Python packages: `psycopg2-binary`, `python-dotenv`, `pandas`
+- Install with: `pip install psycopg2-binary python-dotenv pandas`
+- Supabase schema applied: `03_month_end_tasks.sql`
+
+**Example:**
+```bash
+# Dry run (validate only)
+python3 scripts/import_month_end_tasks.py \
+  --csv data/month_end_tasks.csv \
+  --month-end 2025-01-31 \
+  --dry-run
+
+# Live import
+python3 scripts/import_month_end_tasks.py \
+  --csv data/month_end_tasks.csv \
+  --month-end 2025-01-31
+```
+
+**Output:**
+```
+[INFO] Step 1: Loading CSV data...
+[SUCCESS] Loaded 36 tasks from CSV
+
+[INFO] Step 2: Deduplicating tasks...
+[WARNING] Duplicate task: Create Google Drive folder (Agency Name) M01
+[INFO] Found 1 duplicate tasks
+[SUCCESS] Kept 35 unique tasks
+
+[INFO] Step 3: Connecting to Supabase...
+[SUCCESS] Connected to Supabase
+
+[INFO] Step 4: Fetching valid employee and cluster codes...
+[INFO] Found 9 active employees: ['BOM', 'CKVC', 'JAP', 'JPAL', 'JPL', 'JRMO', 'LAS', 'RIM', 'RMQB']
+[INFO] Found 4 active clusters: ['A', 'B', 'C', 'D']
+
+[INFO] Step 5: Validating tasks...
+[SUCCESS] 35 tasks are valid
+
+[INFO] Step 6: Importing tasks...
+[SUCCESS] Inserted: Create Google Drive folder (Owner: RIM, Due: 2025-01-26)
+...
+[SUCCESS] Changes committed to database
+
+[INFO] ===============================================================================
+[INFO] Import Summary
+[INFO] ===============================================================================
+[INFO] Total tasks in CSV: 36
+[INFO] Duplicates found: 1
+[INFO] Unique tasks: 35
+[INFO] Valid tasks: 35
+[INFO] Invalid tasks: 0
+[SUCCESS] Tasks inserted: 35
+[WARNING] Tasks skipped: 0
+[INFO] ===============================================================================
+```
+
+**See also:** `packages/db/sql/03_month_end_tasks.sql` for database schema
+
+---
+
 ## Quick Start Guide
 
 ### First-Time Deployment

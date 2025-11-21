@@ -1,0 +1,37 @@
+Task Name,Owner,Reviewer,Approver,Cluster,Due Date
+Create Google Drive folder (Agency Name) M01,RIM,CKVC,CKVC,A,M-5
+Month-end collection of receipts from agency,RIM,CKVC,CKVC,A,M-5
+Create Journal Entry - Vendor Liquidation,RIM,CKVC,CKVC,A,M-5
+Create Journal Entry - Collection,RIM,CKVC,CKVC,A,M-5
+Create Journal Entry - Petty Cash,RIM,CKVC,CKVC,A,M-5
+Create Journal Entry - Check Disbursement,RIM,CKVC,CKVC,A,M-5
+Create Journal Entry - Other,RIM,CKVC,CKVC,A,M-5
+Prepare Accounting Report,RIM,CKVC,CKVC,A,M-5
+Prepare bank reconciliation (for bank accounts that the agency uses),RIM,CKVC,CKVC,A,M-5
+Validate Accrued Revenue,BOM,CKVC,CKVC,B,M+2
+Validate Accrued Billings,BOM,CKVC,CKVC,B,M+2
+Validate Work-In-Progress,BOM,CKVC,CKVC,B,M+2
+Prepare Billing Report - For review,BOM,CKVC,CKVC,B,M+2
+Prepare Disbursement report - FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Prepare BS-Income statement-Trial balance - FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Prepare Revenue Report - FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Prepare Staff Utilization- FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Check Other receivable of agency - FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Check Vendor Payables - FOR REVIEW,BOM,CKVC,CKVC,B,M+2
+Create Pre-print Output VAT,JPAL,CKVC,CKVC,C,M+3
+Create Pre-print Input VAT,JPAL,CKVC,CKVC,C,M+3
+File VAT - eBIRforms and efps,JPAL,CKVC,CKVC,C,M+4
+Validate Accrued Expenses,LAS,CKVC,CKVC,D,M+2
+Validate Prepayments,LAS,CKVC,CKVC,D,M+2
+Create Summary Liquidation Report,JPL,CKVC,CKVC,D,M+2
+Prepare Liquidation of Accounts Payable - Trade (PCF) - FOR REVIEW,JPL,CKVC,CKVC,D,M+2
+Prepare Liquidation of Accounts Payable - Non-trade (Advances to Suppliers/Agency/Office/Employees) - FOR REVIEW,JPL,CKVC,CKVC,D,M+2
+Check Prepaid Expense Schedule - FOR REVIEW,JPL,CKVC,CKVC,D,M+2
+Create BIR Form 1601 C - Monthly Remittance,RMQB,CKVC,CKVC,D,M+10
+File BIR Form 1601C - For payment and filing to BIR,RMQB,CKVC,CKVC,D,M+10
+File BIR Form 1601E - for quarterly percentage tax payers - For payment and filing to BIR,RMQB,CKVC,CKVC,D,M+10
+Check Inventory/Fixed Asset count,JAP,CKVC,CKVC,D,M+2
+Check Other Current Liabilities of agency - FOR REVIEW,JAP,CKVC,CKVC,D,M+2
+Prepare Cash Flow report - FOR REVIEW,JAP,CKVC,CKVC,D,M+2
+Prepare Accounts Receivable Aging - FOR REVIEW,JRMO,CKVC,CKVC,D,M+2
+Prepare Accounts Payable Aging - FOR REVIEW,JRMO,CKVC,CKVC,D,M+2
