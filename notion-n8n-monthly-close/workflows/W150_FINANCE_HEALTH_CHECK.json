@@ -1,0 +1,255 @@
+{
+  "name": "W150_FINANCE_HEALTH_CHECK",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "triggerAtHour": 7,
+              "triggerAtMinute": 30
+            }
+          ]
+        }
+      },
+      "id": "cron-trigger",
+      "name": "Daily 7:30 AM PHT",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "command": "ssh root@erp.insightpulseai.net \"cd /opt/odoo-ce/notion-n8n-monthly-close && SUPABASE_SERVICE_ROLE_KEY='{{ $env.SUPABASE_SERVICE_ROLE_KEY }}' N8N_API_KEY='{{ $env.N8N_API_KEY }}' ./scripts/verify_finance_stack.sh --env prod\"",
+        "options": {}
+      },
+      "id": "exec-verify-script",
+      "name": "Run verify_finance_stack.sh",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        550,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "command": "ssh root@erp.insightpulseai.net \"cd /opt/odoo-ce/notion-n8n-monthly-close && ODOO_URL='https://erp.insightpulseai.net' ODOO_DB='odoo' ODOO_LOGIN='jgtolentino_rn@yahoo.com' ODOO_PASSWORD='{{ $env.ODOO_PASSWORD }}' python3 ../scripts/check_project_tasks.py\"",
+        "options": {}
+      },
+      "id": "exec-check-tasks",
+      "name": "Run check_project_tasks.py",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        550,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex"
+      },
+      "id": "merge-results",
+      "name": "Merge Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.stdout + $json.stderr }}",
+              "operation": "contains",
+              "value2": "FAIL"
+            }
+          ]
+        }
+      },
+      "id": "if-failure",
+      "name": "Any Failure?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1050,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=⚠️ **W150 Finance Health Check FAILED**\n\n**Environment:** prod\n**Timestamp:** {{ $now.toISO() }}\n\n**Output:**\n```\n{{ $json.stdout || $json.stderr }}\n```\n\n[View in Supabase](https://supabase.com/dashboard/project/xkxyvboeubffxxbebsll)"
+            },
+            {
+              "name": "channel",
+              "value": "#finance-alerts"
+            },
+            {
+              "name": "username",
+              "value": "Finance Health Bot"
+            },
+            {
+              "name": "icon_emoji",
+              "value": ":warning:"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mm-alert",
+      "name": "Mattermost Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        260
+      ]
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=✅ **W150 Finance Health Check PASSED**\n\n**Environment:** prod\n**Timestamp:** {{ $now.toISO() }}\n\nAll finance stack components are healthy."
+            },
+            {
+              "name": "channel",
+              "value": "#finance-alerts"
+            },
+            {
+              "name": "username",
+              "value": "Finance Health Bot"
+            },
+            {
+              "name": "icon_emoji",
+              "value": ":white_check_mark:"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "mm-success",
+      "name": "Mattermost Success Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1300,
+        360
+      ]
+    }
+  ],
+  "connections": {
+    "Daily 7:30 AM PHT": {
+      "main": [
+        [
+          {
+            "node": "Run verify_finance_stack.sh",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Run check_project_tasks.py",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run verify_finance_stack.sh": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run check_project_tasks.py": {
+      "main": [
+        [
+          {
+            "node": "Merge Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge Results": {
+      "main": [
+        [
+          {
+            "node": "Any Failure?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Any Failure?": {
+      "main": [
+        [
+          {
+            "node": "Mattermost Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mattermost Success Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all",
+    "executionTimeout": 600
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "finance"
+    },
+    {
+      "name": "Health Check",
+      "id": "health-check"
+    },
+    {
+      "name": "Odoo",
+      "id": "odoo"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0",
+  "meta": {
+    "instanceId": "ipa-n8n-prod"
+  }
+}

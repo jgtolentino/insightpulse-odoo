@@ -1,0 +1,435 @@
+{
+  "name": "ODOO_BIR_PREP",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "monthDays",
+              "monthDaysValue": 5,
+              "triggerAtHour": 2,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "cron-monthly",
+      "name": "Monthly 5th 2AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate previous month tax period\nconst now = new Date();\nconst lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);\nconst periodEnd = new Date(now.getFullYear(), now.getMonth(), 0);\n\nreturn {\n  period_start: lastMonth.toISOString().split('T')[0],\n  period_end: periodEnd.toISOString().split('T')[0],\n  period_name: lastMonth.toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),\n  due_date_1601c: new Date(now.getFullYear(), now.getMonth(), 10).toISOString().split('T')[0],\n  due_date_2550q: lastMonth.getMonth() % 3 === 2 ? new Date(now.getFullYear(), now.getMonth(), 15).toISOString().split('T')[0] : null\n};"
+      },
+      "id": "function-period",
+      "name": "Function: Calculate Tax Period",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "getMany",
+        "customResource": "account.move.line",
+        "returnAll": true,
+        "filters": {
+          "filterExpressions": [
+            {
+              "field": "date",
+              "operator": ">=",
+              "value": "={{ $json.period_start }}"
+            },
+            {
+              "field": "date",
+              "operator": "<=",
+              "value": "={{ $json.period_end }}"
+            },
+            {
+              "field": "tax_ids",
+              "operator": "!=",
+              "value": "False"
+            }
+          ]
+        },
+        "options": {
+          "fields": "id,date,debit,credit,tax_ids,account_id,partner_id,move_id"
+        }
+      },
+      "id": "odoo-get-transactions",
+      "name": "Odoo: Get Tax Transactions",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aggregate BIR form totals\nconst transactions = $input.all();\nconst period = $('Function: Calculate Tax Period').first().json;\n\nconst bir1601c = {\n  total_compensation: 0,\n  total_withholding: 0,\n  total_remittance: 0\n};\n\nconst bir2550q = {\n  total_income: 0,\n  total_tax: 0\n};\n\ntransactions.forEach(tx => {\n  const taxIds = tx.json.tax_ids;\n  const amount = tx.json.credit - tx.json.debit;\n  \n  // Classify by tax type (simplified logic)\n  if (taxIds.includes('withholding')) {\n    bir1601c.total_compensation += Math.abs(amount);\n    bir1601c.total_withholding += Math.abs(amount) * 0.1; // 10% rate example\n  }\n  \n  if (taxIds.includes('income_tax')) {\n    bir2550q.total_income += Math.abs(amount);\n    bir2550q.total_tax += Math.abs(amount) * 0.30; // 30% rate example\n  }\n});\n\nreturn {\n  period: period.period_name,\n  period_start: period.period_start,\n  period_end: period.period_end,\n  due_date_1601c: period.due_date_1601c,\n  due_date_2550q: period.due_date_2550q,\n  bir1601c,\n  bir2550q,\n  transaction_count: transactions.length\n};"
+      },
+      "id": "function-aggregate",
+      "name": "Function: Aggregate BIR Totals",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "create",
+        "customResource": "insightpulse_bir.form",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": [
+            {
+              "name": "form_type",
+              "value": "1601-C"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $json.period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $json.period_end }}"
+            },
+            {
+              "name": "due_date",
+              "value": "={{ $json.due_date_1601c }}"
+            },
+            {
+              "name": "total_compensation",
+              "value": "={{ $json.bir1601c.total_compensation }}"
+            },
+            {
+              "name": "total_withholding",
+              "value": "={{ $json.bir1601c.total_withholding }}"
+            },
+            {
+              "name": "state",
+              "value": "draft"
+            }
+          ]
+        }
+      },
+      "id": "odoo-create-1601c",
+      "name": "Odoo: Create 1601-C Form",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        240
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $('Function: Aggregate BIR Totals').first().json.due_date_2550q }}",
+              "operation": "isNotEmpty"
+            }
+          ]
+        }
+      },
+      "id": "if-quarterly",
+      "name": "If: Quarterly Period?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        360
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "create",
+        "customResource": "insightpulse_bir.form",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": [
+            {
+              "name": "form_type",
+              "value": "2550Q"
+            },
+            {
+              "name": "period_start",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.period_start }}"
+            },
+            {
+              "name": "period_end",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.period_end }}"
+            },
+            {
+              "name": "due_date",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.due_date_2550q }}"
+            },
+            {
+              "name": "total_income",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.bir2550q.total_income }}"
+            },
+            {
+              "name": "total_tax",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.bir2550q.total_tax }}"
+            },
+            {
+              "name": "state",
+              "value": "draft"
+            }
+          ]
+        }
+      },
+      "id": "odoo-create-2550q",
+      "name": "Odoo: Create 2550Q Form",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1500,
+        360
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "create",
+        "customResource": "mail.activity",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": [
+            {
+              "name": "res_model",
+              "value": "insightpulse_bir.form"
+            },
+            {
+              "name": "res_id",
+              "value": "={{ $('Odoo: Create 1601-C Form').first().json.id }}"
+            },
+            {
+              "name": "activity_type_id",
+              "value": 4
+            },
+            {
+              "name": "summary",
+              "value": "BIR Form 1601-C Ready for Review"
+            },
+            {
+              "name": "note",
+              "value": "=BIR Form 1601-C for {{ $('Function: Aggregate BIR Totals').first().json.period }} has been pre-filled. Please review and file by {{ $('Function: Aggregate BIR Totals').first().json.due_date_1601c }}."
+            },
+            {
+              "name": "user_id",
+              "value": 2
+            },
+            {
+              "name": "date_deadline",
+              "value": "={{ $('Function: Aggregate BIR Totals').first().json.due_date_1601c }}"
+            }
+          ]
+        }
+      },
+      "id": "odoo-create-activity",
+      "name": "Odoo: Create Review Task",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        300
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=📋 **BIR Forms Generated**\n\n**Period:** {{ $('Function: Aggregate BIR Totals').first().json.period }}\n**Forms Created:**\n- 1601-C (Monthly): ₱{{ Math.round($('Function: Aggregate BIR Totals').first().json.bir1601c.total_withholding).toLocaleString() }}\n{{ $('Function: Aggregate BIR Totals').first().json.due_date_2550q ? '- 2550Q (Quarterly): ₱' + Math.round($('Function: Aggregate BIR Totals').first().json.bir2550q.total_tax).toLocaleString() : '' }}\n\n**Due Dates:**\n- 1601-C: {{ $('Function: Aggregate BIR Totals').first().json.due_date_1601c }}\n{{ $('Function: Aggregate BIR Totals').first().json.due_date_2550q ? '- 2550Q: ' + $('Function: Aggregate BIR Totals').first().json.due_date_2550q : '' }}\n\n**Transactions Analyzed:** {{ $('Function: Aggregate BIR Totals').first().json.transaction_count }}\n\n[View Forms in Odoo](https://tbwa-main.insightpulseai.net/web#model=insightpulse_bir.form)"
+            },
+            {
+              "name": "channel",
+              "value": "#finance-alerts"
+            },
+            {
+              "name": "username",
+              "value": "BIR Bot"
+            },
+            {
+              "name": "icon_emoji",
+              "value": ":clipboard:"
+            }
+          ]
+        }
+      },
+      "id": "mm-notification",
+      "name": "Mattermost Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Monthly 5th 2AM": {
+      "main": [
+        [
+          {
+            "node": "Function: Calculate Tax Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Calculate Tax Period": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Get Tax Transactions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Get Tax Transactions": {
+      "main": [
+        [
+          {
+            "node": "Function: Aggregate BIR Totals",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Aggregate BIR Totals": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Create 1601-C Form",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "If: Quarterly Period?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Create 1601-C Form": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Create Review Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Quarterly Period?": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Create 2550Q Form",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Create 2550Q Form": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Create Review Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Create Review Task": {
+      "main": [
+        [
+          {
+            "node": "Mattermost Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "finance"
+    },
+    {
+      "name": "BIR",
+      "id": "bir"
+    },
+    {
+      "name": "Compliance",
+      "id": "compliance"
+    },
+    {
+      "name": "Odoo",
+      "id": "odoo"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}

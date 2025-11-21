@@ -1,0 +1,379 @@
+{
+  "name": "ODOO_KNOWLEDGE_GOV",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/odoo/knowledge/page-updated",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook: Knowledge Page Updated",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "odoo-knowledge-updated"
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "get",
+        "customResource": "insightpulse_knowledge.page",
+        "id": "={{ $json.body.id }}",
+        "options": {
+          "fields": "id,name,body,owner_id,tag_ids,last_reviewed_date,state"
+        }
+      },
+      "id": "odoo-get-page",
+      "name": "Odoo: Get Knowledge Page",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate knowledge page structure\nconst page = $input.first().json;\n\nconst issues = [];\nconst defaults = {};\n\n// Check for missing owner\nif (!page.owner_id || page.owner_id.length === 0) {\n  issues.push('Missing owner');\n  defaults.owner_id = 2; // Default to admin\n}\n\n// Check for missing tags\nif (!page.tag_ids || page.tag_ids.length === 0) {\n  issues.push('Missing tags');\n}\n\n// Check for missing review date\nconst today = new Date();\nconst sixMonthsAgo = new Date(today.setMonth(today.getMonth() - 6));\nconst lastReviewed = page.last_reviewed_date ? new Date(page.last_reviewed_date) : null;\n\nif (!lastReviewed || lastReviewed < sixMonthsAgo) {\n  issues.push('Review overdue (>6 months)');\n  defaults.last_reviewed_date = new Date().toISOString().split('T')[0];\n}\n\n// Check body content\nif (!page.body || page.body.length < 100) {\n  issues.push('Content too short (<100 chars)');\n}\n\nreturn {\n  page_id: page.id,\n  page_name: page.name,\n  has_issues: issues.length > 0,\n  issues,\n  defaults,\n  should_auto_fix: issues.length > 0 && issues.length <= 2\n};"
+      },
+      "id": "function-validate",
+      "name": "Function: Validate Page Structure",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        750,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{ $json.should_auto_fix }}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "id": "if-auto-fix",
+      "name": "If: Auto-Fix Issues?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "update",
+        "customResource": "insightpulse_knowledge.page",
+        "id": "={{ $json.page_id }}",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": "={{ Object.entries($json.defaults).map(([key, value]) => ({ name: key, value: value })) }}"
+        }
+      },
+      "id": "odoo-update-page",
+      "name": "Odoo: Auto-Fix Page",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        240
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "create",
+        "customResource": "mail.activity",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": [
+            {
+              "name": "res_model",
+              "value": "insightpulse_knowledge.page"
+            },
+            {
+              "name": "res_id",
+              "value": "={{ $json.page_id }}"
+            },
+            {
+              "name": "activity_type_id",
+              "value": 4
+            },
+            {
+              "name": "summary",
+              "value": "Knowledge Page - Manual Review Required"
+            },
+            {
+              "name": "note",
+              "value": "=Issues found in knowledge page:\n{{ $json.issues.join('\\n- ') }}"
+            },
+            {
+              "name": "user_id",
+              "value": 2
+            }
+          ]
+        }
+      },
+      "id": "odoo-create-activity",
+      "name": "Odoo: Create Review Task",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1250,
+        360
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/embeddings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "input",
+              "value": "={{ $('Odoo: Get Knowledge Page').first().json.body }}"
+            },
+            {
+              "name": "model",
+              "value": "text-embedding-3-small"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "openai-embed",
+      "name": "OpenAI: Generate Embedding",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1500,
+        300
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "REPLACE_WITH_OPENAI_CREDENTIAL_ID",
+          "name": "OpenAI API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "insert",
+        "table": "knowledge_embeddings",
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "page_id": "={{ $('Function: Validate Page Structure').first().json.page_id }}",
+            "page_name": "={{ $('Function: Validate Page Structure').first().json.page_name }}",
+            "embedding": "={{ $json.data[0].embedding }}",
+            "content": "={{ $('Odoo: Get Knowledge Page').first().json.body }}",
+            "metadata": "={{ { owner_id: $('Odoo: Get Knowledge Page').first().json.owner_id, tag_ids: $('Odoo: Get Knowledge Page').first().json.tag_ids } }}"
+          }
+        }
+      },
+      "id": "supabase-upsert",
+      "name": "Supabase: Upsert Embedding",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.4,
+      "position": [
+        1750,
+        300
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "REPLACE_WITH_SUPABASE_CREDENTIAL_ID",
+          "name": "Supabase Postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=📚 **Knowledge Page Processed**\n\n**Page:** {{ $('Function: Validate Page Structure').first().json.page_name }}\n**Status:** {{ $('Function: Validate Page Structure').first().json.has_issues ? '⚠️ Issues Found' : '✅ Validated' }}\n{{ $('Function: Validate Page Structure').first().json.has_issues ? '**Issues:**\\n- ' + $('Function: Validate Page Structure').first().json.issues.join('\\n- ') : '' }}\n{{ $('Function: Validate Page Structure').first().json.should_auto_fix ? '**Auto-Fixed:** Yes ✅' : '' }}\n\n**Indexed:** RAG embedding created\n\n[View in Odoo](https://tbwa-main.insightpulseai.net/web#id={{ $('Function: Validate Page Structure').first().json.page_id }}&model=insightpulse_knowledge.page)"
+            },
+            {
+              "name": "channel",
+              "value": "#finance-knowledge"
+            },
+            {
+              "name": "username",
+              "value": "Knowledge Bot"
+            },
+            {
+              "name": "icon_emoji",
+              "value": ":books:"
+            }
+          ]
+        }
+      },
+      "id": "mm-notification",
+      "name": "Mattermost Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Knowledge Page Updated": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Get Knowledge Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Get Knowledge Page": {
+      "main": [
+        [
+          {
+            "node": "Function: Validate Page Structure",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Validate Page Structure": {
+      "main": [
+        [
+          {
+            "node": "If: Auto-Fix Issues?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Auto-Fix Issues?": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Auto-Fix Page",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Odoo: Create Review Task",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Auto-Fix Page": {
+      "main": [
+        [
+          {
+            "node": "OpenAI: Generate Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Create Review Task": {
+      "main": [
+        [
+          {
+            "node": "OpenAI: Generate Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI: Generate Embedding": {
+      "main": [
+        [
+          {
+            "node": "Supabase: Upsert Embedding",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase: Upsert Embedding": {
+      "main": [
+        [
+          {
+            "node": "Mattermost Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Knowledge",
+      "id": "knowledge"
+    },
+    {
+      "name": "Governance",
+      "id": "governance"
+    },
+    {
+      "name": "RAG",
+      "id": "rag"
+    },
+    {
+      "name": "Odoo",
+      "id": "odoo"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}

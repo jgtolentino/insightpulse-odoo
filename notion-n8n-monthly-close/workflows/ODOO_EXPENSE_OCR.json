@@ -1,0 +1,381 @@
+{
+  "name": "ODOO_EXPENSE_OCR",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "/odoo/expense/created",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook: Expense Created",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "odoo-expense-created"
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "get",
+        "customResource": "hr.expense",
+        "id": "={{ $json.body.id }}",
+        "options": {
+          "fields": "id,name,employee_id,total_amount,state,attachment_ids"
+        }
+      },
+      "id": "odoo-get-expense",
+      "name": "Odoo: Get Expense Record",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        500,
+        300
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "getMany",
+        "customResource": "ir.attachment",
+        "returnAll": false,
+        "limit": 1,
+        "filters": {
+          "filterExpressions": [
+            {
+              "field": "res_model",
+              "operator": "=",
+              "value": "hr.expense"
+            },
+            {
+              "field": "res_id",
+              "operator": "=",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "fields": "id,name,datas,mimetype"
+        }
+      },
+      "id": "odoo-get-attachment",
+      "name": "Odoo: Get Receipt Attachment",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        750,
+        300
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "https://ade-ocr-backend-d9dru.ondigitalocean.app/v1/parse",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file_data",
+              "value": "={{ $json.datas }}"
+            },
+            {
+              "name": "filename",
+              "value": "={{ $json.name }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "http-ocr-request",
+      "name": "HTTP: OCR Service",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1000,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Map OCR results to Odoo expense fields\nconst ocrResult = $input.first().json;\nconst expenseData = $('Odoo: Get Expense Record').first().json;\n\nconst mapped = {\n  expense_id: expenseData.id,\n  ocr_confidence: ocrResult.confidence || 0,\n  ocr_vendor: ocrResult.vendor || '',\n  ocr_amount: ocrResult.total_amount || 0,\n  ocr_date: ocrResult.date || null,\n  ocr_tax: ocrResult.tax_amount || 0,\n  ocr_status: ocrResult.confidence >= 0.8 ? 'high_confidence' : 'needs_review',\n  update_fields: {}\n};\n\n// Auto-fill fields if high confidence\nif (mapped.ocr_confidence >= 0.8) {\n  mapped.update_fields = {\n    partner_id: ocrResult.partner_id || false,\n    total_amount: mapped.ocr_amount,\n    date: mapped.ocr_date,\n    description: ocrResult.description || expenseData.name\n  };\n}\n\nreturn mapped;"
+      },
+      "id": "function-map-ocr",
+      "name": "Function: Map OCR to Odoo Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1250,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.ocr_confidence }}",
+              "operation": "largerEqual",
+              "value2": 0.8
+            }
+          ]
+        }
+      },
+      "id": "if-high-confidence",
+      "name": "If: High Confidence?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1500,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "update",
+        "customResource": "hr.expense",
+        "id": "={{ $json.expense_id }}",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": "={{ Object.entries($json.update_fields).map(([key, value]) => ({ name: key, value: value })) }}"
+        }
+      },
+      "id": "odoo-update-expense",
+      "name": "Odoo: Update Expense (Auto)",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        240
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "Custom Resource",
+        "operation": "create",
+        "customResource": "mail.activity",
+        "fieldsToSend": "defineBelow",
+        "fields": {
+          "fields": [
+            {
+              "name": "res_model",
+              "value": "hr.expense"
+            },
+            {
+              "name": "res_id",
+              "value": "={{ $json.expense_id }}"
+            },
+            {
+              "name": "activity_type_id",
+              "value": 4
+            },
+            {
+              "name": "summary",
+              "value": "OCR Confidence Low - Manual Review Required"
+            },
+            {
+              "name": "note",
+              "value": "=OCR extracted data with low confidence ({{ $json.ocr_confidence }}%). Please review and correct manually."
+            },
+            {
+              "name": "user_id",
+              "value": 2
+            }
+          ]
+        }
+      },
+      "id": "odoo-create-activity",
+      "name": "Odoo: Create Activity (Manual Review)",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [
+        1750,
+        360
+      ],
+      "credentials": {
+        "odooApi": {
+          "id": "REPLACE_WITH_ODOO_CREDENTIAL_ID",
+          "name": "odoo-prod-main"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "=💰 **Expense OCR Processed**\n\n**Employee:** {{ $('Odoo: Get Expense Record').first().json.employee_id[1] }}\n**Amount:** ₱{{ $json.ocr_amount }}\n**Vendor:** {{ $json.ocr_vendor }}\n**Confidence:** {{ Math.round($json.ocr_confidence * 100) }}%\n**Status:** {{ $json.ocr_status === 'high_confidence' ? 'Auto-filled ✅' : 'Needs Review ⚠️' }}\n\n[View in Odoo](https://tbwa-main.insightpulseai.net/web#id={{ $json.expense_id }}&model=hr.expense)"
+            },
+            {
+              "name": "channel",
+              "value": "#finance-ssc"
+            },
+            {
+              "name": "username",
+              "value": "Expense Bot"
+            },
+            {
+              "name": "icon_emoji",
+              "value": ":receipt:"
+            }
+          ]
+        }
+      },
+      "id": "mm-notification",
+      "name": "Mattermost Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        2000,
+        300
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: Expense Created": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Get Expense Record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Get Expense Record": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Get Receipt Attachment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Get Receipt Attachment": {
+      "main": [
+        [
+          {
+            "node": "HTTP: OCR Service",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: OCR Service": {
+      "main": [
+        [
+          {
+            "node": "Function: Map OCR to Odoo Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function: Map OCR to Odoo Fields": {
+      "main": [
+        [
+          {
+            "node": "If: High Confidence?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: High Confidence?": {
+      "main": [
+        [
+          {
+            "node": "Odoo: Update Expense (Auto)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Odoo: Create Activity (Manual Review)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Update Expense (Auto)": {
+      "main": [
+        [
+          {
+            "node": "Mattermost Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo: Create Activity (Manual Review)": {
+      "main": [
+        [
+          {
+            "node": "Mattermost Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveExecutionProgress": true,
+    "saveDataErrorExecution": "all",
+    "saveDataSuccessExecution": "all"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "finance"
+    },
+    {
+      "name": "OCR",
+      "id": "ocr"
+    },
+    {
+      "name": "Expense",
+      "id": "expense"
+    },
+    {
+      "name": "Odoo",
+      "id": "odoo"
+    }
+  ],
+  "pinData": {},
+  "versionId": "1.0.0"
+}
