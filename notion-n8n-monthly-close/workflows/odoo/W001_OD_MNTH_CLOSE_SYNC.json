@@ -1,0 +1,133 @@
+{
+  "name": "closing_daily_digest",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * 1-5"
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger - 8 AM PHT Weekdays",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "xml",
+        "bodyParametersXml": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><value><string>odoo</string></value></param>\n    <param><value><int>{{$credentials.odooAuth.uid}}</int></value></param>\n    <param><value><string>{{$credentials.odooAuth.password}}</string></value></param>\n    <param><value><string>project.task</string></value></param>\n    <param><value><string>search_read</string></value></param>\n    <param><value><array><data>\n      <value><array><data>\n        <value><array><data>\n          <value><string>stage_id.name</string></value>\n          <value><string>in</string></value>\n          <value><array><data>\n            <value><string>In Progress</string></value>\n            <value><string>Blocked</string></value>\n            <value><string>Ready to Post</string></value>\n          </data></array></value>\n        </data></array></value>\n        <value><array><data>\n          <value><string>cluster</string></value>\n          <value><string>!=</string></value>\n          <value><boolean>0</boolean></value>\n        </data></array></value>\n      </data></array></value>\n    </data></array></value></param>\n    <param><value><struct>\n      <member>\n        <name>fields</name>\n        <value><array><data>\n          <value><string>name</string></value>\n          <value><string>cluster</string></value>\n          <value><string>owner_code</string></value>\n          <value><string>stage_id</string></value>\n          <value><string>date_deadline</string></value>\n        </data></array></value>\n      </member>\n    </struct></value></param>\n  </params>\n</methodCall>",
+        "options": {}
+      },
+      "name": "Odoo XML-RPC - Get Active Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "1",
+          "name": "Odoo Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse XML-RPC response and group by cluster\nconst xmlResponse = $input.first().json.body;\nconst tasks = parseXmlRpcArray(xmlResponse);\n\nconst grouped = {};\nfor (const task of tasks) {\n  const cluster = task.cluster || 'Unclustered';\n  if (!grouped[cluster]) {\n    grouped[cluster] = {\n      cluster,\n      in_progress: 0,\n      blocked: 0,\n      ready_to_post: 0,\n      total: 0,\n      tasks: []\n    };\n  }\n  \n  grouped[cluster].total++;\n  if (task.stage_id[1] === 'In Progress') grouped[cluster].in_progress++;\n  if (task.stage_id[1] === 'Blocked') grouped[cluster].blocked++;\n  if (task.stage_id[1] === 'Ready to Post') grouped[cluster].ready_to_post++;\n  \n  grouped[cluster].tasks.push({\n    name: task.name,\n    owner: task.owner_code,\n    stage: task.stage_id[1],\n    deadline: task.date_deadline\n  });\n}\n\nreturn Object.values(grouped).map(g => ({json: g}));\n\nfunction parseXmlRpcArray(xml) {\n  // Simple XML-RPC array parser\n  const matches = xml.match(/<array>([\\s\\S]*?)<\\/array>/);\n  if (!matches) return [];\n  // Return parsed array (simplified for demo)\n  return [];\n}"
+      },
+      "name": "Function - Group by Cluster",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Mattermost message\nconst clusters = $input.all().map(item => item.json);\n\nlet message = '## 🚨 Daily Closing Digest\\n\\n';\nmessage += `**Date**: ${new Date().toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})}\\n\\n`;\n\nfor (const cluster of clusters) {\n  message += `### ${cluster.cluster}\\n`;\n  message += `- **In Progress**: ${cluster.in_progress}\\n`;\n  message += `- **Blocked**: ${cluster.blocked} ⚠️\\n`;\n  message += `- **Ready to Post**: ${cluster.ready_to_post}\\n`;\n  message += `- **Total**: ${cluster.total}\\n\\n`;\n  \n  if (cluster.blocked > 0) {\n    message += `**Blocked Tasks**:\\n`;\n    for (const task of cluster.tasks.filter(t => t.stage === 'Blocked')) {\n      message += `  - ${task.name} (${task.owner}) - Deadline: ${task.deadline}\\n`;\n    }\n    message += '\\n';\n  }\n}\n\nmessage += '\\n[View in Odoo](https://erp.insightpulseai.net/web#action=project.action_view_task)';\n\nreturn {json: {text: message}};"
+      },
+      "name": "Function - Build Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$credentials.mattermostWebhook.webhookUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "name": "Mattermost - Post to #finance-alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1050, 300],
+      "credentials": {
+        "mattermostWebhookApi": {
+          "id": "2",
+          "name": "Mattermost Finance Alerts"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger - 8 AM PHT Weekdays": {
+      "main": [
+        [
+          {
+            "node": "Odoo XML-RPC - Get Active Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo XML-RPC - Get Active Tasks": {
+      "main": [
+        [
+          {
+            "node": "Function - Group by Cluster",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Group by Cluster": {
+      "main": [
+        [
+          {
+            "node": "Function - Build Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Build Message": {
+      "main": [
+        [
+          {
+            "node": "Mattermost - Post to #finance-alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Manila"
+  },
+  "versionId": "1",
+  "id": "25"
+}

@@ -2,12 +2,12 @@
 <odoo>
   <data>
 
-    <!-- Tree view -->
+    <!-- List view (Odoo 18+) -->
     <record id="view_ocr_expense_log_tree" model="ir.ui.view">
-      <field name="name">ocr.expense.log.tree</field>
+      <field name="name">ocr.expense.log.list</field>
       <field name="model">ocr.expense.log</field>
       <field name="arch" type="xml">
-        <tree string="OCR Expense Logs" create="false" edit="false">
+        <list string="OCR Expense Logs" create="false" edit="false">
           <field name="created_at"/>
           <field name="expense_id"/>
           <field name="employee_id"/>
@@ -17,7 +17,7 @@
           <field name="currency_extracted"/>
           <field name="duration_ms"/>
           <field name="confidence"/>
-        </tree>
+        </list>
       </field>
     </record>
 
@@ -62,6 +62,21 @@
       </field>
     </record>
 
+    <!-- Pivot view for metrics -->
+    <record id="view_ocr_expense_log_pivot" model="ir.ui.view">
+      <field name="name">ocr.expense.log.pivot</field>
+      <field name="model">ocr.expense.log</field>
+      <field name="arch" type="xml">
+        <pivot string="OCR Performance Metrics">
+          <field name="status" type="col"/>
+          <field name="created_at" interval="month" type="row"/>
+          <field name="vendor_name_extracted" type="row"/>
+          <field name="duration_ms" type="measure"/>
+          <field name="confidence" type="measure"/>
+        </pivot>
+      </field>
+    </record>
+
     <!-- Search view -->
     <record id="view_ocr_expense_log_search" model="ir.ui.view">
       <field name="name">ocr.expense.log.search</field>
@@ -75,12 +90,19 @@
           <filter name="filter_failed" string="Failed" domain="[('status', '=', 'failed')]"/>
           <filter name="filter_partial" string="Partial" domain="[('status', '=', 'partial')]"/>
           <separator/>
+          <filter name="filter_failed_7d" string="Failed (Last 7 Days)" domain="[('status', '=', 'failed'), ('created_at', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
+          <filter name="filter_issues_30d" string="Issues (Last 30 Days)" domain="[('status', 'in', ['partial', 'failed']), ('created_at', '&gt;=', (context_today() - datetime.timedelta(days=30)).strftime('%Y-%m-%d'))]"/>
+          <separator/>
           <filter name="filter_today" string="Today" domain="[('created_at', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
           <filter name="filter_week" string="This Week" domain="[('created_at', '&gt;=', (context_today() - datetime.timedelta(days=7)).strftime('%Y-%m-%d'))]"/>
           <group expand="0" string="Group By">
             <filter name="group_status" string="Status" context="{'group_by': 'status'}"/>
             <filter name="group_employee" string="Employee" context="{'group_by': 'employee_id'}"/>
+            <filter name="group_vendor" string="Vendor" context="{'group_by': 'vendor_name_extracted'}"/>
             <filter name="group_date" string="Date" context="{'group_by': 'created_at:day'}"/>
+            <separator/>
+            <filter name="group_status_employee" string="Status then Employee" context="{'group_by': 'status:employee_id'}"/>
+            <filter name="group_status_vendor" string="Status then Vendor" context="{'group_by': 'status:vendor_name_extracted'}"/>
           </group>
         </search>
       </field>
@@ -90,7 +112,7 @@
     <record id="action_ocr_expense_log" model="ir.actions.act_window">
       <field name="name">OCR Logs</field>
       <field name="res_model">ocr.expense.log</field>
-      <field name="view_mode">tree,form</field>
+      <field name="view_mode">tree,form,pivot</field>
       <field name="context">{'search_default_filter_week': 1}</field>
       <field name="help" type="html">
         <p class="o_view_nocontent_smiling_face">

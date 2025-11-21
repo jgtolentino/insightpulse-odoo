@@ -1,0 +1,123 @@
+# workflows/index.yaml - Finance Ops Workflow Registry
+# n8n instance: odoo-ipa-1 (n8nio/n8n:latest)
+# Production: erp.insightpulseai.net
+# Last updated: 2025-11-21
+
+n8n_container: odoo-ipa-1
+
+workflows:
+  # Odoo Core Finance & Closing (W000-W099)
+  - code: W001_OD_MNTH_CLOSE_SYNC
+    id: 25
+    file: workflows/odoo/W001_OD_MNTH_CLOSE_SYNC.json
+    name: "closing_daily_digest"
+    description: "Daily overdue/due-soon tasks by cluster"
+    trigger: "Cron: 8 AM PHT"
+    integrations: ["Odoo", "Mattermost"]
+    critical: true
+    envs: [dev, prod]
+
+  - code: W002_OD_BIR_ALERTS
+    id: 26
+    file: workflows/odoo/W002_OD_BIR_ALERTS.json
+    name: "bir_calendar_alerts"
+    description: "BIR deadline alerts (7 days before)"
+    trigger: "Cron: 9 AM PHT"
+    integrations: ["Odoo", "Mattermost"]
+    critical: true
+    envs: [dev, prod]
+
+  # Supabase Data Pipelines (W100-W199)
+  - code: W101_SB_CLOSE_SNAPSHOT
+    id: 30
+    file: workflows/supabase/W101_SB_CLOSE_SNAPSHOT.json
+    name: "supabase_close_state_snapshot"
+    description: "Write monthly close state to Supabase"
+    trigger: "Cron: Daily 11 PM PHT"
+    integrations: ["Odoo", "Supabase"]
+    critical: true
+    envs: [dev, prod]
+
+  - code: W102_SB_ERROR_EVENTS
+    id: 31
+    file: workflows/supabase/W102_SB_ERROR_EVENTS.json
+    name: "supabase_error_events"
+    description: "Log failed OCR/n8n executions"
+    trigger: "Webhook"
+    integrations: ["Supabase"]
+    critical: false
+    envs: [dev, prod]
+
+  # Superset BI Dashboards (W200-W299)
+  - code: W201_SS_REFRESH_DASHBOARDS
+    id: 40
+    file: workflows/superset/W201_SS_REFRESH_DASHBOARDS.json
+    name: "superset_refresh_dashboards"
+    description: "Refresh Superset closing dashboards"
+    trigger: "Cron: Daily 5 AM PHT"
+    integrations: ["Superset API"]
+    critical: false
+    envs: [prod]
+
+  # Notion Workspace Mirror (W300-W399)
+  - code: W301_NO_CLOSE_MIRROR
+    id: 50
+    file: workflows/notion/W301_NO_CLOSE_MIRROR.json
+    name: "notion_close_sync"
+    description: "Sync Notion DB with Odoo close state"
+    trigger: "Notion Trigger"
+    integrations: ["Notion", "Odoo"]
+    critical: true
+    envs: [dev, prod]
+
+  - code: W302_NO_TASKS_TO_ODOO
+    id: 51
+    file: workflows/notion/W302_NO_TASKS_TO_ODOO.json
+    name: "notion_tasks_to_odoo"
+    description: "Push Notion tasks into Odoo Finance"
+    trigger: "Notion Trigger"
+    integrations: ["Notion", "Odoo"]
+    critical: false
+    envs: [dev, prod]
+
+  # SAP Concur-Equivalent (W400-W499)
+  - code: W401_CC_EXPENSE_IMPORT
+    id: 60
+    file: workflows/odoo/W401_CC_EXPENSE_IMPORT.json
+    name: "concur_expense_import"
+    description: "Import expenses from OCR/CSV into Odoo"
+    trigger: "Webhook / Schedule"
+    integrations: ["Odoo", "OCR", "Supabase"]
+    critical: true
+    envs: [prod]
+
+  - code: W402_CC_TRAVEL_APPROVAL
+    id: 61
+    file: workflows/odoo/W402_CC_TRAVEL_APPROVAL.json
+    name: "concur_travel_approval_sync"
+    description: "Sync travel requests with Odoo project/tasks"
+    trigger: "Webhook"
+    integrations: ["Odoo", "Mattermost"]
+    critical: true
+    envs: [prod]
+
+  # Cheqroom-Equivalent (W500-W599)
+  - code: W501_EQ_BOOKING_SYNC
+    id: 70
+    file: workflows/odoo/W501_EQ_BOOKING_SYNC.json
+    name: "equipment_booking_sync"
+    description: "Sync booking requests → Odoo equipment.booking"
+    trigger: "Webhook / Schedule"
+    integrations: ["Odoo", "Supabase"]
+    critical: true
+    envs: [prod]
+
+  - code: W502_EQ_OVERDUE_ALERTS
+    id: 71
+    file: workflows/odoo/W502_EQ_OVERDUE_ALERTS.json
+    name: "equipment_overdue_alerts"
+    description: "Nightly job: alerts for overdue equipment returns"
+    trigger: "Cron: Daily 10 AM PHT"
+    integrations: ["Odoo", "Mattermost"]
+    critical: false
+    envs: [prod]
