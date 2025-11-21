@@ -1,0 +1,148 @@
+{
+  "name": "supabase_close_state_snapshot",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 23 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger - 11 PM PHT Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://spdtwktxdalcfigzeqrz.supabase.co/functions/v1/monthly_close_reminder",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source\": \"n8n\",\n  \"runType\": \"nightly_snapshot\",\n  \"timestamp\": \"{{$now.toISO()}}\"\n}",
+        "options": {}
+      },
+      "name": "Supabase Edge Function - Monthly Close Reminder",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "4",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.statusCode}}",
+              "operation": "equal",
+              "value2": 200
+            }
+          ]
+        }
+      },
+      "name": "If - Edge Function Success",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$credentials.mattermostWebhook.webhookUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"✅ **Monthly Close Snapshot Complete**\\n\\nSnapshot created at: {{$now.toFormat('yyyy-MM-dd HH:mm:ss')}} PHT\\n\\nSource: n8n automation\\n\\n[View in Supabase](https://supabase.com/dashboard/project/spdtwktxdalcfigzeqrz/editor)\",\n  \"username\": \"Snapshot Bot\",\n  \"icon_emoji\": \":floppy_disk:\"\n}",
+        "options": {}
+      },
+      "name": "Mattermost - Success Notification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 200],
+      "credentials": {
+        "mattermostWebhookApi": {
+          "id": "2",
+          "name": "Mattermost Finance Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$credentials.mattermostWebhook.webhookUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"text\": \"❌ **Monthly Close Snapshot Failed**\\n\\nTimestamp: {{$now.toFormat('yyyy-MM-dd HH:mm:ss')}} PHT\\n\\nError: Edge Function returned non-200 status\\n\\nStatus Code: {{$json.statusCode}}\\n\\nPlease investigate.\",\n  \"username\": \"Snapshot Bot\",\n  \"icon_emoji\": \":warning:\"\n}",
+        "options": {}
+      },
+      "name": "Mattermost - Failure Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 400],
+      "credentials": {
+        "mattermostWebhookApi": {
+          "id": "2",
+          "name": "Mattermost Finance Alerts"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cron Trigger - 11 PM PHT Daily": {
+      "main": [
+        [
+          {
+            "node": "Supabase Edge Function - Monthly Close Reminder",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Edge Function - Monthly Close Reminder": {
+      "main": [
+        [
+          {
+            "node": "If - Edge Function Success",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Edge Function Success": {
+      "main": [
+        [
+          {
+            "node": "Mattermost - Success Notification",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Mattermost - Failure Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Manila"
+  },
+  "versionId": "1",
+  "id": "30"
+}

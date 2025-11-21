@@ -1,0 +1,175 @@
+{
+  "name": "bir_calendar_alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Cron Trigger - 9 AM PHT Daily",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Calculate 7 days from now\nconst today = new Date();\nconst sevenDays = new Date(today);\nsevenDays.setDate(today.getDate() + 7);\n\nreturn {\n  json: {\n    today: today.toISOString().split('T')[0],\n    target_date: sevenDays.toISOString().split('T')[0]\n  }\n};"
+      },
+      "name": "Function - Calculate Target Date",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://erp.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "specifyBody": "xml",
+        "bodyParametersXml": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><value><string>odoo</string></value></param>\n    <param><value><int>{{$credentials.odooAuth.uid}}</int></value></param>\n    <param><value><string>{{$credentials.odooAuth.password}}</string></value></param>\n    <param><value><string>project.task</string></value></param>\n    <param><value><string>search_read</string></value></param>\n    <param><value><array><data>\n      <value><array><data>\n        <value><array><data>\n          <value><string>bir_deadline</string></value>\n          <value><string>=</string></value>\n          <value><string>{{$json.target_date}}</string></value>\n        </data></array></value>\n        <value><array><data>\n          <value><string>bir_form</string></value>\n          <value><string>!=</string></value>\n          <value><boolean>0</boolean></value>\n        </data></array></value>\n        <value><array><data>\n          <value><string>stage_id.name</string></value>\n          <value><string>!=</string></value>\n          <value><string>Done</string></value>\n        </data></array></value>\n      </data></array></value>\n    </data></array></value></param>\n    <param><value><struct>\n      <member>\n        <name>fields</name>\n        <value><array><data>\n          <value><string>name</string></value>\n          <value><string>bir_form</string></value>\n          <value><string>bir_deadline</string></value>\n          <value><string>owner_code</string></value>\n          <value><string>cluster</string></value>\n        </data></array></value>\n      </member>\n    </struct></value></param>\n  </params>\n</methodCall>",
+        "options": {}
+      },
+      "name": "Odoo XML-RPC - Get BIR Deadlines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [650, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "1",
+          "name": "Odoo Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$input.all().length}}",
+              "operation": "largerEqual",
+              "value2": 1
+            }
+          ]
+        }
+      },
+      "name": "If - Has Upcoming Deadlines",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [850, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse XML-RPC response and build alert message\nconst xmlResponse = $input.first().json.body;\nconst tasks = parseXmlRpcTasks(xmlResponse);\n\nif (tasks.length === 0) {\n  return [];\n}\n\nlet message = '## 📅 BIR Filing Alerts (7 Days)\\n\\n';\nmessage += `**Alert Date**: ${new Date().toLocaleDateString('en-PH', {timeZone: 'Asia/Manila'})}\\n\\n`;\n\n// Group by BIR form\nconst grouped = {};\nfor (const task of tasks) {\n  const form = task.bir_form || 'Unknown';\n  if (!grouped[form]) {\n    grouped[form] = [];\n  }\n  grouped[form].push(task);\n}\n\nfor (const [form, formTasks] of Object.entries(grouped)) {\n  message += `### ${form}\\n`;\n  for (const task of formTasks) {\n    message += `- **${task.owner_code}** (${task.cluster})\\n`;\n    message += `  Deadline: ${task.bir_deadline}\\n`;\n    message += `  [View Task](https://erp.insightpulseai.net/web#id=${task.id}&model=project.task)\\n`;\n  }\n  message += '\\n';\n}\n\nmessage += '\\n---\\n';\nmessage += '**Action Required**: Please review and file before deadline.\\n';\nmessage += '@finance-team @ckvc @rim';\n\nreturn {json: {text: message, username: 'BIR Bot', icon_emoji: ':calendar:'}};\n\nfunction parseXmlRpcTasks(xml) {\n  // Simplified XML-RPC parser for demo\n  // In production, use proper XML parser like fast-xml-parser\n  return [];\n}"
+      },
+      "name": "Function - Build BIR Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 200]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{$credentials.mattermostWebhook.webhookUrl}}",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{$json}}",
+        "options": {}
+      },
+      "name": "Mattermost - Post BIR Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1250, 200],
+      "credentials": {
+        "mattermostWebhookApi": {
+          "id": "3",
+          "name": "Mattermost BIR Alerts"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "name": "No Upcoming Deadlines",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [1050, 400]
+    }
+  ],
+  "connections": {
+    "Cron Trigger - 9 AM PHT Daily": {
+      "main": [
+        [
+          {
+            "node": "Function - Calculate Target Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Calculate Target Date": {
+      "main": [
+        [
+          {
+            "node": "Odoo XML-RPC - Get BIR Deadlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo XML-RPC - Get BIR Deadlines": {
+      "main": [
+        [
+          {
+            "node": "If - Has Upcoming Deadlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Has Upcoming Deadlines": {
+      "main": [
+        [
+          {
+            "node": "Function - Build BIR Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Upcoming Deadlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Function - Build BIR Alert": {
+      "main": [
+        [
+          {
+            "node": "Mattermost - Post BIR Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "timezone": "Asia/Manila"
+  },
+  "versionId": "1",
+  "id": "26"
+}
