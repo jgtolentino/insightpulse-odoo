@@ -1,0 +1,137 @@
+==================================================
+InsightPulse ERP - Baseline Validation Report
+Timestamp: 2025-11-21 07:19:22 UTC
+Baseline Version: v0.2.1-quality
+==================================================
+
+## 1. Production Server Connection
+---------------------------------------------------
+✅ SSH connection successful
+
+## 2. Odoo Service Status
+---------------------------------------------------
+98063ae11e1e   odoo-webhook                                "python3 odoo_webhoo…"   6 days ago   Up 6 days             8101/tcp                                                                                                                          odoo-webhook-1
+e89d6f58b74c   odoo:18.0                                   "/entrypoint.sh -- -…"   7 days ago   Up 17 minutes         0.0.0.0:8069->8069/tcp, [::]:8069->8069/tcp, 8071-8072/tcp                                                                        odoo-odoo-1
+80fe44a5c3ab   postgres:16                                 "docker-entrypoint.s…"   7 days ago   Up 7 days (healthy)   5432/tcp                                                                                                                          odoo-db-1
+604bd19eaeb4   quay.io/keycloak/keycloak:24.0              "/opt/keycloak/bin/k…"   9 days ago   Up 8 days             0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp, 8443/tcp                                                                             odoo-keycloak-1
+f0665f474828   caddy:2                                     "caddy run --config …"   9 days ago   Up 6 days             0.0.0.0:80->80/tcp, [::]:80->80/tcp, 0.0.0.0:443->443/tcp, [::]:443->443/tcp, 0.0.0.0:443->443/udp, [::]:443->443/udp, 2019/tcp   odoo-caddy-1
+a2c77df31c4f   n8nio/n8n:latest                            "tini -- /docker-ent…"   9 days ago   Up 8 days             0.0.0.0:5678->5678/tcp, [::]:5678->5678/tcp                                                                                       odoo-ipa-1
+c0a135f79b13   mattermost/mattermost-team-edition:latest   "/mattermost/bin/mat…"   9 days ago   Up 7 days (healthy)   8067/tcp, 0.0.0.0:8065->8065/tcp, [::]:8065->8065/tcp, 8074-8075/tcp                                                              odoo-mattermost-1
+57941391663f   postgres:15-alpine                          "docker-entrypoint.s…"   9 days ago   Up 8 days (healthy)   5432/tcp                                                                                                                          odoo-keycloak-postgres-1
+359b3eafd944   postgres:15-alpine                          "docker-entrypoint.s…"   9 days ago   Up 8 days (healthy)   5432/tcp                                                                                                                          odoo-n8n-postgres-1
+0fc38affe719   postgres:15-alpine                          "docker-entrypoint.s…"   9 days ago   Up 8 days (healthy)   5432/tcp                                                                                                                          odoo-mattermost-postgres-1
+e4b6e8b4f854   redis:7-alpine                              "docker-entrypoint.s…"   9 days ago   Up 8 days             6379/tcp                                                                                                                          odoo-n8n-redis-1
+4a55be1e2899   redis:7-alpine                              "docker-entrypoint.s…"   9 days ago   Up 8 days             0.0.0.0:6379->6379/tcp, [::]:6379->6379/tcp                                                                                       odoo-keycloak-redis-1
+
+## 3. Installed Modules Count by License
+---------------------------------------------------
+ license | count 
+---------+-------
+ AGPL-3  |    15
+ LGPL-3  |   166
+(2 rows)
+
+
+## 4. Total Installed Modules
+---------------------------------------------------
+ total_installed 
+-----------------
+             181
+(1 row)
+
+
+## 5. Enterprise License Validation (Should be 0)
+---------------------------------------------------
+ enterprise_modules 
+--------------------
+                  0
+(1 row)
+
+
+## 6. odoo.com Links Validation (Should be 0)
+---------------------------------------------------
+ odoo_com_links 
+----------------
+              0
+(1 row)
+
+
+## 7. Custom InsightPulse Modules
+---------------------------------------------------
+             name             |   state   | license |          website           
+------------------------------+-----------+---------+----------------------------
+ ipai_branding_cleaner        | installed | LGPL-3  | https://insightpulseai.net
+ ipai_ce_cleaner              | installed | AGPL-3  | https://insightpulseai.net
+ ipai_finance_monthly_closing | installed | AGPL-3  | https://insightpulseai.net
+ ipai_ocr_expense             | installed | AGPL-3  | https://insightpulseai.net
+ ipai_ocr_webhook             | installed | LGPL-3  | 
+(5 rows)
+
+
+## 8. OCR Expense Log Records (Quality Metrics)
+---------------------------------------------------
+ total_ocr_scans 
+-----------------
+               0
+(1 row)
+
+
+## 9. OCR Adapter Health Check
+---------------------------------------------------
+{
+  "status": "ok",
+  "models": {
+    "ocr": {
+      "loaded": true,
+      "error": null
+    },
+    "stt": {
+      "loaded": false,
+      "error": null
+    },
+    "tts": {
+      "loaded": false,
+      "error": null
+    }
+  },
+  "ts": 1763709569
+}
+
+## 10. Database Size
+---------------------------------------------------
+ database_size 
+---------------
+ 112 MB
+(1 row)
+
+
+## 11. Odoo Version
+---------------------------------------------------
+2025-11-21 07:02:21,165 39 INFO ? odoo: Odoo version 18.0-20251106 
+
+## 12. Worker Status
+---------------------------------------------------
+2025-11-21 05:35:42,089 33 INFO ? odoo.service.server: Worker WorkerHTTP (33) alive 
+2025-11-21 05:35:42,113 34 INFO ? odoo.service.server: Worker WorkerHTTP (34) alive 
+2025-11-21 05:35:42,129 36 INFO ? odoo.service.server: Worker WorkerHTTP (36) alive 
+2025-11-21 05:35:42,139 38 INFO ? odoo.service.server: Worker WorkerHTTP (38) alive 
+2025-11-21 05:35:42,152 42 INFO ? odoo.service.server: Worker WorkerCron (42) alive 
+2025-11-21 07:02:18,528 33 INFO ? odoo.service.server: Worker WorkerHTTP (33) alive 
+2025-11-21 07:02:18,544 34 INFO ? odoo.service.server: Worker WorkerHTTP (34) alive 
+2025-11-21 07:02:18,566 36 INFO ? odoo.service.server: Worker WorkerHTTP (36) alive 
+2025-11-21 07:02:18,572 38 INFO ? odoo.service.server: Worker WorkerHTTP (38) alive 
+2025-11-21 07:02:18,596 41 INFO ? odoo.service.server: Worker WorkerCron (41) alive 
+
+==================================================
+Baseline Validation Complete
+Status: 2025-11-21 07:19:40 UTC
+==================================================
+
+✅ SUCCESS CRITERIA:
+  - Total modules: 169-175 (LGPL-3 + AGPL-3 only)
+  - Enterprise modules: 0
+  - odoo.com links: 0
+  - Custom ipai modules: 2-5 installed
+  - Odoo version: 18.0-20251106
+  - Workers: 4 HTTP + 1 Cron alive
+
