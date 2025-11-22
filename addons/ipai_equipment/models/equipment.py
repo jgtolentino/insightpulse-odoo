@@ -91,6 +91,7 @@ class IpaiEquipmentAsset(models.Model):
 class IpaiEquipmentBooking(models.Model):
     _name = "ipai.equipment.booking"
     _description = "IPAI Equipment Booking"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _order = "start_datetime desc"
 
     name = fields.Char(
@@ -168,6 +169,31 @@ class IpaiEquipmentBooking(models.Model):
             rec.state = "cancelled"
             if rec.asset_id.status in ("reserved", "checked_out"):
                 rec.asset_id.status = "available"
+
+    def _cron_check_overdue_bookings(self):
+        """Create activities for overdue bookings (called by cron)"""
+        overdue = self.search([('is_overdue', '=', True)])
+        activity_type = self.env.ref('mail.mail_activity_data_todo', raise_if_not_found=False)
+
+        if not activity_type:
+            return
+
+        for booking in overdue:
+            # Check if activity already exists for this booking
+            existing = self.env['mail.activity'].search([
+                ('res_id', '=', booking.id),
+                ('res_model', '=', 'ipai.equipment.booking'),
+                ('activity_type_id', '=', activity_type.id),
+            ], limit=1)
+
+            if not existing:
+                # Create activity for the borrower
+                booking.activity_schedule(
+                    'mail.mail_activity_data_todo',
+                    user_id=booking.borrower_id.id,
+                    summary=f'Overdue: {booking.asset_id.name}',
+                    note=f'Booking {booking.name} is overdue. Expected return: {booking.end_datetime.strftime("%Y-%m-%d %H:%M")}',
+                )
 
 
 class IpaiEquipmentIncident(models.Model):

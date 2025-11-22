@@ -11,8 +11,11 @@
         "stock",
         "maintenance",
         "project",
+        "mail",
     ],
     "data": [
+        "data/ipai_equipment_sequences.xml",
+        "data/ipai_equipment_cron.xml",
         "security/ir.model.access.csv",
         "views/ipai_equipment_menus.xml",
         "views/ipai_equipment_views.xml",
