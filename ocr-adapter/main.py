@@ -126,30 +126,142 @@ async def ocr_expense(
 
 # PH-specific vendor normalization map
 VENDOR_NORMALIZATION = {
+    # SM Group
     "sm store": "SM Supermarket",
     "sm dept": "SM Department Store",
     "sm supermarket": "SM Supermarket",
+    "sm city": "SM City",
+    "sm mall": "SM Mall",
+
+    # Jollibee Foods Corporation
     "jollibee foods": "Jollibee",
     "jfc": "Jollibee",
+    "jollibee foods corp": "Jollibee",
+
+    # Convenience Stores
     "7 eleven": "7-Eleven",
     "seven eleven": "7-Eleven",
     "711": "7-Eleven",
+    "7eleven": "7-Eleven",
+    "ministop": "Ministop",
+    "alfamart": "Alfamart",
+    "familymart": "FamilyMart",
+    "family mart": "FamilyMart",
+    "lawson": "Lawson",
+
+    # Restaurants - Filipino
     "max's": "Max's Restaurant",
     "maxs restaurant": "Max's Restaurant",
+    "maxs": "Max's Restaurant",
+    "mang inasal": "Mang Inasal",
+    "manginasal": "Mang Inasal",
+    "chowking": "Chowking",
+    "chow king": "Chowking",
+    "greenwich": "Greenwich",
+    "green wich": "Greenwich",
+    "goldilocks": "Goldilocks",
+    "red ribbon": "Red Ribbon",
+
+    # Fast Food - International
+    "kfc": "KFC",
+    "kentucky fried chicken": "KFC",
+    "mcdonald's": "McDonald's",
+    "mcdonalds": "McDonald's",
+    "mcdo": "McDonald's",
+    "burger king": "Burger King",
+    "wendy's": "Wendy's",
+    "wendys": "Wendy's",
+    "pizza hut": "Pizza Hut",
+    "pizzahut": "Pizza Hut",
+    "shakey's": "Shakey's Pizza",
+    "shakeys": "Shakey's Pizza",
+    "shakeys pizza": "Shakey's Pizza",
+
+    # Coffee Shops
+    "starbucks": "Starbucks",
+    "starbucks coffee": "Starbucks",
+    "bo's coffee": "Bo's Coffee",
+    "bos coffee": "Bo's Coffee",
+    "dunkin donuts": "Dunkin' Donuts",
+    "dunkin'": "Dunkin' Donuts",
+    "dunkin": "Dunkin' Donuts",
+
+    # Supermarkets
     "puregold": "Puregold",
     "puregold price club": "Puregold",
     "robinsons": "Robinsons Supermarket",
-    "ministop": "Ministop",
+    "robinsons supermarket": "Robinsons Supermarket",
+    "savemore": "SaveMore",
+    "save more": "SaveMore",
+    "rustans": "Rustan's",
+    "rustan's": "Rustan's",
+    "rustans supermarket": "Rustan's",
+    "allday": "AllDay Supermarket",
+    "all day": "AllDay Supermarket",
+    "landmark": "Landmark",
+    "landmark supermarket": "Landmark",
+
+    # Pharmacies
     "mercury drug": "Mercury Drug",
+    "mercury drugstore": "Mercury Drug",
     "watsons": "Watsons",
+    "watson's": "Watsons",
+    "southstar drug": "SouthStar Drug",
+    "the generics pharmacy": "The Generics Pharmacy",
+    "tgp": "The Generics Pharmacy",
+
+    # Gas Stations
+    "petron": "Petron",
+    "petron gas": "Petron",
+    "shell": "Shell",
+    "shell gas": "Shell",
+    "caltex": "Caltex",
+    "caltex gas": "Caltex",
+    "phoenix": "Phoenix Petroleum",
+    "phoenix petroleum": "Phoenix Petroleum",
+    "seaoil": "Seaoil",
+
+    # Retail
+    "national bookstore": "National Bookstore",
+    "national book store": "National Bookstore",
+    "fully booked": "Fully Booked",
+    "fullybooked": "Fully Booked",
+    "ace hardware": "Ace Hardware",
+    "handyman": "Handyman",
+    "wilcon": "Wilcon Depot",
+    "wilcon depot": "Wilcon Depot",
 }
 
 # PH local vendor patterns for currency defaulting
 PH_LOCAL_VENDORS = {
+    # Major chains
     "sm", "jollibee", "7-eleven", "max's", "puregold",
     "robinsons", "ministop", "mercury", "watsons", "mercury drug",
-    "savemore", "alfamart", "familymart", "lawson", "supermarket",
-    "sari-sari", "carinderia", "kfc", "mcdonald", "chowking"
+    "savemore", "alfamart", "familymart", "lawson",
+
+    # Filipino restaurants
+    "mang inasal", "chowking", "greenwich", "goldilocks", "red ribbon",
+
+    # Fast food
+    "kfc", "mcdonald", "mcdo", "burger king", "wendy", "pizza hut", "shakey",
+
+    # Coffee
+    "starbucks", "bo's coffee", "dunkin",
+
+    # Supermarkets
+    "rustans", "rustan", "allday", "landmark",
+
+    # Pharmacies
+    "southstar", "generics pharmacy", "tgp",
+
+    # Gas stations
+    "petron", "shell", "caltex", "phoenix", "seaoil",
+
+    # Retail
+    "national bookstore", "fully booked", "ace hardware", "handyman", "wilcon",
+
+    # Generic
+    "supermarket", "sari-sari", "carinderia"
 }
 
 
