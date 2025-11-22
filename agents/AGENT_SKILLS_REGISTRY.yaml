@@ -347,6 +347,61 @@ capabilities:
       - cheqroom_parity_documentation
       - ipai_equipment_tests
 
+  - id: concur_parity_expense_ce
+    name: "SAP Concur-Style Expense Management on Odoo CE"
+    description: "Maintain and extend the ipai_expense + ipai_cash_advance + ipai_ocr_expense stack to provide Concur-grade expense capture, OCR, approvals, and integration into monthly closing via ipai_finance_monthly_closing"
+    skills:
+      - deploy_odoo_module
+      - test_ocr_quality
+      - create_n8n_workflow
+      - analyze_odoo_logs
+    features:
+      - expense_capture_with_ocr
+      - cash_advance_and_settlement
+      - approval_workflows
+      - monthly_closing_integration
+      - n8n_workflow_automation
+      - vendor_normalization
+    preconditions:
+      - odoo_ce_18_running
+      - modules_installed_ipai_expense_cash_advance_ocr_finance_closing
+      - ocr_adapter_reachable
+    validation:
+      - ocr_pipeline_functional
+      - cash_advance_settlement_works
+      - monthly_closing_includes_expenses
+      - approval_workflow_enforced
+    knowledge_refs:
+      - concur_parity_documentation
+      - ipai_expense_tests
+
+  - id: workspace_parity_docs_projects_ce
+    name: "Notion-Style Workspace on Odoo CE"
+    description: "Replace Notion workspace with ipai_docs, ipai_docs_project, and project/task modules so that docs, projects, and tasks live in Odoo CE with full visibility in project boards, My Tasks, and mobile app activities"
+    skills:
+      - deploy_odoo_module
+      - create_odoo_automation
+      - analyze_odoo_logs
+    features:
+      - document_management
+      - project_doc_linkage
+      - task_templates
+      - my_tasks_view
+      - mobile_app_activities
+      - mention_notifications
+    preconditions:
+      - odoo_ce_18_running
+      - modules_installed_ipai_docs_ipai_docs_project_project
+      - outgoing_email_configured
+    validation:
+      - docs_project_linkage_works
+      - task_visibility_across_views
+      - email_mobile_notifications_sent
+      - mention_system_functional
+    knowledge_refs:
+      - workspace_parity_documentation
+      - ipai_docs_tests
+
 # ============================================================================
 # PROCEDURES - High-level orchestration macros
 # ============================================================================
@@ -424,6 +479,72 @@ procedures:
       - "Verify calendar view shows bookings as colored blocks"
       - "Verify utilization pivot/graph views functional"
 
+  ensure_expense_ocr_pipeline:
+    description: "Ensure expense OCR pipeline is working end-to-end"
+    steps:
+      - "Verify ipai_ocr_expense is installed and upgraded in Odoo"
+      - "Open an expense form and confirm OCR fields/buttons are present"
+      - "Upload a sample receipt, trigger OCR, and verify vendor/amount/date fields are populated"
+      - "Check Odoo logs + OCR adapter logs for errors"
+
+  ensure_cash_advance_and_settlement:
+    description: "Ensure cash advance and settlement flow"
+    steps:
+      - "Create cash advance via ipai_cash_advance for a test user"
+      - "Submit and approve the advance; verify accounting entries"
+      - "Submit expenses linked to that advance and settle the balance"
+      - "Confirm the remaining balance and GL postings are correct"
+
+  ensure_monthly_closing_hooks:
+    description: "Ensure monthly closing sees OCR'd expenses"
+    steps:
+      - "Run ipai_finance_monthly_closing in a test DB for a given period"
+      - "Confirm OCR'd expenses are included in the closing views/reports"
+      - "Check that n8n monthly-close workflows consume the same data"
+      - "Verify no blocking errors in scheduled actions or logs"
+
+  run_concur_uat_script:
+    description: "Run SAP Concur parity UAT"
+    steps:
+      - "Create a standard employee user and manager"
+      - "Submit 3 expenses (meal, transport, per diem) with receipts"
+      - "Route through approval workflow; post to accounting"
+      - "Confirm OCR filled in vendor/amount/date on at least 2/3 receipts"
+      - "Validate resulting journal entries vs PH policy expectations"
+
+  ensure_docs_project_linkage:
+    description: "Ensure docs ↔ projects linkage behaves like a Notion workspace"
+    steps:
+      - "Verify ipai_docs and ipai_docs_project are installed"
+      - "Open a project and confirm linked docs smart button or section exists"
+      - "Create a doc from the project; check the project back-link on the doc"
+      - "Link an existing doc to a project and verify both sides show the relationship"
+
+  ensure_task_visibility_and_mentions:
+    description: "Ensure tasks are visible across workspace views"
+    steps:
+      - "Create a project from template and generate tasks"
+      - "Verify tasks show in: project kanban, My Tasks, and Activities"
+      - "Use @mention in task chatter to assign work to a user"
+      - "Confirm mentioned user sees it in their to-do and mobile app activities"
+
+  ensure_email_mobile_notifications:
+    description: "Ensure email and mobile notifications for workspace actions"
+    steps:
+      - "Confirm outgoing email server config is valid"
+      - "Create a task with a due date and @mention a user"
+      - "Verify an email notification is sent to that user"
+      - "Open Odoo mobile app; verify the activity appears for that user"
+
+  run_workspace_uat_script:
+    description: "Run Notion workspace parity UAT"
+    steps:
+      - "Create project 'Monthly Closing – <Month>' in Odoo"
+      - "Attach SOP / policy docs via ipai_docs_project"
+      - "Generate all closing tasks via template and assign initial owners"
+      - "Filter tasks by assignee/company/stage to simulate Notion DB views"
+      - "Check that all assigned users see their tasks and activities on mobile"
+
 # ============================================================================
 # KNOWLEDGE SOURCES - References for agent learning
 # ============================================================================
@@ -477,6 +598,26 @@ knowledge_sources:
     type: tests
     location: "/home/user/odoo-ce/addons/ipai_equipment/tests/"
     description: "ipai_equipment regression tests for booking lifecycle"
+
+  - id: concur_parity_documentation
+    type: documentation
+    location: "/home/user/odoo-ce/docs/FEATURE_CONCUR_PARITY.md"
+    description: "SAP Concur parity feature documentation and UAT script"
+
+  - id: ipai_expense_tests
+    type: tests
+    location: "/home/user/odoo-ce/addons/ipai_expense/tests/"
+    description: "ipai_expense regression tests for OCR and expense lifecycle"
+
+  - id: workspace_parity_documentation
+    type: documentation
+    location: "/home/user/odoo-ce/docs/FEATURE_WORKSPACE_PARITY.md"
+    description: "Notion workspace parity feature documentation and UAT script"
+
+  - id: ipai_docs_tests
+    type: tests
+    location: "/home/user/odoo-ce/addons/ipai_docs/tests/"
+    description: "ipai_docs regression tests for workspace visibility and linkage"
 
 # ============================================================================
 # EXECUTION RULES - Decision logic for autonomous operation
