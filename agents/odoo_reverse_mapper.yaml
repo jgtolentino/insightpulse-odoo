@@ -1,0 +1,355 @@
+---
+# ============================================================================
+# Odoo Reverse Mapping Agent
+# ============================================================================
+# Purpose: Autonomous agent for SaaS → Odoo CE/OCA/ipai feature mapping
+# Workflow: Discover gaps → Generate PRDs → Scaffold modules → Deploy
+# Integration: n8n + Supabase + GitHub + Claude Code CLI + Odoo CE
+# ============================================================================
+
+agent_id: odoo_reverse_mapper
+version: "1.0.0"
+created: "2025-11-23"
+framework: "Agent Skills Architecture v1.0"
+
+# ============================================================================
+# Agent Description
+# ============================================================================
+description: |
+  Autonomous reverse engineering agent that systematically maps SaaS product features
+  to Odoo CE/OCA/ipai module implementations, identifies gaps, generates PRDs,
+  scaffolds modules, and deploys with full CI/CD integration.
+
+purpose:
+  - "Discover SaaS features and analyze implementation requirements"
+  - "Map features to existing Odoo CE core + OCA community modules"
+  - "Identify feature gaps requiring custom ipai_* modules"
+  - "Generate comprehensive PRDs and module scaffolds"
+  - "Deploy modules via Git + CLI workflow with regression testing"
+  - "Track all artifacts in Supabase feature matrix"
+
+# ============================================================================
+# Capabilities
+# ============================================================================
+capabilities:
+  discovery:
+    - crawl_saas_feature_matrix:
+        description: "Fetch feature gaps from Supabase saas_feature_mappings"
+        query: "SELECT * FROM saas_feature_mappings WHERE status IN ('gap', 'partial') AND criticality >= 3 ORDER BY criticality DESC"
+        output: "List of high-priority features requiring implementation"
+
+    - extract_ui_patterns_from_screenshots:
+        description: "Analyze SaaS UI screenshots to identify data models and workflows"
+        tools: [playwright, computer vision]
+        output: "UI component inventory + interaction patterns"
+
+    - detect_workflows_and_state_machines:
+        description: "Reverse-engineer business logic from SaaS product documentation"
+        sources: [official_docs, API_specs, user_guides]
+        output: "Workflow diagrams + state transition maps"
+
+    - identify_data_models_and_entities:
+        description: "Extract entity relationships from SaaS feature specifications"
+        methods: [ERD analysis, API introspection, documentation parsing]
+        output: "Data model definitions ready for Odoo model creation"
+
+  mapping:
+    - match_to_odoo_ce_core_modules:
+        description: "Query Odoo CE for installed modules that provide similar features"
+        command: "odoo-bin shell -d <db> -c 'self.env[\"ir.module.module\"].search([\"&\", (\"state\", \"=\", \"installed\"), (\"application\", \"=\", True)])'"
+        output: "List of CE modules with feature overlap scores"
+
+    - match_to_OCA_modules:
+        description: "Search OCA repositories for community modules addressing feature gaps"
+        sources: [oca/project, oca/hr, oca/account, oca/stock, oca/web]
+        output: "OCA module candidates with installation instructions"
+
+    - identify_missing_or_partial_parity:
+        description: "Calculate feature coverage gaps after CE + OCA mapping"
+        formula: "gap_score = (required_features - covered_features) / required_features"
+        threshold: "gap_score > 0.2 → requires ipai_* module"
+
+    - generate_gap_summary_per_module:
+        description: "Create structured gap report for each ipai_* module candidate"
+        template: "Feature Name | Status | CE Modules | OCA Modules | Enterprise Equiv | Requires"
+        output: "Markdown table in ENTERPRISE_FEATURE_GAP.yaml"
+
+  generation:
+    - scaffold_odoo_module:
+        description: "Generate complete Odoo module structure via CLI"
+        command: "odoo-bin scaffold <module_name> addons"
+        structure: |
+          addons/<module_name>/
+            __init__.py
+            __manifest__.py
+            models/
+            views/
+            data/
+            security/
+            tests/
+            static/
+            README.md
+
+    - generate_manifest_and_models:
+        description: "Create __manifest__.py and model definitions from PRD specifications"
+        inputs: [prd_document, data_model_specs, dependency_list]
+        outputs: [__manifest__.py, models/*.py, views/*.xml]
+
+    - write_regression_tests:
+        description: "Generate automated tests for all ipai_* module features"
+        framework: "Odoo test framework (unittest + TransactionCase)"
+        coverage_target: "≥80% for unit, ≥70% for integration"
+
+    - create_docs_feature_parity:
+        description: "Generate comprehensive feature parity documentation"
+        template: "docs/FEATURE_*_PARITY.md"
+        sections: [overview, features, installation, UAT, monitoring, references]
+
+  deployment:
+    - commit_to_repo:
+        description: "Commit generated module to Git with conventional message"
+        format: "feat(parity): add <module_name> for <saas_product> parity"
+        command: "git add addons/<module_name> docs/ && git commit -m '<message>'"
+
+    - create_pr_with_checklist:
+        description: "Create GitHub PR with deployment checklist"
+        command: "gh pr create --title '<title>' --body '<template>'"
+        template: |
+          ## Summary
+          SaaS parity module for <product>
+
+          ## Checklist
+          - [ ] PRD reviewed
+          - [ ] Module scaffold complete
+          - [ ] Regression tests passing
+          - [ ] Documentation complete
+          - [ ] CI/CD green
+
+    - trigger_ci_package_tests:
+        description: "Trigger GitHub Actions workflow for module validation"
+        workflow: ".github/workflows/odoo-parity-tests.yml"
+        validation: "All tests must pass before merge"
+
+  automation:
+    - update_supabase_feature_status:
+        description: "Update feature mapping status after successful deployment"
+        command: "UPDATE saas_feature_mappings SET status = 'covered' WHERE feature_key = '<key>'"
+        rpc: "route_and_enqueue('DB_OP', {action: 'update_feature', ...})"
+
+    - insert_artifact_records:
+        description: "Link generated artifacts to feature mappings"
+        artifacts: [prd, module, test, doc, n8n_workflow]
+        table: "saas_feature_artifacts"
+
+    - create_github_issues_for_gaps:
+        description: "Create GitHub issues for remaining feature gaps"
+        command: "gh issue create --title '<title>' --body '<body>' --label 'saas-parity,gap'"
+
+    - trigger_n8n_workflows:
+        description: "Trigger n8n automation workflows for continuous monitoring"
+        workflows: [odoo_reverse_mapper, deployment_validation, drift_detection]
+
+  validation:
+    - run_regression_tests:
+        description: "Execute all ipai_* module regression tests"
+        command: "python odoo-bin -d test_<product> -i <module> --test-enable --stop-after-init --log-level=test"
+        exit_code: "0 = success, non-zero = failure"
+
+    - verify_module_installation:
+        description: "Confirm module installed and accessible in Odoo Apps"
+        check: "Apps → Update Apps List → Search '<module>' → Status = Installed"
+
+    - validate_uat_scenarios:
+        description: "Execute UAT scenarios from feature parity documentation"
+        source: "docs/FEATURE_*_PARITY.md → UAT section"
+        acceptance: "All UAT scenarios pass without errors"
+
+    - check_ci_cd_pipeline:
+        description: "Verify GitHub Actions workflow executed successfully"
+        command: "gh run view <run_id> --log"
+        acceptance: "All jobs green, no test failures"
+
+# ============================================================================
+# Required Integrations
+# ============================================================================
+integrations:
+  n8n:
+    url: "https://ipa.insightpulseai.net"
+    api_key: "$N8N_API_KEY"
+    workflows:
+      - odoo_reverse_mapper
+      - deployment_validation
+      - drift_detection
+
+  supabase:
+    project_ref: "xkxyvboeubffxxbebsll"
+    url: "$SUPABASE_URL"
+    service_role_key: "$SUPABASE_SERVICE_ROLE_KEY"
+    tables:
+      - saas_products
+      - saas_feature_mappings
+      - saas_feature_artifacts
+    functions:
+      - route_and_enqueue
+
+  github:
+    token: "$GITHUB_TOKEN"
+    repo: "jgtolentino/odoo-ce"
+    cli: "gh"
+    operations:
+      - pr_create
+      - issue_create
+      - workflow_dispatch
+
+  claude_code_cli:
+    framework: "SuperClaude Multi-Agent Framework"
+    personas: [analyzer, backend, architect, scribe]
+    mcp_servers: [sequential, context7]
+    commands:
+      - /analyze
+      - /build
+      - /document
+
+  odoo_ce:
+    version: "18.0"
+    deployment: "Docker + DigitalOcean"
+    cli: "odoo-bin"
+    operations:
+      - scaffold
+      - install
+      - upgrade
+      - test
+
+# ============================================================================
+# Data Model
+# ============================================================================
+data_model:
+  input:
+    - saas_product: {id, slug, name, homepage_url}
+    - feature_mapping: {feature_key, feature_name, category, status, criticality}
+    - enterprise_equiv: {module_list, coverage_percentage}
+
+  intermediate:
+    - gap_analysis: {feature_key, gap_score, required_modules}
+    - prd_spec: {problem, goals, personas, design, acceptance_criteria}
+    - module_scaffold: {manifest, models, views, data, security, tests}
+
+  output:
+    - deployed_module: {module_name, version, install_status}
+    - test_results: {passed, failed, coverage_percentage}
+    - artifacts: {prd_path, module_path, test_path, doc_path}
+    - updated_features: {status, odoo_modules, ipai_modules}
+
+# ============================================================================
+# Storage Engine
+# ============================================================================
+storage:
+  primary: "Supabase PostgreSQL with RLS"
+  backup: "Git repository (addons/, docs/, agents/)"
+  artifact_tracking: "saas_feature_artifacts table"
+  audit_trail: "created_at, updated_at timestamps on all tables"
+
+# ============================================================================
+# Execution Workflow
+# ============================================================================
+workflow:
+  step_1_discover:
+    action: "Fetch feature gaps from Supabase"
+    query: "SELECT * FROM saas_feature_mappings WHERE status = 'gap' AND criticality >= 4"
+    output: "Priority queue of features to implement"
+
+  step_2_map:
+    action: "Match to CE/OCA modules and identify gaps"
+    process: |
+      1. Query installed CE modules
+      2. Search OCA repositories
+      3. Calculate coverage gaps
+      4. Reference Enterprise equivalents from ENTERPRISE_FEATURE_GAP.yaml
+    output: "Gap summary with module recommendations"
+
+  step_3_generate_prd:
+    action: "Create comprehensive PRD document"
+    template: "docs/PRD_ipai_<module>.md"
+    sections:
+      - Problem statement
+      - Goals and non-goals
+      - Personas and use cases
+      - High-level design
+      - Functional requirements
+      - Implementation plan
+      - Acceptance criteria
+
+  step_4_scaffold_module:
+    action: "Generate Odoo module structure"
+    command: "odoo-bin scaffold ipai_<module> addons"
+    customize:
+      - Update __manifest__.py with dependencies
+      - Create models from data model specs
+      - Generate views (tree, form, kanban, search)
+      - Add security (ir.model.access.csv, RLS policies)
+      - Write regression tests
+
+  step_5_deploy:
+    action: "Deploy module via Git + CLI workflow"
+    steps:
+      - "git add addons/ipai_<module> docs/"
+      - "git commit -m 'feat(parity): add ipai_<module>'"
+      - "git push origin feature/saas-parity"
+      - "./scripts/deploy-odoo-modules.sh ipai_<module>"
+      - "python odoo-bin -d test_<product> -i ipai_<module> --test-enable"
+
+  step_6_track:
+    action: "Update Supabase and create GitHub issues"
+    operations:
+      - "UPDATE saas_feature_mappings SET status = 'covered'"
+      - "INSERT INTO saas_feature_artifacts (...)"
+      - "gh issue create --title 'Deploy ipai_<module> to production'"
+      - "curl -X POST $N8N_BASE_URL/webhook/odoo-reverse-complete"
+
+# ============================================================================
+# Example Invocation
+# ============================================================================
+example_usage:
+  command_line: |
+    # Trigger Clarity PPM reverse mapping
+    ./scripts/run_clarity_ppm_reverse.sh
+
+  agent_invocation: |
+    "Execute the odoo_reverse_mapper agent for Clarity PPM portfolio management"
+    "Map Clarity PPM features to Odoo CE and generate ipai_ppm_* modules"
+
+  n8n_workflow: |
+    POST https://ipa.insightpulseai.net/api/v1/workflows/<workflow_id>/execute
+    Headers: X-N8N-API-KEY: $N8N_API_KEY
+    Body: {"saas_product": "clarity_ppm", "criticality_threshold": 4}
+
+# ============================================================================
+# Quality Gates
+# ============================================================================
+quality_gates:
+  prd_completeness: "All sections filled with actionable specifications"
+  code_coverage: "≥80% unit, ≥70% integration"
+  oca_compliance: "Follow OCA development guidelines"
+  documentation: "Complete feature parity docs + UAT scripts"
+  ci_cd: "All regression tests passing in GitHub Actions"
+  deployment: "Module installed and accessible in Odoo Apps"
+
+# ============================================================================
+# Success Metrics
+# ============================================================================
+success_metrics:
+  feature_coverage: "≥90% SaaS feature parity achieved"
+  deployment_time: "Module scaffolding to deployment in <4 hours"
+  test_pass_rate: "≥95% regression test success rate"
+  cost_savings: "≥$1,000/year per module deployed"
+  automation_rate: "≥80% of workflow automated (manual steps <20%)"
+
+# ============================================================================
+# Limitations
+# ============================================================================
+limitations:
+  - "Cannot install Odoo Enterprise modules on CE server (license restriction)"
+  - "Requires manual UI screenshot analysis for complex workflows"
+  - "Limited to SaaS products with publicly documented APIs/features"
+  - "Depends on accurate PRD specifications for quality module generation"
+  - "Supabase RLS policies must be correctly configured for security"

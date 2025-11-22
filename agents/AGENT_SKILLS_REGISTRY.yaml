@@ -402,6 +402,39 @@ capabilities:
       - workspace_parity_documentation
       - ipai_docs_tests
 
+  - id: saas_parity_reverse_mapper
+    name: "SaaS → Odoo CE Reverse Mapping Agent"
+    description: "Autonomous agent that reverse-engineers SaaS products into Odoo CE/OCA/ipai modules by mapping features, identifying gaps, generating PRDs, scaffolding modules, and deploying with full CI/CD integration"
+    skills:
+      - scaffold_odoo_module
+      - deploy_odoo_module
+      - create_supabase_schema
+      - create_n8n_workflow
+      - deploy_n8n_workflow
+      - run_ci_checks
+    features:
+      - saas_feature_discovery
+      - ce_oca_module_mapping
+      - enterprise_gap_identification
+      - prd_generation
+      - module_scaffolding
+      - automated_deployment
+      - artifact_tracking
+    preconditions:
+      - supabase_feature_matrix_schema_exists
+      - enterprise_feature_gap_yaml_exists
+      - odoo_ce_18_running
+      - n8n_instance_available
+    validation:
+      - feature_coverage_gt_90_percent
+      - all_regression_tests_pass
+      - artifacts_tracked_in_supabase
+      - ci_cd_pipeline_green
+    knowledge_refs:
+      - enterprise_feature_gap
+      - saas_feature_matrix
+      - odoo_reverse_mapper_spec
+
 # ============================================================================
 # PROCEDURES - High-level orchestration macros
 # ============================================================================
@@ -545,6 +578,45 @@ procedures:
       - "Filter tasks by assignee/company/stage to simulate Notion DB views"
       - "Check that all assigned users see their tasks and activities on mobile"
 
+  saas_collect_requirements:
+    description: "Discover SaaS features and analyze implementation requirements"
+    steps:
+      - "Query Supabase saas_feature_mappings for GAP features with criticality >= 3"
+      - "Fetch SaaS product documentation and API specifications"
+      - "Extract UI patterns from screenshots using Playwright"
+      - "Identify data models, workflows, and state machines"
+      - "Document requirements in structured format"
+
+  saas_map_to_odoo_modules:
+    description: "Map SaaS features to existing Odoo CE/OCA modules"
+    steps:
+      - "Query Odoo CE for installed core modules via odoo-bin shell"
+      - "Search OCA repositories for community modules addressing features"
+      - "Calculate feature coverage gap: (required - covered) / required"
+      - "Reference Enterprise equivalents from ENTERPRISE_FEATURE_GAP.yaml"
+      - "Generate gap summary table: Feature | Status | CE | OCA | Enterprise | Requires"
+
+  saas_identify_enterprise_gaps:
+    description: "Identify gaps requiring ipai_* module development"
+    steps:
+      - "Filter features with gap_score > 0.2 requiring custom modules"
+      - "Document Enterprise module equivalents without installing them"
+      - "Update ENTERPRISE_FEATURE_GAP.yaml with new gap entries"
+      - "Prioritize gaps by criticality and cost-benefit analysis"
+
+  saas_emit_ipai_blueprints:
+    description: "Generate PRDs, scaffold modules, and deploy"
+    steps:
+      - "Generate comprehensive PRD from feature specifications"
+      - "Run odoo-bin scaffold <module_name> addons"
+      - "Create models, views, data, security, tests from PRD"
+      - "Write feature parity documentation (FEATURE_*_PARITY.md)"
+      - "Commit to Git with conventional message"
+      - "Deploy via ./scripts/deploy-odoo-modules.sh"
+      - "Run regression tests: odoo-bin -d test_<product> -i <module> --test-enable"
+      - "Update Supabase: status='covered', insert artifact records"
+      - "Create GitHub issue for production deployment"
+
 # ============================================================================
 # KNOWLEDGE SOURCES - References for agent learning
 # ============================================================================
@@ -618,6 +690,21 @@ knowledge_sources:
     type: tests
     location: "/home/user/odoo-ce/addons/ipai_docs/tests/"
     description: "ipai_docs regression tests for workspace visibility and linkage"
+
+  - id: enterprise_feature_gap
+    type: documentation
+    location: "/home/user/odoo-ce/docs/ENTERPRISE_FEATURE_GAP.yaml"
+    description: "Central specification mapping SaaS products to Enterprise equivalents without installing them"
+
+  - id: saas_feature_matrix
+    type: database
+    location: "supabase://saas_feature_mappings"
+    description: "Supabase tables tracking SaaS features → Odoo CE/OCA/ipai mapping with artifact tracking"
+
+  - id: odoo_reverse_mapper_spec
+    type: specification
+    location: "/home/user/odoo-ce/agents/odoo_reverse_mapper.yaml"
+    description: "Complete reverse mapping agent specification with capabilities, workflows, and validation"
 
 # ============================================================================
 # EXECUTION RULES - Decision logic for autonomous operation

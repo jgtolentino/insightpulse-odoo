@@ -1,0 +1,276 @@
+---
+# ============================================================================
+# Clarity PPM Reverse Mapping Execution Loop
+# ============================================================================
+# Purpose: Automated loop for mapping Clarity PPM features to Odoo ipai_ppm_* modules
+# Trigger: Manual execution via scripts/run_clarity_ppm_reverse.sh
+# Output: Complete ipai_ppm_* module stack with PRDs, tests, and documentation
+# ============================================================================
+
+loop_id: clarity_ppm_reverse
+version: "1.0.0"
+created: "2025-11-23"
+saas_product: "clarity_ppm"
+target_modules:
+  - ipai_ppm_portfolio
+  - ipai_ppm_gates
+  - ipai_ppm_capacity
+  - ipai_ppm_scoring
+  - ipai_ppm_roadmap
+
+# ============================================================================
+# Execution Steps
+# ============================================================================
+steps:
+  - id: discover_features
+    description: "Discover Clarity PPM features and update Supabase feature matrix"
+    actions:
+      - action: crawl_saas_feature_matrix
+        source: "docs/links/clarity_ppm.md"
+        output: "List of Clarity PPM features with requirements"
+
+      - action: update_supabase
+        query: |
+          UPDATE saas_feature_mappings
+          SET status = 'gap',
+              criticality = <calculated>,
+              notes = <discovery_findings>
+          WHERE saas_product_id = (SELECT id FROM saas_products WHERE slug = 'clarity_ppm')
+        validation: "All Clarity PPM features now in Supabase with status"
+
+    outputs:
+      - feature_count
+      - gap_count
+      - criticality_distribution
+
+  - id: map_to_odoo
+    description: "Map Clarity PPM features to Odoo CE core + OCA modules"
+    filter:
+      saas_product: "clarity_ppm"
+      status: ["gap", "partial"]
+
+    actions:
+      - action: query_odoo_modules
+        command: |
+          odoo-bin shell -d test_clarity <<EOF
+          modules = self.env['ir.module.module'].search([
+            ('state', '=', 'installed'),
+            ('application', '=', True)
+          ])
+          for m in modules:
+            print(f"{m.name}: {m.summary}")
+          EOF
+        output: "List of installed CE modules with descriptions"
+
+      - action: match_to_odoo_ce_core_modules
+        process: |
+          For each Clarity PPM feature:
+            1. Search installed CE modules for partial matches
+            2. Calculate coverage percentage
+            3. Update odoo_core_modules array in feature_mappings
+        output: "Updated feature_mappings with CE module coverage"
+
+      - action: identify_missing_or_partial_parity
+        formula: "gap_score = (required_features - covered_features) / required_features"
+        threshold: 0.2
+        output: "List of features with gap_score > 0.2"
+
+    outputs:
+      - ce_coverage_percentage
+      - gap_summary
+      - required_ipai_modules
+
+  - id: generate_ppm_modules
+    description: "Generate ipai_ppm_* modules for identified gaps"
+    filter:
+      status: "gap"
+      category: "ppm"
+      criticality: ">= 3"
+
+    actions:
+      - action: generate_prd
+        template: "docs/PRD_ipai_ppm_<feature>.md"
+        for_each: required_ipai_modules
+        sections:
+          - problem_statement
+          - goals_and_non_goals
+          - personas_and_use_cases
+          - high_level_design
+          - functional_requirements
+          - implementation_plan
+          - acceptance_criteria
+        output: "Complete PRD for each ipai_ppm_* module"
+
+      - action: scaffold_module
+        command: "odoo-bin scaffold ipai_ppm_<module> addons"
+        for_each: required_ipai_modules
+        customize:
+          - update_manifest_dependencies
+          - create_models_from_prd
+          - generate_views_tree_form_kanban
+          - add_security_access_csv
+          - write_regression_tests
+        output: "Complete module skeleton in addons/"
+
+      - action: write_feature_parity_docs
+        template: "docs/FEATURE_CLARITY_PPM_PARITY.md"
+        sections:
+          - overview
+          - features_implemented
+          - critical_components
+          - installation_upgrade
+          - uat_testing_scenarios
+          - technical_architecture
+          - automated_testing
+          - agent_framework_integration
+          - maintenance_support
+          - roadmap
+        output: "Comprehensive feature parity documentation"
+
+    outputs:
+      - prd_files
+      - module_directories
+      - feature_docs
+
+  - id: deploy_and_test
+    description: "Deploy modules and run regression tests"
+    actions:
+      - action: git_commit
+        message: "feat(ppm): add ipai_ppm_* stack for Clarity PPM parity"
+        files:
+          - addons/ipai_ppm_*
+          - docs/PRD_ipai_ppm_*.md
+          - docs/FEATURE_CLARITY_PPM_PARITY.md
+
+      - action: deploy_modules
+        command: "./scripts/deploy-odoo-modules.sh ipai_ppm_portfolio ipai_ppm_gates ipai_ppm_capacity"
+        validation: "All modules deployed successfully"
+
+      - action: run_regression_tests
+        command: |
+          python odoo-bin -d test_clarity \
+            -i ipai_ppm_portfolio,ipai_ppm_gates,ipai_ppm_capacity \
+            --test-enable --stop-after-init --log-level=test
+        acceptance: "All tests pass (exit code 0)"
+
+    outputs:
+      - deployment_log
+      - test_results
+      - module_install_status
+
+  - id: track_artifacts
+    description: "Update Supabase with deployed artifacts and create GitHub issues"
+    actions:
+      - action: update_feature_status
+        query: |
+          UPDATE saas_feature_mappings
+          SET status = 'covered',
+              ipai_modules = ARRAY['ipai_ppm_portfolio', 'ipai_ppm_gates', 'ipai_ppm_capacity']
+          WHERE feature_key IN ('portfolio_hierarchy', 'gate_workflows', 'resource_capacity')
+            AND saas_product_id = (SELECT id FROM saas_products WHERE slug = 'clarity_ppm')
+
+      - action: insert_artifacts
+        table: "saas_feature_artifacts"
+        records:
+          - feature: portfolio_hierarchy
+            artifacts:
+              - type: prd
+                path: docs/PRD_ipai_ppm_portfolio.md
+              - type: module
+                path: addons/ipai_ppm_portfolio
+              - type: test
+                path: addons/ipai_ppm_portfolio/tests/
+              - type: doc
+                path: docs/FEATURE_CLARITY_PPM_PARITY.md
+
+      - action: create_github_issues
+        command: |
+          gh issue create \
+            --title "Deploy Clarity PPM parity modules to production" \
+            --body "$(cat <<EOF
+          ## Summary
+          Clarity PPM parity modules ready for UAT and production deployment
+
+          ## Modules
+          - ipai_ppm_portfolio (portfolio → program → project hierarchy)
+          - ipai_ppm_gates (stage-gate approval workflows)
+          - ipai_ppm_capacity (resource capacity planning)
+
+          ## Checklist
+          - [x] PRDs complete
+          - [x] Modules scaffolded
+          - [x] Regression tests passing
+          - [x] Documentation complete
+          - [ ] UAT scenarios executed
+          - [ ] Production deployment scheduled
+          EOF
+          )" \
+            --label "saas-parity,clarity-ppm,deployment"
+
+      - action: trigger_n8n_workflow
+        url: "$N8N_BASE_URL/webhook/odoo-reverse-complete"
+        payload:
+          saas_product: "clarity_ppm"
+          modules_deployed: ["ipai_ppm_portfolio", "ipai_ppm_gates", "ipai_ppm_capacity"]
+          status: "ready_for_uat"
+
+    outputs:
+      - supabase_update_count
+      - artifact_count
+      - github_issue_url
+      - n8n_workflow_status
+
+# ============================================================================
+# Success Criteria
+# ============================================================================
+success_criteria:
+  feature_coverage: "≥90% of Clarity PPM features covered by ipai_ppm_* modules"
+  test_pass_rate: "100% regression tests passing"
+  deployment_time: "Module generation to deployment in <4 hours"
+  artifact_tracking: "All PRDs, modules, tests, and docs tracked in Supabase"
+  cost_savings: "Estimated $10,000-15,000/year savings vs Clarity PPM SaaS"
+
+# ============================================================================
+# Rollback Plan
+# ============================================================================
+rollback:
+  trigger: "Regression tests fail OR deployment errors"
+  actions:
+    - "Revert Git commit"
+    - "Uninstall modules from Odoo"
+    - "Update Supabase feature_mappings status back to 'gap'"
+    - "Document failure in GitHub issue"
+    - "Re-analyze requirements and fix issues"
+
+# ============================================================================
+# Monitoring
+# ============================================================================
+monitoring:
+  daily_checks:
+    - query: "SELECT COUNT(*) FROM saas_feature_mappings WHERE saas_product_id = (SELECT id FROM saas_products WHERE slug = 'clarity_ppm') AND status = 'covered'"
+      description: "Count of Clarity PPM features with full parity"
+
+    - query: "SELECT COUNT(*) FROM saas_feature_artifacts WHERE feature_mapping_id IN (SELECT id FROM saas_feature_mappings WHERE saas_product_id = (SELECT id FROM saas_products WHERE slug = 'clarity_ppm'))"
+      description: "Count of artifacts linked to Clarity PPM features"
+
+  weekly_reviews:
+    - "Review module usage analytics (project/portfolio creation rate)"
+    - "Validate regression test pass rate (should remain 100%)"
+    - "Check for user-reported gaps or enhancement requests"
+
+# ============================================================================
+# Example Invocation
+# ============================================================================
+example_usage:
+  manual_trigger: |
+    cd /home/user/odoo-ce
+    ./scripts/run_clarity_ppm_reverse.sh
+
+  agent_invocation: |
+    "Execute the Clarity PPM reverse mapping loop"
+    "Map Clarity PPM portfolio management to ipai_ppm_* modules"
+
+  n8n_workflow: |
+    POST https://ipa.insightpulseai.net/api/v1/workflows/<workflow_id>/execute
+    Headers: X-N8N-API-KEY: $N8N_API_KEY
+    Body: {"saas_product": "clarity_ppm", "auto_deploy": true}

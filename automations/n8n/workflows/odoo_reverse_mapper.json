@@ -1,0 +1,646 @@
+{
+  "name": "Odoo Reverse Mapper - SaaS Feature Gap Automation",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "trigger_schedule",
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "odoo-reverse-mapper-schedule"
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/saas_feature_mappings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "eq.gap"
+            },
+            {
+              "name": "criticality",
+              "value": "gte.3"
+            },
+            {
+              "name": "order",
+              "value": "criticality.desc"
+            },
+            {
+              "name": "select",
+              "value": "id,saas_product_id,feature_key,feature_name,criticality,enterprise_equiv,requires_ipai"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "fetch_gap_features",
+      "name": "Fetch GAP Features",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_service_role",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      },
+      "id": "split_batches",
+      "name": "Split Into Batches",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [650, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/saas_products",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $json.saas_product_id }}"
+            },
+            {
+              "name": "select",
+              "value": "slug,name"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "id": "get_product_info",
+      "name": "Get Product Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [850, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_service_role",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge_product_data",
+      "name": "Merge Product Data",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [1050, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "feature_mapping_id",
+              "name": "feature_mapping_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "product_slug",
+              "name": "product_slug",
+              "value": "={{ $json.slug }}",
+              "type": "string"
+            },
+            {
+              "id": "product_name",
+              "name": "product_name",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            },
+            {
+              "id": "feature_key",
+              "name": "feature_key",
+              "value": "={{ $json.feature_key }}",
+              "type": "string"
+            },
+            {
+              "id": "feature_name",
+              "name": "feature_name",
+              "value": "={{ $json.feature_name }}",
+              "type": "string"
+            },
+            {
+              "id": "criticality",
+              "name": "criticality",
+              "value": "={{ $json.criticality }}",
+              "type": "number"
+            },
+            {
+              "id": "enterprise_equiv",
+              "name": "enterprise_equiv",
+              "value": "={{ $json.enterprise_equiv }}",
+              "type": "array"
+            },
+            {
+              "id": "requires_ipai",
+              "name": "requires_ipai",
+              "value": "={{ $json.requires_ipai }}",
+              "type": "array"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "prepare_agent_payload",
+      "name": "Prepare Agent Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [1250, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.N8N_BASE_URL }}/webhook/reverse-agent-execute",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "saas_product",
+              "value": "={{ $json.product_slug }}"
+            },
+            {
+              "name": "feature_key",
+              "value": "={{ $json.feature_key }}"
+            },
+            {
+              "name": "feature_name",
+              "value": "={{ $json.feature_name }}"
+            },
+            {
+              "name": "criticality",
+              "value": "={{ $json.criticality }}"
+            },
+            {
+              "name": "enterprise_equiv",
+              "value": "={{ $json.enterprise_equiv }}"
+            },
+            {
+              "name": "requires_ipai",
+              "value": "={{ $json.requires_ipai }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false,
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 300000
+        }
+      },
+      "id": "call_reverse_agent",
+      "name": "Call Reverse Agent",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/saas_feature_artifacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "feature_mapping_id",
+              "value": "={{ $json.feature_mapping_id }}"
+            },
+            {
+              "name": "artifact_type",
+              "value": "prd"
+            },
+            {
+              "name": "path",
+              "value": "={{ $json.prd_path }}"
+            },
+            {
+              "name": "ref",
+              "value": "reverse-mapping-loop"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert_prd_artifact",
+      "name": "Insert PRD Artifact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1650, 200],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_service_role",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/saas_feature_artifacts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "feature_mapping_id",
+              "value": "={{ $json.feature_mapping_id }}"
+            },
+            {
+              "name": "artifact_type",
+              "value": "module"
+            },
+            {
+              "name": "path",
+              "value": "={{ $json.module_path }}"
+            },
+            {
+              "name": "ref",
+              "value": "reverse-mapping-loop"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "insert_module_artifact",
+      "name": "Insert Module Artifact",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1650, 300],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_service_role",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $env.SUPABASE_URL }}/rest/v1/saas_feature_mappings",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $json.feature_mapping_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "status",
+              "value": "partial"
+            },
+            {
+              "name": "ipai_modules",
+              "value": "={{ $json.requires_ipai }}"
+            },
+            {
+              "name": "notes",
+              "value": "Modules generated via reverse mapping loop, pending full implementation"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "update_feature_status",
+      "name": "Update Feature Status",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [1650, 400],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "supabase_service_role",
+          "name": "Supabase Service Role Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "issue",
+        "operation": "create",
+        "owner": {
+          "__rl": true,
+          "value": "jgtolentino",
+          "mode": "name"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "odoo-ce",
+          "mode": "name"
+        },
+        "title": "Deploy {{ $json.product_name }} parity modules ({{ $json.requires_ipai }})",
+        "body": "## Summary\n{{ $json.product_name }} reverse mapping loop completed. Ready for full implementation and UAT.\n\n## Feature\n- **Key**: {{ $json.feature_key }}\n- **Name**: {{ $json.feature_name }}\n- **Criticality**: {{ $json.criticality }}/5\n\n## Modules Generated\n{{ $json.requires_ipai }}\n\n## Enterprise Equivalents\n{{ $json.enterprise_equiv }}\n\n## Status\n- [x] Feature discovery complete\n- [x] Gaps identified and mapped\n- [x] PRD generated\n- [ ] Module scaffolded (manual step required)\n- [ ] Regression tests written\n- [ ] Feature parity documentation complete\n- [ ] UAT scenarios validated\n- [ ] Production deployment scheduled\n\n## Next Actions\n1. Complete PRD review\n2. Scaffold module via odoo-bin\n3. Implement models, views, security, tests\n4. Deploy and validate\n5. Update Supabase feature_mappings to 'covered'\n\n## References\n- Loop spec: agents/loops/{{ $json.product_slug }}_reverse.yaml\n- Enterprise gaps: docs/ENTERPRISE_FEATURE_GAP.yaml\n- Agent spec: agents/odoo_reverse_mapper.yaml\n- PRD: {{ $json.prd_path }}",
+        "labels": {
+          "labels": [
+            {
+              "label": "saas-parity"
+            },
+            {
+              "label": "reverse-mapping"
+            },
+            {
+              "label": "{{ $json.product_slug }}"
+            }
+          ]
+        }
+      },
+      "id": "create_github_issue",
+      "name": "Create GitHub Issue",
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1,
+      "position": [1850, 300],
+      "credentials": {
+        "githubOAuth2Api": {
+          "id": "github_oauth",
+          "name": "GitHub OAuth2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "loop_back",
+      "name": "Loop Back",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [2050, 300]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "merge_final_results",
+      "name": "Merge Final Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 2.1,
+      "position": [2250, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "total_features_processed",
+              "name": "total_features_processed",
+              "value": "={{ $json.length }}",
+              "type": "number"
+            },
+            {
+              "id": "execution_timestamp",
+              "name": "execution_timestamp",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "status",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "summary",
+      "name": "Summary",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.2,
+      "position": [2450, 300]
+    }
+  ],
+  "connections": {
+    "trigger_schedule": {
+      "main": [
+        [
+          {
+            "node": "fetch_gap_features",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "fetch_gap_features": {
+      "main": [
+        [
+          {
+            "node": "split_batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "split_batches": {
+      "main": [
+        [
+          {
+            "node": "get_product_info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "merge_final_results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "get_product_info": {
+      "main": [
+        [
+          {
+            "node": "merge_product_data",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "merge_product_data": {
+      "main": [
+        [
+          {
+            "node": "prepare_agent_payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "prepare_agent_payload": {
+      "main": [
+        [
+          {
+            "node": "call_reverse_agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "call_reverse_agent": {
+      "main": [
+        [
+          {
+            "node": "insert_prd_artifact",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "insert_module_artifact",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "update_feature_status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert_prd_artifact": {
+      "main": [
+        [
+          {
+            "node": "create_github_issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "insert_module_artifact": {
+      "main": [
+        [
+          {
+            "node": "create_github_issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "update_feature_status": {
+      "main": [
+        [
+          {
+            "node": "create_github_issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "create_github_issue": {
+      "main": [
+        [
+          {
+            "node": "loop_back",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "loop_back": {
+      "main": [
+        [
+          {
+            "node": "split_batches",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "merge_final_results": {
+      "main": [
+        [
+          {
+            "node": "summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-11-23T00:00:00.000Z",
+      "updatedAt": "2025-11-23T00:00:00.000Z",
+      "id": "saas-parity",
+      "name": "saas-parity"
+    },
+    {
+      "createdAt": "2025-11-23T00:00:00.000Z",
+      "updatedAt": "2025-11-23T00:00:00.000Z",
+      "id": "reverse-mapping",
+      "name": "reverse-mapping"
+    },
+    {
+      "createdAt": "2025-11-23T00:00:00.000Z",
+      "updatedAt": "2025-11-23T00:00:00.000Z",
+      "id": "automation",
+      "name": "automation"
+    }
+  ],
+  "triggerCount": 1,
+  "updatedAt": "2025-11-23T00:00:00.000Z",
+  "versionId": "1.0.0"
+}

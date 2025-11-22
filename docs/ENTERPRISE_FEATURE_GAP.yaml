@@ -1,0 +1,331 @@
+---
+# ============================================================================
+# ENTERPRISE_FEATURE_GAP.yaml
+# ============================================================================
+# Purpose: Central specification mapping SaaS products to Odoo Enterprise equivalents
+# Strategy: Document Enterprise modules WITHOUT installing them on CE server
+# Usage: Guide ipai_* module development for feature gaps
+# ============================================================================
+
+version: "1.0.0"
+last_updated: "2025-11-23"
+strategy: "Document Enterprise equivalents as reference; implement gaps with ipai_* modules"
+
+# ============================================================================
+# SaaS Target 1: Cheqroom (Equipment Management)
+# ============================================================================
+saas_targets:
+  - id: cheqroom
+    name: "Cheqroom – Equipment Management"
+    homepage: "https://cheqroom.com"
+
+    odoo_enterprise_equivalent:
+      - module: maintenance_equipment
+        coverage: 80%
+        notes: "Provides equipment catalog, maintenance tracking, and alerts"
+
+      - module: stock_barcode
+        coverage: 15%
+        notes: "Mobile barcode scanning for inventory operations"
+
+      - module: helpdesk
+        coverage: 10%
+        notes: "Incident tracking and escalation workflows"
+
+    ce_implementation:
+      core: [stock, maintenance, project, mail]
+      oca: [web_responsive]
+      ipai: [ipai_equipment]
+
+    gaps:
+      - id: mobile_scanning
+        feature: "Mobile barcode scanning for check-in/check-out"
+        status: planned
+        criticality: 3
+        enterprise_equiv: [stock_barcode]
+        requires: [ipai_equipment_mobile]
+        notes: "Flutter mobile app + barcode API integration"
+
+      - id: utilization_analytics
+        feature: "Advanced equipment utilization and forecasting dashboards"
+        status: planned
+        criticality: 3
+        enterprise_equiv: [maintenance_equipment]
+        requires: [ipai_equipment_analytics]
+        notes: "BI integration with Apache Superset for analytics"
+
+    deployment_status: "✅ READY FOR UAT (v0.5.0-saas-parity)"
+    cost_savings: "$708-2,388/year for 50 users"
+
+# ============================================================================
+# SaaS Target 2: SAP Concur (Expense Management)
+# ============================================================================
+  - id: concur_expense
+    name: "SAP Concur – Expense Management"
+    homepage: "https://www.concur.com"
+
+    odoo_enterprise_equivalent:
+      - module: hr_expense_advanced
+        coverage: 70%
+        notes: "Advanced expense workflows, policy enforcement, analytics"
+
+      - module: documents_hr_expense
+        coverage: 20%
+        notes: "Document management integration with OCR"
+
+      - module: account_bank_statement_import
+        coverage: 10%
+        notes: "Automated bank feed import and reconciliation"
+
+    ce_implementation:
+      core: [hr_expense, account, mail]
+      oca: [hr_expense_invoice]
+      ipai: [ipai_expense, ipai_cash_advance, ipai_ocr_expense, ipai_finance_monthly_closing]
+
+    gaps:
+      - id: credit_card_sync
+        feature: "Automated credit card feed import and reconciliation"
+        status: open
+        criticality: 3
+        enterprise_equiv: [account_bank_statement_import]
+        requires: [ipai_expense_bank_sync]
+        notes: "Integration with Philippine banks (BDO, BPI, Metrobank)"
+
+      - id: per_diem_automation
+        feature: "Automated per diem calculation based on travel dates"
+        status: open
+        criticality: 2
+        enterprise_equiv: [hr_expense_advanced]
+        requires: [ipai_expense_per_diem]
+        notes: "Philippine per diem rates by location and job level"
+
+      - id: mobile_capture
+        feature: "Native mobile app for expense capture and approval"
+        status: open
+        criticality: 3
+        enterprise_equiv: [hr_expense_advanced]
+        requires: [ipai_expense_mobile]
+        notes: "Flutter app with camera integration and offline mode"
+
+    deployment_status: "✅ READY FOR UAT (v0.5.0-saas-parity)"
+    cost_savings: "$4,800-7,200/year for 50 users"
+
+# ============================================================================
+# SaaS Target 3: Notion (Business Workspace)
+# ============================================================================
+  - id: notion_business
+    name: "Notion – Business Workspace"
+    homepage: "https://www.notion.so"
+
+    odoo_enterprise_equivalent:
+      - module: documents
+        coverage: 60%
+        notes: "Enterprise document management with workflows and AI"
+
+      - module: documents_project
+        coverage: 15%
+        notes: "Project-document linkage and automation"
+
+      - module: project_enterprise
+        coverage: 20%
+        notes: "Advanced project management features and views"
+
+      - module: project_template
+        coverage: 10%
+        notes: "Project templates and task automation"
+
+    ce_implementation:
+      core: [note, project, mail]
+      oca: []
+      ipai: [ipai_docs, ipai_docs_project]
+
+    gaps:
+      - id: realtime_collaboration
+        feature: "Multiple users editing same document simultaneously (Google Docs style)"
+        status: open
+        criticality: 2
+        enterprise_equiv: [documents]
+        requires: [ipai_docs_realtime]
+        notes: "WebSocket-based real-time sync with operational transforms"
+
+      - id: document_comments
+        feature: "Inline comments on specific paragraphs or sentences"
+        status: open
+        criticality: 2
+        enterprise_equiv: [documents]
+        requires: [ipai_docs_comments]
+        notes: "Comment threads with resolution tracking"
+
+      - id: advanced_search
+        feature: "Full-text search with metadata filters and faceted navigation"
+        status: open
+        criticality: 3
+        enterprise_equiv: [documents]
+        requires: [ipai_docs_search]
+        notes: "PostgreSQL full-text search with tsvector indexing"
+
+    deployment_status: "✅ READY FOR UAT (v0.5.0-saas-parity)"
+    cost_savings: "$6,000-10,800/year for 50 users"
+
+# ============================================================================
+# SaaS Target 4: Clarity PPM (Portfolio & Project Management)
+# ============================================================================
+  - id: clarity_ppm
+    name: "Clarity PPM – Project & Portfolio Management"
+    homepage: null
+
+    odoo_enterprise_equivalent:
+      - module: project_portfolio
+        coverage: 50%
+        notes: "Portfolio → Project hierarchy with scoring and prioritization"
+
+      - module: planning
+        coverage: 30%
+        notes: "Resource capacity planning and allocation"
+
+      - module: project_forecast
+        coverage: 20%
+        notes: "Budget forecasting and timeline prediction"
+
+    ce_implementation:
+      core: [project]
+      oca: []
+      ipai: []
+
+    gaps:
+      - id: portfolio_hierarchy
+        feature: "Portfolio → Program → Project hierarchy with aggregations"
+        status: open
+        criticality: 5
+        enterprise_equiv: [project_portfolio]
+        requires: [ipai_ppm_portfolio]
+        notes: "PRD complete, ready for scaffold generation"
+
+      - id: gate_workflows
+        feature: "Stage-gate approval workflows (gate 0-5)"
+        status: open
+        criticality: 4
+        enterprise_equiv: [project_forecast]
+        requires: [ipai_ppm_gates]
+        notes: "Investment decision framework with governance"
+
+      - id: resource_capacity
+        feature: "Resource capacity planning and allocation tracking"
+        status: open
+        criticality: 5
+        enterprise_equiv: [planning, project_forecast]
+        requires: [ipai_ppm_capacity]
+        notes: "Skill-based resource matching and utilization forecasting"
+
+      - id: portfolio_scoring
+        feature: "Portfolio prioritization with weighted scoring models"
+        status: open
+        criticality: 3
+        enterprise_equiv: [project_portfolio]
+        requires: [ipai_ppm_scoring]
+        notes: "Multi-criteria decision analysis (MCDA)"
+
+      - id: roadmap_visualization
+        feature: "Strategic roadmap and timeline visualization"
+        status: open
+        criticality: 3
+        enterprise_equiv: [project_forecast]
+        requires: [ipai_ppm_roadmap]
+        notes: "Gantt chart with dependencies and milestones"
+
+    deployment_status: "🔄 IN DEVELOPMENT (reverse agent generating modules)"
+    cost_savings: "TBD (estimate $10,000-15,000/year for 50 users)"
+
+# ============================================================================
+# Summary Statistics
+# ============================================================================
+summary:
+  total_saas_products: 4
+  total_enterprise_equivalents: 11
+  total_ipai_modules_deployed: 7
+  total_ipai_modules_planned: 11
+
+  deployment_ready:
+    - cheqroom (ipai_equipment)
+    - concur_expense (ipai_expense stack)
+    - notion_business (ipai_docs stack)
+
+  in_development:
+    - clarity_ppm (ipai_ppm_* stack)
+
+  total_annual_savings: "$21,508-30,388/year for 50 users"
+
+  roi_analysis:
+    development_investment: "$2,000-3,000 one-time"
+    year_1_roi: "717-913%"
+    year_2_plus_roi: "Infinite (no recurring costs)"
+
+# ============================================================================
+# Reverse Agent Workflow
+# ============================================================================
+reverse_agent_process:
+  1_discover:
+    description: "Crawl SaaS feature matrix from Supabase"
+    query: "SELECT * FROM saas_feature_mappings WHERE status = 'gap' AND criticality >= 3"
+    output: "List of high-priority gaps requiring ipai_* modules"
+
+  2_map:
+    description: "Match to Odoo CE core + OCA modules"
+    process: |
+      - Query ir.module.module for installed CE modules
+      - Cross-reference with Enterprise feature equivalents
+      - Identify missing/partial parity coverage
+    output: "Gap summary with Enterprise equivalent references"
+
+  3_generate:
+    description: "Scaffold ipai_* modules for gaps"
+    process: |
+      - Generate PRD from feature specifications
+      - Run: odoo-bin scaffold <module_name> addons
+      - Create models, views, data, security, tests
+      - Write comprehensive feature documentation
+    output: "Complete module skeleton in addons/"
+
+  4_deploy:
+    description: "Install and validate module"
+    process: |
+      - Commit to Git with conventional message
+      - Run: ./scripts/deploy-odoo-modules.sh <module_name>
+      - Execute regression tests
+      - Update Supabase with artifact links
+    output: "Deployed module with green CI/CD pipeline"
+
+  5_track:
+    description: "Update feature matrix and create work items"
+    process: |
+      - Update saas_feature_mappings status to 'covered' or 'partial'
+      - Insert artifact records (prd, module, test, doc)
+      - Create GitHub issues for remaining gaps
+      - Trigger n8n workflows for automation
+    output: "Complete audit trail in Supabase + GitHub"
+
+# ============================================================================
+# Installation Strategy
+# ============================================================================
+installation_notes:
+  ce_core: "Install minimal CE core modules per SaaS domain"
+  oca: "Install OCA community modules from apps.odoo.com or GitHub"
+  ipai: "Deploy via scripts/deploy-odoo-modules.sh with Git + CLI workflow"
+  enterprise: "NEVER install on CE server; use as reference documentation only"
+
+  recommended_order:
+    - Install CE core dependencies first
+    - Add OCA modules for extended functionality
+    - Deploy ipai_* modules last (they depend on CE + OCA)
+    - Run regression tests after each module installation
+    - Update Apps List via UI to verify visibility
+
+# ============================================================================
+# Quality Gates
+# ============================================================================
+quality_standards:
+  code_coverage: "≥80% for unit tests, ≥70% for integration tests"
+  documentation: "Complete PRD + UAT scripts + feature parity docs"
+  regression_tests: "Automated CI/CD with GitHub Actions"
+  oca_compliance: "Follow OCA development guidelines and coding standards"
+  cost_validation: "Savings must exceed $1,000/year per module to justify development"
