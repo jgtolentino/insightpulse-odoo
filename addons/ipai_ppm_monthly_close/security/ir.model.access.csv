@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ppm_monthly_close_user,ppm.monthly.close.user,model_ppm_monthly_close,base.group_user,1,1,1,0
+access_ppm_monthly_close_manager,ppm.monthly.close.manager,model_ppm_monthly_close,base.group_system,1,1,1,1
+access_ppm_close_task_user,ppm.close.task.user,model_ppm_close_task,base.group_user,1,1,1,0
+access_ppm_close_task_manager,ppm.close.task.manager,model_ppm_close_task,base.group_system,1,1,1,1
+access_ppm_close_template_user,ppm.close.template.user,model_ppm_close_template,base.group_user,1,0,0,0
+access_ppm_close_template_manager,ppm.close.template.manager,model_ppm_close_template,base.group_system,1,1,1,1

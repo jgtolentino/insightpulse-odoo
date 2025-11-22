@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Tree View -->
+    <record id="view_ppm_monthly_close_tree" model="ir.ui.view">
+        <field name="name">ppm.monthly.close.tree</field>
+        <field name="model">ppm.monthly.close</field>
+        <field name="arch" type="xml">
+            <tree string="Monthly Close Schedules">
+                <field name="name"/>
+                <field name="close_month"/>
+                <field name="prep_start_date"/>
+                <field name="review_due_date"/>
+                <field name="approval_due_date"/>
+                <field name="task_count"/>
+                <field name="task_completed"/>
+                <field name="progress_percentage" widget="progressbar"/>
+                <field name="state" decoration-info="state=='draft'" decoration-warning="state in ('scheduled','in_progress')" decoration-success="state=='done'"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Form View -->
+    <record id="view_ppm_monthly_close_form" model="ir.ui.view">
+        <field name="name">ppm.monthly.close.form</field>
+        <field name="model">ppm.monthly.close</field>
+        <field name="arch" type="xml">
+            <form string="Monthly Close">
+                <header>
+                    <button name="action_generate_tasks" string="Generate Tasks" type="object"
+                            class="oe_highlight" invisible="task_ids"
+                            confirm="This will create tasks from active templates. Continue?"/>
+                    <button name="action_start_close" string="Start Close Process" type="object"
+                            class="oe_highlight" invisible="state != 'scheduled'"
+                            confirm="This will notify all task owners. Continue?"/>
+                    <button name="action_complete_close" string="Complete Close" type="object"
+                            class="oe_highlight" invisible="state not in ('in_progress', 'review', 'approval')"
+                            confirm="Mark close as complete? All tasks must be done."/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,scheduled,in_progress,done"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="%(action_ppm_close_task_from_close)d" type="action"
+                                class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" widget="statinfo" string="Tasks"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g., FIN CLOSE – November 2025"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group name="schedule" string="Schedule">
+                            <field name="close_month"/>
+                            <field name="month_end_date" readonly="1"/>
+                            <field name="prep_start_date" readonly="1"/>
+                            <field name="review_due_date" readonly="1"/>
+                            <field name="approval_due_date" readonly="1"/>
+                        </group>
+                        <group name="progress" string="Progress">
+                            <field name="task_count"/>
+                            <field name="task_completed"/>
+                            <field name="progress_percentage" widget="progressbar"/>
+                            <field name="created_by_cron"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Tasks" name="tasks">
+                            <field name="task_ids">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="name"/>
+                                    <field name="agency_code"/>
+                                    <field name="owner_code"/>
+                                    <field name="reviewer_code"/>
+                                    <field name="approver_code"/>
+                                    <field name="prep_days"/>
+                                    <field name="state"/>
+                                </tree>
+                            </field>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="General notes about this close period..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Calendar View -->
+    <record id="view_ppm_monthly_close_calendar" model="ir.ui.view">
+        <field name="name">ppm.monthly.close.calendar</field>
+        <field name="model">ppm.monthly.close</field>
+        <field name="arch" type="xml">
+            <calendar string="Close Schedule" date_start="prep_start_date" color="state">
+                <field name="name"/>
+                <field name="state"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- Gantt View -->
+    <record id="view_ppm_monthly_close_gantt" model="ir.ui.view">
+        <field name="name">ppm.monthly.close.gantt</field>
+        <field name="model">ppm.monthly.close</field>
+        <field name="arch" type="xml">
+            <gantt string="Close Timeline" date_start="prep_start_date" date_stop="approval_due_date">
+                <field name="name"/>
+                <field name="state"/>
+            </gantt>
+        </field>
+    </record>
+
+    <!-- Search View -->
+    <record id="view_ppm_monthly_close_search" model="ir.ui.view">
+        <field name="name">ppm.monthly.close.search</field>
+        <field name="model">ppm.monthly.close</field>
+        <field name="arch" type="xml">
+            <search string="Search Monthly Close">
+                <field name="name"/>
+                <field name="close_month"/>
+                <filter name="draft" string="Draft" domain="[('state','=','draft')]"/>
+                <filter name="scheduled" string="Scheduled" domain="[('state','=','scheduled')]"/>
+                <filter name="in_progress" string="In Progress" domain="[('state','in',['in_progress','review','approval'])]"/>
+                <filter name="done" string="Completed" domain="[('state','=','done')]"/>
+                <separator/>
+                <filter name="auto_created" string="Auto-Created" domain="[('created_by_cron','=',True)]"/>
+                <group expand="0" string="Group By">
+                    <filter name="group_state" string="Status" context="{'group_by':'state'}"/>
+                    <filter name="group_month" string="Close Month" context="{'group_by':'close_month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_ppm_monthly_close" model="ir.actions.act_window">
+        <field name="name">Monthly Close Schedules</field>
+        <field name="res_model">ppm.monthly.close</field>
+        <field name="view_mode">tree,form,calendar,gantt</field>
+        <field name="context">{}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first monthly close schedule
+            </p>
+            <p>
+                Monthly close schedules automate the recurring closing process.
+                Click "Create" to start, or the system will auto-create schedules
+                3 business days before each month-end.
+            </p>
+        </field>
+    </record>
+
+</odoo>

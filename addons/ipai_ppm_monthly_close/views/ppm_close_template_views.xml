@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_ppm_close_template_tree" model="ir.ui.view">
+        <field name="name">ppm.close.template.tree</field>
+        <field name="model">ppm.close.template</field>
+        <field name="arch" type="xml">
+            <tree string="Task Templates">
+                <field name="sequence" widget="handle"/>
+                <field name="active" widget="boolean_toggle"/>
+                <field name="task_category"/>
+                <field name="agency_code"/>
+                <field name="owner_code"/>
+                <field name="reviewer_code"/>
+                <field name="approver_code"/>
+                <field name="total_days"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ppm_close_template_form" model="ir.ui.view">
+        <field name="name">ppm.close.template.form</field>
+        <field name="model">ppm.close.template</field>
+        <field name="arch" type="xml">
+            <form string="Task Template">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="active"/>
+                            <field name="task_category"/>
+                            <field name="agency_code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="owner_code"/>
+                            <field name="reviewer_code"/>
+                            <field name="approver_code"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="detailed_task" colspan="4"/>
+                    </group>
+                    <group string="Effort Estimates">
+                        <field name="prep_days"/>
+                        <field name="review_days"/>
+                        <field name="approval_days"/>
+                        <field name="total_days"/>
+                    </group>
+                    <group>
+                        <field name="notes" colspan="4"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_ppm_close_template" model="ir.actions.act_window">
+        <field name="name">Task Templates</field>
+        <field name="res_model">ppm.close.template</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

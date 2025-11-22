@@ -1,0 +1,84 @@
+{
+  "name": "PPM Monthly Close - Notification Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "id": "schedule_trigger",
+      "name": "Daily 8 AM Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://erp.insightpulseai.net/jsonrpc",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "jsonrpc",
+              "value": "2.0"
+            },
+            {
+              "name": "method",
+              "value": "call"
+            },
+            {
+              "name": "params",
+              "value": {
+                "service": "object",
+                "method": "execute",
+                "args": ["ppm.close.task", "cron_send_daily_reminders", []]
+              }
+            }
+          ]
+        }
+      },
+      "id": "call_odoo_cron",
+      "name": "Call Odoo Daily Reminders",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $env.MATTERMOST_WEBHOOK_URL }}",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "text",
+              "value": "Daily monthly close reminders sent successfully at {{ $now.toFormat('HH:mm') }}"
+            }
+          ]
+        }
+      },
+      "id": "notify_mattermost",
+      "name": "Notify Mattermost",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "schedule_trigger": {
+      "main": [[{"node": "call_odoo_cron", "type": "main", "index": 0}]]
+    },
+    "call_odoo_cron": {
+      "main": [[{"node": "notify_mattermost", "type": "main", "index": 0}]]
+    }
+  },
+  "settings": {},
+  "staticData": null,
+  "tags": [{"id": "ppm", "name": "ppm"}, {"id": "monthly-close", "name": "monthly-close"}],
+  "triggerCount": 1
+}

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Task Tree View -->
+    <record id="view_ppm_close_task_tree" model="ir.ui.view">
+        <field name="name">ppm.close.task.tree</field>
+        <field name="model">ppm.close.task</field>
+        <field name="arch" type="xml">
+            <tree string="Closing Tasks">
+                <field name="monthly_close_id"/>
+                <field name="name"/>
+                <field name="agency_code"/>
+                <field name="owner_code"/>
+                <field name="reviewer_code"/>
+                <field name="approver_code"/>
+                <field name="prep_start"/>
+                <field name="review_due"/>
+                <field name="approval_due"/>
+                <field name="state"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Task Form View -->
+    <record id="view_ppm_close_task_form" model="ir.ui.view">
+        <field name="name">ppm.close.task.form</field>
+        <field name="model">ppm.close.task</field>
+        <field name="arch" type="xml">
+            <form string="Closing Task">
+                <header>
+                    <button name="action_start_prep" string="Start Prep" type="object" invisible="state != 'todo'"/>
+                    <button name="action_submit_for_review" string="Submit for Review" type="object" invisible="state != 'in_progress'"/>
+                    <button name="action_submit_for_approval" string="Submit for Approval" type="object" invisible="state != 'for_review'"/>
+                    <button name="action_approve" string="Approve" type="object" class="oe_highlight" invisible="state != 'for_approval'"/>
+                    <button name="action_reject" string="Reject" type="object" invisible="state not in ('for_review','for_approval')"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="monthly_close_id"/>
+                            <field name="name"/>
+                            <field name="agency_code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="owner_code"/>
+                            <field name="reviewer_code"/>
+                            <field name="approver_code"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="detailed_task" colspan="4"/>
+                    </group>
+                    <group string="Schedule">
+                        <group>
+                            <field name="prep_start"/>
+                            <field name="review_due"/>
+                            <field name="approval_due"/>
+                        </group>
+                        <group>
+                            <field name="prep_days"/>
+                            <field name="review_days"/>
+                            <field name="approval_days"/>
+                            <field name="total_days"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Completion Tracking">
+                            <group>
+                                <group string="Preparation">
+                                    <field name="prep_completed_date"/>
+                                    <field name="prep_completed_by"/>
+                                </group>
+                                <group string="Review">
+                                    <field name="review_completed_date"/>
+                                    <field name="review_completed_by"/>
+                                </group>
+                            </group>
+                            <group>
+                                <group string="Approval">
+                                    <field name="approval_completed_date"/>
+                                    <field name="approval_completed_by"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes">
+                            <field name="notes"/>
+                            <field name="completion_notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_ppm_close_task" model="ir.actions.act_window">
+        <field name="name">Closing Tasks</field>
+        <field name="res_model">ppm.close.task</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- Action from Monthly Close -->
+    <record id="action_ppm_close_task_from_close" model="ir.actions.act_window">
+        <field name="name">Tasks</field>
+        <field name="res_model">ppm.close.task</field>
+        <field name="view_mode">tree,form</field>
+        <field name="domain">[('monthly_close_id', '=', active_id)]</field>
+        <field name="context">{'default_monthly_close_id': active_id}</field>
+    </record>
+</odoo>
