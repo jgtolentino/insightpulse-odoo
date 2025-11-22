@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!--
+        IPAI CE Cleaner: Hide Enterprise/IAP Upsells
+
+        This module uses CSS to hide Enterprise badges, odoo.com links,
+        and upgrade prompts across the Odoo CE interface.
+
+        CSS rules are in static/src/css/ipai_ce_cleaner.css
+        Assets loaded via ipai_ce_cleaner_assets.xml
+        -->
+    </data>
+</odoo>

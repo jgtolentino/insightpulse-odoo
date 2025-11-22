@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <menuitem
+            id="ipai_equipment_root_menu"
+            name="IPAI Equipment"
+            parent="stock.menu_stock_root"
+            sequence="60"
+        />
+
+        <menuitem
+            id="ipai_equipment_asset_menu"
+            name="Assets"
+            parent="ipai_equipment_root_menu"
+            action="ipai_equipment_asset_action"
+            sequence="10"
+        />
+
+        <menuitem
+            id="ipai_equipment_booking_menu"
+            name="Bookings"
+            parent="ipai_equipment_root_menu"
+            action="ipai_equipment_booking_action"
+            sequence="20"
+        />
+
+        <menuitem
+            id="ipai_equipment_incident_menu"
+            name="Incidents"
+            parent="ipai_equipment_root_menu"
+            action="ipai_equipment_incident_action"
+            sequence="30"
+        />
+
+        <menuitem
+            id="ipai_equipment_utilization_menu"
+            name="Utilization Analysis"
+            parent="ipai_equipment_root_menu"
+            action="ipai_equipment_utilization_action"
+            sequence="40"
+        />
+
+    </data>
+</odoo>

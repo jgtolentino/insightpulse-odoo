@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data noupdate="1">
+
+    <record id="project_month_end_template" model="project.project">
+      <field name="name">Month-end Closing – Template</field>
+      <field name="active">True</field>
+    </record>
+
+  </data>
+</odoo>

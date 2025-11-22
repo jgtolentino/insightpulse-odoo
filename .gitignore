@@ -1,58 +1,82 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
 # Odoo
 *.pyc
-*.pyo
-__pycache__/
-.venv/
-venv/
+.odoo-bin
+filestore/
+sessions/
 *.log
-*.bak
-*.swp
-.DS_Store
 
-# Database
-*.db
-backups/
+# Odoo addons - only track ipai_* modules
+addons/*
+!addons/ipai_*/
+!addons/ipai_*/**
 
-# Environment
+# Docker
 .env
-.env.local
-.env.*.local
-
-# Data
-data/
-logs/
+docker-compose.override.yml
 
 # IDE
 .vscode/
 .idea/
-*.sublime-*
+*.swp
+*.swo
+*~
+.DS_Store
 
-# Flutter
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.packages
-.pub-cache/
-.pub/
-build/
+# Secrets
+*.key
+*.pem
+*.crt
+secrets/
+.secrets
 
-# Android
-*.iml
-.gradle/
-local.properties
-.android/
+# Deployment
+deploy/.env
+deploy/*.local
+deploy_m1.sh
+deploy/*.log
+deploy/*.backup.*
 
-# iOS
-Pods/
-.symlinks/
-**/Flutter/App.framework
-**/Flutter/Flutter.framework
-**/Flutter/Flutter.podspec
-**/Flutter/Generated.xcconfig
-**/Flutter/ephemeral/
-**/Pods/
-**/.symlinks/
-**/DerivedData/
-ios/Flutter/flutter_export_environment.sh
-.ios/
+# OCA submodules (tracked separately)
+oca/*
+!oca/.gitkeep
 
+# Logs
+logs/
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak
+*.orig
+
+# Database
+*.sql
+*.db
+*.sqlite

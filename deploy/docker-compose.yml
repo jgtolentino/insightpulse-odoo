@@ -1,0 +1,79 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: odoo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: odoo
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: CHANGE_ME_STRONG_DB_PASSWORD
+    volumes:
+      - odoo-db-data:/var/lib/postgresql/data
+    networks:
+      - odoo_backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+  odoo:
+    image: odoo:18.0
+    container_name: odoo-ce
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Odoo talks to Postgres using these
+      HOST: db
+      USER: odoo
+      PASSWORD: CHANGE_ME_STRONG_DB_PASSWORD
+      ODOO_RC: /etc/odoo/odoo.conf
+    volumes:
+      # Main config
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+
+      # Custom CE/OCA addons only – NO Enterprise mounts
+      - ../addons:/mnt/extra-addons
+      - ../oca:/mnt/oca-addons
+
+      # Filestore
+      - odoo-filestore:/var/lib/odoo
+
+    # Expose only inside the droplet; Nginx on host will proxy 443 → 8069
+    ports:
+      - "127.0.0.1:8069:8069"
+    networks:
+      - odoo_backend
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8069/web/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 4G
+        reservations:
+          cpus: '1.0'
+          memory: 1G
+
+networks:
+  odoo_backend:
+
+volumes:
+  odoo-db-data:
+  odoo-filestore:

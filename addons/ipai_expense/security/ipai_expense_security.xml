@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Security Categories -->
+        <record id="module_category_ipai_expense" model="ir.module.category">
+            <field name="name">IPAI Expense &amp; Travel</field>
+            <field name="description">Manage expense and travel request permissions</field>
+            <field name="sequence">10</field>
+        </record>
+
+        <!-- Security Groups -->
+
+        <!-- User: Can create and submit own expenses -->
+        <record id="group_ipai_expense_user" model="res.groups">
+            <field name="name">Employee (User)</field>
+            <field name="category_id" ref="module_category_ipai_expense"/>
+            <field name="implied_ids" eval="[(4, ref('hr_expense.group_hr_expense_user'))]"/>
+            <field name="comment">Can create, edit, and submit own expenses and travel requests</field>
+        </record>
+
+        <!-- Manager: Can approve expenses for team -->
+        <record id="group_ipai_expense_manager" model="res.groups">
+            <field name="name">Manager</field>
+            <field name="category_id" ref="module_category_ipai_expense"/>
+            <field name="implied_ids" eval="[(4, ref('group_ipai_expense_user')), (4, ref('hr_expense.group_hr_expense_team_approver'))]"/>
+            <field name="comment">Can view and approve expenses for direct reports</field>
+        </record>
+
+        <!-- Finance: Can approve, post, and manage all expenses -->
+        <record id="group_ipai_expense_finance" model="res.groups">
+            <field name="name">Finance Director</field>
+            <field name="category_id" ref="module_category_ipai_expense"/>
+            <field name="implied_ids" eval="[(4, ref('group_ipai_expense_manager')), (4, ref('hr_expense.group_hr_expense_manager'))]"/>
+            <field name="comment">Can approve, post to GL, and manage all expenses and travel requests</field>
+        </record>
+
+        <!-- Record Rules -->
+
+        <!-- Employees can only see/edit their own draft expenses -->
+        <record id="expense_rule_user_own" model="ir.rule">
+            <field name="name">Employee: Own Expenses Only</field>
+            <field name="model_id" ref="hr_expense.model_hr_expense"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_user'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">True</field>
+            <field name="perm_unlink">True</field>
+        </record>
+
+        <!-- Managers can see expenses from their direct reports -->
+        <record id="expense_rule_manager_team" model="ir.rule">
+            <field name="name">Manager: Team Expenses</field>
+            <field name="model_id" ref="hr_expense.model_hr_expense"/>
+            <field name="domain_force">[('employee_id.parent_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_manager'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">False</field>
+            <field name="perm_unlink">False</field>
+        </record>
+
+        <!-- Finance can see all expenses -->
+        <record id="expense_rule_finance_all" model="ir.rule">
+            <field name="name">Finance: All Expenses</field>
+            <field name="model_id" ref="hr_expense.model_hr_expense"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_finance'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">True</field>
+            <field name="perm_unlink">True</field>
+        </record>
+
+        <!-- Travel Request Access Rules -->
+
+        <!-- Employees can only see/edit their own travel requests -->
+        <record id="travel_request_rule_user_own" model="ir.rule">
+            <field name="name">Employee: Own Travel Requests Only</field>
+            <field name="model_id" ref="model_ipai_travel_request"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_user'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">True</field>
+            <field name="perm_unlink">True</field>
+        </record>
+
+        <!-- Managers can see travel requests from their team -->
+        <record id="travel_request_rule_manager_team" model="ir.rule">
+            <field name="name">Manager: Team Travel Requests</field>
+            <field name="model_id" ref="model_ipai_travel_request"/>
+            <field name="domain_force">[('employee_id.parent_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_manager'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">False</field>
+            <field name="perm_unlink">False</field>
+        </record>
+
+        <!-- Finance can see all travel requests -->
+        <record id="travel_request_rule_finance_all" model="ir.rule">
+            <field name="name">Finance: All Travel Requests</field>
+            <field name="model_id" ref="model_ipai_travel_request"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_ipai_expense_finance'))]"/>
+            <field name="perm_read">True</field>
+            <field name="perm_write">True</field>
+            <field name="perm_create">True</field>
+            <field name="perm_unlink">True</field>
+        </record>
+
+    </data>
+</odoo>

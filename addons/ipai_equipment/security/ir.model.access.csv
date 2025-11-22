@@ -1,0 +1,4 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_equipment_asset_user,access_ipai_equipment_asset_user,model_ipai_equipment_asset,base.group_user,1,1,1,0
+access_ipai_equipment_booking_user,access_ipai_equipment_booking_user,model_ipai_equipment_booking,base.group_user,1,1,1,0
+access_ipai_equipment_incident_user,access_ipai_equipment_incident_user,model_ipai_equipment_incident,base.group_user,1,1,1,0

@@ -1,0 +1,123 @@
+{
+  "name": "equipment_booking_sync",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "equipment-booking",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "equipment-booking-webhook"
+    },
+    {
+      "parameters": {
+        "url": "https://erp.insightpulseai.net",
+        "database": "odoo",
+        "username": "admin",
+        "password": "={{$credentials.odooApi.password}}",
+        "resource": "equipment.booking",
+        "operation": "create",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldName": "equipment_id",
+              "fieldValue": "={{$json.equipment_id}}"
+            },
+            {
+              "fieldName": "user_id",
+              "fieldValue": "={{$json.user_id}}"
+            },
+            {
+              "fieldName": "start_date",
+              "fieldValue": "={{$json.start_date}}"
+            },
+            {
+              "fieldName": "end_date",
+              "fieldValue": "={{$json.end_date}}"
+            }
+          ]
+        }
+      },
+      "name": "Odoo - Create Booking",
+      "type": "n8n-nodes-base.odoo",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "credentials": {
+        "odooApi": {
+          "id": "1",
+          "name": "Odoo API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "channel": "equipment-alerts",
+        "text": "=📋 New Equipment Booking:\n\n**Equipment**: {{$json.equipment_name}}\n**User**: {{$json.user_name}}\n**Dates**: {{$json.start_date}} → {{$json.end_date}}\n\n[View in Odoo](https://erp.insightpulseai.net/web#id={{$json.id}}&model=equipment.booking)",
+        "attachments": []
+      },
+      "name": "Mattermost - Send Notification",
+      "type": "n8n-nodes-base.mattermost",
+      "typeVersion": 1,
+      "position": [650, 300],
+      "credentials": {
+        "mattermostApi": {
+          "id": "2",
+          "name": "Mattermost Webhook"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}"
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [850, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo - Create Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo - Create Booking": {
+      "main": [
+        [
+          {
+            "node": "Mattermost - Send Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mattermost - Send Notification": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {},
+  "id": "70"
+}
