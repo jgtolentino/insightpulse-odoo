@@ -1,0 +1,154 @@
+name: Odoo SaaS Parity Tests
+
+on:
+  pull_request:
+    paths:
+      - "addons/ipai_equipment/**"
+      - "addons/ipai_expense/**"
+      - "addons/ipai_cash_advance/**"
+      - "addons/ipai_ocr_expense/**"
+      - "addons/ipai_docs/**"
+      - "addons/ipai_docs_project/**"
+      - "agents/**"
+      - "docs/FEATURE_*.md"
+      - "docs/SAAS_PARITY_READINESS.md"
+  push:
+    branches:
+      - main
+      - feature/add-expense-equipment-prd
+
+jobs:
+  test-parity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: odoo
+          POSTGRES_USER: odoo
+          POSTGRES_PASSWORD: odoo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U odoo"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: 'pip'
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libpq-dev \
+            libxml2-dev \
+            libxslt1-dev \
+            libldap2-dev \
+            libsasl2-dev \
+            libjpeg-dev \
+            zlib1g-dev
+
+      - name: Install Python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt || echo "requirements.txt not found, installing odoo dependencies"
+          pip install psycopg2-binary wheel
+
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -p 5432 -U odoo; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+
+      - name: Run Cheqroom parity tests
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: odoo
+          PGPASSWORD: odoo
+          PGDATABASE: test_cheqroom
+        run: |
+          echo "Testing Cheqroom parity (ipai_equipment)..."
+          python odoo-bin -d test_cheqroom \
+            -i ipai_equipment \
+            --test-enable \
+            --stop-after-init \
+            --log-level=test \
+            --db_host=localhost \
+            --db_port=5432 \
+            --db_user=odoo \
+            --db_password=odoo || {
+              echo "❌ Cheqroom parity tests FAILED"
+              exit 1
+            }
+          echo "✅ Cheqroom parity tests PASSED"
+
+      - name: Run Concur parity tests
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: odoo
+          PGPASSWORD: odoo
+          PGDATABASE: test_concur
+        run: |
+          echo "Testing Concur parity (ipai_expense)..."
+          python odoo-bin -d test_concur \
+            -i ipai_expense \
+            --test-enable \
+            --stop-after-init \
+            --log-level=test \
+            --db_host=localhost \
+            --db_port=5432 \
+            --db_user=odoo \
+            --db_password=odoo || {
+              echo "❌ Concur parity tests FAILED"
+              exit 1
+            }
+          echo "✅ Concur parity tests PASSED"
+
+      - name: Run Workspace parity tests
+        env:
+          PGHOST: localhost
+          PGPORT: 5432
+          PGUSER: odoo
+          PGPASSWORD: odoo
+          PGDATABASE: test_workspace
+        run: |
+          echo "Testing Workspace parity (ipai_docs)..."
+          python odoo-bin -d test_workspace \
+            -i ipai_docs \
+            --test-enable \
+            --stop-after-init \
+            --log-level=test \
+            --db_host=localhost \
+            --db_port=5432 \
+            --db_user=odoo \
+            --db_password=odoo || {
+              echo "❌ Workspace parity tests FAILED"
+              exit 1
+            }
+          echo "✅ Workspace parity tests PASSED"
+
+      - name: Parity Test Summary
+        if: always()
+        run: |
+          echo "==================================================="
+          echo "SaaS Parity Test Summary"
+          echo "==================================================="
+          echo "Cheqroom (ipai_equipment): ${{ job.status }}"
+          echo "Concur (ipai_expense): ${{ job.status }}"
+          echo "Workspace (ipai_docs): ${{ job.status }}"
+          echo "==================================================="
+          echo "See docs/SAAS_PARITY_READINESS.md for validation details"

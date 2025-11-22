@@ -499,6 +499,127 @@ Following pattern from KNOWLEDGE_BASE_INDEX:
 
 ---
 
+## 🎯 SaaS Parity Capability Invocations
+
+Three major SaaS replacements are encoded as agent capabilities with full test coverage and CI guardrails.
+
+### Cheqroom Parity (Equipment Management)
+
+**Capability**: `cheqroom_parity_equipment_ce`
+
+**Use When**: Equipment catalog, booking calendar, overlap prevention, or overdue notification system needs validation or extension
+
+**Test Command**:
+```bash
+python odoo-bin -d test_cheqroom \
+  -i ipai_equipment \
+  --test-enable --stop-after-init --log-level=test
+```
+
+**Quick Validation**:
+- Booking sequence generation (EQB prefix): `SELECT name FROM ipai_equipment_booking LIMIT 1;`
+- Overdue cron active: Check Scheduled Actions → "IPAI Equipment: Check Overdue Bookings"
+- Calendar view functional: Navigate to Equipment → Bookings → Calendar
+
+**Documentation**: `docs/FEATURE_CHEQROOM_PARITY.md`
+
+**Agent Invocation**:
+```
+"Run the cheqroom_parity_equipment_ce capability validation procedures"
+"Execute ensure_overdue_cron_and_activities for Cheqroom parity"
+"Validate booking overlap prevention for ipai_equipment"
+```
+
+---
+
+### Concur Parity (Expense Management)
+
+**Capability**: `concur_parity_expense_ce`
+
+**Use When**: Expense OCR, cash advance settlement, approval workflows, or monthly closing integration needs validation
+
+**Test Command**:
+```bash
+python odoo-bin -d test_concur \
+  -i ipai_expense \
+  --test-enable --stop-after-init --log-level=test
+```
+
+**Quick Validation**:
+- OCR health check: `curl https://ocr.insightpulseai.net/health`
+- OCR success rate today: `SELECT COUNT(*) FILTER (WHERE ocr_status='processed') * 100.0 / COUNT(*) FROM ipai_expense WHERE create_date >= CURRENT_DATE;`
+- Vendor normalization count: `grep -c "VENDOR_NORMALIZATION\|PH_LOCAL_VENDORS" ocr-adapter/main.py`
+
+**Documentation**: `docs/FEATURE_CONCUR_PARITY.md`
+
+**Agent Invocation**:
+```
+"Execute ensure_expense_ocr_pipeline for SAP Concur parity"
+"Validate cash advance settlement workflow"
+"Run concur_uat_script for expense approval testing"
+```
+
+---
+
+### Workspace Parity (Notion Replacement)
+
+**Capability**: `workspace_parity_docs_projects_ce`
+
+**Use When**: Document management, project-doc linkage, task templates, or mobile app activities need validation
+
+**Test Command**:
+```bash
+python odoo-bin -d test_workspace \
+  -i ipai_docs \
+  --test-enable --stop-after-init --log-level=test
+```
+
+**Quick Validation**:
+- Doc-project linkage: Check smart buttons on project form
+- Task visibility: Navigate to Project → My Tasks
+- Mobile activities: Open Odoo mobile app → Activities tab
+
+**Documentation**: `docs/FEATURE_WORKSPACE_PARITY.md`
+
+**Agent Invocation**:
+```
+"Run workspace_parity_docs_projects_ce UAT validation"
+"Execute ensure_task_visibility_and_mentions procedure"
+"Validate email and mobile notifications for workspace"
+```
+
+---
+
+### CI/CD Integration
+
+**Workflow**: `.github/workflows/odoo-parity-tests.yml`
+
+**Triggers**:
+- Pull requests affecting parity modules
+- Push to main or feature branches
+- Manual workflow dispatch
+
+**What It Does**:
+1. Spins up PostgreSQL 15 service
+2. Runs all 3 regression test suites in parallel
+3. Blocks PR if any test fails
+4. Provides test summary in CI logs
+
+**Quality Gate**: All parity tests must pass before merge to main
+
+---
+
+### Readiness Document
+
+See `docs/SAAS_PARITY_READINESS.md` for:
+- Complete deployment checklist
+- Cost savings analysis ($11,508-20,388/year for 50 users)
+- UAT validation procedures (18 scenarios total)
+- Monitoring queries and success metrics
+- Rollback plan
+
+---
+
 ## 📞 Help & Escalation
 
 **When you need help:**
