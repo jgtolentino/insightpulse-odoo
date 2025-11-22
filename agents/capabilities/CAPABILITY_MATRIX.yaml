@@ -1,0 +1,389 @@
+# InsightPulse AI - Capability Matrix
+# Purpose: Define what agents can do, preconditions, and execution flows
+# Version: 1.0.0
+
+# ============================================================================
+# CORE CAPABILITIES
+# ============================================================================
+
+capabilities:
+
+  # --------------------------------------------------------------------------
+  # ODOO MODULE DEVELOPMENT
+  # --------------------------------------------------------------------------
+  - name: "Create Odoo CE Module with Supabase Backend"
+    id: cap_odoo_supabase_module
+    description: "Scaffold, develop, test, and deploy Odoo module with Supabase integration"
+
+    preconditions:
+      - odoo_ce_instance_running: "Odoo CE 18 accessible at erp.insightpulseai.net"
+      - supabase_project_configured: "Supabase project spdtwktxdalcfigzeqrz available"
+      - ci_pipeline_active: "GitHub Actions configured for CE/OCA checks"
+
+    skills_required:
+      - scaffold_odoo_module
+      - create_supabase_schema
+      - run_ci_checks
+      - deploy_odoo_module
+
+    execution_flow:
+      - step: 1
+        action: "scaffold_odoo_module"
+        inputs:
+          - module_name
+          - dependencies: ["base", "web", "mail"]
+        outputs:
+          - module_path
+
+      - step: 2
+        action: "create_supabase_schema"
+        inputs:
+          - table_name
+          - columns
+          - rls_policies
+        outputs:
+          - migration_sql
+
+      - step: 3
+        action: "run_ci_checks"
+        inputs:
+          - repo_path
+        validation:
+          - no_enterprise_deps
+          - no_odoo_com_links
+          - tests_pass
+
+      - step: 4
+        action: "deploy_odoo_module"
+        inputs:
+          - module_path
+          - target: "erp.insightpulseai.net"
+        outputs:
+          - deployment_status
+
+    success_criteria:
+      - module_installable: true
+      - ci_checks_pass: true
+      - no_enterprise_violations: true
+      - supabase_integration_tested: true
+
+  # --------------------------------------------------------------------------
+  # OCR QUALITY IMPROVEMENT
+  # --------------------------------------------------------------------------
+  - name: "Improve OCR Extraction Quality"
+    id: cap_improve_ocr_quality
+    description: "Analyze OCR failures, add normalization rules, validate improvements"
+
+    preconditions:
+      - ocr_adapter_deployed: "OCR adapter at ocr.insightpulseai.net"
+      - test_harness_available: "ocr-adapter/scripts/test-harness.py"
+      - ground_truth_data: "test_receipts/ground_truth.csv exists"
+
+    skills_required:
+      - analyze_odoo_logs
+      - test_ocr_quality
+      - add_ocr_normalization
+
+    execution_flow:
+      - step: 1
+        action: "analyze_odoo_logs"
+        inputs:
+          - log_source: "Odoo → Expenses → Configuration → OCR Logs"
+        analysis:
+          - group_by: "Status → Vendor"
+          - identify: "failing vendors with > 3 failures"
+
+      - step: 2
+        action: "add_ocr_normalization"
+        inputs:
+          - vendor_patterns: ["SM Store → SM Supermarket", "7 Eleven → 7-Eleven"]
+          - date_formats: ["DD/MM/YYYY", "PH-style 15 Nov 2025"]
+          - currency_defaults: "PHP for PH vendors"
+        outputs:
+          - updated_adapter_code
+
+      - step: 3
+        action: "test_ocr_quality"
+        inputs:
+          - test_images: "./test_receipts"
+          - ground_truth: "./test_receipts/ground_truth.csv"
+        outputs:
+          - quality_report
+          - accuracy_delta
+
+      - step: 4
+        action: "deploy_adapter_update"
+        validation:
+          - quality_improved: ">= 5% accuracy gain"
+          - no_regressions: "existing passing tests still pass"
+
+    success_criteria:
+      - ocr_success_rate: ">= 85%"
+      - p95_processing_time: "< 30 seconds"
+      - field_accuracy: ">= 90% for date, total, vendor, currency"
+
+  # --------------------------------------------------------------------------
+  # N8N WORKFLOW AUTOMATION
+  # --------------------------------------------------------------------------
+  - name: "Create and Deploy n8n Finance Automation"
+    id: cap_n8n_finance_automation
+    description: "Build n8n workflow for finance ops using workflow conventions"
+
+    preconditions:
+      - n8n_instance_running: "n8n fin-workspace accessible"
+      - workflow_conventions_defined: "WORKFLOW_CONVENTIONS.md available"
+      - odoo_jsonrpc_accessible: "Odoo API reachable from n8n"
+
+    skills_required:
+      - create_n8n_workflow
+      - deploy_n8n_workflow
+
+    execution_flow:
+      - step: 1
+        action: "define_workflow_spec"
+        inputs:
+          - workflow_purpose: "e.g., Daily BIR deadline alerts"
+          - domain_code: "OD (Odoo) | SB (Supabase) | NO (Notion) | CC (Concur-equiv) | EQ (Equipment)"
+          - triggers: "Cron or webhook"
+          - actions: "Query Odoo → Send Mattermost alert"
+
+      - step: 2
+        action: "create_n8n_workflow"
+        naming_convention: "WNNN_DD_SHORT_DESCRIPTION.json"
+        example: "W002_OD_BIR_ALERTS.json"
+        outputs:
+          - workflow_json
+
+      - step: 3
+        action: "deploy_n8n_workflow"
+        location: "notion-n8n-monthly-close/workflows/odoo/"
+        register_in: "workflows/index.yaml"
+
+      - step: 4
+        action: "validate_workflow"
+        tests:
+          - dry_run: "Execute once manually"
+          - check_outputs: "Verify Odoo data updated or alert sent"
+
+    success_criteria:
+      - workflow_follows_conventions: true
+      - registered_in_index: true
+      - dry_run_successful: true
+
+  # --------------------------------------------------------------------------
+  # MOBILE OCR DEPLOYMENT
+  # --------------------------------------------------------------------------
+  - name: "Deploy Mobile OCR Client"
+    id: cap_deploy_mobile_ocr
+    description: "Build, test, and deploy Flutter OCR app with Supabase backend"
+
+    preconditions:
+      - flutter_module_exists: "addons/flutter_receipt_ocr/"
+      - supabase_configured: "parsed_receipts table + receipt-images bucket"
+      - ocr_api_ready: "ocr.insightpulseai.net/ocr endpoint"
+
+    skills_required:
+      - build_flutter_module
+      - test_flutter_integration
+      - setup_supabase_storage
+
+    execution_flow:
+      - step: 1
+        action: "build_flutter_module"
+        inputs:
+          - module_path: "addons/flutter_receipt_ocr"
+          - platform: "android | ios"
+        outputs:
+          - apk_path: "build/app/outputs/flutter-apk/app-release.apk"
+          - ipa_path: "build/ios/iphoneos/Runner.app"
+
+      - step: 2
+        action: "test_flutter_integration"
+        tests:
+          - camera_capture: "Test camera/gallery picker"
+          - ocr_processing: "Upload to Supabase → call OCR → cache result"
+          - offline_cache: "Retrieve cached receipts when offline"
+
+      - step: 3
+        action: "deploy_to_app_stores"
+        targets:
+          - google_play: "Optional"
+          - app_store: "Optional"
+          - direct_download: "Host APK on server"
+
+    success_criteria:
+      - app_builds_successfully: true
+      - integration_tests_pass: true
+      - p95_upload_time: "< 2 seconds"
+      - cache_retrieval_time: "< 500ms"
+
+  # --------------------------------------------------------------------------
+  # INFRASTRUCTURE DEPLOYMENT
+  # --------------------------------------------------------------------------
+  - name: "Deploy Service to DigitalOcean"
+    id: cap_deploy_digitalocean
+    description: "Deploy Odoo, OCR, or other services to DigitalOcean infrastructure"
+
+    preconditions:
+      - digitalocean_account: "doctl configured"
+      - dns_configured: "Domain DNS points to droplet IP"
+      - docker_compose_ready: "deploy/docker-compose.yml exists"
+
+    skills_required:
+      - deploy_to_digitalocean
+      - setup_nginx_proxy
+      - run_ci_checks
+
+    execution_flow:
+      - step: 1
+        action: "provision_droplet"
+        inputs:
+          - droplet_size: "s-2vcpu-4gb"
+          - region: "sgp1 | nyc1"
+          - image: "ubuntu-22-04-x64"
+
+      - step: 2
+        action: "run_m1_deployment_script"
+        script: "deploy_m1.sh.template"
+        what_it_does:
+          - "Install Docker, Nginx, Certbot, UFW"
+          - "Clone repo and configure Odoo"
+          - "Obtain Let's Encrypt SSL"
+          - "Start Docker Compose stack"
+          - "Configure automated backups"
+
+      - step: 3
+        action: "setup_nginx_proxy"
+        inputs:
+          - domain: "erp.insightpulseai.net | ocr.insightpulseai.net"
+          - backend_port: 8069
+
+      - step: 4
+        action: "validate_deployment"
+        checks:
+          - health_check: "curl https://domain/web/health"
+          - ssl_valid: "certbot certificates"
+          - service_running: "docker ps"
+
+    success_criteria:
+      - https_accessible: true
+      - ssl_valid: true
+      - health_check_pass: true
+      - deployment_time: "< 15 minutes"
+
+  # --------------------------------------------------------------------------
+  # FINANCE MONTH-END CLOSING
+  # --------------------------------------------------------------------------
+  - name: "Automate Monthly Finance Closing"
+    id: cap_finance_closing_automation
+    description: "Import tasks, setup alerts, deploy workflows for month-end"
+
+    preconditions:
+      - odoo_project_module: "project module installed"
+      - finance_closing_module: "ipai_finance_monthly_closing installed"
+      - n8n_available: "n8n fin-workspace running"
+
+    skills_required:
+      - import_monthly_tasks
+      - create_n8n_workflow
+      - send_bir_alerts
+
+    execution_flow:
+      - step: 1
+        action: "import_monthly_tasks"
+        inputs:
+          - csv_path: "data/month_end_tasks.csv"
+          - month_offset: 0  # Current month
+        outputs:
+          - project_id
+          - task_count
+
+      - step: 2
+        action: "create_n8n_workflow"
+        workflows:
+          - W001_OD_MNTH_CLOSE_SYNC: "Daily closing digest"
+          - W002_OD_BIR_ALERTS: "BIR deadline alerts"
+        outputs:
+          - workflow_jsons
+
+      - step: 3
+        action: "deploy_n8n_workflow"
+        target: "notion-n8n-monthly-close/workflows/odoo/"
+
+      - step: 4
+        action: "send_bir_alerts"
+        schedule: "Daily at 09:00 PH time"
+        alert_channels:
+          - mattermost: "ops-channel"
+          - email: "finance@insightpulseai.net"
+
+    success_criteria:
+      - tasks_imported: true
+      - workflows_deployed: true
+      - alerts_sending: true
+      - sla_tracking_active: true
+
+# ============================================================================
+# CAPABILITY DEPENDENCIES
+# ============================================================================
+
+capability_dependencies:
+  # OCR capabilities depend on infrastructure
+  cap_improve_ocr_quality:
+    depends_on:
+      - cap_deploy_digitalocean
+
+  # Mobile apps depend on OCR + Supabase
+  cap_deploy_mobile_ocr:
+    depends_on:
+      - cap_improve_ocr_quality
+      - cap_odoo_supabase_module
+
+  # Finance automation depends on Odoo modules + n8n
+  cap_finance_closing_automation:
+    depends_on:
+      - cap_odoo_supabase_module
+      - cap_n8n_finance_automation
+
+# ============================================================================
+# VALIDATION TEMPLATES
+# ============================================================================
+
+validation_templates:
+  ce_oca_compliance:
+    checks:
+      - no_enterprise_modules: "grep -r 'license.*OEEL' should return empty"
+      - no_odoo_com_links: "grep -r 'odoo.com' in templates should return empty"
+      - ci_pipeline_green: "GitHub Actions workflow passes"
+
+  ocr_quality_baseline:
+    metrics:
+      - success_rate: ">= 85%"
+      - p95_latency: "< 30 seconds"
+      - date_accuracy: ">= 95%"
+      - total_accuracy: ">= 95% (±1 peso tolerance)"
+      - vendor_accuracy: ">= 90%"
+
+  deployment_health:
+    checks:
+      - https_reachable: "curl -k https://domain returns 200"
+      - ssl_valid: "SSL cert not expired"
+      - docker_running: "docker ps shows service"
+      - logs_clean: "No error logs in last 100 lines"
+
+# ============================================================================
+# EXECUTION PRIORITY
+# ============================================================================
+
+priority_order:
+  high:
+    - cap_deploy_digitalocean
+    - cap_odoo_supabase_module
+    - cap_improve_ocr_quality
+
+  medium:
+    - cap_n8n_finance_automation
+    - cap_finance_closing_automation
+
+  low:
+    - cap_deploy_mobile_ocr
