@@ -1,0 +1,406 @@
+# InsightPulse AI - Knowledge Base Index
+# Purpose: Map all documentation, patterns, and best practices for agent learning
+# Version: 1.0.0
+
+# ============================================================================
+# KNOWLEDGE DOMAINS
+# ============================================================================
+
+knowledge_domains:
+  - odoo_development
+  - finance_operations
+  - ocr_quality
+  - infrastructure
+  - automation
+  - mobile_development
+  - security_compliance
+
+# ============================================================================
+# DOCUMENTATION SOURCES
+# ============================================================================
+
+documentation:
+
+  # --- Project Documentation ---
+  - id: project_readme
+    title: "InsightPulse Odoo CE - Main README"
+    path: "/home/user/odoo-ce/README.md"
+    domain: odoo_development
+    type: overview
+    topics:
+      - "Odoo CE 18 deployment"
+      - "Custom modules overview"
+      - "M1 one-shot deployment"
+      - "Module installation guide"
+    agent_use: "First document to read for project overview"
+
+  - id: project_spec
+    title: "Project Specification"
+    path: "/home/user/odoo-ce/spec.md"
+    domain: odoo_development
+    type: specification
+    topics:
+      - "CE/OCA-only requirements"
+      - "SAP Concur replacement"
+      - "Cheqroom replacement"
+      - "Success criteria"
+    agent_use: "Reference for CE/OCA compliance rules"
+
+  - id: implementation_plan
+    title: "Implementation Plan"
+    path: "/home/user/odoo-ce/plan.md"
+    domain: odoo_development
+    type: roadmap
+    topics:
+      - "Phase 0-5 milestones"
+      - "Exit criteria per phase"
+      - "Expense MVP"
+      - "Equipment MVP"
+    agent_use: "Understand project phases and dependencies"
+
+  - id: module_service_matrix
+    title: "Module & Service Matrix"
+    path: "/home/user/odoo-ce/specs/MODULE_SERVICE_MATRIX.md"
+    domain: odoo_development
+    type: architecture
+    topics:
+      - "Odoo module dependencies"
+      - "External service integration points"
+      - "Installation sequence"
+      - "Concur/Cheqroom/Notion mapping"
+    agent_use: "Primary reference for system architecture and integration"
+
+  # --- OCR Documentation ---
+  - id: ocr_setup_guide
+    title: "OCR Service Definition"
+    path: "/home/user/odoo-ce/ODOO_OCR_SETUP.md"
+    domain: ocr_quality
+    type: runbook
+    topics:
+      - "OCR architecture"
+      - "SLOs (success rate, latency, accuracy)"
+      - "Quality monitoring"
+      - "Normalization strategy"
+      - "Test harness usage"
+    agent_use: "Reference for OCR quality standards and improvement workflows"
+
+  - id: ocr_project_complete
+    title: "OCR Project Completion Report"
+    path: "/home/user/odoo-ce/OCR_PROJECT_COMPLETE.md"
+    domain: ocr_quality
+    type: project_report
+    topics:
+      - "Backend enhancement details"
+      - "Flutter module structure"
+      - "Supabase integration"
+      - "Security implementation"
+      - "Testing results"
+    agent_use: "Reference for Flutter OCR module and Supabase setup"
+
+  # --- n8n Automation Documentation ---
+  - id: n8n_workflow_conventions
+    title: "n8n Workflow Conventions"
+    path: "/home/user/odoo-ce/notion-n8n-monthly-close/WORKFLOW_CONVENTIONS.md"
+    domain: automation
+    type: standards
+    topics:
+      - "Workflow naming (WNNN_DD_DESCRIPTION)"
+      - "Domain codes (OD, SB, SS, NO, CC, EQ)"
+      - "Directory structure"
+      - "CLI operations"
+    agent_use: "MUST follow these conventions when creating n8n workflows"
+
+  - id: n8n_cli_guide
+    title: "n8n CLI Usage Guide"
+    path: "/home/user/odoo-ce/notion-n8n-monthly-close/N8N_CLI_README.md"
+    domain: automation
+    type: howto
+    topics:
+      - "Export/import workflows"
+      - "Backup/restore"
+      - "Workflow IDs and stability"
+    agent_use: "Reference for n8n CLI operations"
+
+  - id: n8n_deployment_status
+    title: "n8n Deployment Status"
+    path: "/home/user/odoo-ce/notion-n8n-monthly-close/DEPLOYMENT_STATUS.md"
+    domain: automation
+    type: status
+    topics:
+      - "Deployed workflows"
+      - "Pending workflows"
+      - "Integration status"
+    agent_use: "Check current automation deployment state"
+
+  # --- Infrastructure Documentation ---
+  - id: deployment_guide
+    title: "Deployment Guide"
+    path: "/home/user/odoo-ce/docs/DEPLOYMENT_GUIDE.md"
+    domain: infrastructure
+    type: runbook
+    topics:
+      - "DigitalOcean setup"
+      - "Docker Compose configuration"
+      - "Nginx reverse proxy"
+      - "SSL certificate management"
+    agent_use: "Reference for infrastructure deployment"
+
+  - id: health_check_guide
+    title: "Health Check Documentation"
+    path: "/home/user/odoo-ce/docs/HEALTH_CHECK.md"
+    domain: infrastructure
+    type: monitoring
+    topics:
+      - "Health check endpoints"
+      - "Monitoring setup"
+      - "Alert configuration"
+    agent_use: "Reference for service health monitoring"
+
+  # --- Finance Operations ---
+  - id: finance_prd
+    title: "Expense & Equipment MVP PRD"
+    path: "/home/user/odoo-ce/specs/002-odoo-expense-equipment-mvp.prd.md"
+    domain: finance_operations
+    type: requirements
+    topics:
+      - "Expense workflows"
+      - "Equipment booking flows"
+      - "Approval workflows"
+      - "Reporting requirements"
+    agent_use: "Reference for business requirements and workflows"
+
+# ============================================================================
+# CODE PATTERNS
+# ============================================================================
+
+code_patterns:
+
+  # --- Odoo Module Patterns ---
+  - id: odoo_manifest_pattern
+    title: "Odoo Manifest Template"
+    domain: odoo_development
+    location: "addons/ipai_*/manifest__.py"
+    pattern: |
+      {
+          "name": "Module Name",
+          "summary": "Brief description",
+          "version": "18.0.1.0.0",
+          "category": "Category",
+          "author": "InsightPulseAI",
+          "website": "https://insightpulseai.net",
+          "license": "AGPL-3",
+          "depends": ["base", "web"],
+          "data": ["views/", "security/"],
+          "installable": True,
+          "application": True,
+      }
+    agent_use: "Use this template for new module manifests"
+
+  - id: odoo_model_pattern
+    title: "Odoo Model Definition Pattern"
+    domain: odoo_development
+    location: "addons/ipai_*/models/"
+    pattern: |
+      from odoo import models, fields, api
+
+      class ModelName(models.Model):
+          _name = 'module.model'
+          _description = 'Model Description'
+
+          name = fields.Char(required=True)
+          # ... fields ...
+
+          @api.depends('field')
+          def _compute_something(self):
+              for record in self:
+                  # ... compute logic ...
+    agent_use: "Use this pattern for new Odoo models"
+
+  # --- OCR Normalization Patterns ---
+  - id: ocr_vendor_normalization
+    title: "OCR Vendor Normalization Pattern"
+    domain: ocr_quality
+    location: "ocr-adapter/main.py"
+    pattern: |
+      VENDOR_NORMALIZATION = {
+          "sm store": "SM Supermarket",
+          "7 eleven": "7-Eleven",
+          # ... add more vendors ...
+      }
+    agent_use: "Add new vendor mappings here to improve OCR quality"
+
+  - id: ocr_ph_local_vendors
+    title: "PH Local Vendor Set"
+    domain: ocr_quality
+    location: "ocr-adapter/main.py"
+    pattern: |
+      PH_LOCAL_VENDORS = {
+          "sm", "7-eleven", "puregold", "max's",
+          # ... PH-specific vendors default to PHP ...
+      }
+    agent_use: "Add PH vendors here for automatic PHP currency defaulting"
+
+  # --- n8n Workflow Patterns ---
+  - id: n8n_odoo_jsonrpc
+    title: "n8n Odoo JSON-RPC Pattern"
+    domain: automation
+    pattern: |
+      {
+        "nodes": [
+          {
+            "type": "n8n-nodes-base.httpRequest",
+            "parameters": {
+              "url": "https://erp.insightpulseai.net/jsonrpc",
+              "method": "POST",
+              "body": {
+                "jsonrpc": "2.0",
+                "method": "call",
+                "params": {
+                  "service": "object",
+                  "method": "execute",
+                  "args": ["database", "uid", "password", "model", "method", []]
+                }
+              }
+            }
+          }
+        ]
+      }
+    agent_use: "Use this pattern for n8n → Odoo integration"
+
+  # --- Supabase RLS Patterns ---
+  - id: supabase_rls_policy
+    title: "Supabase RLS Policy Pattern"
+    domain: security_compliance
+    pattern: |
+      -- Enable RLS
+      ALTER TABLE table_name ENABLE ROW LEVEL SECURITY;
+
+      -- User can only see own records
+      CREATE POLICY "Users can view own records"
+        ON table_name FOR SELECT
+        USING (auth.uid() = user_id);
+
+      -- User can only insert own records
+      CREATE POLICY "Users can insert own records"
+        ON table_name FOR INSERT
+        WITH CHECK (auth.uid() = user_id);
+    agent_use: "Always apply RLS policies to Supabase tables for user data isolation"
+
+# ============================================================================
+# BEST PRACTICES
+# ============================================================================
+
+best_practices:
+
+  odoo_development:
+    - "Always use CE/OCA modules, never Enterprise"
+    - "No odoo.com links in user-facing code"
+    - "Follow OCA coding guidelines"
+    - "Add security/ir.model.access.csv for all models"
+    - "Use AGPL-3 license for custom modules"
+
+  ocr_quality:
+    - "Add normalization rules in adapter, not Odoo"
+    - "Run test harness after each normalization change"
+    - "Target: >= 85% success rate, < 30s P95 latency"
+    - "Monitor ocr.expense.log pivot weekly"
+    - "Use ±1 peso tolerance for total amount matching"
+
+  n8n_automation:
+    - "Follow WNNN_DD_DESCRIPTION naming convention"
+    - "Register all workflows in workflows/index.yaml"
+    - "Store workflows under workflows/<domain>/"
+    - "Use JSON-RPC for Odoo integration"
+    - "Implement error handling and retries"
+
+  security:
+    - "Always enable RLS on Supabase tables"
+    - "Use X-API-KEY authentication for external APIs"
+    - "Implement rate limiting (e.g., 100 req/hour)"
+    - "Never commit secrets to git"
+    - "Use HTTPS/TLS for all endpoints"
+
+  deployment:
+    - "Use M1 one-shot script for fresh deployments"
+    - "Always run CI checks before deploying"
+    - "Backup database before major upgrades"
+    - "Use Let's Encrypt for SSL certificates"
+    - "Monitor service health endpoints"
+
+# ============================================================================
+# EXTERNAL REFERENCES
+# ============================================================================
+
+external_references:
+
+  - id: odoo_docs
+    title: "Odoo CE Documentation"
+    url: "https://www.odoo.com/documentation/18.0/"
+    domain: odoo_development
+    agent_use: "Reference for core Odoo CE features"
+
+  - id: oca_guidelines
+    title: "OCA Development Guidelines"
+    url: "https://odoo-community.org/page/development"
+    domain: odoo_development
+    agent_use: "Follow OCA coding standards"
+
+  - id: supabase_docs
+    title: "Supabase Documentation"
+    url: "https://supabase.com/docs"
+    domain: infrastructure
+    agent_use: "Reference for Supabase features and RLS"
+
+  - id: n8n_docs
+    title: "n8n Documentation"
+    url: "https://docs.n8n.io/"
+    domain: automation
+    agent_use: "Reference for n8n workflow building"
+
+  - id: flutter_docs
+    title: "Flutter Documentation"
+    url: "https://docs.flutter.dev/"
+    domain: mobile_development
+    agent_use: "Reference for Flutter development"
+
+# ============================================================================
+# TROUBLESHOOTING GUIDES
+# ============================================================================
+
+troubleshooting:
+
+  odoo_issues:
+    - symptom: "Module fails to install"
+      diagnosis: "Check __manifest__.py dependencies and syntax"
+      solution: "Verify all depends modules installed, check logs"
+
+    - symptom: "CI fails with Enterprise module detected"
+      diagnosis: "grep finds Enterprise license or module reference"
+      solution: "Remove Enterprise dependency, use CE/OCA alternative"
+
+  ocr_issues:
+    - symptom: "OCR failure rate > 20%"
+      diagnosis: "Check ocr.expense.log → Group by Status → Vendor"
+      solution: "Add vendor normalization rule in ocr-adapter/main.py"
+
+    - symptom: "P95 processing time > 30s"
+      diagnosis: "Check OCR backend health, network latency"
+      solution: "Optimize OCR backend, check timeout settings"
+
+  n8n_issues:
+    - symptom: "Workflow import fails"
+      diagnosis: "Check workflow JSON syntax and node types"
+      solution: "Validate JSON, ensure n8n nodes installed"
+
+    - symptom: "Odoo JSON-RPC fails"
+      diagnosis: "Check authentication, database name, API endpoint"
+      solution: "Verify credentials, test with curl"
+
+  deployment_issues:
+    - symptom: "Docker container won't start"
+      diagnosis: "Check docker logs, port conflicts"
+      solution: "Review logs, check port availability, verify env vars"
+
+    - symptom: "SSL certificate not working"
+      diagnosis: "Check certbot logs, DNS configuration"
+      solution: "Verify DNS points to droplet IP, re-run certbot"

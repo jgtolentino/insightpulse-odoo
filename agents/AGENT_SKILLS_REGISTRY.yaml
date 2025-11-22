@@ -1,0 +1,495 @@
+# InsightPulse AI - Agent Skills Registry
+# Version: 1.0.0
+# Purpose: Master capability map derived from Odoo CE + Supabase + n8n + K8s stack
+# Aligned to: Microsoft Learn → Agent Capability transformation pattern
+
+id: insightpulse_ai_agent_registry
+version: 1.0.0
+created: 2025-11-22
+status: active
+owner: InsightPulseAI Platform Team
+
+# ============================================================================
+# DOMAINS - Major capability areas
+# ============================================================================
+domains:
+  - odoo_ce              # Odoo Community Edition operations
+  - supabase             # Supabase database + storage
+  - n8n                  # Workflow automation
+  - ocr_ml               # OCR + AI/ML inference
+  - deployment           # Infrastructure + deployment
+  - finance_ops          # Finance operations + closing
+  - mobile               # Mobile client development
+
+# ============================================================================
+# SKILLS - Atomic capabilities the agent can execute
+# ============================================================================
+skills:
+  # --- Odoo CE Skills ---
+  - id: scaffold_odoo_module
+    name: "Scaffold Odoo Module"
+    domain: odoo_ce
+    description: "Create new Odoo CE module with manifest, models, views, security"
+    inputs:
+      - module_name
+      - category
+      - dependencies
+    outputs:
+      - module_directory
+      - __manifest__.py
+      - models/
+      - views/
+      - security/
+    tools:
+      - odoo_scaffold
+      - python
+      - xml
+    knowledge_refs:
+      - odoo_oca_patterns
+      - odoo_ce_18_docs
+
+  - id: deploy_odoo_module
+    name: "Deploy Odoo Module to Production"
+    domain: odoo_ce
+    description: "Rsync module, upgrade, restart Odoo container"
+    inputs:
+      - module_name
+      - target_host
+    outputs:
+      - deployment_log
+    tools:
+      - rsync
+      - ssh
+      - docker
+    preconditions:
+      - odoo_instance_running
+      - module_passes_lint
+
+  - id: create_odoo_automation
+    name: "Create Odoo Automation Rule"
+    domain: odoo_ce
+    description: "Create automated actions for model triggers"
+    inputs:
+      - model_name
+      - trigger_type
+      - action
+    outputs:
+      - ir.cron or ir.actions.server record
+
+  - id: analyze_odoo_logs
+    name: "Analyze Odoo Error Logs"
+    domain: odoo_ce
+    description: "Parse Odoo logs, identify errors, suggest fixes"
+    inputs:
+      - log_file_path
+    outputs:
+      - error_summary
+      - suggested_fixes
+
+  # --- Supabase Skills ---
+  - id: create_supabase_schema
+    name: "Generate Supabase Schema"
+    domain: supabase
+    description: "Create PostgreSQL tables with RLS policies"
+    inputs:
+      - table_name
+      - columns
+      - rls_policies
+    outputs:
+      - migration_sql
+    tools:
+      - supabase_cli
+      - postgresql
+
+  - id: setup_supabase_storage
+    name: "Setup Supabase Storage Bucket"
+    domain: supabase
+    description: "Create storage bucket with RLS policies"
+    inputs:
+      - bucket_name
+      - access_level
+      - rls_policies
+    outputs:
+      - bucket_config
+
+  # --- n8n Skills ---
+  - id: create_n8n_workflow
+    name: "Create n8n Workflow"
+    domain: n8n
+    description: "Generate n8n workflow JSON from specification"
+    inputs:
+      - workflow_spec
+      - domain_code
+    outputs:
+      - workflow_json
+      - workflow_id
+    tools:
+      - n8n_cli
+      - jq
+    knowledge_refs:
+      - n8n_workflow_conventions
+      - odoo_jsonrpc_patterns
+
+  - id: deploy_n8n_workflow
+    name: "Deploy n8n Workflow"
+    domain: n8n
+    description: "Import workflow to n8n instance"
+    inputs:
+      - workflow_json_path
+    outputs:
+      - workflow_url
+    tools:
+      - n8n_cli
+    preconditions:
+      - n8n_instance_running
+
+  # --- OCR/ML Skills ---
+  - id: test_ocr_quality
+    name: "Test OCR Quality"
+    domain: ocr_ml
+    description: "Run OCR test harness against ground truth"
+    inputs:
+      - test_images_dir
+      - ground_truth_csv
+    outputs:
+      - quality_report
+      - accuracy_metrics
+    tools:
+      - python
+      - test_harness_script
+    knowledge_refs:
+      - ocr_quality_standards
+      - ph_receipt_patterns
+
+  - id: add_ocr_normalization
+    name: "Add OCR Normalization Rule"
+    domain: ocr_ml
+    description: "Add vendor/date/currency normalization to OCR adapter"
+    inputs:
+      - normalization_type
+      - pattern
+      - canonical_value
+    outputs:
+      - updated_main_py
+
+  # --- Deployment Skills ---
+  - id: deploy_to_digitalocean
+    name: "Deploy to DigitalOcean"
+    domain: deployment
+    description: "Deploy service to DigitalOcean droplet or App Platform"
+    inputs:
+      - service_type
+      - config_files
+    outputs:
+      - deployment_url
+      - service_status
+    tools:
+      - doctl
+      - ssh
+      - docker
+
+  - id: setup_nginx_proxy
+    name: "Setup Nginx Reverse Proxy"
+    domain: deployment
+    description: "Configure nginx with SSL for service"
+    inputs:
+      - domain_name
+      - backend_port
+    outputs:
+      - nginx_config
+      - ssl_cert_status
+    tools:
+      - nginx
+      - certbot
+
+  - id: run_ci_checks
+    name: "Run CI/CD Checks"
+    domain: deployment
+    description: "Execute CE/OCA guardrails, linting, tests"
+    inputs:
+      - repo_path
+    outputs:
+      - check_results
+    tools:
+      - github_actions
+      - ruff
+      - pylint
+
+  # --- Finance Ops Skills ---
+  - id: import_monthly_tasks
+    name: "Import Monthly Closing Tasks"
+    domain: finance_ops
+    description: "Import month-end tasks from CSV to Odoo projects"
+    inputs:
+      - csv_path
+      - month_offset
+    outputs:
+      - task_count
+      - project_id
+    knowledge_refs:
+      - finance_closing_templates
+      - bir_filing_calendar
+
+  - id: send_bir_alerts
+    name: "Send BIR Deadline Alerts"
+    domain: finance_ops
+    description: "Check BIR deadlines, send Mattermost/email alerts"
+    inputs:
+      - alert_days_before
+    outputs:
+      - alerts_sent
+    tools:
+      - n8n
+      - mattermost_webhook
+
+  # --- Mobile Skills ---
+  - id: build_flutter_module
+    name: "Build Flutter Module"
+    domain: mobile
+    description: "Build Flutter module for Android/iOS"
+    inputs:
+      - module_path
+      - platform
+    outputs:
+      - apk_path or ipa_path
+    tools:
+      - flutter
+
+  - id: test_flutter_integration
+    name: "Test Flutter-Supabase Integration"
+    domain: mobile
+    description: "Run integration tests for Flutter + Supabase"
+    inputs:
+      - test_suite_path
+    outputs:
+      - test_results
+    tools:
+      - flutter_test
+      - supabase_test_client
+
+# ============================================================================
+# CAPABILITIES - Composite workflows combining multiple skills
+# ============================================================================
+capabilities:
+  - id: build_enterprise_module
+    name: "Build Enterprise Odoo Module"
+    description: "End-to-end creation of production-ready Odoo module"
+    skills:
+      - scaffold_odoo_module
+      - run_ci_checks
+      - deploy_odoo_module
+    preconditions:
+      - odoo_instance_available
+      - ci_pipeline_green
+    validation:
+      - module_installable
+      - no_enterprise_dependencies
+      - all_tests_pass
+
+  - id: setup_ocr_pipeline
+    name: "Setup Complete OCR Pipeline"
+    description: "Deploy OCR adapter + Odoo module + quality testing"
+    skills:
+      - deploy_to_digitalocean
+      - deploy_odoo_module
+      - create_supabase_schema
+      - test_ocr_quality
+    outputs:
+      - ocr_endpoint_url
+      - quality_baseline
+
+  - id: automate_finance_closing
+    name: "Automate Monthly Finance Closing"
+    description: "Deploy n8n workflows for finance automation"
+    skills:
+      - import_monthly_tasks
+      - create_n8n_workflow
+      - deploy_n8n_workflow
+      - send_bir_alerts
+    knowledge_refs:
+      - finance_closing_playbook
+      - bir_compliance_rules
+
+  - id: deploy_mobile_ocr
+    name: "Deploy Mobile OCR Client"
+    description: "Build and deploy Flutter OCR app"
+    skills:
+      - build_flutter_module
+      - setup_supabase_storage
+      - test_flutter_integration
+    outputs:
+      - mobile_app_download_url
+
+# ============================================================================
+# PROCEDURES - High-level orchestration macros
+# ============================================================================
+procedures:
+  build_new_feature:
+    description: "End-to-end feature development workflow"
+    steps:
+      - "Understand requirement from user"
+      - "Map requirement to Odoo CE + edge systems"
+      - "Generate code scaffold using relevant skills"
+      - "Run tests and CI checks"
+      - "Deploy to staging/production"
+      - "Notify stakeholders via Mattermost/n8n"
+    validation:
+      - "AI validator checks code quality"
+      - "Odoo test suite passes"
+      - "GitHub CI checks green"
+      - "No Enterprise/IAP dependencies introduced"
+
+  investigate_production_issue:
+    description: "Debug production issues"
+    steps:
+      - "Analyze Odoo logs using analyze_odoo_logs skill"
+      - "Check OCR quality metrics if OCR-related"
+      - "Review n8n workflow execution logs"
+      - "Identify root cause"
+      - "Propose fix + create patch"
+      - "Deploy fix + validate"
+
+  onboard_new_automation:
+    description: "Add new n8n automation workflow"
+    steps:
+      - "Define workflow specification"
+      - "Create workflow JSON using n8n conventions"
+      - "Test workflow in n8n staging"
+      - "Deploy to production n8n instance"
+      - "Document in workflow registry"
+      - "Add to knowledge base"
+
+# ============================================================================
+# KNOWLEDGE SOURCES - References for agent learning
+# ============================================================================
+knowledge_sources:
+  - id: odoo_oca_patterns
+    type: documentation
+    location: "https://odoo-community.org/"
+    description: "OCA module patterns and best practices"
+
+  - id: odoo_ce_18_docs
+    type: documentation
+    location: "/home/user/odoo-ce/docs/"
+    description: "Odoo CE 18 internal documentation"
+
+  - id: n8n_workflow_conventions
+    type: specification
+    location: "/home/user/odoo-ce/notion-n8n-monthly-close/WORKFLOW_CONVENTIONS.md"
+    description: "n8n naming and structure conventions"
+
+  - id: ocr_quality_standards
+    type: specification
+    location: "/home/user/odoo-ce/ODOO_OCR_SETUP.md"
+    description: "OCR quality SLOs and normalization patterns"
+
+  - id: ph_receipt_patterns
+    type: knowledge
+    location: "ocr-adapter/main.py"
+    description: "PH vendor normalization and receipt patterns"
+
+  - id: finance_closing_playbook
+    type: runbook
+    location: "/home/user/odoo-ce/specs/002-odoo-expense-equipment-mvp.prd.md"
+    description: "Finance closing workflows and BIR requirements"
+
+  - id: insightpulse_standards
+    type: standards
+    location: "/home/user/odoo-ce/spec.md"
+    description: "InsightPulse CE/OCA-only standards"
+
+  - id: module_service_matrix
+    type: architecture
+    location: "/home/user/odoo-ce/specs/MODULE_SERVICE_MATRIX.md"
+    description: "Complete platform integration map"
+
+# ============================================================================
+# EXECUTION RULES - Decision logic for autonomous operation
+# ============================================================================
+execution_rules:
+  - rule: "Always prefer CE/OCA over Enterprise"
+    condition: "when: module selection needed"
+    action: "reject Enterprise dependencies, suggest CE/OCA alternatives"
+
+  - rule: "Validate no odoo.com links"
+    condition: "when: code changes touch UI/templates"
+    action: "run CI check for odoo.com references before commit"
+
+  - rule: "Test OCR quality after normalization changes"
+    condition: "when: ocr-adapter/main.py modified"
+    action: "run test_ocr_quality skill automatically"
+
+  - rule: "Deploy via M1 script for infrastructure changes"
+    condition: "when: deploy/ directory modified"
+    action: "use deploy_m1.sh.template workflow"
+
+  - rule: "Follow n8n naming conventions"
+    condition: "when: creating new n8n workflow"
+    action: "use WNNN_DD_DESCRIPTION pattern from WORKFLOW_CONVENTIONS.md"
+
+  - rule: "Isolate user data with RLS"
+    condition: "when: creating Supabase tables"
+    action: "always add Row Level Security policies"
+
+  - rule: "Rate limit external API calls"
+    condition: "when: integrating external services"
+    action: "implement rate limiting (e.g., 100 req/hour for OCR)"
+
+# ============================================================================
+# STACK CONFIGURATION - Actual deployed services
+# ============================================================================
+stack:
+  odoo:
+    url: "https://erp.insightpulseai.net"
+    version: "18.0 CE"
+    custom_modules:
+      - ipai_expense
+      - ipai_equipment
+      - ipai_ocr_expense
+      - ipai_finance_monthly_closing
+      - ipai_ce_cleaner
+      - flutter_receipt_ocr
+
+  supabase:
+    project_id: "spdtwktxdalcfigzeqrz"
+    region: "us-east-1"
+    tables:
+      - parsed_receipts
+    buckets:
+      - receipt-images
+
+  ocr_service:
+    url: "https://ocr.insightpulseai.net"
+    backend: "PaddleOCR-VL-900M"
+    llm: "OpenAI GPT-4o-mini"
+
+  n8n:
+    workspace: "fin-workspace"
+    workflows_repo: "notion-n8n-monthly-close/workflows/"
+
+  infrastructure:
+    platform: "DigitalOcean"
+    compute:
+      - odoo-erp-prod (Odoo + PostgreSQL)
+      - ocr-service-droplet (OCR backend)
+    deployment_method: "Docker Compose + M1 script"
+
+# ============================================================================
+# METRICS - Success criteria for agent operations
+# ============================================================================
+metrics:
+  ocr_quality:
+    target: ">= 85% success rate"
+    measurement: "Query ocr.expense.log for status='success'"
+
+  deployment_speed:
+    target: "< 5 minutes for module deployment"
+    measurement: "Time from rsync to Odoo restart"
+
+  ci_reliability:
+    target: "100% pass rate for CE/OCA checks"
+    measurement: "GitHub Actions workflow success"
+
+  automation_coverage:
+    target: ">= 80% of repetitive tasks automated"
+    measurement: "Count of n8n workflows vs manual processes"

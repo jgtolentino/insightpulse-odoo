@@ -1,0 +1,440 @@
+# InsightPulse AI - Execution Procedures
+# Purpose: Step-by-step playbooks for common agent tasks
+# Version: 1.0.0
+
+# ============================================================================
+# HIGH-LEVEL PROCEDURES
+# ============================================================================
+
+procedures:
+
+  # --------------------------------------------------------------------------
+  # 1. BUILD NEW FEATURE (End-to-End Development)
+  # --------------------------------------------------------------------------
+  build_new_feature:
+    description: "Complete workflow for implementing a new feature"
+    category: development
+    estimated_duration: "2-4 hours"
+
+    steps:
+      - step: 1
+        phase: "Requirement Analysis"
+        actions:
+          - "Read user requirement carefully"
+          - "Identify affected systems: Odoo CE, Supabase, n8n, mobile"
+          - "Check MODULE_SERVICE_MATRIX.md for integration points"
+          - "List required modules and dependencies"
+
+      - step: 2
+        phase: "Planning"
+        actions:
+          - "Create todo list with TodoWrite tool"
+          - "Break down into: scaffold → implement → test → deploy"
+          - "Identify knowledge sources needed"
+          - "Check if similar patterns exist in codebase"
+
+      - step: 3
+        phase: "Implementation"
+        actions:
+          - "Use scaffold_odoo_module if new module needed"
+          - "Follow odoo_manifest_pattern from KNOWLEDGE_BASE_INDEX"
+          - "Implement models, views, security"
+          - "Add Supabase schema if external storage needed"
+          - "Create n8n workflow if automation required"
+
+      - step: 4
+        phase: "Validation"
+        actions:
+          - "Run run_ci_checks skill"
+          - "Verify no Enterprise modules: grep -r 'OEEL'"
+          - "Verify no odoo.com links: grep -r 'odoo.com'"
+          - "Test locally with docker compose up"
+
+      - step: 5
+        phase: "Deployment"
+        actions:
+          - "Use deploy_odoo_module skill"
+          - "Rsync to erp.insightpulseai.net"
+          - "Upgrade module: odoo -u module_name"
+          - "Restart Odoo container"
+          - "Check health endpoint"
+
+      - step: 6
+        phase: "Notification"
+        actions:
+          - "Mark todos as completed"
+          - "Report deployment status to user"
+          - "Document any manual steps needed"
+
+    success_criteria:
+      - "Feature works as specified"
+      - "CI checks pass (CE/OCA compliance)"
+      - "Deployed to production successfully"
+      - "User notified with clear summary"
+
+    rollback_plan:
+      - "Keep previous module version backup"
+      - "Restore from backup if deployment fails"
+      - "Revert git commit if needed"
+
+  # --------------------------------------------------------------------------
+  # 2. INVESTIGATE PRODUCTION ISSUE (Debugging)
+  # --------------------------------------------------------------------------
+  investigate_production_issue:
+    description: "Debug and resolve production problems"
+    category: troubleshooting
+    estimated_duration: "30 minutes - 2 hours"
+
+    steps:
+      - step: 1
+        phase: "Identify Scope"
+        actions:
+          - "Ask user: which system? Odoo, OCR, n8n, mobile?"
+          - "Ask for: error message, when it started, affected users"
+          - "Check recent deployments: git log --since='2 days ago'"
+
+      - step: 2
+        phase: "Gather Logs"
+        actions:
+          - "Odoo logs: docker logs odoo-odoo-1 --tail 100"
+          - "OCR logs: ssh ocr.insightpulseai.net 'journalctl -u ai-inference-hub -n 100'"
+          - "n8n logs: check n8n execution history"
+          - "Odoo OCR quality: analyze_odoo_logs from ocr.expense.log"
+
+      - step: 3
+        phase: "Analyze Root Cause"
+        actions:
+          - "Search error in KNOWLEDGE_BASE_INDEX troubleshooting section"
+          - "Check if recent code change related"
+          - "If OCR: group failures by vendor/date/currency"
+          - "If Odoo: check for missing dependencies or migration issues"
+
+      - step: 4
+        phase: "Propose Fix"
+        actions:
+          - "If OCR quality: add_ocr_normalization rule"
+          - "If Odoo bug: create patch using Edit tool"
+          - "If n8n: update workflow JSON"
+          - "If config: update env vars or odoo.conf"
+
+      - step: 5
+        phase: "Test Fix"
+        actions:
+          - "If OCR: run test_ocr_quality skill"
+          - "If Odoo: test locally first"
+          - "Validate fix doesn't break existing functionality"
+
+      - step: 6
+        phase: "Deploy Fix"
+        actions:
+          - "Deploy to staging first if available"
+          - "Deploy to production using relevant skill"
+          - "Monitor logs for 5-10 minutes after deployment"
+          - "Verify issue resolved"
+
+    success_criteria:
+      - "Root cause identified"
+      - "Fix deployed successfully"
+      - "Issue no longer reproduces"
+      - "No regressions introduced"
+
+  # --------------------------------------------------------------------------
+  # 3. IMPROVE OCR QUALITY (Iterative Enhancement)
+  # --------------------------------------------------------------------------
+  improve_ocr_quality:
+    description: "Analyze OCR failures and improve extraction accuracy"
+    category: quality_improvement
+    estimated_duration: "1-2 hours"
+
+    steps:
+      - step: 1
+        phase: "Analyze Current Quality"
+        actions:
+          - "Query Odoo: Expenses → Configuration → OCR Logs"
+          - "Filter: Failed (Last 7 Days)"
+          - "Group by: Status → Vendor"
+          - "Identify top 5 failing vendors or patterns"
+
+      - step: 2
+        phase: "Review Ground Truth"
+        actions:
+          - "Check if ground_truth.csv has examples of failing vendor"
+          - "If not, ask user to provide sample receipts"
+          - "Add to test_receipts/ directory"
+          - "Update ground_truth.csv with expected values"
+
+      - step: 3
+        phase: "Add Normalization Rules"
+        actions:
+          - "Edit ocr-adapter/main.py"
+          - "Add vendor mapping to VENDOR_NORMALIZATION dict"
+          - "Add date format if needed"
+          - "Add to PH_LOCAL_VENDORS if PH vendor"
+        example: |
+          VENDOR_NORMALIZATION = {
+              "jollibee": "Jollibee",
+              "sm dept store": "SM Department Store",
+          }
+
+      - step: 4
+        phase: "Test Improvements"
+        actions:
+          - "Run test harness: test_ocr_quality skill"
+          - "Check accuracy delta: expect >= 5% improvement"
+          - "Verify no regressions: existing passing tests still pass"
+
+      - step: 5
+        phase: "Deploy Adapter Update"
+        actions:
+          - "Deploy adapter to ocr.insightpulseai.net"
+          - "Method: git push → DigitalOcean App Platform auto-deploy"
+          - "Or: rsync + restart service"
+          - "Monitor logs: check first 10 OCR calls"
+
+      - step: 6
+        phase: "Monitor Post-Deployment"
+        actions:
+          - "Watch ocr.expense.log for next 24 hours"
+          - "Check if failure rate decreased"
+          - "Update quality report in docs/"
+
+    success_criteria:
+      - "Success rate: >= 85%"
+      - "P95 latency: < 30 seconds"
+      - "Field accuracy: date >= 95%, total >= 95%, vendor >= 90%"
+      - "No regressions in existing passing tests"
+
+  # --------------------------------------------------------------------------
+  # 4. ONBOARD NEW N8N AUTOMATION (Workflow Creation)
+  # --------------------------------------------------------------------------
+  onboard_new_n8n_automation:
+    description: "Create and deploy new n8n automation workflow"
+    category: automation
+    estimated_duration: "1-2 hours"
+
+    steps:
+      - step: 1
+        phase: "Define Workflow Spec"
+        actions:
+          - "Understand automation purpose from user"
+          - "Identify: trigger (cron, webhook, manual)"
+          - "Identify: actions (query Odoo, send alert, create record)"
+          - "Identify: domain code from WORKFLOW_CONVENTIONS.md"
+        domain_codes:
+          - "OD: Odoo"
+          - "SB: Supabase"
+          - "NO: Notion"
+          - "CC: Concur-equivalent (expense/travel)"
+          - "EQ: Equipment"
+
+      - step: 2
+        phase: "Assign Workflow ID"
+        actions:
+          - "Check workflows/index.yaml for next available ID in domain"
+          - "Format: WNNN_DD_SHORT_DESCRIPTION"
+        examples:
+          - "W003_OD_EXPENSE_REMINDERS"
+          - "W103_SB_DATA_SYNC"
+          - "W403_CC_RECEIPT_IMPORT"
+
+      - step: 3
+        phase: "Create Workflow JSON"
+        actions:
+          - "Use create_n8n_workflow skill"
+          - "Follow n8n_odoo_jsonrpc pattern from KNOWLEDGE_BASE_INDEX"
+          - "Add error handling and retry logic"
+          - "Save to: notion-n8n-monthly-close/workflows/<domain>/"
+
+      - step: 4
+        phase: "Register Workflow"
+        actions:
+          - "Add entry to workflows/index.yaml"
+          - "Include: id, name, domain, schedule, status"
+
+      - step: 5
+        phase: "Test Workflow"
+        actions:
+          - "Import to n8n staging or dev instance"
+          - "Run manual execution"
+          - "Verify: Odoo data updated or alert sent"
+          - "Check logs for errors"
+
+      - step: 6
+        phase: "Deploy to Production"
+        actions:
+          - "Use deploy_n8n_workflow skill"
+          - "Import to production n8n instance"
+          - "Enable workflow"
+          - "Set cron schedule if applicable"
+          - "Monitor first few executions"
+
+    success_criteria:
+      - "Workflow follows naming conventions"
+      - "Registered in index.yaml"
+      - "Dry run successful"
+      - "Deployed to production n8n"
+
+  # --------------------------------------------------------------------------
+  # 5. DEPLOY TO DIGITALOCEAN (Infrastructure)
+  # --------------------------------------------------------------------------
+  deploy_to_digitalocean:
+    description: "Deploy new service or update to DigitalOcean"
+    category: infrastructure
+    estimated_duration: "15-30 minutes"
+
+    steps:
+      - step: 1
+        phase: "Pre-Deployment Checks"
+        actions:
+          - "Verify DNS configured: host <domain>"
+          - "Check doctl access: doctl account get"
+          - "Ensure deploy/ configs ready: docker-compose.yml, odoo.conf"
+
+      - step: 2
+        phase: "Choose Deployment Method"
+        options:
+          - option: "Fresh Odoo Deployment"
+            script: "deploy_m1.sh.template"
+            use_when: "New Odoo instance"
+
+          - option: "Update Existing Service"
+            method: "rsync + docker restart"
+            use_when: "Module update or config change"
+
+          - option: "App Platform Deployment"
+            method: "doctl apps create-deployment"
+            use_when: "OCR adapter or stateless service"
+
+      - step: 3
+        phase: "Execute Deployment"
+        actions:
+          - "If M1 script: ssh to droplet, run deploy_m1.sh"
+          - "If rsync: rsync -avz source/ target:dest/"
+          - "If App Platform: git push → auto-deploy"
+
+      - step: 4
+        phase: "Post-Deployment Validation"
+        actions:
+          - "Check health endpoint: curl https://domain/health"
+          - "Verify SSL: curl -vI https://domain"
+          - "Check docker: ssh target 'docker ps'"
+          - "Review logs: docker logs <container> --tail 50"
+
+      - step: 5
+        phase: "Monitoring Setup"
+        actions:
+          - "Add to uptime monitor (if critical service)"
+          - "Configure log aggregation (if needed)"
+          - "Set up alerts for health check failures"
+
+    success_criteria:
+      - "Service accessible via HTTPS"
+      - "SSL certificate valid"
+      - "Health check passes"
+      - "No errors in startup logs"
+
+# ============================================================================
+# DECISION TREES
+# ============================================================================
+
+decision_trees:
+
+  which_skill_to_use:
+    question: "What type of task is this?"
+    branches:
+      - condition: "Create new Odoo module"
+        use: "scaffold_odoo_module → run_ci_checks → deploy_odoo_module"
+
+      - condition: "Improve OCR quality"
+        use: "analyze_odoo_logs → add_ocr_normalization → test_ocr_quality"
+
+      - condition: "Create automation"
+        use: "create_n8n_workflow → deploy_n8n_workflow"
+
+      - condition: "Deploy infrastructure"
+        use: "deploy_to_digitalocean → setup_nginx_proxy"
+
+      - condition: "Debug production issue"
+        use: "investigate_production_issue procedure"
+
+  deployment_method:
+    question: "What are you deploying?"
+    branches:
+      - condition: "Fresh Odoo instance on new droplet"
+        method: "deploy_m1.sh.template"
+        duration: "10-15 minutes"
+
+      - condition: "Update existing Odoo module"
+        method: "rsync + docker exec odoo -u module_name"
+        duration: "2-5 minutes"
+
+      - condition: "OCR adapter update"
+        method: "git push → DigitalOcean App Platform auto-deploy"
+        duration: "3-5 minutes"
+
+      - condition: "n8n workflow"
+        method: "n8n CLI import"
+        duration: "1-2 minutes"
+
+# ============================================================================
+# VALIDATION CHECKLISTS
+# ============================================================================
+
+validation_checklists:
+
+  before_deployment:
+    - "CI checks pass (GitHub Actions green)"
+    - "No Enterprise modules detected"
+    - "No odoo.com links in templates"
+    - "All tests pass locally"
+    - "Database backup taken (if schema changes)"
+
+  after_deployment:
+    - "Service accessible via HTTPS"
+    - "SSL certificate valid"
+    - "Health check endpoint returns 200"
+    - "No errors in logs (last 50 lines)"
+    - "User-facing functionality works"
+
+  ce_oca_compliance:
+    - "grep -r 'OEEL' addons/ returns empty"
+    - "grep -r 'odoo.com' addons/ returns empty (except comments)"
+    - "All dependencies are CE or OCA modules"
+    - "LICENSE files are AGPL-3"
+    - "No IAP references in code"
+
+  ocr_quality:
+    - "Test harness passes with >= 85% accuracy"
+    - "P95 processing time < 30 seconds"
+    - "Date accuracy >= 95%"
+    - "Total accuracy >= 95% (±1 peso tolerance)"
+    - "Vendor accuracy >= 90%"
+
+# ============================================================================
+# ROLLBACK PROCEDURES
+# ============================================================================
+
+rollback_procedures:
+
+  odoo_module_rollback:
+    when: "Module upgrade fails or breaks functionality"
+    steps:
+      - "Restore database from backup: psql < backup.sql"
+      - "Rsync previous module version from git"
+      - "Restart Odoo: docker restart odoo-odoo-1"
+      - "Verify functionality restored"
+
+  ocr_adapter_rollback:
+    when: "OCR quality degrades after deployment"
+    steps:
+      - "Revert git commit: git revert <commit>"
+      - "Redeploy adapter (auto via git push)"
+      - "Run test harness to confirm quality restored"
+
+  n8n_workflow_rollback:
+    when: "Workflow causes errors or incorrect behavior"
+    steps:
+      - "Disable workflow in n8n UI"
+      - "Restore previous version from backups/"
+      - "Re-import using n8n CLI"
+      - "Test manually before re-enabling"
