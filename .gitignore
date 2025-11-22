@@ -1,0 +1,58 @@
+# Odoo
+*.pyc
+*.pyo
+__pycache__/
+.venv/
+venv/
+*.log
+*.bak
+*.swp
+.DS_Store
+
+# Database
+*.db
+backups/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Data
+data/
+logs/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-*
+
+# Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Android
+*.iml
+.gradle/
+local.properties
+.android/
+
+# iOS
+Pods/
+.symlinks/
+**/Flutter/App.framework
+**/Flutter/Flutter.framework
+**/Flutter/Flutter.podspec
+**/Flutter/Generated.xcconfig
+**/Flutter/ephemeral/
+**/Pods/
+**/.symlinks/
+**/DerivedData/
+ios/Flutter/flutter_export_environment.sh
+.ios/
+
