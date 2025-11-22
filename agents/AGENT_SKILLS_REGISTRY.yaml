@@ -320,6 +320,33 @@ capabilities:
     outputs:
       - mobile_app_download_url
 
+  - id: cheqroom_parity_equipment_ce
+    name: "Cheqroom-Style Equipment Management on Odoo CE"
+    description: "Maintain and extend ipai_equipment module providing Cheqroom-grade equipment catalog, booking, calendar, overlap prevention, overdue alerts, and utilization reports on Odoo 18 CE"
+    skills:
+      - scaffold_odoo_module
+      - deploy_odoo_module
+      - analyze_odoo_logs
+      - create_n8n_workflow
+    features:
+      - equipment_catalog_with_conditions
+      - booking_calendar_with_overlap_prevention
+      - overdue_notifications_via_cron
+      - utilization_reports_pivot_graph
+      - incident_tracking
+      - mail_activities_integration
+    preconditions:
+      - odoo_ce_18_with_stock_maintenance_project
+      - mail_module_installed
+    validation:
+      - booking_sequence_exists
+      - calendar_view_functional
+      - overdue_cron_creates_activities
+      - overlap_constraint_enforced
+    knowledge_refs:
+      - cheqroom_parity_documentation
+      - ipai_equipment_tests
+
 # ============================================================================
 # PROCEDURES - High-level orchestration macros
 # ============================================================================
@@ -358,6 +385,44 @@ procedures:
       - "Deploy to production n8n instance"
       - "Document in workflow registry"
       - "Add to knowledge base"
+
+  ensure_ipai_equipment_schema:
+    description: "Ensure ipai_equipment module has complete schema"
+    steps:
+      - "Verify ipai.equipment.asset model has all Cheqroom fields (status, condition, location, image)"
+      - "Verify ipai.equipment.booking model with mail.thread + mail.activity.mixin"
+      - "Verify ipai.equipment.incident model exists"
+      - "Check security/ir.model.access.csv has all 3 models"
+      - "Validate views include tree, form, calendar, graph, pivot"
+
+  ensure_booking_calendar_and_overlap_guard:
+    description: "Ensure booking calendar and overlap prevention"
+    steps:
+      - "Verify calendar view exists in ipai_equipment_views.xml with date_start/date_stop"
+      - "Verify _check_booking_conflict constraint in booking model"
+      - "Test overlap prevention by creating conflicting bookings"
+      - "Confirm error raised for same asset + overlapping dates"
+
+  ensure_overdue_cron_and_activities:
+    description: "Ensure overdue cron + activities for equipment bookings"
+    steps:
+      - "Open addons/ipai_equipment/models/equipment.py and verify _cron_check_overdue_bookings exists"
+      - "Verify activity creation logic uses mail.mail_activity_data_todo and borrower_id"
+      - "Verify data/ipai_equipment_cron.xml is loaded in __manifest__.py"
+      - "Deploy ipai_equipment via scripts/deploy-odoo-modules.sh ipai_equipment"
+      - "Run cron manually from Scheduled Actions and confirm activities appear"
+
+  run_cheqroom_uat_script:
+    description: "Run Cheqroom UAT on ipai_equipment"
+    steps:
+      - "Upgrade ipai_equipment in Odoo UI (Apps → Search → Upgrade)"
+      - "Create 3 assets: Sony A7S3 #1, Sony A7S3 #2, DJI Gimbal #1"
+      - "Create booking EQB00001, test reserve/check-out/return state transitions"
+      - "Test overlap error for same asset with overlapping dates"
+      - "Create overdue booking (past end_datetime, state=checked_out)"
+      - "Run cron manually, verify activity created for borrower"
+      - "Verify calendar view shows bookings as colored blocks"
+      - "Verify utilization pivot/graph views functional"
 
 # ============================================================================
 # KNOWLEDGE SOURCES - References for agent learning
@@ -402,6 +467,16 @@ knowledge_sources:
     type: architecture
     location: "/home/user/odoo-ce/specs/MODULE_SERVICE_MATRIX.md"
     description: "Complete platform integration map"
+
+  - id: cheqroom_parity_documentation
+    type: documentation
+    location: "/home/user/odoo-ce/docs/FEATURE_CHEQROOM_PARITY.md"
+    description: "Cheqroom parity feature documentation and UAT script"
+
+  - id: ipai_equipment_tests
+    type: tests
+    location: "/home/user/odoo-ce/addons/ipai_equipment/tests/"
+    description: "ipai_equipment regression tests for booking lifecycle"
 
 # ============================================================================
 # EXECUTION RULES - Decision logic for autonomous operation
