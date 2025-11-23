@@ -6,6 +6,91 @@ Deployment automation and health check scripts for the Finance Stack Health Moni
 
 This directory contains scripts to automate the deployment and operation of the finance stack health monitoring infrastructure.
 
+## Repository Maintenance Scripts
+
+### 0. `gen_repo_tree.sh`
+
+Automatically generates and updates the repository structure tree in `spec.md`.
+
+**Usage:**
+```bash
+./scripts/gen_repo_tree.sh
+```
+
+**What it does:**
+- Scans the current repository structure (depth 2)
+- Generates a clean tree view excluding build artifacts
+- Updates the `<!-- REPO_TREE_START -->` section in `spec.md`
+- Ensures documentation always reflects actual repo state
+
+**Prerequisites:**
+- `tree` command available (`brew install tree` on macOS)
+- Git repository (uses `git rev-parse --show-toplevel`)
+
+**Example:**
+```bash
+# Manually regenerate repo tree
+./scripts/gen_repo_tree.sh
+
+# Output:
+✅ Updated repo tree in /path/to/odoo-ce/spec.md
+```
+
+**Auto-execution:**
+- CI enforces tree is up-to-date (see `.github/workflows/ci-odoo-ce.yml`)
+- Pre-commit hook auto-regenerates (install with `./scripts/install-git-hooks.sh`)
+
+**See also:** `spec.md` for the auto-generated tree output
+
+---
+
+### 0.1. `install-git-hooks.sh`
+
+Installs git pre-commit hook for auto-regenerating repo tree.
+
+**Usage:**
+```bash
+./scripts/install-git-hooks.sh
+```
+
+**What it does:**
+- Creates `.git/hooks/pre-commit` hook
+- Auto-runs `gen_repo_tree.sh` before every commit
+- Auto-stages updated `spec.md` if tree changed
+- Prevents out-of-date documentation
+
+**Example:**
+```bash
+# Install hooks (one-time setup)
+./scripts/install-git-hooks.sh
+
+# Output:
+✅ Git hooks installed successfully!
+
+Pre-commit hook will now auto-regenerate repo tree in spec.md
+To disable: rm .git/hooks/pre-commit
+```
+
+**Behavior:**
+```bash
+# After installation, when you commit:
+git commit -m "feat: add new module"
+
+# Output:
+🔄 Regenerating repo tree...
+✅ Updated repo tree in /path/to/odoo-ce/spec.md
+📝 Adding updated spec.md to commit
+[main abc1234] feat: add new module
+ 2 files changed, 100 insertions(+), 50 deletions(-)
+```
+
+**To disable:**
+```bash
+rm .git/hooks/pre-commit
+```
+
+---
+
 ## Deployment Scripts
 
 ### 1. `deploy-to-server.sh`

@@ -49,3 +49,25 @@ jobs:
       - name: Python lint (optional baseline)
         run: |
           python -m compileall addons || true
+
+  repo-structure:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install tree command
+        run: sudo apt-get update && sudo apt-get install -y tree
+
+      - name: Regenerate repo tree
+        run: ./scripts/gen_repo_tree.sh
+
+      - name: Fail if repo tree is out of date
+        run: |
+          if ! git diff --quiet spec.md; then
+            echo "::error::Repo tree in spec.md is out of date. Run ./scripts/gen_repo_tree.sh and commit."
+            echo "Expected diff:"
+            git diff spec.md
+            exit 1
+          fi
+          echo "✅ Repo tree is up to date"
