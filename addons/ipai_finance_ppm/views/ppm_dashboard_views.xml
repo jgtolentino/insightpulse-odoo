@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Root menu (define here to avoid circular dependency) -->
+    <menuitem id="menu_finance_ppm_root"
+              name="Finance PPM"
+              web_icon="project,static/description/icon.png"
+              sequence="10"/>
+
     <!-- List view -->
     <record id="view_finance_ppm_dashboard_tree" model="ir.ui.view">
         <field name="name">finance.ppm.dashboard.tree</field>
