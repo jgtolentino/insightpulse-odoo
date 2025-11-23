@@ -91,6 +91,15 @@
                     var statusData = <t t-raw="status_data"/>;
                     var today = '<t t-esc="today"/>';
 
+                    // Extract Bootstrap CSS variables for design token consistency
+                    var colorTokens = {
+                        primary: getComputedStyle(document.documentElement).getPropertyValue('--bs-primary').trim() || '#5470c6',
+                        success: getComputedStyle(document.documentElement).getPropertyValue('--bs-success').trim() || '#91cc75',
+                        warning: getComputedStyle(document.documentElement).getPropertyValue('--bs-warning').trim() || '#fac858',
+                        danger: getComputedStyle(document.documentElement).getPropertyValue('--bs-danger').trim() || '#ee6666',
+                        info: getComputedStyle(document.documentElement).getPropertyValue('--bs-info').trim() || '#409eff'
+                    };
+
                     // Chart 1: Timeline (Gantt-style)
                     var timelineChart = echarts.init(document.getElementById('chart_timeline'));
                     var timelineOption = {
@@ -120,28 +129,28 @@
                                 type: 'bar',
                                 stack: 'deadline',
                                 data: chartData.map(item => [item.prep_deadline, item.form]),
-                                itemStyle: { color: '#5470c6' }
+                                itemStyle: { color: colorTokens.primary }
                             },
                             {
                                 name: 'Review',
                                 type: 'bar',
                                 stack: 'deadline',
                                 data: chartData.map(item => [item.review_deadline, item.form]),
-                                itemStyle: { color: '#91cc75' }
+                                itemStyle: { color: colorTokens.success }
                             },
                             {
                                 name: 'Approval',
                                 type: 'bar',
                                 stack: 'deadline',
                                 data: chartData.map(item => [item.approval_deadline, item.form]),
-                                itemStyle: { color: '#fac858' }
+                                itemStyle: { color: colorTokens.warning }
                             },
                             {
                                 name: 'Filing',
                                 type: 'bar',
                                 stack: 'deadline',
                                 data: chartData.map(item => [item.filing_deadline, item.form]),
-                                itemStyle: { color: '#ee6666' }
+                                itemStyle: { color: colorTokens.danger }
                             }
                         ]
                     };
@@ -179,8 +188,8 @@
                                 data: chartData.map(item => item.completion),
                                 itemStyle: {
                                     color: function(params) {
-                                        return params.value >= 100 ? '#67c23a' :
-                                               params.value >= 50 ? '#e6a23c' : '#f56c6c';
+                                        return params.value >= 100 ? colorTokens.success :
+                                               params.value >= 50 ? colorTokens.warning : colorTokens.danger;
                                     }
                                 }
                             },
@@ -190,9 +199,9 @@
                                 data: chartData.map(() => 100),
                                 lineStyle: {
                                     type: 'dashed',
-                                    color: '#409eff'
+                                    color: colorTokens.info
                                 },
-                                itemStyle: { color: '#409eff' }
+                                itemStyle: { color: colorTokens.info }
                             }
                         ]
                     };
