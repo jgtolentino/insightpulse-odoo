@@ -23,7 +23,7 @@
         # 'data/approval_matrix_data.xml',  # TODO: Create
         # 'data/export_templates_data.xml',  # TODO: Create
         # Views (load last, comment out until created)
-        # 'views/hr_expense_advance_views.xml',  # TODO: Create
+        'views/hr_expense_advance_views.xml',
         # 'views/spectra_export_views.xml',  # TODO: Create
         # 'views/spectra_mapping_views.xml',  # TODO: Create
         # 'views/approval_matrix_views.xml',  # TODO: Create
