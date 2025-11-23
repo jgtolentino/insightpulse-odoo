@@ -82,8 +82,6 @@ The system is designed to:
 |   |-- nginx-site.conf
 |   |-- requirements.txt
 |   `-- test-ocr.sh
-|-- packages
-|   `-- db
 |-- scripts
 |   |-- README.md
 |   |-- apply-supabase-schema.sh
