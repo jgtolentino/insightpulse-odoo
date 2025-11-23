@@ -7,6 +7,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.2.0] - 2025-11-23 — Equipment MVP + CI/CD Automation
+
+### Fixed
+- **Odoo 18 Compatibility Issue** - ipai_equipment module installation
+  - Removed deprecated `numbercall` field from ir.cron model
+  - File: `addons/ipai_equipment/data/ipai_equipment_cron.xml:13`
+  - Error: `ValueError: Invalid field 'numbercall' on model 'ir.cron'`
+  - Resolution: Odoo 18 crons run indefinitely by default (field removed)
+
+### Added
+- **CI/CD Automation Infrastructure**
+  - `odoo-bin` shim: Portable wrapper for GitHub Actions (fixes path issues)
+  - `scripts/run_odoo_migrations.sh`: Auto-detect ipai_*/tbwa_* modules
+  - `scripts/report_ci_telemetry.sh`: n8n webhook integration for CI health
+
+- **Equipment MVP Module** (Ready for Installation)
+  - Module: `ipai_equipment` (Cheqroom parity)
+  - Features: Equipment Catalog, Bookings, Incidents tracking
+  - Cron: Daily overdue booking checks
+  - Status: ⏳ Requires manual UI installation (dependency: maintenance module)
+
+### Documentation
+- Added `DEPLOYMENT_MVP.md`: Complete installation guide with troubleshooting
+- Installation method: Odoo Apps menu (manual step required)
+- Acceptance gates: Module state, UI access, cron registration, zero errors
+
+### Technical Details
+- **Odoo 18 Breaking Change**: ir.cron.numbercall field removed
+- **Migration Path**: Remove field from all cron XML definitions
+- **Reference**: https://www.odoo.com/documentation/18.0/developer/reference/upgrades.html
+
+### Files Modified
+```
+M  addons/ipai_equipment/data/ipai_equipment_cron.xml
+A  odoo-bin (executable)
+A  scripts/run_odoo_migrations.sh (executable)
+A  scripts/report_ci_telemetry.sh (executable)
+A  DEPLOYMENT_MVP.md
+```
+
+### Next Actions
+1. Install via Odoo UI: Apps > Update Apps List > Search "ipai_equipment" > Install
+2. Verify: Equipment menu visible with 3 submenus (Catalog, Bookings, Incidents)
+3. Test: Create test equipment record and verify cron job registered
+
+---
+
 ## [1.1.0] - 2025-11-23 — Finance PPM Automation Go-Live
 
 ### Added
