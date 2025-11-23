@@ -65,6 +65,10 @@ jobs:
           pip install -r requirements.txt || echo "requirements.txt not found, installing odoo dependencies"
           pip install psycopg2-binary wheel
 
+      - name: Install Odoo 18 CE from source
+        run: |
+          scripts/ci/install_odoo_18.sh
+
       - name: Wait for PostgreSQL
         run: |
           until pg_isready -h localhost -p 5432 -U odoo; do
@@ -81,7 +85,7 @@ jobs:
           PGDATABASE: test_cheqroom
         run: |
           echo "Testing Cheqroom parity (ipai_equipment)..."
-          python odoo-bin -d test_cheqroom \
+          scripts/ci/run_odoo_tests.sh -d test_cheqroom \
             -i ipai_equipment \
             --test-enable \
             --stop-after-init \
@@ -104,7 +108,7 @@ jobs:
           PGDATABASE: test_concur
         run: |
           echo "Testing Concur parity (ipai_expense)..."
-          python odoo-bin -d test_concur \
+          scripts/ci/run_odoo_tests.sh -d test_concur \
             -i ipai_expense \
             --test-enable \
             --stop-after-init \
@@ -127,7 +131,7 @@ jobs:
           PGDATABASE: test_workspace
         run: |
           echo "Testing Workspace parity (ipai_docs)..."
-          python odoo-bin -d test_workspace \
+          scripts/ci/run_odoo_tests.sh -d test_workspace \
             -i ipai_docs \
             --test-enable \
             --stop-after-init \
