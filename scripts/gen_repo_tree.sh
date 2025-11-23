@@ -10,7 +10,8 @@ cd "${ROOT_DIR}"
 
 # Generate the actual tree (depth 2, adjust as needed)
 # Exclude common build/cache directories
-tree -a -L 2 \
+# Use LC_ALL=C for consistent sorting across macOS and Linux
+LC_ALL=C tree -a -L 2 \
   --dirsfirst \
   --noreport \
   -I 'node_modules|.git|__pycache__|*.pyc|.DS_Store|venv|env' \

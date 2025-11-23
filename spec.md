@@ -21,101 +21,101 @@ The system is designed to:
 <!-- REPO_TREE_START -->
 ```text
 .
-├── .github
-│   └── workflows
-├── addons
-│   ├── flutter_receipt_ocr
-│   ├── ipai_ce_cleaner
-│   ├── ipai_docs
-│   ├── ipai_equipment
-│   ├── ipai_expense
-│   ├── ipai_finance_monthly_closing
-│   ├── ipai_ocr_expense
-│   ├── ipai_ppm_monthly_close
-│   └── tbwa_spectra_integration
-├── agents
-│   ├── capabilities
-│   ├── knowledge
-│   ├── loops
-│   ├── procedures
-│   ├── AGENT_SKILLS_REGISTRY.yaml
-│   ├── odoo_reverse_mapper.yaml
-│   ├── ORCHESTRATOR.md
-│   ├── PRIORITIZED_ROADMAP.md
-│   └── README.md
-├── automations
-│   └── n8n
-├── baselines
-│   └── v0.2.1-quality-baseline-20251121.txt
-├── data
-│   └── month_end_tasks.csv
-├── deploy
-│   ├── nginx
-│   ├── docker-compose.yml
-│   └── odoo.conf
-├── docs
-│   ├── AGENT_FRAMEWORK_SESSION_REPORT.md
-│   ├── DEPLOYMENT_GUIDE.md
-│   ├── DEPLOYMENT.md
-│   ├── ENTERPRISE_FEATURE_GAP.yaml
-│   ├── FEATURE_CHEQROOM_PARITY.md
-│   ├── FEATURE_CONCUR_PARITY.md
-│   ├── FEATURE_WORKSPACE_PARITY.md
-│   ├── HEALTH_CHECK.md
-│   ├── ODOO_MODULE_DEPLOYMENT.md
-│   ├── PRD_ipai_ppm_portfolio.md
-│   └── SAAS_PARITY_READINESS.md
-├── notion-n8n-monthly-close
-│   ├── scripts
-│   ├── workflows
-│   ├── DEPLOYMENT_STATUS.md
-│   ├── N8N_CLI_README.md
-│   └── WORKFLOW_CONVENTIONS.md
-├── ocr-adapter
-│   ├── scripts
-│   ├── .gitignore
-│   ├── DEPLOYMENT.md
-│   ├── docker-compose.yml
-│   ├── Dockerfile
-│   ├── main.py
-│   ├── nginx-site.conf
-│   ├── README.md
-│   ├── requirements.txt
-│   └── test-ocr.sh
-├── packages
-│   └── db
-├── scripts
-│   ├── apply-supabase-schema.sh
-│   ├── backup_odoo.sh
-│   ├── baseline-validation.sh
-│   ├── check_project_tasks.py
-│   ├── deploy-odoo-modules.sh
-│   ├── deploy-to-server.sh
-│   ├── deployment-checklist.sh
-│   ├── gen_repo_tree.sh
-│   ├── import_month_end_tasks.py
-│   ├── install-git-hooks.sh
-│   ├── README.md
-│   ├── run_clarity_ppm_reverse.sh
-│   └── validate_m1.sh
-├── specs
-│   ├── 002-odoo-expense-equipment-mvp.prd.md
-│   ├── INSTALL_SEQUENCE.md
-│   ├── MODULE_SERVICE_MATRIX.md
-│   ├── README.md
-│   └── tasks.md
-├── supabase
-│   ├── migrations
-│   └── seed
-├── .gitignore
-├── deploy_m1.sh.template
-├── OCR_PROJECT_COMPLETE.md
-├── ODOO_OCR_SETUP.md
-├── plan.md
-├── README.md
-├── spec.md
-├── TAG_LABEL_VOCABULARY.md
-└── tasks.md
+|-- .github
+|   `-- workflows
+|-- addons
+|   |-- flutter_receipt_ocr
+|   |-- ipai_ce_cleaner
+|   |-- ipai_docs
+|   |-- ipai_equipment
+|   |-- ipai_expense
+|   |-- ipai_finance_monthly_closing
+|   |-- ipai_ocr_expense
+|   |-- ipai_ppm_monthly_close
+|   `-- tbwa_spectra_integration
+|-- agents
+|   |-- capabilities
+|   |-- knowledge
+|   |-- loops
+|   |-- procedures
+|   |-- AGENT_SKILLS_REGISTRY.yaml
+|   |-- ORCHESTRATOR.md
+|   |-- PRIORITIZED_ROADMAP.md
+|   |-- README.md
+|   `-- odoo_reverse_mapper.yaml
+|-- automations
+|   `-- n8n
+|-- baselines
+|   `-- v0.2.1-quality-baseline-20251121.txt
+|-- data
+|   `-- month_end_tasks.csv
+|-- deploy
+|   |-- nginx
+|   |-- docker-compose.yml
+|   `-- odoo.conf
+|-- docs
+|   |-- AGENT_FRAMEWORK_SESSION_REPORT.md
+|   |-- DEPLOYMENT.md
+|   |-- DEPLOYMENT_GUIDE.md
+|   |-- ENTERPRISE_FEATURE_GAP.yaml
+|   |-- FEATURE_CHEQROOM_PARITY.md
+|   |-- FEATURE_CONCUR_PARITY.md
+|   |-- FEATURE_WORKSPACE_PARITY.md
+|   |-- HEALTH_CHECK.md
+|   |-- ODOO_MODULE_DEPLOYMENT.md
+|   |-- PRD_ipai_ppm_portfolio.md
+|   `-- SAAS_PARITY_READINESS.md
+|-- notion-n8n-monthly-close
+|   |-- scripts
+|   |-- workflows
+|   |-- DEPLOYMENT_STATUS.md
+|   |-- N8N_CLI_README.md
+|   `-- WORKFLOW_CONVENTIONS.md
+|-- ocr-adapter
+|   |-- scripts
+|   |-- .gitignore
+|   |-- DEPLOYMENT.md
+|   |-- Dockerfile
+|   |-- README.md
+|   |-- docker-compose.yml
+|   |-- main.py
+|   |-- nginx-site.conf
+|   |-- requirements.txt
+|   `-- test-ocr.sh
+|-- packages
+|   `-- db
+|-- scripts
+|   |-- README.md
+|   |-- apply-supabase-schema.sh
+|   |-- backup_odoo.sh
+|   |-- baseline-validation.sh
+|   |-- check_project_tasks.py
+|   |-- deploy-odoo-modules.sh
+|   |-- deploy-to-server.sh
+|   |-- deployment-checklist.sh
+|   |-- gen_repo_tree.sh
+|   |-- import_month_end_tasks.py
+|   |-- install-git-hooks.sh
+|   |-- run_clarity_ppm_reverse.sh
+|   `-- validate_m1.sh
+|-- specs
+|   |-- 002-odoo-expense-equipment-mvp.prd.md
+|   |-- INSTALL_SEQUENCE.md
+|   |-- MODULE_SERVICE_MATRIX.md
+|   |-- README.md
+|   `-- tasks.md
+|-- supabase
+|   |-- migrations
+|   `-- seed
+|-- .gitignore
+|-- OCR_PROJECT_COMPLETE.md
+|-- ODOO_OCR_SETUP.md
+|-- README.md
+|-- TAG_LABEL_VOCABULARY.md
+|-- deploy_m1.sh.template
+|-- plan.md
+|-- spec.md
+`-- tasks.md
 ```
 <!-- REPO_TREE_END -->
 
