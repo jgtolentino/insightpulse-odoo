@@ -6,23 +6,97 @@
 
 ---
 
-## 📊 Module Installation Status
+## 📊 Module Catalog – CE vs OCA vs IPAI (Current Status)
 
-### ✅ InsightPulse AI Modules (Visible in Apps Menu)
+### 1. IPAI & TBWA Custom Modules
 
-| Module Name | Technical Name | Version | Author | Status | Install Link |
-|-------------|----------------|---------|--------|--------|--------------|
-| **IPAI Equipment Management** | `ipai_equipment` | 18.0.1.0.0 | InsightPulseAI | ⏳ **Ready to Install** | https://insightpulseai.net |
-| **IPAI Expense & Travel (PH)** | `ipai_expense` | 18.0.1.0.0 | InsightPulseAI | ⏳ **Ready to Install** | https://insightpulseai.net |
-| **IPAI Finance PPM** | `ipai_finance_ppm` | 18.0.1.0.0 | InsightPulseAI | ⏳ **Ready to Install** | https://insightpulseai.net |
-| **InsightPulse AI Finance SSC** | `ipai_finance_ssc` | 18.0.1.0.0 | InsightPulse AI | ⏳ **Ready to Install** | https://insightpulseai.net |
+| Display Name | Technical Name | Source | URL | Notes |
+|-------------|----------------|--------|-----|-------|
+| **IPAI Equipment Management** | `ipai_equipment` | IPAI | https://insightpulseai.net | Cheqroom parity (Equipment) |
+| **IPAI Expense & Travel (PH)** | `ipai_expense` | IPAI | https://insightpulseai.net | Concur parity (Expense/Travel) |
+| **IPAI Finance PPM** | `ipai_finance_ppm` | IPAI | https://insightpulseai.net | Clarity-style Finance PPM |
+| **InsightPulse AI Finance SSC** | `ipai_finance_ssc` | IPAI | https://insightpulseai.net | Legacy SSC engine (to sunset) |
+| **IPAI Docs** | `ipai_docs` | IPAI | https://insightpulseai.net | Notion/Workspace parity |
+| **IPAI Docs Project** | `ipai_docs_project` | IPAI | https://insightpulseai.net | Project-linked docs |
+| **IPAI Cash Advance** | `ipai_cash_advance` | IPAI | https://insightpulseai.net | New cash advance workflow |
+| **IPAI OCR Expense** | `ipai_ocr_expense` | IPAI | https://insightpulseai.net | OCR + hr_expense bridge |
+| **IPAI Finance Monthly Closing** | `ipai_finance_monthly_closing` | IPAI | https://insightpulseai.net | PPM → Project monthly close |
+| **IPAI PPM Monthly Close** | `ipai_ppm_monthly_close` | IPAI | https://insightpulseai.net | Opinionated PPM close engine |
+| **Cash Advance Management** | `x_cash_advance` | IPAI/TBWA | https://github.com/OCA/account-financial-tools | Legacy; replaced by ipai_* |
+| **Expense Policy Engine** | `x_expense_policy` | IPAI/TBWA | https://pulse-hub-web-an645.ondigitalocean.app | Legacy Spectra-era policy |
 
-### 📦 Custom Extended Modules
+> **Status:** All IPAI modules are visible in Apps; `ipai_equipment` is MVP-ready and should be installed via UI. Legacy `x_*` modules are marked **for migration/deprecation** once ipai_* flows are stable.
 
-| Module Name | Technical Name | Version | Author | Status |
-|-------------|----------------|---------|--------|--------|
-| **Cash Advance Management** | `x_cash_advance` | 18.0.1.0.0 | InsightPulse AI, OCA | ⏳ **Ready to Install** |
-| **Expense Policy Engine** | `x_expense_policy` | 18.0.1.0.0 | Finance SSC | ⏳ **Ready to Install** |
+---
+
+### 2. OCA Modules in Use / Available
+
+| Display Name | Technical Name | OCA Repo / URL | Role |
+|-------------|----------------|----------------|------|
+| **Account Financial Reports** | `account_financial_report` | https://github.com/OCA/account-financial-reporting | Advanced financial reports |
+| **Account Financial Reports Sale** | `account_financial_report_sale` | https://github.com/OCA/account-financial-reporting | Sales-focused reports |
+| **Animal** | `animal` | https://github.com/OCA/partner-contact | Example/utility module |
+| **Audit Log** | `auditlog` | https://github.com/OCA/server-tools | Security & audit trail |
+| **MIS Builder** | `mis_builder` | https://github.com/OCA/mis-builder | Management reporting (MIS) |
+| **Partner VAT Unique** | `partner_vat_unique` | https://github.com/OCA/partner-contact | VAT uniqueness constraint |
+| **Purchase Request** | `purchase_request` | https://github.com/OCA/purchase-workflow | PR / PO workflow |
+| **Web Theme Classic** | `web_theme_classic` | https://github.com/OCA/web | CE/OCA front-end theme |
+
+> **Rule:** All analytics / reporting / theming enhancements should prefer **OCA** modules above custom development.
+
+---
+
+### 3. Core Odoo 18 CE Apps (Allowed Baseline)
+
+> These are standard **Community Edition** apps you're allowed to install when needed.
+
+| Display Name | Technical Name | Vendor | URL |
+|-------------|----------------|--------|-----|
+| **Sales** | `sale_management` | Odoo S.A. | https://www.odoo.com/app/sales |
+| **CRM** | `crm` | Odoo S.A. | https://www.odoo.com/app/crm |
+| **Invoicing** | `account` | Odoo S.A. | https://www.odoo.com/app/invoicing |
+| **Inventory** | `stock` | Odoo S.A. | https://www.odoo.com/app/inventory |
+| **Purchase** | `purchase` | Odoo S.A. | https://www.odoo.com/app/purchase |
+| **Project** | `project` | Odoo S.A. | https://www.odoo.com/app/project |
+| **Timesheets** | `timesheet_grid` | Odoo S.A. | — (bundled CE) |
+| **Expenses** | `hr_expense` | Odoo S.A. | https://www.odoo.com/app/expenses |
+| **Employees** | `hr` | Odoo S.A. | https://www.odoo.com/app/employees |
+| **Maintenance** | `maintenance` | Odoo S.A. | https://www.odoo.com/app/maintenance |
+| **Manufacturing** | `mrp` | Odoo S.A. | https://www.odoo.com/app/manufacturing |
+| **Website** | `website` | Odoo S.A. | https://www.odoo.com/app/website |
+| **eCommerce** | `website_sale` | Odoo S.A. | https://www.odoo.com/app/ecommerce |
+| **Point of Sale** | `point_of_sale` | Odoo S.A. | https://www.odoo.com/app/point-of-sale-shop |
+| **Email Marketing** | `mass_mailing` | Odoo S.A. | https://www.odoo.com/app/email-marketing |
+| **Calendar** | `calendar` | Odoo S.A. | — |
+| **Contacts** | `contacts` | Odoo S.A. | — |
+| **Discuss** | `mail` | Odoo S.A. | https://www.odoo.com/app/discuss |
+| **Fleet** | `fleet` | Odoo S.A. | https://www.odoo.com/app/fleet |
+| **Time Off** | `hr_holidays` | Odoo S.A. | https://www.odoo.com/app/time-off |
+| **Recruitment** | `hr_recruitment` | Odoo S.A. | https://www.odoo.com/app/recruitment |
+
+---
+
+### 4. Enterprise / Blocklisted Modules (Do **Not** Use)
+
+> ⚠️ **Enterprise Guardrail:** The following modules must remain **uninstalled** in TBWA / InsightPulse instances. All requested features must be implemented via **OCA + ipai_*** modules instead.
+
+**Blocklisted Modules** (present in Apps menu but off-limits):
+- `web_studio` (Studio) - No-code builder (Enterprise only)
+- `sign` (Sign) - Digital signature (Enterprise only)
+- `helpdesk` (Helpdesk) - Ticketing system (Enterprise only)
+- `sale_subscription` (Subscriptions) - Recurring revenue (Enterprise only)
+- `timesheet_grid` (Timesheets) - Listed as CE but has Enterprise hooks
+- `planning` (Planning) - Resource planning (Enterprise only)
+- `quality_control` (Quality) - QMS (Enterprise only)
+- `mrp_plm` (PLM) - Product lifecycle (Enterprise only)
+- `industry_fsm` (Field Service) - FSM (Enterprise only)
+- `appointment` (Appointments) - Booking (Enterprise only)
+- `voip` (VoIP) - Voice calls (Enterprise only)
+
+**Policy**: If a feature exists in one of these modules, it must be:
+1. Replicated in an IPAI custom module, OR
+2. Sourced from an OCA alternative, OR
+3. Deferred until a CE/OCA solution exists
 
 ---
 
@@ -34,7 +108,9 @@ All IPAI modules correctly point to InsightPulse infrastructure:
 - ✅ `https://insightpulseai.net` (all ipai_* modules)
 - ✅ `https://pulse-hub-web-an645.ondigitalocean.app` (x_expense_policy)
 
-**No odoo.com upsell links detected** ✅
+**No odoo.com upsell links detected in code** ✅
+
+> **Note**: Core CE Apps table below contains odoo.com reference links for official documentation. These are in markdown docs (not code) and excluded from CI guardrails which only scan `addons/`, `oca/`, `deploy/` directories.
 
 ### 🏢 OCA Modules (Community Edition)
 
