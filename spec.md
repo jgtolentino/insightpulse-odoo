@@ -24,11 +24,27 @@ The system is designed to:
 ├── .github
 │   └── workflows
 ├── addons
+│   ├── flutter_receipt_ocr
 │   ├── ipai_ce_cleaner
+│   ├── ipai_docs
 │   ├── ipai_equipment
 │   ├── ipai_expense
 │   ├── ipai_finance_monthly_closing
-│   └── ipai_ocr_expense
+│   ├── ipai_ocr_expense
+│   ├── ipai_ppm_monthly_close
+│   └── tbwa_spectra_integration
+├── agents
+│   ├── capabilities
+│   ├── knowledge
+│   ├── loops
+│   ├── procedures
+│   ├── AGENT_SKILLS_REGISTRY.yaml
+│   ├── odoo_reverse_mapper.yaml
+│   ├── ORCHESTRATOR.md
+│   ├── PRIORITIZED_ROADMAP.md
+│   └── README.md
+├── automations
+│   └── n8n
 ├── baselines
 │   └── v0.2.1-quality-baseline-20251121.txt
 ├── data
@@ -38,9 +54,17 @@ The system is designed to:
 │   ├── docker-compose.yml
 │   └── odoo.conf
 ├── docs
+│   ├── AGENT_FRAMEWORK_SESSION_REPORT.md
 │   ├── DEPLOYMENT_GUIDE.md
 │   ├── DEPLOYMENT.md
-│   └── HEALTH_CHECK.md
+│   ├── ENTERPRISE_FEATURE_GAP.yaml
+│   ├── FEATURE_CHEQROOM_PARITY.md
+│   ├── FEATURE_CONCUR_PARITY.md
+│   ├── FEATURE_WORKSPACE_PARITY.md
+│   ├── HEALTH_CHECK.md
+│   ├── ODOO_MODULE_DEPLOYMENT.md
+│   ├── PRD_ipai_ppm_portfolio.md
+│   └── SAAS_PARITY_READINESS.md
 ├── notion-n8n-monthly-close
 │   ├── scripts
 │   ├── workflows
@@ -65,12 +89,14 @@ The system is designed to:
 │   ├── backup_odoo.sh
 │   ├── baseline-validation.sh
 │   ├── check_project_tasks.py
+│   ├── deploy-odoo-modules.sh
 │   ├── deploy-to-server.sh
 │   ├── deployment-checklist.sh
 │   ├── gen_repo_tree.sh
 │   ├── import_month_end_tasks.py
 │   ├── install-git-hooks.sh
 │   ├── README.md
+│   ├── run_clarity_ppm_reverse.sh
 │   └── validate_m1.sh
 ├── specs
 │   ├── 002-odoo-expense-equipment-mvp.prd.md
@@ -78,12 +104,17 @@ The system is designed to:
 │   ├── MODULE_SERVICE_MATRIX.md
 │   ├── README.md
 │   └── tasks.md
+├── supabase
+│   ├── migrations
+│   └── seed
 ├── .gitignore
 ├── deploy_m1.sh.template
+├── OCR_PROJECT_COMPLETE.md
 ├── ODOO_OCR_SETUP.md
 ├── plan.md
 ├── README.md
 ├── spec.md
+├── TAG_LABEL_VOCABULARY.md
 └── tasks.md
 ```
 <!-- REPO_TREE_END -->

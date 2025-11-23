@@ -614,7 +614,7 @@ Solution:
 ## 📚 Resources
 
 **Documentation**:
-- [Odoo HR Expense](https://www.odoo.com/documentation/18.0/applications/hr/expenses.html)
+- [Odoo CE HR Expense Module](https://github.com/odoo/odoo/tree/18.0/addons/hr_expense) - Official CE source
 - [Okta OAuth 2.0](https://developer.okta.com/docs/guides/implement-grant-type/authcode/main/)
 - [n8n Workflows](https://docs.n8n.io/)
 - [Spectra GL Documentation](https://internal-spectra-docs)
