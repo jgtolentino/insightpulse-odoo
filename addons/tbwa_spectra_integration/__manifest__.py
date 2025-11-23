@@ -24,9 +24,9 @@
         # 'data/export_templates_data.xml',  # TODO: Create
         # Views (load last, comment out until created)
         'views/hr_expense_advance_views.xml',
-        # 'views/spectra_export_views.xml',  # TODO: Create
-        # 'views/spectra_mapping_views.xml',  # TODO: Create
-        # 'views/approval_matrix_views.xml',  # TODO: Create
+        'views/spectra_export_views.xml',
+        'views/spectra_mapping_views.xml',
+        'views/approval_matrix_views.xml',
         'views/tbwa_menu.xml',
         # Wizards (load after views)
         # 'wizards/spectra_export_wizard_views.xml',  # TODO: Create

@@ -1,0 +1,266 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- Approval Matrix Form View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_approval_matrix_form" model="ir.ui.view">
+        <field name="name">tbwa.approval.matrix.form</field>
+        <field name="model">tbwa.approval.matrix</field>
+        <field name="arch" type="xml">
+            <form string="Approval Matrix Rule">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="toggle_active" type="object"
+                                class="oe_stat_button" icon="fa-archive">
+                            <field name="active" widget="boolean_button"
+                                   options="{'terminology': 'active'}"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="e.g., Standard Approval (Up to PHP 10,000)"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Amount Threshold">
+                            <field name="currency_id" invisible="1"/>
+                            <field name="amount_min"/>
+                            <field name="amount_max"/>
+                        </group>
+                        <group string="Rule Priority">
+                            <field name="sequence"/>
+                        </group>
+                    </group>
+                    <group string="Approval Workflow">
+                        <group>
+                            <label for="approver_level_1" string="Level 1 Approver"/>
+                            <div>
+                                <field name="approver_level_1"/>
+                                <p class="text-muted" invisible="approver_level_1 != 'manager'">
+                                    Employee's immediate manager
+                                </p>
+                                <p class="text-muted" invisible="approver_level_1 != 'finance_head'">
+                                    Finance department head
+                                </p>
+                                <p class="text-muted" invisible="approver_level_1 != 'cfo'">
+                                    Chief Financial Officer
+                                </p>
+                            </div>
+                        </group>
+                        <group>
+                            <label for="approver_level_2" string="Level 2 Approver"/>
+                            <div>
+                                <field name="approver_level_2"/>
+                                <p class="text-muted" invisible="approver_level_2 != 'finance_head'">
+                                    Finance department head
+                                </p>
+                                <p class="text-muted" invisible="approver_level_2 != 'cfo'">
+                                    Chief Financial Officer
+                                </p>
+                            </div>
+                        </group>
+                    </group>
+                    <group string="SLA Monitoring">
+                        <group>
+                            <field name="sla_hours"/>
+                            <field name="escalation_threshold"/>
+                        </group>
+                        <group>
+                            <label for="escalation_threshold" invisible="1"/>
+                            <div invisible="1">
+                                <field name="escalation_threshold" readonly="1"/>
+                                <p class="text-muted">
+                                    <i>Escalation at <field name="escalation_threshold"/> hours
+                                    (80% of <field name="sla_hours"/> hours SLA)</i>
+                                </p>
+                            </div>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Add rule description or special conditions..."/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Approval Matrix List View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_approval_matrix_list" model="ir.ui.view">
+        <field name="name">tbwa.approval.matrix.list</field>
+        <field name="model">tbwa.approval.matrix</field>
+        <field name="arch" type="xml">
+            <list string="Approval Matrix Rules" default_order="sequence, amount_min">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="amount_min"/>
+                <field name="amount_max"/>
+                <field name="approver_level_1"/>
+                <field name="approver_level_2"/>
+                <field name="sla_hours"/>
+                <field name="escalation_threshold" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Approval Matrix Search View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_approval_matrix_search" model="ir.ui.view">
+        <field name="name">tbwa.approval.matrix.search</field>
+        <field name="model">tbwa.approval.matrix</field>
+        <field name="arch" type="xml">
+            <search string="Approval Matrix">
+                <field name="name"/>
+                <field name="amount_min"/>
+                <field name="amount_max"/>
+
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactive" domain="[('active', '=', False)]"/>
+
+                <separator/>
+                <filter name="filter_manager_l1" string="Manager (L1)"
+                        domain="[('approver_level_1', '=', 'manager')]"/>
+                <filter name="filter_finance_l1" string="Finance Head (L1)"
+                        domain="[('approver_level_1', '=', 'finance_head')]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_approver_l1" string="Level 1 Approver"
+                            context="{'group_by': 'approver_level_1'}"/>
+                    <filter name="group_approver_l2" string="Level 2 Approver"
+                            context="{'group_by': 'approver_level_2'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Approval Matrix Window Action -->
+    <!-- ============================================ -->
+    <record id="action_tbwa_approval_matrix_list" model="ir.actions.act_window">
+        <field name="name">Approval Matrix</field>
+        <field name="res_model">tbwa.approval.matrix</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tbwa_approval_matrix_search"/>
+        <field name="context">{
+            'search_default_filter_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first approval matrix rule
+            </p>
+            <p>
+                Approval matrix rules define who needs to approve cash advances based on the requested amount.
+                Rules are evaluated in sequence order, and the first matching rule is used.
+            </p>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Tag Vocabulary Form View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_tag_vocabulary_form" model="ir.ui.view">
+        <field name="name">tbwa.tag.vocabulary.form</field>
+        <field name="model">tbwa.tag.vocabulary</field>
+        <field name="arch" type="xml">
+            <form string="Tag Vocabulary">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="tag_category"/>
+                            <field name="tag_value"/>
+                        </group>
+                        <group>
+                            <field name="tag_label"/>
+                            <field name="tag_color" widget="color"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="spectra_code"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Add tag description or usage guidelines..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Tag Vocabulary List View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_tag_vocabulary_list" model="ir.ui.view">
+        <field name="name">tbwa.tag.vocabulary.list</field>
+        <field name="model">tbwa.tag.vocabulary</field>
+        <field name="arch" type="xml">
+            <list string="Tag Vocabulary" default_order="tag_category, sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="tag_category"/>
+                <field name="tag_value"/>
+                <field name="tag_label"/>
+                <field name="tag_color" widget="color"/>
+                <field name="spectra_code"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Tag Vocabulary Search View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_tag_vocabulary_search" model="ir.ui.view">
+        <field name="name">tbwa.tag.vocabulary.search</field>
+        <field name="model">tbwa.tag.vocabulary</field>
+        <field name="arch" type="xml">
+            <search string="Tag Vocabulary">
+                <field name="tag_category"/>
+                <field name="tag_value"/>
+                <field name="tag_label"/>
+                <field name="spectra_code"/>
+
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactive" domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_category" string="Category" context="{'group_by': 'tag_category'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Tag Vocabulary Window Action -->
+    <!-- ============================================ -->
+    <record id="action_tbwa_tag_vocabulary_list" model="ir.actions.act_window">
+        <field name="name">Tag Vocabulary</field>
+        <field name="res_model">tbwa.tag.vocabulary</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tbwa_tag_vocabulary_search"/>
+        <field name="context">{
+            'search_default_filter_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first tag
+            </p>
+            <p>
+                Tag vocabulary defines standardized tags for categorizing expenses and cash advances.
+                Tags can be used for reporting and analysis in both Odoo and Spectra.
+            </p>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- GL Mapping Form View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_mapping_form" model="ir.ui.view">
+        <field name="name">tbwa.spectra.mapping.form</field>
+        <field name="model">tbwa.spectra.mapping</field>
+        <field name="arch" type="xml">
+            <form string="Spectra GL Mapping">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Mapping Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Mapping Configuration">
+                            <field name="mapping_type"/>
+                            <field name="source_account_id" invisible="mapping_type != 'account'"/>
+                            <field name="source_analytic_id" invisible="mapping_type != 'analytic'"/>
+                            <field name="source_tag_id" invisible="mapping_type != 'tag'"/>
+                        </group>
+                        <group string="Spectra GL Account">
+                            <field name="gl_code_id"/>
+                            <field name="gl_account_name"/>
+                            <field name="gl_account_code"/>
+                        </group>
+                    </group>
+                    <group string="Tax &amp; Withholding">
+                        <group>
+                            <field name="vat_code"/>
+                            <field name="vat_rate"/>
+                        </group>
+                        <group>
+                            <field name="withholding_code"/>
+                            <field name="withholding_rate"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="notes" placeholder="Add mapping notes or special instructions..."/>
+                    </group>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Mapping List View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_mapping_list" model="ir.ui.view">
+        <field name="name">tbwa.spectra.mapping.list</field>
+        <field name="model">tbwa.spectra.mapping</field>
+        <field name="arch" type="xml">
+            <list string="GL Mappings" editable="bottom">
+                <field name="name"/>
+                <field name="mapping_type"/>
+                <field name="source_account_id" optional="hide" column_invisible="parent.mapping_type != 'account'"/>
+                <field name="source_analytic_id" optional="hide" column_invisible="parent.mapping_type != 'analytic'"/>
+                <field name="source_tag_id" optional="hide" column_invisible="parent.mapping_type != 'tag'"/>
+                <field name="gl_account_code"/>
+                <field name="gl_account_name"/>
+                <field name="vat_code" optional="show"/>
+                <field name="vat_rate" optional="show"/>
+                <field name="withholding_code" optional="hide"/>
+                <field name="withholding_rate" optional="hide"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Mapping Search View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_mapping_search" model="ir.ui.view">
+        <field name="name">tbwa.spectra.mapping.search</field>
+        <field name="model">tbwa.spectra.mapping</field>
+        <field name="arch" type="xml">
+            <search string="GL Mappings">
+                <field name="name"/>
+                <field name="gl_account_code"/>
+                <field name="gl_account_name"/>
+                <field name="source_account_id"/>
+                <field name="source_analytic_id"/>
+
+                <filter name="filter_account" string="Account Mappings"
+                        domain="[('mapping_type', '=', 'account')]"/>
+                <filter name="filter_analytic" string="Analytic Mappings"
+                        domain="[('mapping_type', '=', 'analytic')]"/>
+                <filter name="filter_tag" string="Tag Mappings"
+                        domain="[('mapping_type', '=', 'tag')]"/>
+
+                <separator/>
+                <filter name="filter_active" string="Active" domain="[('active', '=', True)]"/>
+                <filter name="filter_inactive" string="Inactive" domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_mapping_type" string="Mapping Type" context="{'group_by': 'mapping_type'}"/>
+                    <filter name="group_gl_account" string="GL Account" context="{'group_by': 'gl_account_code'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Mapping Window Action -->
+    <!-- ============================================ -->
+    <record id="action_tbwa_spectra_mapping_list" model="ir.actions.act_window">
+        <field name="name">GL Mappings</field>
+        <field name="res_model">tbwa.spectra.mapping</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tbwa_spectra_mapping_search"/>
+        <field name="context">{
+            'search_default_filter_active': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first GL mapping
+            </p>
+            <p>
+                GL mappings define how Odoo accounts, analytic accounts, and tags map to Spectra GL accounts.
+                These mappings are used during the export process to generate the correct GL codes in the CSV file.
+            </p>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Code Form View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_gl_code_form" model="ir.ui.view">
+        <field name="name">tbwa.spectra.gl.code.form</field>
+        <field name="model">tbwa.spectra.gl.code</field>
+        <field name="arch" type="xml">
+            <form string="Spectra GL Code">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="code"/>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="gl_type"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="description" placeholder="Add GL code description..."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Code List View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_gl_code_list" model="ir.ui.view">
+        <field name="name">tbwa.spectra.gl.code.list</field>
+        <field name="model">tbwa.spectra.gl.code</field>
+        <field name="arch" type="xml">
+            <list string="Spectra GL Codes" editable="bottom">
+                <field name="code"/>
+                <field name="name"/>
+                <field name="gl_type"/>
+                <field name="description"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- GL Code Window Action -->
+    <!-- ============================================ -->
+    <record id="action_tbwa_spectra_gl_code_list" model="ir.actions.act_window">
+        <field name="name">Spectra GL Codes</field>
+        <field name="res_model">tbwa.spectra.gl.code</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first GL code
+            </p>
+            <p>
+                Define the Spectra chart of accounts that Odoo will export to.
+                These GL codes are referenced in the GL mappings.
+            </p>
+        </field>
+    </record>
+
+</odoo>
