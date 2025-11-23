@@ -451,3 +451,42 @@ class SpectraExport(models.Model):
             export_batch.validation_errors = str(e)
 
         return export_batch
+
+    @api.model
+    def cron_cleanup_old_exports(self):
+        """
+        Weekly cron to clean up old export batches (older than 90 days).
+        Runs every Sunday at 02:00 AM.
+        Keeps exports archived in Supabase but removes from Odoo to save space.
+        """
+        from datetime import timedelta
+        cutoff_date = fields.Date.today() - timedelta(days=90)
+
+        # Find old export batches (exported and approved)
+        old_exports = self.search([
+            ('state', 'in', ['exported', 'approved_finance']),
+            ('export_date', '<', cutoff_date),
+        ])
+
+        if not old_exports:
+            _logger.info("No old export batches to clean up")
+            return
+
+        # Archive attachments to Supabase before deletion
+        for export_batch in old_exports:
+            try:
+                # Archive files to Supabase if not already done
+                if not export_batch.archived_to_supabase:
+                    export_batch._archive_attachment()
+            except Exception as e:
+                _logger.error(f"Failed to archive export {export_batch.name}: {e}")
+                continue
+
+        # Log before deletion
+        batch_names = ', '.join(old_exports.mapped('name'))
+        _logger.info(f"Cleaning up {len(old_exports)} old export batches: {batch_names}")
+
+        # Delete old batches (soft delete - mark as inactive)
+        old_exports.write({'active': False})
+
+        return len(old_exports)

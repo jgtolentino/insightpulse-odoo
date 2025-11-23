@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- ============================================= -->
+        <!-- Security Groups -->
+        <!-- ============================================= -->
+
+        <!-- TBWA Manager Group -->
+        <record id="group_tbwa_manager" model="res.groups">
+            <field name="name">TBWA Manager</field>
+            <field name="category_id" ref="base.module_category_human_resources"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
+            <field name="comment">
+                TBWA Managers can:
+                - Approve Level 1 cash advances and expenses (their team)
+                - View their department's expense reports
+                - Cannot export to Spectra or configure mappings
+            </field>
+        </record>
+
+        <!-- TBWA Finance Group -->
+        <record id="group_tbwa_finance" model="res.groups">
+            <field name="name">TBWA Finance</field>
+            <field name="category_id" ref="base.module_category_accounting"/>
+            <field name="implied_ids" eval="[(4, ref('group_tbwa_manager'))]"/>
+            <field name="comment">
+                TBWA Finance team can:
+                - Approve Level 2 cash advances and expenses (final approval)
+                - Generate Spectra export batches
+                - View all cash advances and expense reports across agencies
+                - Cannot modify GL mappings or approval matrix
+            </field>
+        </record>
+
+        <!-- TBWA Admin Group -->
+        <record id="group_tbwa_admin" model="res.groups">
+            <field name="name">TBWA Admin</field>
+            <field name="category_id" ref="base.module_category_administration"/>
+            <field name="implied_ids" eval="[(4, ref('group_tbwa_finance'))]"/>
+            <field name="comment">
+                TBWA Administrators can:
+                - Configure GL mappings and Spectra export templates
+                - Configure approval matrix rules
+                - Full CRUD on all models
+                - Manage tag vocabulary
+            </field>
+        </record>
+
+        <!-- ============================================= -->
+        <!-- Record Rules (Row-Level Security) -->
+        <!-- ============================================= -->
+
+        <!-- Cash Advance Record Rules -->
+
+        <!-- Rule: Employees see own cash advances -->
+        <record id="cash_advance_employee_rule" model="ir.rule">
+            <field name="name">Employee Own Cash Advances</field>
+            <field name="model_id" ref="model_hr_expense_advance"/>
+            <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule: Managers see their department's cash advances -->
+        <record id="cash_advance_manager_rule" model="ir.rule">
+            <field name="name">Manager Department Cash Advances</field>
+            <field name="model_id" ref="model_hr_expense_advance"/>
+            <field name="domain_force">[('employee_id.parent_id.user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_manager'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Rule: Finance sees all cash advances -->
+        <record id="cash_advance_finance_rule" model="ir.rule">
+            <field name="name">Finance All Cash Advances</field>
+            <field name="model_id" ref="model_hr_expense_advance"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_finance'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Spectra Export Record Rules -->
+
+        <!-- Rule: Finance and Admin can manage exports -->
+        <record id="spectra_export_finance_rule" model="ir.rule">
+            <field name="name">Finance Manage Spectra Exports</field>
+            <field name="model_id" ref="model_tbwa_spectra_export"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_finance'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Configuration Models Record Rules -->
+
+        <!-- Rule: Only Admin can modify configuration models -->
+        <record id="config_admin_rule" model="ir.rule">
+            <field name="name">Admin Configuration Access</field>
+            <field name="model_id" ref="model_tbwa_spectra_mapping"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="gl_code_admin_rule" model="ir.rule">
+            <field name="name">Admin GL Code Access</field>
+            <field name="model_id" ref="model_tbwa_spectra_gl_code"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <record id="approval_matrix_admin_rule" model="ir.rule">
+            <field name="name">Admin Approval Matrix Access</field>
+            <field name="model_id" ref="model_tbwa_approval_matrix"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Tag Vocabulary Record Rules -->
+
+        <!-- Rule: All users can read and create tags, finance/admin can delete -->
+        <record id="tag_vocab_all_rule" model="ir.rule">
+            <field name="name">Tag Vocabulary Access</field>
+            <field name="model_id" ref="model_tbwa_tag_vocabulary"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('base.group_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <record id="tag_vocab_finance_rule" model="ir.rule">
+            <field name="name">Finance Tag Vocabulary Full Access</field>
+            <field name="model_id" ref="model_tbwa_tag_vocabulary"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_tbwa_finance'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+    </data>
+</odoo>

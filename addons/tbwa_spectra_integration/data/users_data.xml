@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================================= -->
+        <!-- TBWA Finance Users (Placeholders) -->
+        <!-- ============================================= -->
+
+        <!-- Finance Head User -->
+        <record id="user_finance_head" model="res.users">
+            <field name="name">Finance Head (TBWA)</field>
+            <field name="login">finance.head@tbwa.com</field>
+            <field name="email">finance.head@tbwa.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_tbwa_finance')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="active" eval="True"/>
+            <field name="password">finance@tbwa2025</field>
+        </record>
+
+        <!-- CFO User -->
+        <record id="user_cfo" model="res.users">
+            <field name="name">CFO (TBWA)</field>
+            <field name="login">cfo@tbwa.com</field>
+            <field name="email">cfo@tbwa.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_tbwa_finance'), ref('group_tbwa_admin')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="active" eval="True"/>
+            <field name="password">cfo@tbwa2025</field>
+        </record>
+
+        <!-- Finance Manager User -->
+        <record id="user_finance_manager" model="res.users">
+            <field name="name">Finance Manager (TBWA)</field>
+            <field name="login">finance.manager@tbwa.com</field>
+            <field name="email">finance.manager@tbwa.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_tbwa_manager')])]"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="company_ids" eval="[(6, 0, [ref('base.main_company')])]"/>
+            <field name="active" eval="True"/>
+            <field name="password">finance.mgr@tbwa2025</field>
+        </record>
+
+        <!-- ============================================= -->
+        <!-- Employee Records for Testing -->
+        <!-- ============================================= -->
+
+        <!-- Finance Head Employee Record -->
+        <record id="employee_finance_head" model="hr.employee">
+            <field name="name">Finance Head (TBWA)</field>
+            <field name="user_id" ref="user_finance_head"/>
+            <field name="employee_code">FIN001</field>
+            <field name="job_title">Finance Head</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- CFO Employee Record -->
+        <record id="employee_cfo" model="hr.employee">
+            <field name="name">CFO (TBWA)</field>
+            <field name="user_id" ref="user_cfo"/>
+            <field name="employee_code">EXE001</field>
+            <field name="job_title">Chief Financial Officer</field>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- Finance Manager Employee Record -->
+        <record id="employee_finance_manager" model="hr.employee">
+            <field name="name">Finance Manager (TBWA)</field>
+            <field name="user_id" ref="user_finance_manager"/>
+            <field name="employee_code">FIN002</field>
+            <field name="job_title">Finance Manager</field>
+            <field name="parent_id" ref="employee_finance_head"/>
+            <field name="company_id" ref="base.main_company"/>
+            <field name="active" eval="True"/>
+        </record>
+
+        <!-- ============================================= -->
+        <!-- Notes for Production Deployment -->
+        <!-- ============================================= -->
+
+        <!--
+        IMPORTANT: These are placeholder users for development/testing only.
+
+        For TBWA-PROD deployment:
+        1. Update login emails to actual TBWA employee emails
+        2. Configure Okta SSO for authentication (Phase 2)
+        3. Change passwords to secure values (stored in password manager)
+        4. Link to actual TBWA employee records
+        5. Verify email addresses are valid for notification delivery
+
+        Security Notes:
+        - Default passwords are weak and MUST be changed in production
+        - Consider enforcing password complexity via Odoo settings
+        - Enable MFA via Okta SSO (Phase 2)
+        - Review user access rights quarterly
+        -->
+
+    </data>
+</odoo>

@@ -401,3 +401,50 @@ class HRExpenseAdvance(models.Model):
                 )
 
         _logger.info(f"Sent {len(advances)} liquidation reminders, {len(overdue)} escalations")
+
+    @api.model
+    def cron_monitor_approval_sla(self):
+        """
+        Hourly cron to monitor and escalate SLA breaches in approval workflow.
+        Escalates cash advances that exceed approval time thresholds.
+        """
+        from datetime import timedelta
+        now = fields.Datetime.now()
+
+        # Find cash advances in approval states with breached SLA (>48 hours)
+        breach_threshold = now - timedelta(hours=48)
+
+        breached_advances = self.search([
+            ('state', 'in', ['submitted', 'approved_l1']),
+            ('submit_date', '<', breach_threshold),
+        ])
+
+        # Escalate to finance team
+        finance_users = self.env.ref('tbwa_spectra_integration.group_tbwa_finance', raise_if_not_found=False)
+        if not finance_users:
+            _logger.warning("Finance group not found for SLA escalation")
+            return
+
+        for advance in breached_advances:
+            # Calculate hours overdue
+            age = now - advance.submit_date
+            hours_overdue = age.total_seconds() / 3600
+
+            # Escalate to all finance users
+            for user in finance_users.users:
+                advance.activity_schedule(
+                    'mail.mail_activity_data_warning',
+                    user_id=user.id,
+                    summary=_('SLA BREACH: Cash Advance Approval Overdue'),
+                    note=_(f'Cash advance {advance.name} for {advance.employee_id.name} '
+                          f'has been pending for {hours_overdue:.1f} hours (SLA: 48h). '
+                          f'Current state: {dict(advance._fields["state"].selection).get(advance.state)}'),
+                )
+
+            # Log breach
+            advance.message_post(
+                body=_(f'⚠️ SLA BREACH: Approval pending for {hours_overdue:.1f} hours'),
+                message_type='notification',
+            )
+
+        _logger.info(f"SLA Monitor: {len(breached_advances)} advances escalated for breach")

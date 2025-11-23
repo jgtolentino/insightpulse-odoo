@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================================= -->
+        <!-- Cron Jobs for TBWA Spectra Integration -->
+        <!-- ============================================= -->
+
+        <!-- Monthly Spectra Export Automation -->
+        <!-- Runs on 1st day of each month at 06:30 AM -->
+        <record id="ir_cron_spectra_monthly_export" model="ir.cron">
+            <field name="name">TBWA Spectra: Monthly Export Automation</field>
+            <field name="model_id" ref="model_tbwa_spectra_export"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_auto_export()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">months</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="priority">5</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + relativedelta(day=1, hour=6, minute=30, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+
+        <!-- Daily Cash Advance Liquidation Reminders -->
+        <!-- Runs every day at 9:00 AM -->
+        <record id="ir_cron_liquidation_reminders" model="ir.cron">
+            <field name="name">TBWA Spectra: Daily Liquidation Reminders</field>
+            <field name="model_id" ref="model_hr_expense_advance"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_send_liquidation_reminders()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="priority">10</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + relativedelta(hour=9, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+
+        <!-- Hourly Approval SLA Monitoring -->
+        <!-- Runs every hour to check SLA breaches -->
+        <record id="ir_cron_approval_sla_monitor" model="ir.cron">
+            <field name="name">TBWA Spectra: Approval SLA Monitor</field>
+            <field name="model_id" ref="model_hr_expense_advance"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_monitor_approval_sla()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="priority">15</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + relativedelta(minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+
+        <!-- Weekly Export Batch Cleanup -->
+        <!-- Runs every Sunday at 02:00 AM to clean up old exports -->
+        <record id="ir_cron_export_cleanup" model="ir.cron">
+            <field name="name">TBWA Spectra: Export Batch Cleanup</field>
+            <field name="model_id" ref="model_tbwa_spectra_export"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_cleanup_old_exports()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">weeks</field>
+            <field name="numbercall">-1</field>
+            <field name="active" eval="True"/>
+            <field name="priority">20</field>
+            <field name="user_id" ref="base.user_admin"/>
+            <field name="nextcall" eval="(DateTime.now() + relativedelta(weekday=6, hour=2, minute=0, second=0)).strftime('%Y-%m-%d %H:%M:%S')"/>
+        </record>
+
+    </data>
+</odoo>
