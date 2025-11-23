@@ -50,6 +50,14 @@ jobs:
         run: |
           python -m compileall addons || true
 
+      - name: Report CI telemetry
+        if: always()
+        env:
+          N8N_CI_WEBHOOK_URL: ${{ secrets.N8N_CI_WEBHOOK_URL }}
+        run: |
+          chmod +x scripts/report_ci_telemetry.sh
+          scripts/report_ci_telemetry.sh "${{ job.status }}"
+
   repo-structure:
     runs-on: ubuntu-latest
     steps:
@@ -71,3 +79,11 @@ jobs:
             exit 1
           fi
           echo "✅ Repo tree is up to date"
+
+      - name: Report CI telemetry
+        if: always()
+        env:
+          N8N_CI_WEBHOOK_URL: ${{ secrets.N8N_CI_WEBHOOK_URL }}
+        run: |
+          chmod +x scripts/report_ci_telemetry.sh
+          scripts/report_ci_telemetry.sh "${{ job.status }}"
