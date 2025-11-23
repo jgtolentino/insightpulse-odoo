@@ -1,0 +1,27 @@
+<odoo>
+    <record id="view_ipai_doc_tag_tree" model="ir.ui.view">
+        <field name="name">ipai.doc.tag.tree</field>
+        <field name="model">ipai.doc.tag</field>
+        <field name="arch" type="xml">
+            <tree string="Document Tags">
+                <field name="name"/>
+                <field name="color"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_doc_tag_form" model="ir.ui.view">
+        <field name="name">ipai.doc.tag.form</field>
+        <field name="model">ipai.doc.tag</field>
+        <field name="arch" type="xml">
+            <form string="Document Tag">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="color" widget="color_picker"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

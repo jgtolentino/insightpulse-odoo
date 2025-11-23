@@ -1,0 +1,69 @@
+<odoo>
+    <record id="view_ipai_doc_tree" model="ir.ui.view">
+        <field name="name">ipai.doc.tree</field>
+        <field name="model">ipai.doc</field>
+        <field name="arch" type="xml">
+            <tree string="Documents">
+                <field name="name"/>
+                <field name="doc_type"/>
+                <field name="state"/>
+                <field name="owner_id"/>
+                <field name="company_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_doc_form" model="ir.ui.view">
+        <field name="name">ipai.doc.form</field>
+        <field name="model">ipai.doc</field>
+        <field name="arch" type="xml">
+            <form string="Document" class="o_ipai_doc_form">
+                <header>
+                    <button name="action_set_in_review" type="object"
+                            string="Send for Review" states="draft"
+                            class="btn-primary"/>
+                    <button name="action_publish" type="object"
+                            string="Publish" states="in_review"
+                            class="btn-primary"/>
+                    <button name="action_archive" type="object"
+                            string="Archive" states="published"
+                            class="btn-secondary"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <!-- Place for smart buttons later (linked projects/tasks) -->
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="doc_type"/>
+                            <field name="owner_id"/>
+                            <field name="responsible_ids" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <field name="parent_id"/>
+                            <field name="tag_ids" widget="many2many_tags"/>
+                            <field name="is_template"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Content">
+                            <!-- For now, use Html widget; later this can be replaced by a block editor widget -->
+                            <field name="body_html" widget="html" options="{'style-inline': True}"/>
+                        </page>
+                        <page string="Raw JSON (Debug)">
+                            <field name="body_json"/>
+                        </page>
+                        <page string="Followers & Activities">
+                            <field name="message_follower_ids" widget="mail_followers"/>
+                            <field name="activity_ids" widget="mail_activity"/>
+                            <field name="message_ids" widget="mail_thread"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+</odoo>

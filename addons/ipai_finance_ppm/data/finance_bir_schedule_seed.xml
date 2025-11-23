@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Example BIR 1601-C schedule for December 2025 -->
+        <record id="bir_1601c_2025_12" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C (Compensation) – Dec 2025</field>
+            <field name="period_covered">Dec 2025</field>
+            <field name="filing_deadline">2026-01-15</field>
+            <field name="prep_deadline">2026-01-09</field>  <!-- BIR - 4 business days -->
+            <field name="review_deadline">2026-01-12</field>  <!-- BIR - 2 business days -->
+            <field name="approval_deadline">2026-01-13</field>  <!-- BIR - 1 business day -->
+            <field name="logframe_id" ref="logframe_im2_tax_filing"/>
+            <field name="status">not_started</field>
+            <field name="completion_pct">0.0</field>
+        </record>
+    </data>
+</odoo>

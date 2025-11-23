@@ -1,0 +1,315 @@
+{
+  "name": "Finance PPM - Monthly Compliance Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 1 * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger-3",
+      "notes": "Run on 1st day of month at 9 AM to generate previous month report"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/common",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>authenticate</methodName>\n  <params>\n    <param><string>production</string></param>\n    <param><string>{{$credentials.odoo_username}}</string></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><value/></param>\n  </params>\n</methodCall>"
+      },
+      "name": "Odoo Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "id": "odoo-auth-3"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst uidMatch = xml.match(/<int>(\\d+)<\\/int>/);\nconst uid = uidMatch ? parseInt(uidMatch[1]) : null;\n\nconst now = new Date();\nconst lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);\nconst monthEnd = new Date(now.getFullYear(), now.getMonth(), 0);\n\nreturn {\n  json: {\n    uid: uid,\n    database: 'production',\n    report_month: lastMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),\n    date_start: lastMonth.toISOString().split('T')[0],\n    date_end: monthEnd.toISOString().split('T')[0]\n  }\n};"
+      },
+      "name": "Parse UID & Set Period",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "parse-uid-3"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><string>{{$json.database}}</string></param>\n    <param><int>{{$json.uid}}</int></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><string>ipai.finance.bir_schedule</string></param>\n    <param><string>search_read</string></param>\n    <param>\n      <array>\n        <data>\n          <value>\n            <array>\n              <data>\n                <value><array><data>\n                  <value><string>filing_deadline</string></value>\n                  <value><string>&gt;=</string></value>\n                  <value><string>{{$json.date_start}}</string></value>\n                </data></array></value>\n                <value><array><data>\n                  <value><string>filing_deadline</string></value>\n                  <value><string>&lt;=</string></value>\n                  <value><string>{{$json.date_end}}</string></value>\n                </data></array></value>\n              </data>\n            </array>\n          </value>\n        </data>\n      </array>\n    </param>\n    <param>\n      <array>\n        <data>\n          <value><struct><member>\n            <name>fields</name>\n            <value><array><data>\n              <value><string>name</string></value>\n              <value><string>period_covered</string></value>\n              <value><string>filing_deadline</string></value>\n              <value><string>status</string></value>\n              <value><string>completion_pct</string></value>\n            </data></array></value>\n          </member></struct></value>\n        </data>\n      </array>\n    </param>\n  </params>\n</methodCall>"
+      },
+      "name": "Query BIR Forms (Month)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 300],
+      "id": "query-bir-month-1",
+      "notes": "Fetch all BIR forms for the previous month"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst records = [];\n\nconst recordMatches = xml.match(/<struct>([\\s\\S]*?)<\\/struct>/g);\n\nif (recordMatches) {\n  recordMatches.forEach(record => {\n    const nameMatch = record.match(/<member><name>name<\\/name><value><string>([^<]+)<\\/string>/);\n    const deadlineMatch = record.match(/<member><name>filing_deadline<\\/name><value><string>([^<]+)<\\/string>/);\n    const statusMatch = record.match(/<member><name>status<\\/name><value><string>([^<]+)<\\/string>/);\n    const completionMatch = record.match(/<member><name>completion_pct<\\/name><value><double>([^<]+)<\\/double>/);\n    \n    if (nameMatch && deadlineMatch) {\n      records.push({\n        name: nameMatch[1],\n        filing_deadline: deadlineMatch[1],\n        status: statusMatch ? statusMatch[1] : 'unknown',\n        completion_pct: completionMatch ? parseFloat(completionMatch[1]) : 0\n      });\n    }\n  });\n}\n\n// Calculate summary statistics\nconst stats = {\n  total: records.length,\n  filed: records.filter(r => r.status === 'filed').length,\n  on_time: records.filter(r => r.status === 'filed' || r.status === 'submitted').length,\n  late: records.filter(r => r.status === 'late').length,\n  in_progress: records.filter(r => r.status === 'in_progress').length,\n  not_started: records.filter(r => r.status === 'not_started').length,\n  compliance_rate: 0,\n  avg_completion: 0,\n  records: records\n};\n\nstats.compliance_rate = stats.total > 0 ? (stats.on_time / stats.total * 100).toFixed(1) : 0;\nstats.avg_completion = stats.total > 0 ? (records.reduce((sum, r) => sum + r.completion_pct, 0) / stats.total).toFixed(1) : 0;\n\nreturn { json: stats };"
+      },
+      "name": "Calculate Statistics",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "id": "calc-stats-1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $input.item.json;\nconst period = $('Parse UID & Set Period').item.json.report_month;\n\n// Generate compliance status emoji\nconst complianceEmoji = stats.compliance_rate >= 95 ? '✅' : stats.compliance_rate >= 80 ? '⚠️' : '🚨';\n\n// Build detailed report\nconst report = `# 📊 Finance PPM Monthly Compliance Report\n\n**Period:** ${period}\n**Generated:** ${new Date().toLocaleString()}\n\n---\n\n## ${complianceEmoji} Compliance Summary\n\n| Metric | Value | Status |\n|--------|-------|--------|\n| **Total BIR Forms** | ${stats.total} | - |\n| **Filed On-Time** | ${stats.on_time} | ${stats.on_time === stats.total ? '✅' : '⚠️'} |\n| **Late Filings** | ${stats.late} | ${stats.late === 0 ? '✅' : '🚨'} |\n| **Compliance Rate** | ${stats.compliance_rate}% | ${complianceEmoji} |\n| **Avg Completion** | ${stats.avg_completion}% | ${stats.avg_completion >= 90 ? '✅' : '⚠️'} |\n\n---\n\n## 📋 Status Breakdown\n\n| Status | Count | Percentage |\n|--------|-------|------------|\n| ✅ Filed | ${stats.filed} | ${stats.total > 0 ? (stats.filed / stats.total * 100).toFixed(1) : 0}% |\n| 🔄 In Progress | ${stats.in_progress} | ${stats.total > 0 ? (stats.in_progress / stats.total * 100).toFixed(1) : 0}% |\n| ❌ Not Started | ${stats.not_started} | ${stats.total > 0 ? (stats.not_started / stats.total * 100).toFixed(1) : 0}% |\n| 🚨 Late | ${stats.late} | ${stats.total > 0 ? (stats.late / stats.total * 100).toFixed(1) : 0}% |\n\n---\n\n## 📝 Individual Forms\n\n${stats.records.map(r => {\n  const statusEmoji = {\n    'filed': '✅',\n    'submitted': '✅',\n    'in_progress': '🔄',\n    'not_started': '❌',\n    'late': '🚨'\n  };\n  \n  return `### ${statusEmoji[r.status]} ${r.name}\n- **Deadline:** ${r.filing_deadline}\n- **Status:** ${r.status}\n- **Completion:** ${r.completion_pct}%\n`;\n}).join('\\n')}\n\n---\n\n## 🎯 Recommendations\n\n${stats.late > 0 ? `⚠️ **Action Required:** ${stats.late} late filing(s) detected. Immediate review recommended.\\n` : ''}\n${stats.compliance_rate < 95 ? `⚠️ **Improvement Needed:** Compliance rate ${stats.compliance_rate}% is below 95% target.\\n` : ''}\n${stats.compliance_rate >= 95 && stats.late === 0 ? `✅ **Excellent Performance:** All filings on-time with ${stats.compliance_rate}% compliance.\\n` : ''}\n\n**Next Steps:**\n1. Review late filings and document root causes\n2. Update internal deadlines if needed\n3. Schedule review with Finance Director\n4. Archive this report for audit trail\n\n---\n\n*Generated by Finance PPM n8n Automation*\n[View Dashboard](https://odoo.insightpulseai.net/ipai/finance/ppm)`;\n\nreturn {\n  json: {\n    report_markdown: report,\n    report_title: `Finance PPM Report - ${period}`,\n    compliance_rate: stats.compliance_rate,\n    period: period,\n    requires_action: stats.late > 0 || stats.compliance_rate < 95\n  }\n};"
+      },
+      "name": "Generate Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1250, 300],
+      "id": "generate-report-1"
+    },
+    {
+      "parameters": {
+        "url": "={{$credentials.mattermost_webhook_url}}",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"text\": \"## {{$json.report_title}}\\n\\n{{$json.report_markdown}}\",\n  \"channel\": \"finance-reports\",\n  \"username\": \"Monthly Report Bot\",\n  \"icon_emoji\": \"📊\"\n}"
+      },
+      "name": "Post to Mattermost",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 200],
+      "id": "send-report-1"
+    },
+    {
+      "parameters": {
+        "url": "={{$credentials.supabase_url}}/rest/v1/finance_ppm_reports",
+        "requestMethod": "POST",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{$credentials.supabase_service_role_key}}"
+            },
+            {
+              "name": "Authorization",
+              "value": "=Bearer {{$credentials.supabase_service_role_key}}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Prefer",
+              "value": "return=representation"
+            }
+          ]
+        },
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"report_period\": \"{{$json.period}}\",\n  \"report_content\": \"{{$json.report_markdown}}\",\n  \"compliance_rate\": {{$json.compliance_rate}},\n  \"requires_action\": {{$json.requires_action}},\n  \"generated_at\": \"{{$now.toISO()}}\"\n}"
+      },
+      "name": "Save to Supabase",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1450, 400],
+      "id": "save-supabase-1",
+      "notes": "Archive report in Supabase for audit trail"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "boolean": [
+            {
+              "value1": "={{$json.requires_action}}",
+              "value2": true
+            }
+          ]
+        }
+      },
+      "name": "Requires Action?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1650, 300],
+      "id": "check-action-1"
+    },
+    {
+      "parameters": {
+        "url": "={{$credentials.mattermost_webhook_url}}",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"text\": \"🚨 **Action Required: Monthly Compliance Report**\\n\\n@finance-director Please review the monthly compliance report. Issues detected require immediate attention.\\n\\n[View Full Report](https://odoo.insightpulseai.net/ipai/finance/ppm)\",\n  \"channel\": \"finance-urgent\",\n  \"username\": \"Action Alert Bot\",\n  \"icon_emoji\": \"🚨\"\n}"
+      },
+      "name": "Alert Finance Director",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "id": "alert-director-1",
+      "notes": "Send urgent alert if action is required"
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = {\n  report_generated: true,\n  period: $('Parse UID & Set Period').item.json.report_month,\n  compliance_rate: $input.item.json.compliance_rate,\n  action_alert_sent: $input.item.json.requires_action,\n  timestamp: new Date().toISOString()\n};\n\nconsole.log('Monthly Report Summary:', summary);\n\nreturn { json: summary };"
+      },
+      "name": "Log Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 300],
+      "id": "log-summary-3"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo Auth": {
+      "main": [
+        [
+          {
+            "node": "Parse UID & Set Period",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse UID & Set Period": {
+      "main": [
+        [
+          {
+            "node": "Query BIR Forms (Month)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query BIR Forms (Month)": {
+      "main": [
+        [
+          {
+            "node": "Calculate Statistics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Statistics": {
+      "main": [
+        [
+          {
+            "node": "Generate Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Report": {
+      "main": [
+        [
+          {
+            "node": "Post to Mattermost",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Save to Supabase",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post to Mattermost": {
+      "main": [
+        [
+          {
+            "node": "Requires Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save to Supabase": {
+      "main": [
+        [
+          {
+            "node": "Requires Action?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Requires Action?": {
+      "main": [
+        [
+          {
+            "node": "Alert Finance Director",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alert Finance Director": {
+      "main": [
+        [
+          {
+            "node": "Log Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "id": "monthly-compliance-report",
+  "meta": {
+    "instanceId": "n8n.insightpulseai.net"
+  },
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "1"
+    },
+    {
+      "name": "Reports",
+      "id": "6"
+    },
+    {
+      "name": "Compliance",
+      "id": "7"
+    }
+  ]
+}

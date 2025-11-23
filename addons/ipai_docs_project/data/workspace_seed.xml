@@ -1,0 +1,116 @@
+<odoo>
+    <data noupdate="1">
+        <!-- 1. Workspace Projects -->
+        <record id="project_ws_finance" model="project.project">
+            <field name="name">WS – Finance &amp; Tax</field>
+            <field name="description">Workspace for Finance, Tax, and Compliance.</field>
+            <field name="privacy_visibility">employees</field>
+        </record>
+
+        <record id="project_ws_ai_ops" model="project.project">
+            <field name="name">WS – AI Ops &amp; Agents</field>
+            <field name="description">Workspace for AI Development and Operations.</field>
+            <field name="privacy_visibility">employees</field>
+        </record>
+
+        <record id="project_ws_tbwa" model="project.project">
+            <field name="name">WS – TBWA SMP / Client Work</field>
+            <field name="description">Workspace for Client Projects and Campaigns.</field>
+            <field name="privacy_visibility">employees</field>
+        </record>
+
+        <record id="project_ws_insightpulse" model="project.project">
+            <field name="name">WS – InsightPulseAI Internal</field>
+            <field name="description">Internal Company Workspace.</field>
+            <field name="privacy_visibility">employees</field>
+        </record>
+
+        <record id="project_ws_w9" model="project.project">
+            <field name="name">WS – W9 Studio / Creative</field>
+            <field name="description">Workspace for Creative Studio.</field>
+            <field name="privacy_visibility">employees</field>
+        </record>
+
+        <!-- 2. Root Knowledge Docs (Home Pages) -->
+        <record id="doc_home_finance" model="ipai.doc">
+            <field name="name">Finance – Home</field>
+            <field name="doc_type">page</field>
+            <field name="state">published</field>
+            <field name="body_html"><![CDATA[<h1>Finance & Tax Workspace</h1><p>Welcome to the Finance home page.</p>]]></field>
+            <field name="project_ids" eval="[(4, ref('project_ws_finance'))]"/>
+        </record>
+
+        <record id="doc_home_ai_ops" model="ipai.doc">
+            <field name="name">AI Ops – Home</field>
+            <field name="doc_type">page</field>
+            <field name="state">published</field>
+            <field name="body_html"><![CDATA[<h1>AI Ops Workspace</h1><p>Welcome to the AI Operations home page.</p>]]></field>
+            <field name="project_ids" eval="[(4, ref('project_ws_ai_ops'))]"/>
+        </record>
+
+        <record id="doc_home_tbwa" model="ipai.doc">
+            <field name="name">TBWA – Home</field>
+            <field name="doc_type">page</field>
+            <field name="state">published</field>
+            <field name="body_html"><![CDATA[<h1>TBWA Workspace</h1><p>Welcome to the Client Work home page.</p>]]></field>
+            <field name="project_ids" eval="[(4, ref('project_ws_tbwa'))]"/>
+        </record>
+
+        <record id="doc_home_insightpulse" model="ipai.doc">
+            <field name="name">InsightPulse – Home</field>
+            <field name="doc_type">page</field>
+            <field name="state">published</field>
+            <field name="body_html"><![CDATA[<h1>InsightPulse Internal</h1><p>Welcome to the Company home page.</p>]]></field>
+            <field name="project_ids" eval="[(4, ref('project_ws_insightpulse'))]"/>
+        </record>
+
+        <record id="doc_home_w9" model="ipai.doc">
+            <field name="name">W9 Studio – Home</field>
+            <field name="doc_type">page</field>
+            <field name="state">published</field>
+            <field name="body_html"><![CDATA[<h1>W9 Studio Workspace</h1><p>Welcome to the Creative Studio home page.</p>]]></field>
+            <field name="project_ids" eval="[(4, ref('project_ws_w9'))]"/>
+        </record>
+
+        <!-- 3. Templates -->
+        <record id="project_template_month_end" model="project.project">
+            <field name="name">TEMPLATE – Month-End Closing</field>
+            <field name="active">True</field>
+        </record>
+        
+        <!-- Stages for Month-End -->
+        <record id="stage_me_backlog" model="project.task.type">
+            <field name="name">Backlog</field>
+            <field name="sequence">1</field>
+            <field name="project_ids" eval="[(4, ref('project_template_month_end'))]"/>
+        </record>
+        <record id="stage_me_progress" model="project.task.type">
+            <field name="name">In Progress</field>
+            <field name="sequence">2</field>
+            <field name="project_ids" eval="[(4, ref('project_template_month_end'))]"/>
+        </record>
+        <record id="stage_me_done" model="project.task.type">
+            <field name="name">Done</field>
+            <field name="sequence">10</field>
+            <field name="project_ids" eval="[(4, ref('project_template_month_end'))]"/>
+        </record>
+
+        <!-- Default Tasks for Month-End -->
+        <record id="task_me_trial_balance" model="project.task">
+            <field name="name">Prepare Trial Balance</field>
+            <field name="project_id" ref="project_template_month_end"/>
+            <field name="stage_id" ref="stage_me_backlog"/>
+        </record>
+        <record id="task_me_reconcile" model="project.task">
+            <field name="name">Reconcile Bank Statements</field>
+            <field name="project_id" ref="project_template_month_end"/>
+            <field name="stage_id" ref="stage_me_backlog"/>
+        </record>
+        <record id="task_me_vat" model="project.task">
+            <field name="name">Prepare VAT Return (2550Q)</field>
+            <field name="project_id" ref="project_template_month_end"/>
+            <field name="stage_id" ref="stage_me_backlog"/>
+        </record>
+
+    </data>
+</odoo>

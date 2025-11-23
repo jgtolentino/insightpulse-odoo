@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_finance_person,ipai.finance.person,model_ipai_finance_person,base.group_user,1,1,1,1
+access_ipai_finance_task_template,ipai.finance.task.template,model_ipai_finance_task_template,base.group_user,1,1,1,1
+access_ipai_bir_form_schedule,ipai.bir.form.schedule,model_ipai_bir_form_schedule,base.group_user,1,1,1,1
+access_ipai_bir_process_step,ipai.bir.process.step,model_ipai_bir_process_step,base.group_user,1,1,1,1
+access_finance_ppm_dashboard_user,access_finance_ppm_dashboard_user,model_finance_ppm_dashboard,account.group_account_user,1,0,0,0

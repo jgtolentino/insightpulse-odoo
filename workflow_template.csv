@@ -1,0 +1,16 @@
+form_code,stage,role,person_code,objective,offset_business_days
+1601C,Preparation,Finance Supervisor,BOM,IM2,4
+1601C,Review,Senior Finance Manager,RIM,IM2,2
+1601C,Approval,Finance Director,CKVC,IM2,1
+2550Q,Preparation,Finance Supervisor,BOM,IM2,5
+2550Q,Review,Senior Finance Manager,RIM,IM2,3
+2550Q,Approval,Finance Director,CKVC,IM2,1
+1702Q,Preparation,Finance Supervisor,BOM,IM2,5
+1702Q,Review,Senior Finance Manager,RIM,IM2,3
+1702Q,Approval,Finance Director,CKVC,IM2,1
+1601EQ,Preparation,Finance Supervisor,BOM,IM2,4
+1601EQ,Review,Senior Finance Manager,RIM,IM2,2
+1601EQ,Approval,Finance Director,CKVC,IM2,1
+0619E,Preparation,Finance Supervisor,BOM,IM2,4
+0619E,Review,Senior Finance Manager,RIM,IM2,2
+0619E,Approval,Finance Director,CKVC,IM2,1

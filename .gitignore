@@ -34,6 +34,8 @@ sessions/
 addons/*
 !addons/ipai_*/
 !addons/ipai_*/**
+!addons/tbwa_*/
+!addons/tbwa_*/**
 
 # Docker
 .env

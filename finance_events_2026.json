@@ -1,0 +1,932 @@
+[
+  {
+    "date": "2026-01-09",
+    "value": 1,
+    "label": "1601C Dec 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-13",
+    "value": 1,
+    "label": "1601C Dec 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-14",
+    "value": 1,
+    "label": "1601C Dec 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-19",
+    "value": 1,
+    "label": "2550Q Q4 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-21",
+    "value": 1,
+    "label": "2550Q Q4 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-23",
+    "value": 1,
+    "label": "2550Q Q4 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-01-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-27",
+    "value": 1,
+    "label": "1601EQ Q4 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-29",
+    "value": 1,
+    "label": "1601EQ Q4 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-01-30",
+    "value": 1,
+    "label": "1601EQ Q4 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-04",
+    "value": 1,
+    "label": "0619E Jan 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-06",
+    "value": 1,
+    "label": "0619E Jan 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-09",
+    "value": 1,
+    "label": "0619E Jan 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-10",
+    "value": 1,
+    "label": "1601C Jan 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-12",
+    "value": 1,
+    "label": "1601C Jan 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-02-13",
+    "value": 1,
+    "label": "1601C Jan 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-02-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-04",
+    "value": 1,
+    "label": "0619E Feb 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-06",
+    "value": 1,
+    "label": "0619E Feb 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-09",
+    "value": 1,
+    "label": "0619E Feb 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-10",
+    "value": 1,
+    "label": "1601C Feb 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-12",
+    "value": 1,
+    "label": "1601C Feb 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-03-13",
+    "value": 1,
+    "label": "1601C Feb 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-03-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-08",
+    "value": 1,
+    "label": "1601C Mar 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-13",
+    "value": 1,
+    "label": "1601C Mar 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-14",
+    "value": 1,
+    "label": "1601C Mar 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-20",
+    "value": 1,
+    "label": "2550Q Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-22",
+    "value": 1,
+    "label": "2550Q Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-24",
+    "value": 1,
+    "label": "1601EQ Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-30",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-24",
+    "value": 1,
+    "label": "2550Q Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-28",
+    "value": 1,
+    "label": "1601EQ Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-30",
+    "status": "open"
+  },
+  {
+    "date": "2026-04-29",
+    "value": 1,
+    "label": "1601EQ Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-04-30",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-05",
+    "value": 1,
+    "label": "0619E Apr 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-11",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-07",
+    "value": 1,
+    "label": "0619E Apr 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-11",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-08",
+    "value": 1,
+    "label": "0619E Apr 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-11",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-11",
+    "value": 1,
+    "label": "1601C Apr 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-13",
+    "value": 1,
+    "label": "1601C Apr 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-14",
+    "value": 1,
+    "label": "1601C Apr 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-05-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-25",
+    "value": 1,
+    "label": "1702Q Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-27",
+    "value": 1,
+    "label": "1702Q Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-05-29",
+    "value": 1,
+    "label": "1702Q Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-04",
+    "value": 1,
+    "label": "0619E May 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-08",
+    "value": 1,
+    "label": "0619E May 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-08",
+    "value": 1,
+    "label": "1601C May 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-09",
+    "value": 1,
+    "label": "0619E May 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-10",
+    "value": 1,
+    "label": "1601C May 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-06-11",
+    "value": 1,
+    "label": "1601C May 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-06-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-09",
+    "value": 1,
+    "label": "1601C Jun 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-13",
+    "value": 1,
+    "label": "1601C Jun 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-14",
+    "value": 1,
+    "label": "1601C Jun 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-20",
+    "value": 1,
+    "label": "2550Q Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-22",
+    "value": 1,
+    "label": "2550Q Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-24",
+    "value": 1,
+    "label": "2550Q Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-27",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-27",
+    "value": 1,
+    "label": "1601EQ Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-31",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-29",
+    "value": 1,
+    "label": "1601EQ Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-31",
+    "status": "open"
+  },
+  {
+    "date": "2026-07-30",
+    "value": 1,
+    "label": "1601EQ Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-07-31",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-04",
+    "value": 1,
+    "label": "0619E Jul 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-06",
+    "value": 1,
+    "label": "0619E Jul 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-07",
+    "value": 1,
+    "label": "0619E Jul 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-11",
+    "value": 1,
+    "label": "1601C Jul 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-17",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-13",
+    "value": 1,
+    "label": "1601C Jul 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-17",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-14",
+    "value": 1,
+    "label": "1601C Jul 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-08-17",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-24",
+    "value": 1,
+    "label": "1702Q Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-26",
+    "value": 1,
+    "label": "1702Q Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-08-28",
+    "value": 1,
+    "label": "1702Q Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-04",
+    "value": 1,
+    "label": "0619E Aug 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-08",
+    "value": 1,
+    "label": "0619E Aug 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-09",
+    "value": 1,
+    "label": "0619E Aug 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-09",
+    "value": 1,
+    "label": "1601C Aug 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-11",
+    "value": 1,
+    "label": "1601C Aug 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-09-14",
+    "value": 1,
+    "label": "1601C Aug 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-09-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-09",
+    "value": 1,
+    "label": "1601C Sep 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-13",
+    "value": 1,
+    "label": "1601C Sep 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-14",
+    "value": 1,
+    "label": "1601C Sep 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-19",
+    "value": 1,
+    "label": "2550Q Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-21",
+    "value": 1,
+    "label": "2550Q Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-23",
+    "value": 1,
+    "label": "2550Q Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-10-26",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-27",
+    "value": 1,
+    "label": "1601EQ Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-29",
+    "value": 1,
+    "label": "1601EQ Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-10-30",
+    "value": 1,
+    "label": "1601EQ Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-02",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-04",
+    "value": 1,
+    "label": "0619E Oct 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-06",
+    "value": 1,
+    "label": "0619E Oct 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-09",
+    "value": 1,
+    "label": "0619E Oct 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-10",
+    "value": 1,
+    "label": "1601C Oct 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-12",
+    "value": 1,
+    "label": "1601C Oct 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-13",
+    "value": 1,
+    "label": "1601C Oct 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-11-16",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-23",
+    "value": 1,
+    "label": "1702Q Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-25",
+    "value": 1,
+    "label": "1702Q Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-11-27",
+    "value": 1,
+    "label": "1702Q Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-01",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-03",
+    "value": 1,
+    "label": "0619E Nov 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-07",
+    "value": 1,
+    "label": "0619E Nov 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-09",
+    "value": 1,
+    "label": "0619E Nov 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-10",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-09",
+    "value": 1,
+    "label": "1601C Nov 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-11",
+    "value": 1,
+    "label": "1601C Nov 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-15",
+    "status": "open"
+  },
+  {
+    "date": "2026-12-14",
+    "value": 1,
+    "label": "1601C Nov 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "objective": "IM2",
+    "legal_deadline": "2026-12-15",
+    "status": "open"
+  }
+]

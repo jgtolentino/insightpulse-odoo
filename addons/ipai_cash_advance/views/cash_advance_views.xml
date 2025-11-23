@@ -1,0 +1,84 @@
+<odoo>
+    <record id="view_ipai_cash_advance_tree" model="ir.ui.view">
+        <field name="name">ipai.cash.advance.tree</field>
+        <field name="model">ipai.cash.advance</field>
+        <field name="arch" type="xml">
+            <tree string="Cash Advances">
+                <field name="name"/>
+                <field name="date"/>
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <field name="amount_requested"/>
+                <field name="state" widget="badge" decoration-info="state == 'draft'" decoration-success="state == 'closed'"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_ipai_cash_advance_form" model="ir.ui.view">
+        <field name="name">ipai.cash.advance.form</field>
+        <field name="model">ipai.cash.advance</field>
+        <field name="arch" type="xml">
+            <form string="Cash Advance">
+                <header>
+                    <button name="action_submit" string="Submit" type="object" states="draft" class="oe_highlight"/>
+                    <button name="action_approve" string="Approve" type="object" states="submitted" class="oe_highlight" groups="base.group_system"/>
+                    <button name="action_pay" string="Disburse Cash" type="object" states="approved" class="oe_highlight" groups="base.group_system"/>
+                    <button name="action_start_liquidation" string="Start Liquidation" type="object" states="paid" class="oe_highlight"/>
+                    <button name="action_finish_liquidation" string="Submit Liquidation" type="object" states="liquidating" class="oe_highlight"/>
+                    <button name="action_close" string="Close" type="object" states="liquidated" class="oe_highlight" groups="base.group_system"/>
+                    <field name="state" widget="statusbar" statusbar_visible="draft,submitted,approved,paid,liquidated,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="employee_id"/>
+                            <field name="department_id"/>
+                            <field name="date"/>
+                        </group>
+                        <group>
+                            <field name="amount_requested"/>
+                            <field name="purpose"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Liquidation Details" attrs="{'invisible': [('state', 'in', ['draft', 'submitted', 'approved'])]}">
+                            <field name="line_ids">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="particulars"/>
+                                    <field name="client"/>
+                                    <field name="ce_number"/>
+                                    <field name="amount_meals" sum="Total Meals"/>
+                                    <field name="amount_transpo" sum="Total Transpo"/>
+                                    <field name="amount_misc" sum="Total Misc"/>
+                                    <field name="total" sum="Grand Total"/>
+                                    <field name="currency_id" invisible="1"/>
+                                </tree>
+                            </field>
+                            <group class="oe_subtotal_footer oe_right">
+                                <field name="amount_requested" string="Cash Advanced"/>
+                                <field name="total_liquidated"/>
+                                <div class="oe_subtotal_footer_separator oe_inline">
+                                    <label for="amount_due"/>
+                                </div>
+                                <field name="amount_due" nolabel="1" class="oe_subtotal_footer_separator"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+</odoo>

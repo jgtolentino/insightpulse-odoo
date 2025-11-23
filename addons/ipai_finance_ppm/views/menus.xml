@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_finance_ppm_root" name="Finance PPM" web_icon="project,static/description/icon.png" sequence="10"/>
+
+    <menuitem id="menu_finance_directory" name="Directory" parent="menu_finance_ppm_root" action="action_finance_person" sequence="10"/>
+    <menuitem id="menu_finance_tasks" name="Monthly Tasks" parent="menu_finance_ppm_root" action="action_finance_task_template" sequence="20"/>
+    <menuitem id="menu_finance_calendar" name="Compliance Calendar" parent="menu_finance_ppm_root" action="action_bir_form_schedule" sequence="30"/>
+</odoo>

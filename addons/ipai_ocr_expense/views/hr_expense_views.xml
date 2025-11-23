@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+    <record id="view_hr_expense_form_ocr" model="ir.ui.view">
+        <field name="name">hr.expense.form.ocr</field>
+        <field name="model">hr.expense</field>
+        <field name="inherit_id" ref="hr_expense.view_expenses_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/group" position="inside">
+                <group string="OCR">
+                    <field name="ocr_status"/>
+                    <field name="ocr_amount_detected" readonly="1"/>
+                    <field name="ocr_date_detected" readonly="1"/>
+                    <field name="ocr_vendor_detected" readonly="1"/>
+                    <field name="ocr_error_message" readonly="1"/>
+                    <field name="ocr_payload" invisible="1"/>
+                </group>
+            </xpath>
+
+            <xpath expr="//header" position="inside">
+                <button name="action_send_to_ocr"
+                        string="Send to OCR"
+                        type="object"
+                        class="btn-secondary"
+                        invisible="state not in ['draft']"/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>

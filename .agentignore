@@ -1,0 +1,6 @@
+logs/
+filestore/
+tmp/
+deploy/*.log
+*.pyc
+__pycache__/

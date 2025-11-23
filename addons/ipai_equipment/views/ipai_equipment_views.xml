@@ -2,98 +2,45 @@
 <odoo>
     <data>
 
-        <!-- Assets -->
-        <record id="ipai_equipment_asset_tree" model="ir.ui.view">
-            <field name="name">ipai.equipment.asset.tree</field>
-            <field name="model">ipai.equipment.asset</field>
+        <!-- Extend Maintenance Equipment Form -->
+        <record id="hr_equipment_view_form_inherit_ipai" model="ir.ui.view">
+            <field name="name">maintenance.equipment.form.inherit.ipai</field>
+            <field name="model">maintenance.equipment</field>
+            <field name="inherit_id" ref="maintenance.hr_equipment_view_form"/>
             <field name="arch" type="xml">
-                <tree>
-                    <field name="name"/>
-                    <field name="category_id"/>
-                    <field name="serial_number"/>
-                    <field name="location_id"/>
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_bookings" type="object" string="Bookings"
+                            class="oe_stat_button" icon="fa-calendar">
+                        <field name="booking_count" widget="statinfo"/>
+                    </button>
+                    <button name="action_view_incidents" type="object" string="Incidents"
+                            class="oe_stat_button" icon="fa-exclamation-triangle">
+                        <field name="incident_count" widget="statinfo"/>
+                    </button>
+                </xpath>
+                <xpath expr="//field[@name='serial_no']" position="after">
+                    <field name="equipment_code"/>
                     <field name="condition"/>
                     <field name="status"/>
-                </tree>
+                    <field name="current_custodian_id"/>
+                </xpath>
             </field>
         </record>
 
-        <record id="ipai_equipment_asset_form" model="ir.ui.view">
-            <field name="name">ipai.equipment.asset.form</field>
-            <field name="model">ipai.equipment.asset</field>
+        <!-- Extend Maintenance Equipment Kanban -->
+        <record id="hr_equipment_view_kanban_inherit_ipai" model="ir.ui.view">
+            <field name="name">maintenance.equipment.kanban.inherit.ipai</field>
+            <field name="model">maintenance.equipment</field>
+            <field name="inherit_id" ref="maintenance.hr_equipment_view_kanban"/>
             <field name="arch" type="xml">
-                <form string="Equipment Asset">
-                    <header>
-                        <button name="action_view_bookings" type="object" string="Bookings"
-                                class="oe_stat_button" icon="fa-calendar">
-                            <field name="booking_count" widget="statinfo" string="Bookings"/>
-                        </button>
-                        <button name="action_view_incidents" type="object" string="Incidents"
-                                class="oe_stat_button" icon="fa-exclamation-triangle">
-                            <field name="incident_count" widget="statinfo" string="Incidents"/>
-                        </button>
-                    </header>
-                    <sheet>
-                        <group>
-                            <field name="name"/>
-                            <field name="product_id"/>
-                            <field name="category_id"/>
-                        </group>
-                        <group>
-                            <field name="serial_number"/>
-                            <field name="location_id"/>
-                            <field name="condition"/>
-                            <field name="status"/>
-                        </group>
-                        <group>
-                            <field name="image_1920" widget="image"/>
-                        </group>
-                    </sheet>
-                </form>
+                <xpath expr="//div[hasclass('o_kanban_record_body')]" position="inside">
+                    <div class="mt-1">
+                        <span class="badge text-bg-info" t-if="record.status.raw_value == 'available'">Available</span>
+                        <span class="badge text-bg-warning" t-if="record.status.raw_value == 'reserved'">Reserved</span>
+                        <span class="badge text-bg-danger" t-if="record.status.raw_value == 'checked_out'">Checked Out</span>
+                    </div>
+                </xpath>
             </field>
-        </record>
-
-        <!-- Asset Search View with Filters -->
-        <record id="ipai_equipment_asset_search" model="ir.ui.view">
-            <field name="name">ipai.equipment.asset.search</field>
-            <field name="model">ipai.equipment.asset</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="name"/>
-                    <field name="serial_number"/>
-                    <field name="category_id"/>
-                    <field name="location_id"/>
-                    <filter string="Available" name="available"
-                            domain="[('status', '=', 'available')]"/>
-                    <filter string="Checked Out" name="checked_out"
-                            domain="[('status', '=', 'checked_out')]"/>
-                    <filter string="In Maintenance" name="in_maintenance"
-                            domain="[('status', '=', 'maintenance')]"/>
-                    <filter string="Reserved" name="reserved"
-                            domain="[('status', '=', 'reserved')]"/>
-                    <separator/>
-                    <filter string="Good Condition" name="good_condition"
-                            domain="[('condition', '=', 'good')]"/>
-                    <filter string="Damaged" name="damaged"
-                            domain="[('condition', '=', 'damaged')]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Status" name="group_status"
-                                context="{'group_by': 'status'}"/>
-                        <filter string="Condition" name="group_condition"
-                                context="{'group_by': 'condition'}"/>
-                        <filter string="Category" name="group_category"
-                                context="{'group_by': 'category_id'}"/>
-                        <filter string="Location" name="group_location"
-                                context="{'group_by': 'location_id'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
-
-        <record id="ipai_equipment_asset_action" model="ir.actions.act_window">
-            <field name="name">Assets</field>
-            <field name="res_model">ipai.equipment.asset</field>
-            <field name="view_mode">tree,form</field>
         </record>
 
         <!-- Bookings -->
@@ -101,14 +48,14 @@
             <field name="name">ipai.equipment.booking.tree</field>
             <field name="model">ipai.equipment.booking</field>
             <field name="arch" type="xml">
-                <tree>
+                <tree decoration-danger="is_overdue">
                     <field name="name"/>
-                    <field name="asset_id"/>
-                    <field name="borrower_id"/>
+                    <field name="requester_id"/>
                     <field name="project_id"/>
                     <field name="start_datetime"/>
                     <field name="end_datetime"/>
                     <field name="state"/>
+                    <field name="is_overdue" invisible="1"/>
                 </tree>
             </field>
         </record>
@@ -118,30 +65,56 @@
             <field name="model">ipai.equipment.booking</field>
             <field name="arch" type="xml">
                 <form string="Equipment Booking">
-                    <sheet>
-                        <group>
-                            <field name="name" readonly="1"/>
-                            <field name="asset_id"/>
-                            <field name="borrower_id"/>
-                            <field name="project_id"/>
-                        </group>
-                        <group>
-                            <field name="start_datetime"/>
-                            <field name="end_datetime"/>
-                            <field name="state" readonly="1"/>
-                        </group>
-                    </sheet>
-                    <footer>
-                        <button name="action_reserve" type="object" string="Reserve"
-                                states="draft" class="btn-primary"/>
+                    <header>
+                        <button name="action_request" type="object" string="Request"
+                                invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_approve" type="object" string="Approve"
+                                invisible="state != 'requested'" class="btn-primary"/>
                         <button name="action_check_out" type="object" string="Check Out"
-                                states="reserved" class="btn-primary"/>
+                                invisible="state != 'approved'" class="btn-primary"/>
                         <button name="action_return" type="object" string="Return"
-                                states="checked_out" class="btn-primary"/>
+                                invisible="state != 'checked_out'" class="btn-primary"/>
                         <button name="action_cancel" type="object" string="Cancel"
-                                states="draft,reserved" class="btn-secondary"/>
-                        <button string="Close" class="btn-secondary" special="cancel"/>
-                    </footer>
+                                invisible="state in ['returned', 'cancelled']" class="btn-secondary"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,requested,approved,checked_out,returned"/>
+                    </header>
+                    <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name"/></h1>
+                        </div>
+                        <group>
+                            <group>
+                                <field name="requester_id"/>
+                                <field name="project_id"/>
+                                <field name="purpose"/>
+                            </group>
+                            <group>
+                                <field name="start_datetime"/>
+                                <field name="end_datetime"/>
+                                <field name="is_overdue" invisible="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Equipment">
+                                <field name="equipment_ids">
+                                    <tree>
+                                        <field name="name"/>
+                                        <field name="serial_no"/>
+                                        <field name="status"/>
+                                        <field name="condition"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Notes">
+                                <field name="notes"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
                 </form>
             </field>
         </record>
@@ -154,51 +127,11 @@
                 <calendar string="Booking Calendar"
                           date_start="start_datetime"
                           date_stop="end_datetime"
-                          color="asset_id"
+                          color="requester_id"
                           event_open_popup="true">
-                    <field name="asset_id"/>
-                    <field name="borrower_id"/>
+                    <field name="requester_id"/>
                     <field name="state"/>
                 </calendar>
-            </field>
-        </record>
-
-        <!-- Booking Search View with Filters -->
-        <record id="ipai_equipment_booking_search" model="ir.ui.view">
-            <field name="name">ipai.equipment.booking.search</field>
-            <field name="model">ipai.equipment.booking</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="name"/>
-                    <field name="asset_id"/>
-                    <field name="borrower_id"/>
-                    <field name="project_id"/>
-                    <filter string="My Bookings" name="my_bookings"
-                            domain="[('borrower_id', '=', uid)]"/>
-                    <filter string="Overdue" name="overdue"
-                            domain="[('is_overdue', '=', True)]"/>
-                    <separator/>
-                    <filter string="Draft" name="draft"
-                            domain="[('state', '=', 'draft')]"/>
-                    <filter string="Reserved" name="reserved"
-                            domain="[('state', '=', 'reserved')]"/>
-                    <filter string="Checked Out" name="checked_out_bookings"
-                            domain="[('state', '=', 'checked_out')]"/>
-                    <filter string="Returned" name="returned"
-                            domain="[('state', '=', 'returned')]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Asset" name="group_asset"
-                                context="{'group_by': 'asset_id'}"/>
-                        <filter string="Borrower" name="group_borrower"
-                                context="{'group_by': 'borrower_id'}"/>
-                        <filter string="Project" name="group_project"
-                                context="{'group_by': 'project_id'}"/>
-                        <filter string="State" name="group_state"
-                                context="{'group_by': 'state'}"/>
-                        <filter string="Start Date" name="group_start_date"
-                                context="{'group_by': 'start_datetime'}"/>
-                    </group>
-                </search>
             </field>
         </record>
 
@@ -215,7 +148,7 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="name"/>
-                    <field name="asset_id"/>
+                    <field name="equipment_id"/>
                     <field name="booking_id"/>
                     <field name="reported_by"/>
                     <field name="severity"/>
@@ -232,7 +165,7 @@
                     <sheet>
                         <group>
                             <field name="name"/>
-                            <field name="asset_id"/>
+                            <field name="equipment_id"/>
                             <field name="booking_id"/>
                             <field name="reported_by"/>
                         </group>
@@ -252,106 +185,6 @@
             <field name="name">Incidents</field>
             <field name="res_model">ipai.equipment.incident</field>
             <field name="view_mode">tree,form</field>
-        </record>
-
-        <!-- Asset Utilization Graph View -->
-        <record id="ipai_equipment_asset_graph" model="ir.ui.view">
-            <field name="name">ipai.equipment.asset.graph</field>
-            <field name="model">ipai.equipment.asset</field>
-            <field name="arch" type="xml">
-                <graph string="Asset Distribution" type="bar">
-                    <field name="status" type="row"/>
-                    <field name="category_id" type="col"/>
-                </graph>
-            </field>
-        </record>
-
-        <!-- Asset Utilization Pivot View -->
-        <record id="ipai_equipment_asset_pivot" model="ir.ui.view">
-            <field name="name">ipai.equipment.asset.pivot</field>
-            <field name="model">ipai.equipment.asset</field>
-            <field name="arch" type="xml">
-                <pivot string="Asset Pivot Analysis">
-                    <field name="category_id" type="row"/>
-                    <field name="status" type="col"/>
-                    <field name="location_id" type="row"/>
-                </pivot>
-            </field>
-        </record>
-
-        <!-- Booking Utilization Graph View -->
-        <record id="ipai_equipment_booking_graph" model="ir.ui.view">
-            <field name="name">ipai.equipment.booking.graph</field>
-            <field name="model">ipai.equipment.booking</field>
-            <field name="arch" type="xml">
-                <graph string="Booking Analysis" type="bar" stacked="True">
-                    <field name="asset_id" type="row"/>
-                    <field name="state" type="col"/>
-                </graph>
-            </field>
-        </record>
-
-        <!-- Booking Utilization Pivot View -->
-        <record id="ipai_equipment_booking_pivot" model="ir.ui.view">
-            <field name="name">ipai.equipment.booking.pivot</field>
-            <field name="model">ipai.equipment.booking</field>
-            <field name="arch" type="xml">
-                <pivot string="Booking Pivot Analysis">
-                    <field name="start_datetime" interval="month" type="col"/>
-                    <field name="asset_id" type="row"/>
-                    <field name="borrower_id" type="row"/>
-                    <field name="state" type="col"/>
-                </pivot>
-            </field>
-        </record>
-
-        <!-- Utilization Analysis Action -->
-        <record id="ipai_equipment_utilization_action" model="ir.actions.act_window">
-            <field name="name">Equipment Utilization</field>
-            <field name="res_model">ipai.equipment.booking</field>
-            <field name="view_mode">pivot,graph,calendar,tree,form</field>
-            <field name="context">{
-                'search_default_group_asset': 1,
-            }</field>
-        </record>
-
-        <!-- Incident Analysis Graph View -->
-        <record id="ipai_equipment_incident_graph" model="ir.ui.view">
-            <field name="name">ipai.equipment.incident.graph</field>
-            <field name="model">ipai.equipment.incident</field>
-            <field name="arch" type="xml">
-                <graph string="Incident Analysis" type="bar">
-                    <field name="severity" type="row"/>
-                    <field name="asset_id" type="col"/>
-                </graph>
-            </field>
-        </record>
-
-        <!-- Incident Search View with Filters -->
-        <record id="ipai_equipment_incident_search" model="ir.ui.view">
-            <field name="name">ipai.equipment.incident.search</field>
-            <field name="model">ipai.equipment.incident</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="name"/>
-                    <field name="asset_id"/>
-                    <field name="reported_by"/>
-                    <filter string="Open" name="open"
-                            domain="[('status', '=', 'open')]"/>
-                    <filter string="In Progress" name="in_progress"
-                            domain="[('status', '=', 'in_progress')]"/>
-                    <filter string="High Severity" name="high_severity"
-                            domain="[('severity', '=', 'high')]"/>
-                    <group expand="0" string="Group By">
-                        <filter string="Asset" name="group_asset_incident"
-                                context="{'group_by': 'asset_id'}"/>
-                        <filter string="Severity" name="group_severity"
-                                context="{'group_by': 'severity'}"/>
-                        <filter string="Status" name="group_status_incident"
-                                context="{'group_by': 'status'}"/>
-                    </group>
-                </search>
-            </field>
         </record>
 
     </data>

@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_cash_advance_user,access_ipai_cash_advance_user,model_ipai_cash_advance,base.group_user,1,1,1,0
+access_ipai_cash_advance_manager,access_ipai_cash_advance_manager,model_ipai_cash_advance,base.group_system,1,1,1,1
+access_ipai_cash_advance_line_user,access_ipai_cash_advance_line_user,model_ipai_cash_advance_line,base.group_user,1,1,1,0
+access_ipai_cash_advance_line_manager,access_ipai_cash_advance_line_manager,model_ipai_cash_advance_line,base.group_system,1,1,1,1

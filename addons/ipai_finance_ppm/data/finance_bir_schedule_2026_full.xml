@@ -1,0 +1,1415 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- BIR Schedule Templates for 2026 -->
+
+        <record id="bir_schedule_rim_1601_c_1" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_2" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_3" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_4" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_5" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_6" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_7" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_8" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_9" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_10" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_11" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_1601_c_12" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_2550q_13" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_2550q_14" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_2550q_15" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rim_2550q_16" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_17" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_18" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_19" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_20" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_21" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_22" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_23" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_24" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_25" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_26" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_27" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_1601_c_28" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_2550q_29" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_2550q_30" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_2550q_31" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_ckvc_2550q_32" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_33" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_34" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_35" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_36" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_37" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_38" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_39" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_40" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_41" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_42" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_43" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_1601_c_44" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_2550q_45" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_2550q_46" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_2550q_47" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_bom_2550q_48" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_49" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_50" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_51" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_52" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_53" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_54" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_55" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_56" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_57" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_58" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_59" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_1601_c_60" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_2550q_61" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_2550q_62" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_2550q_63" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jpal_2550q_64" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_65" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_66" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_67" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_68" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_69" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_70" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_71" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_72" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_73" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_74" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_75" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_1601_c_76" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_2550q_77" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_2550q_78" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_2550q_79" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jli_2550q_80" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_81" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_82" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_83" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_84" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_85" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_86" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_87" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_88" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_89" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_90" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_91" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_1601_c_92" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_2550q_93" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_2550q_94" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_2550q_95" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_jap_2550q_96" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_97" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_98" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_99" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_100" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_101" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_102" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_103" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_104" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_105" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_106" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_107" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_1601_c_108" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_2550q_109" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_2550q_110" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_2550q_111" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_las_2550q_112" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_113" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - January 2026</field>
+            <field name="period_covered">2026-01-01 to 2026-01-31</field>
+            <field name="filing_deadline">2026-02-10</field>
+            <field name="prep_deadline">2026-02-05</field>
+            <field name="review_deadline">2026-02-07</field>
+            <field name="approval_deadline">2026-02-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_114" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - February 2026</field>
+            <field name="period_covered">2026-02-01 to 2026-02-28</field>
+            <field name="filing_deadline">2026-03-10</field>
+            <field name="prep_deadline">2026-03-05</field>
+            <field name="review_deadline">2026-03-07</field>
+            <field name="approval_deadline">2026-03-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_115" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - March 2026</field>
+            <field name="period_covered">2026-03-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-04-10</field>
+            <field name="prep_deadline">2026-04-05</field>
+            <field name="review_deadline">2026-04-07</field>
+            <field name="approval_deadline">2026-04-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_116" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - April 2026</field>
+            <field name="period_covered">2026-04-01 to 2026-04-30</field>
+            <field name="filing_deadline">2026-05-10</field>
+            <field name="prep_deadline">2026-05-05</field>
+            <field name="review_deadline">2026-05-07</field>
+            <field name="approval_deadline">2026-05-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_117" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - May 2026</field>
+            <field name="period_covered">2026-05-01 to 2026-05-31</field>
+            <field name="filing_deadline">2026-06-10</field>
+            <field name="prep_deadline">2026-06-05</field>
+            <field name="review_deadline">2026-06-07</field>
+            <field name="approval_deadline">2026-06-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_118" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - June 2026</field>
+            <field name="period_covered">2026-06-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-07-10</field>
+            <field name="prep_deadline">2026-07-05</field>
+            <field name="review_deadline">2026-07-07</field>
+            <field name="approval_deadline">2026-07-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_119" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - July 2026</field>
+            <field name="period_covered">2026-07-01 to 2026-07-31</field>
+            <field name="filing_deadline">2026-08-10</field>
+            <field name="prep_deadline">2026-08-05</field>
+            <field name="review_deadline">2026-08-07</field>
+            <field name="approval_deadline">2026-08-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_120" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - August 2026</field>
+            <field name="period_covered">2026-08-01 to 2026-08-31</field>
+            <field name="filing_deadline">2026-09-10</field>
+            <field name="prep_deadline">2026-09-05</field>
+            <field name="review_deadline">2026-09-07</field>
+            <field name="approval_deadline">2026-09-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_121" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - September 2026</field>
+            <field name="period_covered">2026-09-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-10-10</field>
+            <field name="prep_deadline">2026-10-05</field>
+            <field name="review_deadline">2026-10-07</field>
+            <field name="approval_deadline">2026-10-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_122" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - October 2026</field>
+            <field name="period_covered">2026-10-01 to 2026-10-31</field>
+            <field name="filing_deadline">2026-11-10</field>
+            <field name="prep_deadline">2026-11-05</field>
+            <field name="review_deadline">2026-11-07</field>
+            <field name="approval_deadline">2026-11-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_123" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - November 2026</field>
+            <field name="period_covered">2026-11-01 to 2026-11-30</field>
+            <field name="filing_deadline">2026-12-10</field>
+            <field name="prep_deadline">2026-12-05</field>
+            <field name="review_deadline">2026-12-07</field>
+            <field name="approval_deadline">2026-12-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_1601_c_124" model="ipai.finance.bir_schedule">
+            <field name="name">1601-C - December 2026</field>
+            <field name="period_covered">2026-12-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-01-10</field>
+            <field name="prep_deadline">2027-01-05</field>
+            <field name="review_deadline">2027-01-07</field>
+            <field name="approval_deadline">2027-01-09</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_2550q_125" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q1</field>
+            <field name="period_covered">2026-01-01 to 2026-03-31</field>
+            <field name="filing_deadline">2026-05-30</field>
+            <field name="prep_deadline">2026-05-20</field>
+            <field name="review_deadline">2026-05-25</field>
+            <field name="approval_deadline">2026-05-28</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_2550q_126" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q2</field>
+            <field name="period_covered">2026-04-01 to 2026-06-30</field>
+            <field name="filing_deadline">2026-08-29</field>
+            <field name="prep_deadline">2026-08-19</field>
+            <field name="review_deadline">2026-08-24</field>
+            <field name="approval_deadline">2026-08-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_2550q_127" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q3</field>
+            <field name="period_covered">2026-07-01 to 2026-09-30</field>
+            <field name="filing_deadline">2026-11-29</field>
+            <field name="prep_deadline">2026-11-19</field>
+            <field name="review_deadline">2026-11-24</field>
+            <field name="approval_deadline">2026-11-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+        <record id="bir_schedule_rmqb_2550q_128" model="ipai.finance.bir_schedule">
+            <field name="name">2550Q - 2026 Q4</field>
+            <field name="period_covered">2026-10-01 to 2026-12-31</field>
+            <field name="filing_deadline">2027-03-01</field>
+            <field name="prep_deadline">2027-02-19</field>
+            <field name="review_deadline">2027-02-24</field>
+            <field name="approval_deadline">2027-02-27</field>
+            <field name="logframe_id" ref="finance_logframe_im2"/>
+            <field name="status">draft</field>
+        </record>
+
+    </data>
+</odoo>

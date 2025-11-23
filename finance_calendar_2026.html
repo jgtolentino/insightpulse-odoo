@@ -1,0 +1,1221 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>2026 Finance Closing & Tax Calendar</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        body { margin: 0; background-color: #04172b; color: white; font-family: sans-serif; }
+        #main { width: 100%; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="main"></div>
+    <script type="text/javascript">
+        var chartDom = document.getElementById('main');
+        var myChart = echarts.init(chartDom);
+        var option;
+
+        const nodes = [
+  {
+    "name": "2026-01-09-0",
+    "value": [
+      "2026-01-09",
+      1
+    ],
+    "label": "1601C Dec 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-13-1",
+    "value": [
+      "2026-01-13",
+      1
+    ],
+    "label": "1601C Dec 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-14-2",
+    "value": [
+      "2026-01-14",
+      1
+    ],
+    "label": "1601C Dec 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-19-3",
+    "value": [
+      "2026-01-19",
+      1
+    ],
+    "label": "2550Q Q4 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-21-4",
+    "value": [
+      "2026-01-21",
+      1
+    ],
+    "label": "2550Q Q4 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-23-5",
+    "value": [
+      "2026-01-23",
+      1
+    ],
+    "label": "2550Q Q4 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-27-6",
+    "value": [
+      "2026-01-27",
+      1
+    ],
+    "label": "1601EQ Q4 2025 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-29-7",
+    "value": [
+      "2026-01-29",
+      1
+    ],
+    "label": "1601EQ Q4 2025 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-01-30-8",
+    "value": [
+      "2026-01-30",
+      1
+    ],
+    "label": "1601EQ Q4 2025 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-04-9",
+    "value": [
+      "2026-02-04",
+      1
+    ],
+    "label": "0619E Jan 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-06-10",
+    "value": [
+      "2026-02-06",
+      1
+    ],
+    "label": "0619E Jan 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-09-11",
+    "value": [
+      "2026-02-09",
+      1
+    ],
+    "label": "0619E Jan 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-10-12",
+    "value": [
+      "2026-02-10",
+      1
+    ],
+    "label": "1601C Jan 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-12-13",
+    "value": [
+      "2026-02-12",
+      1
+    ],
+    "label": "1601C Jan 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-02-13-14",
+    "value": [
+      "2026-02-13",
+      1
+    ],
+    "label": "1601C Jan 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-04-15",
+    "value": [
+      "2026-03-04",
+      1
+    ],
+    "label": "0619E Feb 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-06-16",
+    "value": [
+      "2026-03-06",
+      1
+    ],
+    "label": "0619E Feb 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-09-17",
+    "value": [
+      "2026-03-09",
+      1
+    ],
+    "label": "0619E Feb 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-10-18",
+    "value": [
+      "2026-03-10",
+      1
+    ],
+    "label": "1601C Feb 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-12-19",
+    "value": [
+      "2026-03-12",
+      1
+    ],
+    "label": "1601C Feb 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-03-13-20",
+    "value": [
+      "2026-03-13",
+      1
+    ],
+    "label": "1601C Feb 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-08-21",
+    "value": [
+      "2026-04-08",
+      1
+    ],
+    "label": "1601C Mar 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-13-22",
+    "value": [
+      "2026-04-13",
+      1
+    ],
+    "label": "1601C Mar 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-14-23",
+    "value": [
+      "2026-04-14",
+      1
+    ],
+    "label": "1601C Mar 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-20-24",
+    "value": [
+      "2026-04-20",
+      1
+    ],
+    "label": "2550Q Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-22-25",
+    "value": [
+      "2026-04-22",
+      1
+    ],
+    "label": "2550Q Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-24-26",
+    "value": [
+      "2026-04-24",
+      1
+    ],
+    "label": "1601EQ Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-24-27",
+    "value": [
+      "2026-04-24",
+      1
+    ],
+    "label": "2550Q Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-28-28",
+    "value": [
+      "2026-04-28",
+      1
+    ],
+    "label": "1601EQ Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-04-29-29",
+    "value": [
+      "2026-04-29",
+      1
+    ],
+    "label": "1601EQ Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-05-30",
+    "value": [
+      "2026-05-05",
+      1
+    ],
+    "label": "0619E Apr 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-07-31",
+    "value": [
+      "2026-05-07",
+      1
+    ],
+    "label": "0619E Apr 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-08-32",
+    "value": [
+      "2026-05-08",
+      1
+    ],
+    "label": "0619E Apr 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-11-33",
+    "value": [
+      "2026-05-11",
+      1
+    ],
+    "label": "1601C Apr 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-13-34",
+    "value": [
+      "2026-05-13",
+      1
+    ],
+    "label": "1601C Apr 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-14-35",
+    "value": [
+      "2026-05-14",
+      1
+    ],
+    "label": "1601C Apr 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-25-36",
+    "value": [
+      "2026-05-25",
+      1
+    ],
+    "label": "1702Q Q1 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-27-37",
+    "value": [
+      "2026-05-27",
+      1
+    ],
+    "label": "1702Q Q1 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-05-29-38",
+    "value": [
+      "2026-05-29",
+      1
+    ],
+    "label": "1702Q Q1 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-04-39",
+    "value": [
+      "2026-06-04",
+      1
+    ],
+    "label": "0619E May 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-08-40",
+    "value": [
+      "2026-06-08",
+      1
+    ],
+    "label": "0619E May 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-08-41",
+    "value": [
+      "2026-06-08",
+      1
+    ],
+    "label": "1601C May 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-09-42",
+    "value": [
+      "2026-06-09",
+      1
+    ],
+    "label": "0619E May 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-10-43",
+    "value": [
+      "2026-06-10",
+      1
+    ],
+    "label": "1601C May 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-06-11-44",
+    "value": [
+      "2026-06-11",
+      1
+    ],
+    "label": "1601C May 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-09-45",
+    "value": [
+      "2026-07-09",
+      1
+    ],
+    "label": "1601C Jun 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-13-46",
+    "value": [
+      "2026-07-13",
+      1
+    ],
+    "label": "1601C Jun 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-14-47",
+    "value": [
+      "2026-07-14",
+      1
+    ],
+    "label": "1601C Jun 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-20-48",
+    "value": [
+      "2026-07-20",
+      1
+    ],
+    "label": "2550Q Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-22-49",
+    "value": [
+      "2026-07-22",
+      1
+    ],
+    "label": "2550Q Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-24-50",
+    "value": [
+      "2026-07-24",
+      1
+    ],
+    "label": "2550Q Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-27-51",
+    "value": [
+      "2026-07-27",
+      1
+    ],
+    "label": "1601EQ Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-29-52",
+    "value": [
+      "2026-07-29",
+      1
+    ],
+    "label": "1601EQ Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-07-30-53",
+    "value": [
+      "2026-07-30",
+      1
+    ],
+    "label": "1601EQ Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-04-54",
+    "value": [
+      "2026-08-04",
+      1
+    ],
+    "label": "0619E Jul 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-06-55",
+    "value": [
+      "2026-08-06",
+      1
+    ],
+    "label": "0619E Jul 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-07-56",
+    "value": [
+      "2026-08-07",
+      1
+    ],
+    "label": "0619E Jul 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-11-57",
+    "value": [
+      "2026-08-11",
+      1
+    ],
+    "label": "1601C Jul 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-13-58",
+    "value": [
+      "2026-08-13",
+      1
+    ],
+    "label": "1601C Jul 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-14-59",
+    "value": [
+      "2026-08-14",
+      1
+    ],
+    "label": "1601C Jul 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-24-60",
+    "value": [
+      "2026-08-24",
+      1
+    ],
+    "label": "1702Q Q2 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-26-61",
+    "value": [
+      "2026-08-26",
+      1
+    ],
+    "label": "1702Q Q2 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-08-28-62",
+    "value": [
+      "2026-08-28",
+      1
+    ],
+    "label": "1702Q Q2 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-04-63",
+    "value": [
+      "2026-09-04",
+      1
+    ],
+    "label": "0619E Aug 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-08-64",
+    "value": [
+      "2026-09-08",
+      1
+    ],
+    "label": "0619E Aug 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-09-65",
+    "value": [
+      "2026-09-09",
+      1
+    ],
+    "label": "0619E Aug 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-09-66",
+    "value": [
+      "2026-09-09",
+      1
+    ],
+    "label": "1601C Aug 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-11-67",
+    "value": [
+      "2026-09-11",
+      1
+    ],
+    "label": "1601C Aug 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-09-14-68",
+    "value": [
+      "2026-09-14",
+      1
+    ],
+    "label": "1601C Aug 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-09-69",
+    "value": [
+      "2026-10-09",
+      1
+    ],
+    "label": "1601C Sep 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-13-70",
+    "value": [
+      "2026-10-13",
+      1
+    ],
+    "label": "1601C Sep 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-14-71",
+    "value": [
+      "2026-10-14",
+      1
+    ],
+    "label": "1601C Sep 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-19-72",
+    "value": [
+      "2026-10-19",
+      1
+    ],
+    "label": "2550Q Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-21-73",
+    "value": [
+      "2026-10-21",
+      1
+    ],
+    "label": "2550Q Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-23-74",
+    "value": [
+      "2026-10-23",
+      1
+    ],
+    "label": "2550Q Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-27-75",
+    "value": [
+      "2026-10-27",
+      1
+    ],
+    "label": "1601EQ Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-29-76",
+    "value": [
+      "2026-10-29",
+      1
+    ],
+    "label": "1601EQ Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-10-30-77",
+    "value": [
+      "2026-10-30",
+      1
+    ],
+    "label": "1601EQ Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-04-78",
+    "value": [
+      "2026-11-04",
+      1
+    ],
+    "label": "0619E Oct 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-06-79",
+    "value": [
+      "2026-11-06",
+      1
+    ],
+    "label": "0619E Oct 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-09-80",
+    "value": [
+      "2026-11-09",
+      1
+    ],
+    "label": "0619E Oct 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-10-81",
+    "value": [
+      "2026-11-10",
+      1
+    ],
+    "label": "1601C Oct 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-12-82",
+    "value": [
+      "2026-11-12",
+      1
+    ],
+    "label": "1601C Oct 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-13-83",
+    "value": [
+      "2026-11-13",
+      1
+    ],
+    "label": "1601C Oct 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-23-84",
+    "value": [
+      "2026-11-23",
+      1
+    ],
+    "label": "1702Q Q3 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-25-85",
+    "value": [
+      "2026-11-25",
+      1
+    ],
+    "label": "1702Q Q3 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-11-27-86",
+    "value": [
+      "2026-11-27",
+      1
+    ],
+    "label": "1702Q Q3 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-03-87",
+    "value": [
+      "2026-12-03",
+      1
+    ],
+    "label": "0619E Nov 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-07-88",
+    "value": [
+      "2026-12-07",
+      1
+    ],
+    "label": "0619E Nov 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-09-89",
+    "value": [
+      "2026-12-09",
+      1
+    ],
+    "label": "0619E Nov 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-09-90",
+    "value": [
+      "2026-12-09",
+      1
+    ],
+    "label": "1601C Nov 2026 \u2013 Preparation",
+    "role": "Finance Supervisor",
+    "person": "BOM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-11-91",
+    "value": [
+      "2026-12-11",
+      1
+    ],
+    "label": "1601C Nov 2026 \u2013 Review",
+    "role": "Senior Finance Manager",
+    "person": "RIM",
+    "status": "open",
+    "objective": "IM2"
+  },
+  {
+    "name": "2026-12-14-92",
+    "value": [
+      "2026-12-14",
+      1
+    ],
+    "label": "1601C Nov 2026 \u2013 Approval",
+    "role": "Finance Director",
+    "person": "CKVC",
+    "status": "open",
+    "objective": "IM2"
+  }
+];
+
+        const bg = '#04172b';
+        const onTrack = '#00C853';
+        const atRisk = '#FFAB00';
+        const late = '#FF5252';
+        const open = '#90caf9'; // Blue for future/open
+
+        function statusColor(status) {
+            if (status === 'late') return late;
+            if (status === 'at_risk') return atRisk;
+            if (status === 'open') return open;
+            return onTrack;
+        }
+
+        const seriesData = nodes.map(n => ({
+            ...n,
+            symbolSize: 10,
+            itemStyle: { color: statusColor(n.status) },
+        }));
+
+        option = {
+            backgroundColor: bg,
+            title: {
+                text: '2026 Finance Closing & Tax Calendar',
+                left: 'center',
+                top: 20,
+                textStyle: { color: '#ffffff', fontSize: 24 }
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: params => {
+                    const d = params.data;
+                    return `
+                        <div style="text-align:left">
+                        <b>${d.value[0]}</b><br/>
+                        ${d.label}<br/>
+                        ${d.role} – ${d.person}<br/>
+                        Status: ${d.status}
+                        </div>
+                    `;
+                },
+            },
+            calendar: {
+                range: '2026',
+                cellSize: ['auto', 20],
+                top: 100,
+                left: 60,
+                right: 60,
+                bottom: 40,
+                yearLabel: { show: true, color: '#fff', fontSize: 20 },
+                dayLabel: { firstDay: 1, color: '#90a4ae', nameMap: 'en' },
+                monthLabel: { color: '#90a4ae', nameMap: 'en' },
+                itemStyle: {
+                    color: '#0b253a',
+                    borderColor: '#113550'
+                }
+            },
+            series: [
+                {
+                    type: 'graph',
+                    coordinateSystem: 'calendar',
+                    data: seriesData,
+                    links: [],
+                    edgeSymbol: ['none', 'arrow'],
+                    edgeSymbolSize: 6,
+                    lineStyle: {
+                        color: '#90caf9',
+                        width: 1,
+                        opacity: 0.6,
+                    },
+                    emphasis: { focus: 'adjacency' },
+                },
+            ],
+        };
+
+        option && myChart.setOption(option);
+        
+        window.addEventListener('resize', function() {
+            myChart.resize();
+        });
+    </script>
+</body>
+</html>
+    

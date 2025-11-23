@@ -1,0 +1,20 @@
+<odoo>
+    <menuitem id="menu_ipai_cash_advance_root"
+              name="Cash Advance"
+              sequence="30"
+              parent="base.menu_custom"/>
+
+    <menuitem id="menu_ipai_cash_advance"
+              name="Requests"
+              parent="menu_ipai_cash_advance_root"
+              action="action_ipai_cash_advance"/>
+
+    <record id="action_ipai_cash_advance" model="ir.actions.act_window">
+        <field name="name">Cash Advances</field>
+        <field name="res_model">ipai.cash.advance</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>Create a new Cash Advance Request.</p>
+        </field>
+    </record>
+</odoo>

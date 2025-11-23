@@ -1,0 +1,251 @@
+{
+  "name": "Finance PPM - BIR Deadline Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger-1",
+      "notes": "Run daily at 8 AM to check upcoming BIR deadlines"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/common",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>authenticate</methodName>\n  <params>\n    <param><string>production</string></param>\n    <param><string>{{$credentials.odoo_username}}</string></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><value/></param>\n  </params>\n</methodCall>"
+      },
+      "name": "Odoo Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "id": "odoo-auth-1",
+      "notes": "Authenticate with Odoo XML-RPC API"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst uidMatch = xml.match(/<int>(\\d+)<\\/int>/);\nconst uid = uidMatch ? parseInt(uidMatch[1]) : null;\n\nreturn {\n  json: {\n    uid: uid,\n    database: 'production'\n  }\n};"
+      },
+      "name": "Parse UID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "parse-uid-1",
+      "notes": "Extract user ID from XML-RPC response"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><string>{{$json.database}}</string></param>\n    <param><int>{{$json.uid}}</int></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><string>ipai.finance.bir_schedule</string></param>\n    <param><string>search_read</string></param>\n    <param>\n      <array>\n        <data>\n          <value>\n            <array>\n              <data>\n                <value><array><data>\n                  <value><string>filing_deadline</string></value>\n                  <value><string>&gt;=</string></value>\n                  <value><string>{{$now.format('YYYY-MM-DD')}}</string></value>\n                </data></array></value>\n                <value><array><data>\n                  <value><string>filing_deadline</string></value>\n                  <value><string>&lt;=</string></value>\n                  <value><string>{{$now.plus(7, 'days').format('YYYY-MM-DD')}}</string></value>\n                </data></array></value>\n                <value><array><data>\n                  <value><string>status</string></value>\n                  <value><string>in</string></value>\n                  <value><array><data>\n                    <value><string>not_started</string></value>\n                    <value><string>in_progress</string></value>\n                  </data></array></value>\n                </data></array></value>\n              </data>\n            </array>\n          </value>\n        </data>\n      </array>\n    </param>\n    <param>\n      <array>\n        <data>\n          <value><struct><member>\n            <name>fields</name>\n            <value><array><data>\n              <value><string>name</string></value>\n              <value><string>period_covered</string></value>\n              <value><string>filing_deadline</string></value>\n              <value><string>status</string></value>\n              <value><string>completion_pct</string></value>\n            </data></array></value>\n          </member></struct></value>\n        </data>\n      </array>\n    </param>\n  </params>\n</methodCall>"
+      },
+      "name": "Query Upcoming BIR Deadlines",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 300],
+      "id": "query-bir-1",
+      "notes": "Fetch BIR schedules with deadlines in next 7 days"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst records = [];\n\n// Parse XML response and extract BIR schedule records\n// Simplified - actual implementation would use XML parser\nconst recordMatches = xml.match(/<struct>([\\s\\S]*?)<\\/struct>/g);\n\nif (recordMatches) {\n  recordMatches.forEach(record => {\n    const nameMatch = record.match(/<member><name>name<\\/name><value><string>([^<]+)<\\/string>/);\n    const deadlineMatch = record.match(/<member><name>filing_deadline<\\/name><value><string>([^<]+)<\\/string>/);\n    const statusMatch = record.match(/<member><name>status<\\/name><value><string>([^<]+)<\\/string>/);\n    const completionMatch = record.match(/<member><name>completion_pct<\\/name><value><double>([^<]+)<\\/double>/);\n    \n    if (nameMatch && deadlineMatch) {\n      const deadline = new Date(deadlineMatch[1]);\n      const today = new Date();\n      const daysRemaining = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));\n      \n      records.push({\n        name: nameMatch[1],\n        filing_deadline: deadlineMatch[1],\n        status: statusMatch ? statusMatch[1] : 'unknown',\n        completion_pct: completionMatch ? parseFloat(completionMatch[1]) : 0,\n        days_remaining: daysRemaining,\n        urgency: daysRemaining <= 3 ? 'critical' : daysRemaining <= 5 ? 'high' : 'normal'\n      });\n    }\n  });\n}\n\nreturn records.map(record => ({ json: record }));"
+      },
+      "name": "Parse BIR Records",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "id": "parse-records-1",
+      "notes": "Parse XML response and calculate urgency"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{$json.days_remaining}}",
+              "operation": "smaller",
+              "value2": 8
+            }
+          ]
+        }
+      },
+      "name": "Filter Upcoming",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "id": "filter-1",
+      "notes": "Only alert for deadlines within 7 days"
+    },
+    {
+      "parameters": {
+        "jsCode": "const record = $input.item.json;\nconst urgencyEmoji = {\n  'critical': '🚨',\n  'high': '⚠️',\n  'normal': 'ℹ️'\n};\n\nconst statusEmoji = {\n  'not_started': '❌',\n  'in_progress': '🔄',\n  'submitted': '✅',\n  'filed': '✅'\n};\n\nconst message = `${urgencyEmoji[record.urgency]} **BIR Deadline Alert**\n\n**Form:** ${record.name}\n**Deadline:** ${record.filing_deadline} (${record.days_remaining} days remaining)\n**Status:** ${statusEmoji[record.status]} ${record.status}\n**Completion:** ${record.completion_pct}%\n\n${record.urgency === 'critical' ? '⚠️ **URGENT: Deadline in 3 days or less!**' : ''}\n${record.completion_pct < 50 ? '⚠️ **Warning: Less than 50% complete**' : ''}\n\n[View in Odoo](https://odoo.insightpulseai.net/web#model=ipai.finance.bir_schedule)`;\n\nreturn {\n  json: {\n    text: message,\n    channel: record.urgency === 'critical' ? 'finance-urgent' : 'finance-alerts',\n    username: 'BIR Alert Bot',\n    icon_emoji: urgencyEmoji[record.urgency]\n  }\n};"
+      },
+      "name": "Format Mattermost Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "id": "format-message-1",
+      "notes": "Format alert message with urgency indicators"
+    },
+    {
+      "parameters": {
+        "url": "={{$credentials.mattermost_webhook_url}}",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"text\": \"{{$json.text}}\",\n  \"channel\": \"{{$json.channel}}\",\n  \"username\": \"{{$json.username}}\",\n  \"icon_emoji\": \"{{$json.icon_emoji}}\"\n}"
+      },
+      "name": "Send to Mattermost",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200],
+      "id": "send-mattermost-1",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "1",
+          "name": "Mattermost Webhook"
+        }
+      },
+      "notes": "Send alert to appropriate Mattermost channel"
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = {\n  total_checked: $input.all().length,\n  alerts_sent: $input.all().filter(item => item.json.channel).length,\n  critical_count: $input.all().filter(item => item.json.urgency === 'critical').length,\n  timestamp: new Date().toISOString()\n};\n\nconsole.log('BIR Deadline Alert Summary:', summary);\n\nreturn { json: summary };"
+      },
+      "name": "Log Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1850, 300],
+      "id": "log-summary-1",
+      "notes": "Log execution summary for monitoring"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo Auth": {
+      "main": [
+        [
+          {
+            "node": "Parse UID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse UID": {
+      "main": [
+        [
+          {
+            "node": "Query Upcoming BIR Deadlines",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Upcoming BIR Deadlines": {
+      "main": [
+        [
+          {
+            "node": "Parse BIR Records",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse BIR Records": {
+      "main": [
+        [
+          {
+            "node": "Filter Upcoming",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Upcoming": {
+      "main": [
+        [
+          {
+            "node": "Format Mattermost Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Mattermost Message": {
+      "main": [
+        [
+          {
+            "node": "Send to Mattermost",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send to Mattermost": {
+      "main": [
+        [
+          {
+            "node": "Log Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "id": "bir-deadline-alert",
+  "meta": {
+    "instanceId": "n8n.insightpulseai.net"
+  },
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "1"
+    },
+    {
+      "name": "BIR",
+      "id": "2"
+    },
+    {
+      "name": "Alerts",
+      "id": "3"
+    }
+  ]
+}

@@ -1,0 +1,272 @@
+{
+  "name": "Finance PPM - Task Escalation",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9,14 * * *"
+            }
+          ]
+        }
+      },
+      "name": "Schedule Trigger",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "id": "schedule-trigger-2",
+      "notes": "Run twice daily (9 AM and 2 PM) to check for overdue tasks"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/common",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>authenticate</methodName>\n  <params>\n    <param><string>production</string></param>\n    <param><string>{{$credentials.odoo_username}}</string></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><value/></param>\n  </params>\n</methodCall>"
+      },
+      "name": "Odoo Auth",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [450, 300],
+      "id": "odoo-auth-2"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst uidMatch = xml.match(/<int>(\\d+)<\\/int>/);\nconst uid = uidMatch ? parseInt(uidMatch[1]) : null;\n\nreturn {\n  json: {\n    uid: uid,\n    database: 'production'\n  }\n};"
+      },
+      "name": "Parse UID",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300],
+      "id": "parse-uid-2"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><string>{{$json.database}}</string></param>\n    <param><int>{{$json.uid}}</int></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><string>project.task</string></param>\n    <param><string>search_read</string></param>\n    <param>\n      <array>\n        <data>\n          <value>\n            <array>\n              <data>\n                <value><array><data>\n                  <value><string>is_finance_ppm</string></value>\n                  <value><string>=</string></value>\n                  <value><boolean>1</boolean></value>\n                </data></array></value>\n                <value><array><data>\n                  <value><string>date_deadline</string></value>\n                  <value><string>&lt;=</string></value>\n                  <value><string>{{$now.plus(3, 'days').format('YYYY-MM-DD')}}</string></value>\n                </data></array></value>\n                <value><array><data>\n                  <value><string>stage_id.fold</string></value>\n                  <value><string>=</string></value>\n                  <value><boolean>0</boolean></value>\n                </data></array></value>\n              </data>\n            </array>\n          </value>\n        </data>\n      </array>\n    </param>\n    <param>\n      <array>\n        <data>\n          <value><struct><member>\n            <name>fields</name>\n            <value><array><data>\n              <value><string>name</string></value>\n              <value><string>date_deadline</string></value>\n              <value><string>user_ids</string></value>\n              <value><string>stage_id</string></value>\n              <value><string>finance_logframe_id</string></value>\n              <value><string>bir_schedule_id</string></value>\n            </data></array></value>\n          </member></struct></value>\n        </data>\n      </array>\n    </param>\n  </params>\n</methodCall>"
+      },
+      "name": "Query Overdue Tasks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [850, 300],
+      "id": "query-tasks-1",
+      "notes": "Fetch Finance PPM tasks with deadlines ≤ 3 days away and not completed"
+    },
+    {
+      "parameters": {
+        "jsCode": "const xml = $input.item.json.body;\nconst tasks = [];\n\nconst recordMatches = xml.match(/<struct>([\\s\\S]*?)<\\/struct>/g);\n\nif (recordMatches) {\n  recordMatches.forEach(record => {\n    const nameMatch = record.match(/<member><name>name<\\/name><value><string>([^<]+)<\\/string>/);\n    const deadlineMatch = record.match(/<member><name>date_deadline<\\/name><value><string>([^<]+)<\\/string>/);\n    const userMatch = record.match(/<member><name>user_ids<\\/name><value><array>([\\s\\S]*?)<\\/array>/);\n    const stageMatch = record.match(/<member><name>stage_id<\\/name><value><array>([\\s\\S]*?)<\\/array>/);\n    \n    if (nameMatch && deadlineMatch) {\n      const deadline = new Date(deadlineMatch[1]);\n      const today = new Date();\n      const daysRemaining = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));\n      \n      tasks.push({\n        name: nameMatch[1],\n        deadline: deadlineMatch[1],\n        days_remaining: daysRemaining,\n        is_overdue: daysRemaining < 0,\n        severity: daysRemaining < 0 ? 'critical' : daysRemaining <= 1 ? 'high' : 'medium',\n        assignee: userMatch ? 'assigned' : 'unassigned',\n        stage: stageMatch ? 'in_progress' : 'not_started'\n      });\n    }\n  });\n}\n\nreturn tasks.map(task => ({ json: task }));"
+      },
+      "name": "Parse Tasks",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1050, 300],
+      "id": "parse-tasks-1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json.severity}}",
+              "operation": "equals",
+              "value2": "critical"
+            },
+            {
+              "value1": "={{$json.severity}}",
+              "operation": "equals",
+              "value2": "high"
+            }
+          ]
+        },
+        "combineOperation": "any"
+      },
+      "name": "Filter High Priority",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "id": "filter-2",
+      "notes": "Only escalate critical and high severity tasks"
+    },
+    {
+      "parameters": {
+        "jsCode": "const task = $input.item.json;\n\nconst severityConfig = {\n  'critical': {\n    emoji: '🚨',\n    color: '#FF0000',\n    action: 'IMMEDIATE ACTION REQUIRED',\n    escalateTo: 'Finance Director'\n  },\n  'high': {\n    emoji: '⚠️',\n    color: '#FFA500',\n    action: 'Urgent Review Required',\n    escalateTo: 'Senior Finance Manager'\n  },\n  'medium': {\n    emoji: 'ℹ️',\n    color: '#0000FF',\n    action: 'Review Requested',\n    escalateTo: 'Finance Supervisor'\n  }\n};\n\nconst config = severityConfig[task.severity];\nconst overdueText = task.is_overdue ? `**OVERDUE by ${Math.abs(task.days_remaining)} days**` : `**${task.days_remaining} days remaining**`;\n\nconst message = `${config.emoji} **Task Escalation**\n\n${config.action}\n\n**Task:** ${task.name}\n**Deadline:** ${task.deadline}\n**Status:** ${overdueText}\n**Escalated to:** ${config.escalateTo}\n\n${task.assignee === 'unassigned' ? '⚠️ **Warning: Task is unassigned**\\n' : ''}\n\n**Actions Required:**\n1. Review task status immediately\n2. Update progress in Odoo\n3. Notify team if blockers exist\n\n[Open in Odoo](https://odoo.insightpulseai.net/web#model=project.task)`;\n\nreturn {\n  json: {\n    text: message,\n    channel: task.severity === 'critical' ? 'finance-urgent' : 'finance-escalations',\n    username: 'Task Escalation Bot',\n    icon_emoji: config.emoji,\n    attachments: [\n      {\n        color: config.color,\n        title: `${config.emoji} ${task.name}`,\n        text: `Escalated to ${config.escalateTo}`,\n        fields: [\n          {\n            title: 'Deadline',\n            value: task.deadline,\n            short: true\n          },\n          {\n            title: 'Days Remaining',\n            value: task.days_remaining,\n            short: true\n          }\n        ]\n      }\n    ]\n  }\n};"
+      },
+      "name": "Format Escalation Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1450, 200],
+      "id": "format-escalation-1"
+    },
+    {
+      "parameters": {
+        "url": "={{$credentials.mattermost_webhook_url}}",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "={\n  \"text\": \"{{$json.text}}\",\n  \"channel\": \"{{$json.channel}}\",\n  \"username\": \"{{$json.username}}\",\n  \"icon_emoji\": \"{{$json.icon_emoji}}\",\n  \"attachments\": {{$json.attachments}}\n}"
+      },
+      "name": "Send Escalation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1650, 200],
+      "id": "send-escalation-1"
+    },
+    {
+      "parameters": {
+        "url": "https://odoo.insightpulseai.net/xmlrpc/2/object",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "requestMethod": "POST",
+        "jsonParameters": true,
+        "bodyParametersJson": "=<?xml version=\"1.0\"?>\n<methodCall>\n  <methodName>execute_kw</methodName>\n  <params>\n    <param><string>production</string></param>\n    <param><int>{{$('Parse UID').item.json.uid}}</int></param>\n    <param><string>{{$credentials.odoo_password}}</string></param>\n    <param><string>mail.message</string></param>\n    <param><string>create</string></param>\n    <param>\n      <array>\n        <data>\n          <value><struct>\n            <member>\n              <name>model</name>\n              <value><string>project.task</string></value>\n            </member>\n            <member>\n              <name>res_id</name>\n              <value><int>{{$json.task_id}}</int></value>\n            </member>\n            <member>\n              <name>body</name>\n              <value><string>Task escalated via n8n automation due to approaching deadline.</string></value>\n            </member>\n            <member>\n              <name>message_type</name>\n              <value><string>notification</string></value>\n            </member>\n          </struct></value>\n        </data>\n      </array>\n    </param>\n  </params>\n</methodCall>"
+      },
+      "name": "Log in Odoo Chatter",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 3,
+      "position": [1850, 200],
+      "id": "log-chatter-1",
+      "notes": "Log escalation in task's chatter history"
+    },
+    {
+      "parameters": {
+        "jsCode": "const summary = {\n  total_checked: $input.all().length,\n  escalations_sent: $input.all().filter(item => item.json.channel).length,\n  critical_count: $input.all().filter(item => item.json.severity === 'critical').length,\n  timestamp: new Date().toISOString()\n};\n\nconsole.log('Task Escalation Summary:', summary);\n\nreturn { json: summary };"
+      },
+      "name": "Log Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2050, 300],
+      "id": "log-summary-2"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Odoo Auth",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Odoo Auth": {
+      "main": [
+        [
+          {
+            "node": "Parse UID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse UID": {
+      "main": [
+        [
+          {
+            "node": "Query Overdue Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Query Overdue Tasks": {
+      "main": [
+        [
+          {
+            "node": "Parse Tasks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Tasks": {
+      "main": [
+        [
+          {
+            "node": "Filter High Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter High Priority": {
+      "main": [
+        [
+          {
+            "node": "Format Escalation Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Escalation Message": {
+      "main": [
+        [
+          {
+            "node": "Send Escalation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Escalation": {
+      "main": [
+        [
+          {
+            "node": "Log in Odoo Chatter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log in Odoo Chatter": {
+      "main": [
+        [
+          {
+            "node": "Log Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "id": "task-escalation",
+  "meta": {
+    "instanceId": "n8n.insightpulseai.net"
+  },
+  "tags": [
+    {
+      "name": "Finance",
+      "id": "1"
+    },
+    {
+      "name": "Tasks",
+      "id": "4"
+    },
+    {
+      "name": "Escalation",
+      "id": "5"
+    }
+  ]
+}

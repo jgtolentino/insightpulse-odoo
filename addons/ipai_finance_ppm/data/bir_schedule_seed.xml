@@ -1,0 +1,780 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="schedule_1601C_Dec_2025" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Dec 2025</field>
+            <field name="bir_deadline">2026-01-15</field>
+            <field name="prep_date">2026-01-09</field>
+            <field name="review_date">2026-01-13</field>
+            <field name="approval_date">2026-01-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Dec_2025_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Dec_2025_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Dec_2025_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_2550Q_Q4_2025" model="ipai.bir.form.schedule">
+            <field name="form_code">2550Q</field>
+            <field name="period">Q4 2025</field>
+            <field name="bir_deadline">2026-01-26</field>
+            <field name="prep_date">2026-01-19</field>
+            <field name="review_date">2026-01-21</field>
+            <field name="approval_date">2026-01-23</field>
+            <field name="step_ids">
+                <record id="schedule_2550Q_Q4_2025_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_2550Q_Q4_2025_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_2550Q_Q4_2025_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601EQ_Q4_2025" model="ipai.bir.form.schedule">
+            <field name="form_code">1601EQ</field>
+            <field name="period">Q4 2025</field>
+            <field name="bir_deadline">2026-02-02</field>
+            <field name="prep_date">2026-01-27</field>
+            <field name="review_date">2026-01-29</field>
+            <field name="approval_date">2026-01-30</field>
+            <field name="step_ids">
+                <record id="schedule_1601EQ_Q4_2025_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601EQ_Q4_2025_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601EQ_Q4_2025_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Jan_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Jan 2026</field>
+            <field name="bir_deadline">2026-02-10</field>
+            <field name="prep_date">2026-02-04</field>
+            <field name="review_date">2026-02-06</field>
+            <field name="approval_date">2026-02-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Jan_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Jan_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Jan_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Jan_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Jan 2026</field>
+            <field name="bir_deadline">2026-02-16</field>
+            <field name="prep_date">2026-02-10</field>
+            <field name="review_date">2026-02-12</field>
+            <field name="approval_date">2026-02-13</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Jan_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Jan_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Jan_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Feb_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Feb 2026</field>
+            <field name="bir_deadline">2026-03-10</field>
+            <field name="prep_date">2026-03-04</field>
+            <field name="review_date">2026-03-06</field>
+            <field name="approval_date">2026-03-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Feb_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Feb_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Feb_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Feb_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Feb 2026</field>
+            <field name="bir_deadline">2026-03-16</field>
+            <field name="prep_date">2026-03-10</field>
+            <field name="review_date">2026-03-12</field>
+            <field name="approval_date">2026-03-13</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Feb_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Feb_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Feb_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Mar_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Mar 2026</field>
+            <field name="bir_deadline">2026-04-15</field>
+            <field name="prep_date">2026-04-08</field>
+            <field name="review_date">2026-04-13</field>
+            <field name="approval_date">2026-04-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Mar_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Mar_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Mar_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_2550Q_Q1_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">2550Q</field>
+            <field name="period">Q1 2026</field>
+            <field name="bir_deadline">2026-04-27</field>
+            <field name="prep_date">2026-04-20</field>
+            <field name="review_date">2026-04-22</field>
+            <field name="approval_date">2026-04-24</field>
+            <field name="step_ids">
+                <record id="schedule_2550Q_Q1_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_2550Q_Q1_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_2550Q_Q1_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601EQ_Q1_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601EQ</field>
+            <field name="period">Q1 2026</field>
+            <field name="bir_deadline">2026-04-30</field>
+            <field name="prep_date">2026-04-24</field>
+            <field name="review_date">2026-04-28</field>
+            <field name="approval_date">2026-04-29</field>
+            <field name="step_ids">
+                <record id="schedule_1601EQ_Q1_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601EQ_Q1_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601EQ_Q1_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Apr_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Apr 2026</field>
+            <field name="bir_deadline">2026-05-11</field>
+            <field name="prep_date">2026-05-05</field>
+            <field name="review_date">2026-05-07</field>
+            <field name="approval_date">2026-05-08</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Apr_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Apr_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Apr_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Apr_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Apr 2026</field>
+            <field name="bir_deadline">2026-05-15</field>
+            <field name="prep_date">2026-05-11</field>
+            <field name="review_date">2026-05-13</field>
+            <field name="approval_date">2026-05-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Apr_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Apr_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Apr_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1702Q_Q1_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1702Q</field>
+            <field name="period">Q1 2026</field>
+            <field name="bir_deadline">2026-06-01</field>
+            <field name="prep_date">2026-05-25</field>
+            <field name="review_date">2026-05-27</field>
+            <field name="approval_date">2026-05-29</field>
+            <field name="step_ids">
+                <record id="schedule_1702Q_Q1_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1702Q_Q1_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1702Q_Q1_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_May_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">May 2026</field>
+            <field name="bir_deadline">2026-06-10</field>
+            <field name="prep_date">2026-06-04</field>
+            <field name="review_date">2026-06-08</field>
+            <field name="approval_date">2026-06-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_May_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_May_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_May_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_May_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">May 2026</field>
+            <field name="bir_deadline">2026-06-15</field>
+            <field name="prep_date">2026-06-08</field>
+            <field name="review_date">2026-06-10</field>
+            <field name="approval_date">2026-06-11</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_May_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_May_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_May_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Jun_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Jun 2026</field>
+            <field name="bir_deadline">2026-07-15</field>
+            <field name="prep_date">2026-07-09</field>
+            <field name="review_date">2026-07-13</field>
+            <field name="approval_date">2026-07-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Jun_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Jun_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Jun_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_2550Q_Q2_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">2550Q</field>
+            <field name="period">Q2 2026</field>
+            <field name="bir_deadline">2026-07-27</field>
+            <field name="prep_date">2026-07-20</field>
+            <field name="review_date">2026-07-22</field>
+            <field name="approval_date">2026-07-24</field>
+            <field name="step_ids">
+                <record id="schedule_2550Q_Q2_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_2550Q_Q2_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_2550Q_Q2_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601EQ_Q2_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601EQ</field>
+            <field name="period">Q2 2026</field>
+            <field name="bir_deadline">2026-07-31</field>
+            <field name="prep_date">2026-07-27</field>
+            <field name="review_date">2026-07-29</field>
+            <field name="approval_date">2026-07-30</field>
+            <field name="step_ids">
+                <record id="schedule_1601EQ_Q2_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601EQ_Q2_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601EQ_Q2_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Jul_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Jul 2026</field>
+            <field name="bir_deadline">2026-08-10</field>
+            <field name="prep_date">2026-08-04</field>
+            <field name="review_date">2026-08-06</field>
+            <field name="approval_date">2026-08-07</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Jul_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Jul_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Jul_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Jul_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Jul 2026</field>
+            <field name="bir_deadline">2026-08-17</field>
+            <field name="prep_date">2026-08-11</field>
+            <field name="review_date">2026-08-13</field>
+            <field name="approval_date">2026-08-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Jul_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Jul_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Jul_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1702Q_Q2_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1702Q</field>
+            <field name="period">Q2 2026</field>
+            <field name="bir_deadline">2026-09-01</field>
+            <field name="prep_date">2026-08-24</field>
+            <field name="review_date">2026-08-26</field>
+            <field name="approval_date">2026-08-28</field>
+            <field name="step_ids">
+                <record id="schedule_1702Q_Q2_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1702Q_Q2_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1702Q_Q2_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Aug_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Aug 2026</field>
+            <field name="bir_deadline">2026-09-10</field>
+            <field name="prep_date">2026-09-04</field>
+            <field name="review_date">2026-09-08</field>
+            <field name="approval_date">2026-09-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Aug_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Aug_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Aug_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Aug_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Aug 2026</field>
+            <field name="bir_deadline">2026-09-15</field>
+            <field name="prep_date">2026-09-09</field>
+            <field name="review_date">2026-09-11</field>
+            <field name="approval_date">2026-09-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Aug_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Aug_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Aug_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Sep_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Sep 2026</field>
+            <field name="bir_deadline">2026-10-15</field>
+            <field name="prep_date">2026-10-09</field>
+            <field name="review_date">2026-10-13</field>
+            <field name="approval_date">2026-10-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Sep_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Sep_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Sep_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_2550Q_Q3_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">2550Q</field>
+            <field name="period">Q3 2026</field>
+            <field name="bir_deadline">2026-10-26</field>
+            <field name="prep_date">2026-10-19</field>
+            <field name="review_date">2026-10-21</field>
+            <field name="approval_date">2026-10-23</field>
+            <field name="step_ids">
+                <record id="schedule_2550Q_Q3_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_2550Q_Q3_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_2550Q_Q3_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601EQ_Q3_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601EQ</field>
+            <field name="period">Q3 2026</field>
+            <field name="bir_deadline">2026-11-02</field>
+            <field name="prep_date">2026-10-27</field>
+            <field name="review_date">2026-10-29</field>
+            <field name="approval_date">2026-10-30</field>
+            <field name="step_ids">
+                <record id="schedule_1601EQ_Q3_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601EQ_Q3_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601EQ_Q3_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Oct_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Oct 2026</field>
+            <field name="bir_deadline">2026-11-10</field>
+            <field name="prep_date">2026-11-04</field>
+            <field name="review_date">2026-11-06</field>
+            <field name="approval_date">2026-11-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Oct_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Oct_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Oct_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Oct_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Oct 2026</field>
+            <field name="bir_deadline">2026-11-16</field>
+            <field name="prep_date">2026-11-10</field>
+            <field name="review_date">2026-11-12</field>
+            <field name="approval_date">2026-11-13</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Oct_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Oct_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Oct_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1702Q_Q3_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1702Q</field>
+            <field name="period">Q3 2026</field>
+            <field name="bir_deadline">2026-12-01</field>
+            <field name="prep_date">2026-11-23</field>
+            <field name="review_date">2026-11-25</field>
+            <field name="approval_date">2026-11-27</field>
+            <field name="step_ids">
+                <record id="schedule_1702Q_Q3_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1702Q_Q3_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1702Q_Q3_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_0619E_Nov_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">0619E</field>
+            <field name="period">Nov 2026</field>
+            <field name="bir_deadline">2026-12-10</field>
+            <field name="prep_date">2026-12-03</field>
+            <field name="review_date">2026-12-07</field>
+            <field name="approval_date">2026-12-09</field>
+            <field name="step_ids">
+                <record id="schedule_0619E_Nov_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_0619E_Nov_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_0619E_Nov_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+        <record id="schedule_1601C_Nov_2026" model="ipai.bir.form.schedule">
+            <field name="form_code">1601C</field>
+            <field name="period">Nov 2026</field>
+            <field name="bir_deadline">2026-12-15</field>
+            <field name="prep_date">2026-12-09</field>
+            <field name="review_date">2026-12-11</field>
+            <field name="approval_date">2026-12-14</field>
+            <field name="step_ids">
+                <record id="schedule_1601C_Nov_2026_step_0" model="ipai.bir.process.step">
+                    <field name="step_no">1</field>
+                    <field name="title">Preparation</field>
+                    <field name="role">Finance Supervisor</field>
+                </record>
+                <record id="schedule_1601C_Nov_2026_step_1" model="ipai.bir.process.step">
+                    <field name="step_no">2</field>
+                    <field name="title">Review</field>
+                    <field name="role">Senior Finance Manager</field>
+                </record>
+                <record id="schedule_1601C_Nov_2026_step_2" model="ipai.bir.process.step">
+                    <field name="step_no">3</field>
+                    <field name="title">Approval</field>
+                    <field name="role">Finance Director</field>
+                </record>
+            </field>
+        </record>
+    </data>
+</odoo>

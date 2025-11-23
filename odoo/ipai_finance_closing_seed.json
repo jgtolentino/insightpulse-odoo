@@ -1,0 +1,818 @@
+[
+    {
+        "id": "schedule_1601-C_20260210",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 1",
+            "bir_deadline": "2026-02-10",
+            "prep_date": "2026-02-04",
+            "review_date": "2026-02-06",
+            "approval_date": "2026-02-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260210",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 1",
+            "bir_deadline": "2026-02-10",
+            "prep_date": "2026-02-04",
+            "review_date": "2026-02-06",
+            "approval_date": "2026-02-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260302",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 1",
+            "bir_deadline": "2026-03-02",
+            "prep_date": "2026-02-23",
+            "review_date": "2026-02-26",
+            "approval_date": "2026-02-27"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260216",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 1",
+            "bir_deadline": "2026-02-16",
+            "prep_date": "2026-02-10",
+            "review_date": "2026-02-12",
+            "approval_date": "2026-02-13"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260216",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 1",
+            "bir_deadline": "2026-02-16",
+            "prep_date": "2026-02-10",
+            "review_date": "2026-02-12",
+            "approval_date": "2026-02-13"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260310",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 2",
+            "bir_deadline": "2026-03-10",
+            "prep_date": "2026-03-04",
+            "review_date": "2026-03-06",
+            "approval_date": "2026-03-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260310",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 2",
+            "bir_deadline": "2026-03-10",
+            "prep_date": "2026-03-04",
+            "review_date": "2026-03-06",
+            "approval_date": "2026-03-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260401",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 2",
+            "bir_deadline": "2026-04-01",
+            "prep_date": "2026-03-24",
+            "review_date": "2026-03-26",
+            "approval_date": "2026-03-27"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260316",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 2",
+            "bir_deadline": "2026-03-16",
+            "prep_date": "2026-03-10",
+            "review_date": "2026-03-12",
+            "approval_date": "2026-03-13"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260316",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 2",
+            "bir_deadline": "2026-03-16",
+            "prep_date": "2026-03-10",
+            "review_date": "2026-03-12",
+            "approval_date": "2026-03-13"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260410",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-10",
+            "prep_date": "2026-04-03",
+            "review_date": "2026-04-07",
+            "approval_date": "2026-04-08"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260410",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-10",
+            "prep_date": "2026-04-03",
+            "review_date": "2026-04-07",
+            "approval_date": "2026-04-08"
+        }
+    },
+    {
+        "id": "schedule_1601-EQ_20260430",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-EQ",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-30",
+            "prep_date": "2026-04-24",
+            "review_date": "2026-04-28",
+            "approval_date": "2026-04-29"
+        }
+    },
+    {
+        "id": "schedule_2550Q_20260427",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "2550Q",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-27",
+            "prep_date": "2026-04-21",
+            "review_date": "2026-04-23",
+            "approval_date": "2026-04-24"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260430",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-30",
+            "prep_date": "2026-04-24",
+            "review_date": "2026-04-28",
+            "approval_date": "2026-04-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260415",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-15",
+            "prep_date": "2026-04-08",
+            "review_date": "2026-04-13",
+            "approval_date": "2026-04-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260415",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 3",
+            "bir_deadline": "2026-04-15",
+            "prep_date": "2026-04-08",
+            "review_date": "2026-04-13",
+            "approval_date": "2026-04-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260511",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 4",
+            "bir_deadline": "2026-05-11",
+            "prep_date": "2026-05-05",
+            "review_date": "2026-05-07",
+            "approval_date": "2026-05-08"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260511",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 4",
+            "bir_deadline": "2026-05-11",
+            "prep_date": "2026-05-05",
+            "review_date": "2026-05-07",
+            "approval_date": "2026-05-08"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260601",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 4",
+            "bir_deadline": "2026-06-01",
+            "prep_date": "2026-05-26",
+            "review_date": "2026-05-28",
+            "approval_date": "2026-05-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260515",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 4",
+            "bir_deadline": "2026-05-15",
+            "prep_date": "2026-05-11",
+            "review_date": "2026-05-13",
+            "approval_date": "2026-05-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260515",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 4",
+            "bir_deadline": "2026-05-15",
+            "prep_date": "2026-05-11",
+            "review_date": "2026-05-13",
+            "approval_date": "2026-05-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260610",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 5",
+            "bir_deadline": "2026-06-10",
+            "prep_date": "2026-06-04",
+            "review_date": "2026-06-08",
+            "approval_date": "2026-06-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260610",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 5",
+            "bir_deadline": "2026-06-10",
+            "prep_date": "2026-06-04",
+            "review_date": "2026-06-08",
+            "approval_date": "2026-06-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260630",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 5",
+            "bir_deadline": "2026-06-30",
+            "prep_date": "2026-06-24",
+            "review_date": "2026-06-26",
+            "approval_date": "2026-06-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260615",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 5",
+            "bir_deadline": "2026-06-15",
+            "prep_date": "2026-06-08",
+            "review_date": "2026-06-10",
+            "approval_date": "2026-06-11"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260615",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 5",
+            "bir_deadline": "2026-06-15",
+            "prep_date": "2026-06-08",
+            "review_date": "2026-06-10",
+            "approval_date": "2026-06-11"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260710",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-10",
+            "prep_date": "2026-07-06",
+            "review_date": "2026-07-08",
+            "approval_date": "2026-07-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260710",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-10",
+            "prep_date": "2026-07-06",
+            "review_date": "2026-07-08",
+            "approval_date": "2026-07-09"
+        }
+    },
+    {
+        "id": "schedule_1601-EQ_20260730",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-EQ",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-30",
+            "prep_date": "2026-07-24",
+            "review_date": "2026-07-28",
+            "approval_date": "2026-07-29"
+        }
+    },
+    {
+        "id": "schedule_2550Q_20260727",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "2550Q",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-27",
+            "prep_date": "2026-07-21",
+            "review_date": "2026-07-23",
+            "approval_date": "2026-07-24"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260730",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-30",
+            "prep_date": "2026-07-24",
+            "review_date": "2026-07-28",
+            "approval_date": "2026-07-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260715",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-15",
+            "prep_date": "2026-07-09",
+            "review_date": "2026-07-13",
+            "approval_date": "2026-07-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260715",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 6",
+            "bir_deadline": "2026-07-15",
+            "prep_date": "2026-07-09",
+            "review_date": "2026-07-13",
+            "approval_date": "2026-07-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260810",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 7",
+            "bir_deadline": "2026-08-10",
+            "prep_date": "2026-08-04",
+            "review_date": "2026-08-06",
+            "approval_date": "2026-08-07"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260810",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 7",
+            "bir_deadline": "2026-08-10",
+            "prep_date": "2026-08-04",
+            "review_date": "2026-08-06",
+            "approval_date": "2026-08-07"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260831",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 7",
+            "bir_deadline": "2026-08-31",
+            "prep_date": "2026-08-24",
+            "review_date": "2026-08-27",
+            "approval_date": "2026-08-28"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260817",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 7",
+            "bir_deadline": "2026-08-17",
+            "prep_date": "2026-08-11",
+            "review_date": "2026-08-13",
+            "approval_date": "2026-08-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260817",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 7",
+            "bir_deadline": "2026-08-17",
+            "prep_date": "2026-08-11",
+            "review_date": "2026-08-13",
+            "approval_date": "2026-08-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20260910",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 8",
+            "bir_deadline": "2026-09-10",
+            "prep_date": "2026-09-04",
+            "review_date": "2026-09-08",
+            "approval_date": "2026-09-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20260910",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 8",
+            "bir_deadline": "2026-09-10",
+            "prep_date": "2026-09-04",
+            "review_date": "2026-09-08",
+            "approval_date": "2026-09-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20260930",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 8",
+            "bir_deadline": "2026-09-30",
+            "prep_date": "2026-09-24",
+            "review_date": "2026-09-28",
+            "approval_date": "2026-09-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20260915",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 8",
+            "bir_deadline": "2026-09-15",
+            "prep_date": "2026-09-09",
+            "review_date": "2026-09-11",
+            "approval_date": "2026-09-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20260915",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 8",
+            "bir_deadline": "2026-09-15",
+            "prep_date": "2026-09-09",
+            "review_date": "2026-09-11",
+            "approval_date": "2026-09-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20261012",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-12",
+            "prep_date": "2026-10-06",
+            "review_date": "2026-10-08",
+            "approval_date": "2026-10-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20261012",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-12",
+            "prep_date": "2026-10-06",
+            "review_date": "2026-10-08",
+            "approval_date": "2026-10-09"
+        }
+    },
+    {
+        "id": "schedule_1601-EQ_20261030",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-EQ",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-30",
+            "prep_date": "2026-10-26",
+            "review_date": "2026-10-28",
+            "approval_date": "2026-10-29"
+        }
+    },
+    {
+        "id": "schedule_2550Q_20261026",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "2550Q",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-26",
+            "prep_date": "2026-10-20",
+            "review_date": "2026-10-22",
+            "approval_date": "2026-10-23"
+        }
+    },
+    {
+        "id": "schedule_SSS_20261030",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-30",
+            "prep_date": "2026-10-26",
+            "review_date": "2026-10-28",
+            "approval_date": "2026-10-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20261015",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-15",
+            "prep_date": "2026-10-09",
+            "review_date": "2026-10-13",
+            "approval_date": "2026-10-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20261015",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 9",
+            "bir_deadline": "2026-10-15",
+            "prep_date": "2026-10-09",
+            "review_date": "2026-10-13",
+            "approval_date": "2026-10-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20261110",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 10",
+            "bir_deadline": "2026-11-10",
+            "prep_date": "2026-11-04",
+            "review_date": "2026-11-06",
+            "approval_date": "2026-11-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20261110",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 10",
+            "bir_deadline": "2026-11-10",
+            "prep_date": "2026-11-04",
+            "review_date": "2026-11-06",
+            "approval_date": "2026-11-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20261201",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 10",
+            "bir_deadline": "2026-12-01",
+            "prep_date": "2026-11-24",
+            "review_date": "2026-11-26",
+            "approval_date": "2026-11-27"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20261116",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 10",
+            "bir_deadline": "2026-11-16",
+            "prep_date": "2026-11-10",
+            "review_date": "2026-11-12",
+            "approval_date": "2026-11-13"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20261116",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 10",
+            "bir_deadline": "2026-11-16",
+            "prep_date": "2026-11-10",
+            "review_date": "2026-11-12",
+            "approval_date": "2026-11-13"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20261210",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 11",
+            "bir_deadline": "2026-12-10",
+            "prep_date": "2026-12-03",
+            "review_date": "2026-12-07",
+            "approval_date": "2026-12-09"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20261210",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 11",
+            "bir_deadline": "2026-12-10",
+            "prep_date": "2026-12-03",
+            "review_date": "2026-12-07",
+            "approval_date": "2026-12-09"
+        }
+    },
+    {
+        "id": "schedule_SSS_20261231",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 11",
+            "bir_deadline": "2026-12-31",
+            "prep_date": "2026-12-23",
+            "review_date": "2026-12-28",
+            "approval_date": "2026-12-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20261215",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 11",
+            "bir_deadline": "2026-12-15",
+            "prep_date": "2026-12-09",
+            "review_date": "2026-12-11",
+            "approval_date": "2026-12-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20261215",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 11",
+            "bir_deadline": "2026-12-15",
+            "prep_date": "2026-12-09",
+            "review_date": "2026-12-11",
+            "approval_date": "2026-12-14"
+        }
+    },
+    {
+        "id": "schedule_1601-C_20270115",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-C",
+            "period": "Month 12",
+            "bir_deadline": "2027-01-15",
+            "prep_date": "2027-01-11",
+            "review_date": "2027-01-13",
+            "approval_date": "2027-01-14"
+        }
+    },
+    {
+        "id": "schedule_0619-E_20270115",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "0619-E",
+            "period": "Month 12",
+            "bir_deadline": "2027-01-15",
+            "prep_date": "2027-01-11",
+            "review_date": "2027-01-13",
+            "approval_date": "2027-01-14"
+        }
+    },
+    {
+        "id": "schedule_1601-EQ_20270201",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "1601-EQ",
+            "period": "Month 12",
+            "bir_deadline": "2027-02-01",
+            "prep_date": "2027-01-26",
+            "review_date": "2027-01-28",
+            "approval_date": "2027-01-29"
+        }
+    },
+    {
+        "id": "schedule_2550Q_20270125",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "2550Q",
+            "period": "Month 12",
+            "bir_deadline": "2027-01-25",
+            "prep_date": "2027-01-19",
+            "review_date": "2027-01-21",
+            "approval_date": "2027-01-22"
+        }
+    },
+    {
+        "id": "schedule_SSS_20270201",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "SSS",
+            "period": "Month 12",
+            "bir_deadline": "2027-02-01",
+            "prep_date": "2027-01-26",
+            "review_date": "2027-01-28",
+            "approval_date": "2027-01-29"
+        }
+    },
+    {
+        "id": "schedule_PhilHealth_20270115",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "PhilHealth",
+            "period": "Month 12",
+            "bir_deadline": "2027-01-15",
+            "prep_date": "2027-01-11",
+            "review_date": "2027-01-13",
+            "approval_date": "2027-01-14"
+        }
+    },
+    {
+        "id": "schedule_Pag-IBIG_20270115",
+        "model": "ipai.bir.form.schedule",
+        "fields": {
+            "form_code": "Pag-IBIG",
+            "period": "Month 12",
+            "bir_deadline": "2027-01-15",
+            "prep_date": "2027-01-11",
+            "review_date": "2027-01-13",
+            "approval_date": "2027-01-14"
+        }
+    }
+]

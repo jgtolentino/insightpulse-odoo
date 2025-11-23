@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Project for Finance tasks -->
+        <record id="project_month_end_closing" model="project.project">
+            <field name="name">TBWA Finance – Month-End &amp; BIR</field>
+        </record>
+
+        <!-- IM2: Tax Filing Compliance logframe entry -->
+        <record id="logframe_im2_tax_filing" model="ipai.finance.logframe">
+            <field name="level">im2</field>
+            <field name="code">Tax Filing Compliance</field>
+            <field name="name">Complete, on-time tax filing for payroll, VAT, and withholding taxes.</field>
+            <field name="indicators">% of filings submitted before BIR deadlines; # of late filings; total penalties paid.</field>
+            <field name="means_of_verification">BIR confirmation receipts; tax filing tracker; bank debit advices.</field>
+            <field name="assumptions">Government portals operational; systems stable; reviewers and approvers respond within agreed lead times.</field>
+            <field name="sequence">10</field>
+        </record>
+    </data>
+</odoo>

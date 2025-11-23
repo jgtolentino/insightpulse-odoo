@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- Spectra Export Form View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_export_form" model="ir.ui.view">
+        <field name="name">tbwa.spectra.export.form</field>
+        <field name="model">tbwa.spectra.export</field>
+        <field name="arch" type="xml">
+            <form string="Spectra Export Batch">
+                <header>
+                    <button name="action_export_csv" string="Generate CSV" type="object"
+                            invisible="state != 'draft'" class="oe_highlight"/>
+                    <button name="action_approve" string="Approve Export" type="object"
+                            invisible="state != 'exported'" class="oe_highlight"
+                            groups="tbwa_spectra_integration.group_tbwa_finance"/>
+                    <button name="action_reject" string="Reject" type="object"
+                            invisible="state not in ['exported', 'approved_finance']"
+                            groups="tbwa_spectra_integration.group_tbwa_finance"/>
+                    <button name="action_cancel" string="Cancel" type="object"
+                            invisible="state in ['cancelled', 'completed']"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,exported,approved_finance,sent,completed"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_advance_lines" type="object"
+                                class="oe_stat_button" icon="fa-money">
+                            <field name="line_count" widget="statinfo" string="Cash Advances"/>
+                        </button>
+                        <button name="action_download_csv" type="object"
+                                class="oe_stat_button" icon="fa-download"
+                                invisible="state == 'draft'">
+                            <div class="o_field_widget o_stat_info">
+                                <span class="o_stat_text">Download</span>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Export Information">
+                            <field name="period_start" readonly="state != 'draft'"/>
+                            <field name="period_end" readonly="state != 'draft'"/>
+                            <field name="export_date"/>
+                            <field name="export_type" readonly="state != 'draft'"/>
+                        </group>
+                        <group string="Status">
+                            <field name="csv_file" filename="csv_filename" readonly="state != 'exported'"/>
+                            <field name="csv_filename" invisible="1"/>
+                            <field name="sent_date"/>
+                            <field name="archived_to_supabase" groups="base.group_no_one"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Cash Advance Lines" name="lines">
+                            <field name="advance_ids" readonly="state != 'draft'">
+                                <list string="Cash Advances" editable="bottom">
+                                    <field name="name"/>
+                                    <field name="employee_id"/>
+                                    <field name="amount" sum="Total Amount"/>
+                                    <field name="state"/>
+                                    <field name="payment_date"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Summary" name="summary">
+                            <group>
+                                <group string="Counts">
+                                    <field name="line_count"/>
+                                    <field name="total_amount"/>
+                                </group>
+                                <group string="Export Details">
+                                    <field name="created_by_id"/>
+                                    <field name="company_id" groups="base.group_multi_company"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Notes" name="notes">
+                            <field name="notes" placeholder="Add export notes or instructions here..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Spectra Export List View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_export_list" model="ir.ui.view">
+        <field name="name">tbwa.spectra.export.list</field>
+        <field name="model">tbwa.spectra.export</field>
+        <field name="arch" type="xml">
+            <list string="Spectra Export Batches" default_order="export_date desc, id desc"
+                  decoration-muted="state == 'cancelled'"
+                  decoration-success="state == 'completed'"
+                  decoration-info="state == 'draft'"
+                  decoration-warning="state in ['exported', 'approved_finance']">
+                <field name="name"/>
+                <field name="export_type"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+                <field name="line_count"/>
+                <field name="total_amount" sum="Total Amount"/>
+                <field name="export_date"/>
+                <field name="sent_date"/>
+                <field name="state" widget="badge"
+                       decoration-success="state == 'completed'"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state in ['exported', 'approved_finance']"
+                       decoration-danger="state == 'rejected'"/>
+                <field name="archived_to_supabase" groups="base.group_no_one"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Spectra Export Search View -->
+    <!-- ============================================ -->
+    <record id="view_tbwa_spectra_export_search" model="ir.ui.view">
+        <field name="name">tbwa.spectra.export.search</field>
+        <field name="model">tbwa.spectra.export</field>
+        <field name="arch" type="xml">
+            <search string="Spectra Export Batches">
+                <field name="name" string="Batch Reference"/>
+                <field name="export_type"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+
+                <filter name="filter_draft" string="Draft" domain="[('state', '=', 'draft')]"/>
+                <filter name="filter_exported" string="Exported" domain="[('state', '=', 'exported')]"/>
+                <filter name="filter_approved" string="Approved" domain="[('state', '=', 'approved_finance')]"/>
+                <filter name="filter_sent" string="Sent" domain="[('state', '=', 'sent')]"/>
+                <filter name="filter_completed" string="Completed" domain="[('state', '=', 'completed')]"/>
+                <filter name="filter_rejected" string="Rejected" domain="[('state', '=', 'rejected')]"/>
+                <filter name="filter_cancelled" string="Cancelled" domain="[('state', '=', 'cancelled')]"/>
+
+                <separator/>
+                <filter name="filter_cash_advance" string="Cash Advances"
+                        domain="[('export_type', '=', 'cash_advance')]"/>
+                <filter name="filter_expense_report" string="Expense Reports"
+                        domain="[('export_type', '=', 'expense_report')]"/>
+                <filter name="filter_journal_entry" string="Journal Entries"
+                        domain="[('export_type', '=', 'journal_entry')]"/>
+
+                <separator/>
+                <filter name="filter_this_month" string="This Month"
+                        domain="[('export_date', '&gt;=', (context_today() - relativedelta(day=1)).strftime('%Y-%m-%d')), ('export_date', '&lt;=', (context_today() + relativedelta(day=31)).strftime('%Y-%m-%d'))]"/>
+                <filter name="filter_last_month" string="Last Month"
+                        domain="[('export_date', '&gt;=', (context_today() - relativedelta(months=1, day=1)).strftime('%Y-%m-%d')), ('export_date', '&lt;=', (context_today() - relativedelta(months=1, day=31)).strftime('%Y-%m-%d'))]"/>
+
+                <separator/>
+                <filter name="filter_not_archived" string="Not Archived"
+                        domain="[('archived_to_supabase', '=', False)]"
+                        groups="base.group_no_one"/>
+
+                <group expand="0" string="Group By">
+                    <filter name="group_export_type" string="Export Type" context="{'group_by': 'export_type'}"/>
+                    <filter name="group_state" string="Status" context="{'group_by': 'state'}"/>
+                    <filter name="group_month" string="Month" context="{'group_by': 'export_date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ============================================ -->
+    <!-- Spectra Export Window Action -->
+    <!-- ============================================ -->
+    <record id="action_tbwa_spectra_export_list" model="ir.actions.act_window">
+        <field name="name">Spectra Export Batches</field>
+        <field name="res_model">tbwa.spectra.export</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_tbwa_spectra_export_search"/>
+        <field name="context">{
+            'search_default_filter_this_month': 1,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Create your first Spectra export batch
+            </p>
+            <p>
+                Export batches are used to generate CSV files for import into the Spectra finance system.
+                Each batch contains cash advances or expense reports for a specific period.
+            </p>
+        </field>
+    </record>
+
+</odoo>

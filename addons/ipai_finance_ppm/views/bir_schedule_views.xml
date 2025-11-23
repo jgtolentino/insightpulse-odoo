@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_bir_form_schedule_tree" model="ir.ui.view">
+        <field name="name">ipai.bir.form.schedule.tree</field>
+        <field name="model">ipai.bir.form.schedule</field>
+        <field name="arch" type="xml">
+            <list string="BIR Schedule">
+                <field name="bir_deadline" widget="remaining_days"/>
+                <field name="form_code"/>
+                <field name="period"/>
+                <field name="prep_date"/>
+                <field name="review_date"/>
+                <field name="approval_date"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_bir_form_schedule_calendar" model="ir.ui.view">
+        <field name="name">ipai.bir.form.schedule.calendar</field>
+        <field name="model">ipai.bir.form.schedule</field>
+        <field name="arch" type="xml">
+            <calendar string="Compliance Calendar" date_start="bir_deadline" color="form_code">
+                <field name="form_code"/>
+                <field name="period"/>
+            </calendar>
+        </field>
+    </record>
+
+    <record id="view_bir_form_schedule_form" model="ir.ui.view">
+        <field name="name">ipai.bir.form.schedule.form</field>
+        <field name="model">ipai.bir.form.schedule</field>
+        <field name="arch" type="xml">
+            <form string="BIR Filing">
+                <header>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="form_code"/> - <field name="period"/></h1>
+                    </div>
+                    <group>
+                        <group string="Deadlines">
+                            <field name="bir_deadline"/>
+                            <field name="prep_date"/>
+                            <field name="review_date"/>
+                            <field name="approval_date"/>
+                        </group>
+                        <group string="Responsibility">
+                            <field name="responsible_prep_id"/>
+                            <field name="responsible_review_id"/>
+                            <field name="responsible_approval_id"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Process Steps">
+                            <field name="step_ids">
+                                <list editable="bottom">
+                                    <field name="step_no"/>
+                                    <field name="title"/>
+                                    <field name="role"/>
+                                    <field name="person_id"/>
+                                    <field name="target_offset"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_bir_form_schedule" model="ir.actions.act_window">
+        <field name="name">Compliance Calendar</field>
+        <field name="res_model">ipai.bir.form.schedule</field>
+        <field name="view_mode">calendar,list,form</field>
+    </record>
+</odoo>

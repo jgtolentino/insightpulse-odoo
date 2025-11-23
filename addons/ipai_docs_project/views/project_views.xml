@@ -1,0 +1,30 @@
+<odoo>
+    <record id="view_project_form_ipai_docs_inherit" model="ir.ui.view">
+        <field name="name">project.project.form.ipai.docs</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+            <xpath expr="//sheet/div[@name='button_box']" position="inside">
+                <button name="action_view_docs"
+                        type="object"
+                        class="oe_stat_button"
+                        icon="fa-file-text-o"
+                        attrs="{'invisible': [('doc_count', '=', 0)]}">
+                    <field name="doc_count" widget="statinfo" string="Documents"/>
+                </button>
+            </xpath>
+
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Documents">
+                    <field name="doc_ids" widget="many2many_tags">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="doc_type"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+</odoo>

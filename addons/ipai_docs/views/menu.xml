@@ -1,0 +1,31 @@
+<odoo>
+    <menuitem id="menu_ipai_docs_root"
+              name="Knowledge"
+              sequence="40"
+              parent="base.menu_custom"/>
+
+    <menuitem id="menu_ipai_docs"
+              name="Documents"
+              parent="menu_ipai_docs_root"
+              action="action_ipai_docs"/>
+
+    <menuitem id="menu_ipai_doc_tags"
+              name="Tags"
+              parent="menu_ipai_docs_root"
+              action="action_ipai_doc_tags"/>
+
+    <record id="action_ipai_docs" model="ir.actions.act_window">
+        <field name="name">Documents</field>
+        <field name="res_model">ipai.doc</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>Create and organize internal documentation.</p>
+        </field>
+    </record>
+
+    <record id="action_ipai_doc_tags" model="ir.actions.act_window">
+        <field name="name">Document Tags</field>
+        <field name="res_model">ipai.doc.tag</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>

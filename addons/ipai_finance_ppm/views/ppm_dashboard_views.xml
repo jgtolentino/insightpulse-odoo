@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- List view -->
+    <record id="view_finance_ppm_dashboard_tree" model="ir.ui.view">
+        <field name="name">finance.ppm.dashboard.tree</field>
+        <field name="model">finance.ppm.dashboard</field>
+        <field name="arch" type="xml">
+            <list string="Finance PPM Automation">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="workflow_code"/>
+                <field name="last_status"/>
+                <field name="last_run_at"/>
+                <field name="next_scheduled_at"/>
+                <field name="failures_24h"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- Kanban summary -->
+    <record id="view_finance_ppm_dashboard_kanban" model="ir.ui.view">
+        <field name="name">finance.ppm.dashboard.kanban</field>
+        <field name="model">finance.ppm.dashboard</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_small_column" default_group_by="last_status">
+                <field name="name"/>
+                <field name="workflow_code"/>
+                <field name="last_status"/>
+                <field name="last_run_at"/>
+                <field name="next_scheduled_at"/>
+                <field name="failures_24h"/>
+                <field name="status_color"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div t-attf-class="oe_kanban_global_click o_kanban_record oe_kanban_color_#{record.status_color.value}">
+                            <div class="o_kanban_details">
+                                <strong t-esc="record.name.value"/>
+                                <div class="text-muted">
+                                    <span t-esc="record.workflow_code.value"/>
+                                </div>
+                                <div>
+                                    <span>Last:</span>
+                                    <span t-esc="record.last_run_at.value or '-'"/>
+                                </div>
+                                <div>
+                                    <span>Next:</span>
+                                    <span t-esc="record.next_scheduled_at.value or '-'"/>
+                                </div>
+                                <div>
+                                    <span>Failures (24h):</span>
+                                    <span t-esc="record.failures_24h.value"/>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- Form view -->
+    <record id="view_finance_ppm_dashboard_form" model="ir.ui.view">
+        <field name="name">finance.ppm.dashboard.form</field>
+        <field name="model">finance.ppm.dashboard</field>
+        <field name="arch" type="xml">
+            <form string="Finance PPM Workflow">
+                <header>
+                    <button name="action_refresh_dashboard"
+                            string="Refresh All"
+                            type="object"
+                            class="btn-primary"/>
+                    <field name="last_status" widget="statusbar"
+                           statusbar_visible="ok,warning,error"/>
+                </header>
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="workflow_code"/>
+                        <field name="last_run_at"/>
+                        <field name="next_scheduled_at"/>
+                        <field name="total_runs"/>
+                        <field name="failures_24h"/>
+                    </group>
+                    <group>
+                        <field name="last_message" colspan="4"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Search view -->
+    <record id="view_finance_ppm_dashboard_search" model="ir.ui.view">
+        <field name="name">finance.ppm.dashboard.search</field>
+        <field name="model">finance.ppm.dashboard</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="workflow_code"/>
+                <field name="last_status"/>
+                <filter name="status_ok" string="OK" domain="[('last_status','=','ok')]"/>
+                <filter name="status_warn" string="Warnings" domain="[('last_status','=','warning')]"/>
+                <filter name="status_err" string="Errors" domain="[('last_status','=','error')]"/>
+            </search>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_finance_ppm_dashboard" model="ir.actions.act_window">
+        <field name="name">PPM Automation Dashboard</field>
+        <field name="res_model">finance.ppm.dashboard</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="help" type="html">
+            <p>
+                This panel shows the live status of Finance PPM n8n workflows
+                (BIR Deadline Alert, Task Escalation, Monthly Report).
+                Use the "Refresh All" button to pull latest metrics from the status API.
+            </p>
+        </field>
+    </record>
+
+    <!-- Menu item under existing PPM menu root -->
+    <menuitem id="menu_finance_ppm_dashboard"
+              name="PPM Automation Dashboard"
+              parent="menu_finance_ppm_root"
+              action="action_finance_ppm_dashboard"
+              sequence="40"/>
+</odoo>

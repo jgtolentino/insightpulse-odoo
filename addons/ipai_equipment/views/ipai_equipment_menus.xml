@@ -1,45 +1,50 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Top Level Menu -->
+        <menuitem id="menu_ipai_equipment_root"
+                  name="Equipment"
+                  web_icon="maintenance,static/description/icon.png"
+                  sequence="40"/>
 
-        <menuitem
-            id="ipai_equipment_root_menu"
-            name="IPAI Equipment"
-            parent="stock.menu_stock_root"
-            sequence="60"
-        />
+        <!-- Dashboard / Overview -->
+        <menuitem id="menu_ipai_equipment_dashboard"
+                  name="Dashboard"
+                  parent="menu_ipai_equipment_root"
+                  action="ipai_equipment_utilization_action"
+                  sequence="10"/>
 
-        <menuitem
-            id="ipai_equipment_asset_menu"
-            name="Assets"
-            parent="ipai_equipment_root_menu"
-            action="ipai_equipment_asset_action"
-            sequence="10"
-        />
+        <!-- Bookings -->
+        <menuitem id="menu_ipai_equipment_bookings"
+                  name="Bookings"
+                  parent="menu_ipai_equipment_root"
+                  action="ipai_equipment_booking_action"
+                  sequence="20"/>
 
-        <menuitem
-            id="ipai_equipment_booking_menu"
-            name="Bookings"
-            parent="ipai_equipment_root_menu"
-            action="ipai_equipment_booking_action"
-            sequence="20"
-        />
+        <!-- Equipment (Link to Maintenance Equipment) -->
+        <menuitem id="menu_ipai_equipment_assets"
+                  name="Equipment"
+                  parent="menu_ipai_equipment_root"
+                  action="maintenance.hr_equipment_action"
+                  sequence="30"/>
 
-        <menuitem
-            id="ipai_equipment_incident_menu"
-            name="Incidents"
-            parent="ipai_equipment_root_menu"
-            action="ipai_equipment_incident_action"
-            sequence="30"
-        />
+        <!-- Incidents -->
+        <menuitem id="menu_ipai_equipment_incidents"
+                  name="Incidents"
+                  parent="menu_ipai_equipment_root"
+                  action="ipai_equipment_incident_action"
+                  sequence="40"/>
 
-        <menuitem
-            id="ipai_equipment_utilization_menu"
-            name="Utilization Analysis"
-            parent="ipai_equipment_root_menu"
-            action="ipai_equipment_utilization_action"
-            sequence="40"
-        />
-
+        <!-- Configuration -->
+        <menuitem id="menu_ipai_equipment_config"
+                  name="Configuration"
+                  parent="menu_ipai_equipment_root"
+                  sequence="100"/>
+        
+        <menuitem id="menu_ipai_equipment_categories"
+                  name="Categories"
+                  parent="menu_ipai_equipment_config"
+                  action="maintenance.hr_equipment_category_action"
+                  sequence="10"/>
     </data>
 </odoo>

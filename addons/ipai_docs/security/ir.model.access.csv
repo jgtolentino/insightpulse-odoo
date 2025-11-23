@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_doc_user,access_ipai_doc_user,model_ipai_doc,base.group_user,1,1,1,0
+access_ipai_doc_manager,access_ipai_doc_manager,model_ipai_doc,base.group_system,1,1,1,1
+access_ipai_doc_tag_user,access_ipai_doc_tag_user,model_ipai_doc_tag,base.group_user,1,1,1,0
+access_ipai_doc_tag_manager,access_ipai_doc_tag_manager,model_ipai_doc_tag,base.group_system,1,1,1,1

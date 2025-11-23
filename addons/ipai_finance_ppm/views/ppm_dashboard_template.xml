@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="ppm_dashboard_template" name="Finance PPM Dashboard">
+        <t t-call="web.layout">
+            <div class="container-fluid o_finance_ppm_dashboard">
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h1>Finance PPM Dashboard</h1>
+                        <p class="text-muted">
+                            Real-time view of BIR filing schedules and completion status
+                        </p>
+                        <p>
+                            <strong>Total Schedules:</strong> <t t-esc="schedule_count"/>
+                            | <strong>Today:</strong> <t t-esc="today"/>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Chart Row 1: Timeline -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>BIR Filing Timeline</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart_timeline" style="width: 100%; height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chart Row 2: Completion and Status -->
+                <div class="row mt-4">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Completion vs Deadline</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart_completion" style="width: 100%; height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>Status Distribution</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="chart_status" style="width: 100%; height: 400px;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Data Table -->
+                <div class="row mt-4 mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5>BIR Schedule Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Form</th>
+                                            <th>Period</th>
+                                            <th>Filing Deadline</th>
+                                            <th>Completion</th>
+                                            <th>Status</th>
+                                            <th>Supervisor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="schedule_table_body">
+                                        <!-- Populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ECharts JavaScript -->
+            <script type="text/javascript">
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Parse data from template
+                    var chartData = <t t-raw="chart_data"/>;
+                    var statusData = <t t-raw="status_data"/>;
+                    var today = '<t t-esc="today"/>';
+
+                    // Chart 1: Timeline (Gantt-style)
+                    var timelineChart = echarts.init(document.getElementById('chart_timeline'));
+                    var timelineOption = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' }
+                        },
+                        legend: {
+                            data: ['Preparation', 'Review', 'Approval', 'Filing']
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'time'
+                        },
+                        yAxis: {
+                            type: 'category',
+                            data: chartData.map(item => item.form)
+                        },
+                        series: [
+                            {
+                                name: 'Preparation',
+                                type: 'bar',
+                                stack: 'deadline',
+                                data: chartData.map(item => [item.prep_deadline, item.form]),
+                                itemStyle: { color: '#5470c6' }
+                            },
+                            {
+                                name: 'Review',
+                                type: 'bar',
+                                stack: 'deadline',
+                                data: chartData.map(item => [item.review_deadline, item.form]),
+                                itemStyle: { color: '#91cc75' }
+                            },
+                            {
+                                name: 'Approval',
+                                type: 'bar',
+                                stack: 'deadline',
+                                data: chartData.map(item => [item.approval_deadline, item.form]),
+                                itemStyle: { color: '#fac858' }
+                            },
+                            {
+                                name: 'Filing',
+                                type: 'bar',
+                                stack: 'deadline',
+                                data: chartData.map(item => [item.filing_deadline, item.form]),
+                                itemStyle: { color: '#ee6666' }
+                            }
+                        ]
+                    };
+                    timelineChart.setOption(timelineOption);
+
+                    // Chart 2: Completion vs Deadline
+                    var completionChart = echarts.init(document.getElementById('chart_completion'));
+                    var completionOption = {
+                        tooltip: {
+                            trigger: 'axis',
+                            axisPointer: { type: 'shadow' }
+                        },
+                        legend: {
+                            data: ['Completion %', 'Target (100%)']
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: chartData.map(item => item.form),
+                            axisLabel: {
+                                interval: 0,
+                                rotate: 45
+                            }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            max: 100,
+                            axisLabel: {
+                                formatter: '{value}%'
+                            }
+                        },
+                        series: [
+                            {
+                                name: 'Completion %',
+                                type: 'bar',
+                                data: chartData.map(item => item.completion),
+                                itemStyle: {
+                                    color: function(params) {
+                                        return params.value >= 100 ? '#67c23a' :
+                                               params.value >= 50 ? '#e6a23c' : '#f56c6c';
+                                    }
+                                }
+                            },
+                            {
+                                name: 'Target (100%)',
+                                type: 'line',
+                                data: chartData.map(() => 100),
+                                lineStyle: {
+                                    type: 'dashed',
+                                    color: '#409eff'
+                                },
+                                itemStyle: { color: '#409eff' }
+                            }
+                        ]
+                    };
+                    completionChart.setOption(completionOption);
+
+                    // Chart 3: Status Distribution (Pie)
+                    var statusChart = echarts.init(document.getElementById('chart_status'));
+                    var statusOption = {
+                        tooltip: {
+                            trigger: 'item',
+                            formatter: '{b}: {c} ({d}%)'
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left'
+                        },
+                        series: [
+                            {
+                                name: 'Status',
+                                type: 'pie',
+                                radius: '50%',
+                                data: statusData,
+                                emphasis: {
+                                    itemStyle: {
+                                        shadowBlur: 10,
+                                        shadowOffsetX: 0,
+                                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    statusChart.setOption(statusOption);
+
+                    // Populate data table
+                    var tableBody = document.getElementById('schedule_table_body');
+                    chartData.forEach(function(item) {
+                        var row = tableBody.insertRow();
+                        row.insertCell(0).textContent = item.form;
+                        row.insertCell(1).textContent = item.period;
+                        row.insertCell(2).textContent = item.filing_deadline;
+                        row.insertCell(3).textContent = item.completion.toFixed(1) + '%';
+                        row.insertCell(4).textContent = item.status.replace(/_/g, ' ').toUpperCase();
+                        row.insertCell(5).textContent = item.supervisor;
+                    });
+
+                    // Responsive resize
+                    window.addEventListener('resize', function() {
+                        timelineChart.resize();
+                        completionChart.resize();
+                        statusChart.resize();
+                    });
+                });
+            </script>
+        </t>
+    </template>
+</odoo>
