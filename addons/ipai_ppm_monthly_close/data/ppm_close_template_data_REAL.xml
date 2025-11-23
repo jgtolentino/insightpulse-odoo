@@ -1,0 +1,440 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ============================================================ -->
+        <!-- COMPLETE Monthly Close Task Templates                       -->
+        <!-- Based on actual Finance Framework Unified Workbook          -->
+        <!-- All employee codes and reviewers match real directory       -->
+        <!-- ============================================================ -->
+
+        <!-- RIM Tasks (Owner: RIM = rey.meran@omc.com) -->
+        <record id="template_rim_payroll" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">10</field>
+            <field name="task_category">Payroll &amp; Personnel</field>
+            <field name="detailed_task">Process and record Payroll, Final Pay, SL Conversions, and early retirement accrual.</field>
+            <field name="agency_code">RIM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rim_tax_provisions" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">20</field>
+            <field name="task_category">Tax &amp; Provisions</field>
+            <field name="detailed_task">Calculate and record the monthly Tax Provision and PPB Provision (performance bonuses).</field>
+            <field name="agency_code">RIM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rim_rent_leases" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">30</field>
+            <field name="task_category">Rent &amp; Leases</field>
+            <field name="detailed_task">Record recurring monthly Rental Income/Expense and monthly amortization expense for employee hospitalization plans.</field>
+            <field name="agency_code">RIM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rim_accruals" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">40</field>
+            <field name="task_category">Accruals &amp; Expenses</field>
+            <field name="detailed_task">Record accruals for Consultancy Fees and various routine General Expense Accruals. Process and record Payments for various Cash Advances.</field>
+            <field name="agency_code">RIM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rim_prior_period" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">50</field>
+            <field name="task_category">Prior Period Review</field>
+            <field name="detailed_task">Process reversal entries for the prior month's accruals and reclassifications.</field>
+            <field name="agency_code">RIM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- BOM Tasks (Owner: BOM = beng.manalo@omc.com) -->
+        <record id="template_bom_amortization" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">60</field>
+            <field name="task_category">Amortization &amp; Corporate</field>
+            <field name="detailed_task">Record monthly Depreciation, Amortization for vehicles/purchases/LOA, and Amortization for all technology licenses and shared service costs.</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_bom_corporate_accruals" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">70</field>
+            <field name="task_category">Corporate Accruals</field>
+            <field name="detailed_task">Accrue monthly expenses for Management and Royalty fees, consulting fees, and funds for Innovations/Initiatives.</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_bom_insurance" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">80</field>
+            <field name="task_category">Insurance</field>
+            <field name="detailed_task">Record monthly accrual for various Corporate Insurance types and amortize prepaid Health Insurance.</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_bom_treasury" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">90</field>
+            <field name="task_category">Treasury &amp; Other</field>
+            <field name="detailed_task">Record monthly bank charges, perform revaluation of foreign currency bank accounts, and record the monthly expense portion of the Omnicom stock option grant.</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_bom_prior_period" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">100</field>
+            <field name="task_category">Prior Period Review</field>
+            <field name="detailed_task">Process reversal entries for all prior month Accruals (e.g., trainings, production/retainers).</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_bom_regional" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">110</field>
+            <field name="task_category">Regional Reporting</field>
+            <field name="detailed_task">Prepare reports for Flash, Wins &amp; Losses and Revenue.</field>
+            <field name="agency_code">BOM</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- JPAL Tasks (Owner: JPAL = jinky.paladin@omc.com) -->
+        <record id="template_jpal_client_billings" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">120</field>
+            <field name="task_category">Client Billings</field>
+            <field name="detailed_task">Accrue estimated Production, Retainer Fees, Media Commission, Creative Fees, and OOPC.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jpal_wip_oop" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">130</field>
+            <field name="task_category">WIP/OOP Management</field>
+            <field name="detailed_task">Perform month-end Reclassifications of OOP to WIP and necessary Reclass WIP to OOP.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jpal_amortization" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">140</field>
+            <field name="task_category">Amortization &amp; Corporate</field>
+            <field name="detailed_task">Record monthly Amortization of the Business Permit and Amortization of LOA. Accrue estimated monthly Audit Fees. Record monthly Rental Expense/Income related to intercompany transactions. Perform month-end Revaluation of Intercompany Balances.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jpal_ar_aging" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">150</field>
+            <field name="task_category">AR Aging - WC</field>
+            <field name="detailed_task">Prepare reports for Working Capital related to AR.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- LAS Tasks (Owner: LAS = amor.lasaga@omc.com) -->
+        <record id="template_las_ca_liquidations" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">160</field>
+            <field name="task_category">CA Liquidations</field>
+            <field name="detailed_task">Process and record Cash Advance (CA) Liquidations for specific project-related expenses.</field>
+            <field name="agency_code">LAS</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_las_ap_aging" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">170</field>
+            <field name="task_category">AP Aging - WC</field>
+            <field name="detailed_task">Prepare AP Aging report for working capital submission.</field>
+            <field name="agency_code">LAS</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_las_oop" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">180</field>
+            <field name="task_category">OOP</field>
+            <field name="detailed_task">Prepare HOW's summary report.</field>
+            <field name="agency_code">LAS</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_las_asset_lease" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">190</field>
+            <field name="task_category">Asset &amp; Lease Entries</field>
+            <field name="detailed_task">Record monthly interest expense on leased assets and process amortization reclassifications for prepaid corporate fees.</field>
+            <field name="agency_code">LAS</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_las_reclassifications" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">200</field>
+            <field name="task_category">Reclassifications</field>
+            <field name="detailed_task">Process required reclassifications between specific GL accounts and between Marketing Expense categories.</field>
+            <field name="agency_code">LAS</field>
+            <field name="owner_code">BOM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- JLI Tasks (Owner: JLI - needs mapping to directory) -->
+        <record id="template_jli_vat" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">210</field>
+            <field name="task_category">VAT &amp; Taxes</field>
+            <field name="detailed_task">Compile and record monthly Input VAT entries (VAT paid on purchases) and the monthly VAT Report.</field>
+            <field name="agency_code">JLI</field>
+            <field name="owner_code">JPAL</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jli_accruals" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">220</field>
+            <field name="task_category">Accruals &amp; Assets</field>
+            <field name="detailed_task">Accrue recurring Expenses. Record the monthly recognition/capitalization of Other Computer Related Costs.</field>
+            <field name="agency_code">JLI</field>
+            <field name="owner_code">LAS</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jli_ap_aging" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">230</field>
+            <field name="task_category">AP Aging</field>
+            <field name="detailed_task">Prepare AP Aging report with detailed status per invoice.</field>
+            <field name="agency_code">JLI</field>
+            <field name="owner_code">LAS</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- RMQB Tasks (Owner: RMQB = sally.brillantes@omc.com) -->
+        <record id="template_rmqb_ca_liquidations" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">240</field>
+            <field name="task_category">CA Liquidations</field>
+            <field name="detailed_task">Process and record Cash Advance (CA) Liquidations submitted by employees.</field>
+            <field name="agency_code">RMQB</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rmqb_accruals" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">250</field>
+            <field name="task_category">Accruals &amp; Assets</field>
+            <field name="detailed_task">Accrue monthly expense for Employee Cellphone Allowance.</field>
+            <field name="agency_code">RMQB</field>
+            <field name="owner_code">LAS</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_rmqb_reclassification" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">260</field>
+            <field name="task_category">Expense Reclassification</field>
+            <field name="detailed_task">Process reclassifications to correct expense categories (e.g., General Expense to Wireless and Meals).</field>
+            <field name="agency_code">RMQB</field>
+            <field name="owner_code">RIM</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- JAP Tasks (Owner: JAP - needs mapping) -->
+        <record id="template_jap_vat_reporting" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">270</field>
+            <field name="task_category">VAT Reporting</field>
+            <field name="detailed_task">Compile, review, and record the monthly VAT Report (Initial and additional entries).</field>
+            <field name="agency_code">JAP</field>
+            <field name="owner_code">JPAL</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jap_job_transfers" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">280</field>
+            <field name="task_category">Job Transfers</field>
+            <field name="detailed_task">Process and record Transfers of Job Codes for consultancy fees and corporate projects. Record specific GL reclassifications.</field>
+            <field name="agency_code">JAP</field>
+            <field name="owner_code">JPAL</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <!-- JRMO Tasks (Owner: JRMO - not in directory, using JPAL) -->
+        <record id="template_jrmo_accruals" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">290</field>
+            <field name="task_category">Accruals</field>
+            <field name="detailed_task">Compile documents for the attachment of the revenue accruals.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">JPAL</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+        <record id="template_jrmo_wip" model="ppm.close.template">
+            <field name="active" eval="True"/>
+            <field name="sequence">300</field>
+            <field name="task_category">WIP</field>
+            <field name="detailed_task">Prepare WIP schedule summary per Job#.</field>
+            <field name="agency_code">JPAL</field>
+            <field name="owner_code">JPAL</field>
+            <field name="reviewer_code">CKVC</field>
+            <field name="approver_code">CKVC</field>
+            <field name="prep_days">1.0</field>
+            <field name="review_days">0.5</field>
+            <field name="approval_days">0.5</field>
+        </record>
+
+    </data>
+</odoo>

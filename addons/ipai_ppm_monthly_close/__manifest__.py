@@ -43,7 +43,7 @@ Integration:
     ],
     'data': [
         'security/ir.model.access.csv',
-        'data/ppm_close_template_data.xml',
+        'data/ppm_close_template_data_REAL.xml',
         'data/ppm_close_cron.xml',
         'views/ppm_monthly_close_views.xml',
         'views/ppm_close_task_views.xml',
