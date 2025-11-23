@@ -37,6 +37,7 @@ The system is designed to:
 |   |-- capabilities
 |   |-- knowledge
 |   |-- loops
+|   |-- personas
 |   |-- procedures
 |   |-- AGENT_SKILLS_REGISTRY.yaml
 |   |-- ORCHESTRATOR.md
@@ -62,6 +63,7 @@ The system is designed to:
 |   |-- FEATURE_CONCUR_PARITY.md
 |   |-- FEATURE_WORKSPACE_PARITY.md
 |   |-- HEALTH_CHECK.md
+|   |-- ODOO_ARCHITECT_PERSONA.md
 |   |-- ODOO_MODULE_DEPLOYMENT.md
 |   |-- PRD_ipai_ppm_portfolio.md
 |   `-- SAAS_PARITY_READINESS.md

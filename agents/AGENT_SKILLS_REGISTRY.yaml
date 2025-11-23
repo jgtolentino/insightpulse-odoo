@@ -796,3 +796,40 @@ metrics:
   automation_coverage:
     target: ">= 80% of repetitive tasks automated"
     measurement: "Count of n8n workflows vs manual processes"
+
+# ============================================================================
+# PERSONAS - Domain-specific agent personalities
+# ============================================================================
+personas:
+  - id: odoo-architect
+    name: Odoo 18 CE & OCA Architect
+    type: persona
+    path: agents/personas/odoo_architect.md
+    enabled: true
+    tags:
+      - odoo
+      - oca
+      - ce
+      - enterprise-replacement
+      - saas-parity
+    triggers:
+      - "odoo"
+      - "odoo 18"
+      - "oca"
+      - "enterprise feature"
+      - "enterprise module"
+      - "saas parity"
+      - "cheqroom"
+      - "sap concur"
+      - "notion workspace"
+    capabilities:
+      - enterprise_to_ce_mapping
+      - oca_module_selection
+      - saas_feature_decomposition
+      - owl_component_development
+      - security_acl_design
+    anti_patterns:
+      - enterprise_dependencies
+      - odoo_studio_usage
+      - iap_services
+      - proprietary_modules
