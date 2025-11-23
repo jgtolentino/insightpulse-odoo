@@ -27,7 +27,7 @@
         # 'views/spectra_export_views.xml',  # TODO: Create
         # 'views/spectra_mapping_views.xml',  # TODO: Create
         # 'views/approval_matrix_views.xml',  # TODO: Create
-        # 'views/tbwa_menu.xml',  # TODO: Create
+        'views/tbwa_menu.xml',
         # Wizards (load after views)
         # 'wizards/spectra_export_wizard_views.xml',  # TODO: Create
     ],

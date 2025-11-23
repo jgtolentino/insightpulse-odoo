@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ============================================ -->
+    <!-- Root Menu -->
+    <!-- ============================================ -->
+    <menuitem id="menu_tbwa_spectra_root"
+              name="TBWA Spectra"
+              web_icon="tbwa_spectra_integration,static/description/icon.png"
+              sequence="50"/>
+
+    <!-- ============================================ -->
+    <!-- Cash Advances Menu Section -->
+    <!-- ============================================ -->
+    <menuitem id="menu_tbwa_spectra_cash_advances"
+              name="Cash Advances"
+              parent="menu_tbwa_spectra_root"
+              sequence="10"/>
+
+    <!-- My Cash Advances (All users) -->
+    <menuitem id="menu_hr_expense_advance_my"
+              name="My Cash Advances"
+              parent="menu_tbwa_spectra_cash_advances"
+              action="action_hr_expense_advance_list"
+              sequence="10"/>
+
+    <!-- Team Cash Advances (Managers) -->
+    <menuitem id="menu_hr_expense_advance_manager"
+              name="Team Cash Advances"
+              parent="menu_tbwa_spectra_cash_advances"
+              action="action_hr_expense_advance_manager"
+              groups="tbwa_spectra_integration.group_tbwa_manager"
+              sequence="20"/>
+
+    <!-- All Cash Advances (Finance) -->
+    <menuitem id="menu_hr_expense_advance_finance"
+              name="All Cash Advances"
+              parent="menu_tbwa_spectra_cash_advances"
+              action="action_hr_expense_advance_finance"
+              groups="tbwa_spectra_integration.group_tbwa_finance"
+              sequence="30"/>
+
+    <!-- ============================================ -->
+    <!-- Spectra Export Menu Section -->
+    <!-- ============================================ -->
+    <menuitem id="menu_tbwa_spectra_export"
+              name="Spectra Exports"
+              parent="menu_tbwa_spectra_root"
+              groups="tbwa_spectra_integration.group_tbwa_finance"
+              sequence="20"/>
+
+    <!-- Export Batches -->
+    <menuitem id="menu_tbwa_spectra_export_batches"
+              name="Export Batches"
+              parent="menu_tbwa_spectra_export"
+              action="action_tbwa_spectra_export_list"
+              sequence="10"/>
+
+    <!-- GL Mappings -->
+    <menuitem id="menu_tbwa_spectra_mappings"
+              name="GL Mappings"
+              parent="menu_tbwa_spectra_export"
+              action="action_tbwa_spectra_mapping_list"
+              sequence="20"/>
+
+    <!-- ============================================ -->
+    <!-- Configuration Menu Section -->
+    <!-- ============================================ -->
+    <menuitem id="menu_tbwa_spectra_configuration"
+              name="Configuration"
+              parent="menu_tbwa_spectra_root"
+              groups="tbwa_spectra_integration.group_tbwa_admin"
+              sequence="90"/>
+
+    <!-- Approval Matrix -->
+    <menuitem id="menu_tbwa_approval_matrix"
+              name="Approval Matrix"
+              parent="menu_tbwa_spectra_configuration"
+              action="action_tbwa_approval_matrix_list"
+              sequence="10"/>
+
+    <!-- Tag Vocabulary -->
+    <menuitem id="menu_tbwa_tag_vocabulary"
+              name="Tag Vocabulary"
+              parent="menu_tbwa_spectra_configuration"
+              action="action_tbwa_tag_vocabulary_list"
+              sequence="20"/>
+
+    <!-- GL Code Configuration -->
+    <menuitem id="menu_tbwa_spectra_gl_codes"
+              name="GL Codes"
+              parent="menu_tbwa_spectra_configuration"
+              action="action_tbwa_spectra_gl_code_list"
+              sequence="30"/>
+
+</odoo>
