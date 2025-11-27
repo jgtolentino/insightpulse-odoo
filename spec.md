@@ -40,6 +40,7 @@ The system is designed to:
 |   |-- ipai_finance_ppm
 |   |-- ipai_ocr_expense
 |   |-- ipai_ppm_monthly_close
+|   |-- ipai_workspace_core
 |   `-- tbwa_spectra_integration
 |-- agents
 |   |-- capabilities

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <record id="view_ipai_workspace_tree" model="ir.ui.view">
+    <field name="name">ipai.workspace.tree</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <tree string="Workspaces">
+        <field name="name"/>
+        <field name="industry"/>
+        <field name="client_id"/>
+        <field name="account_manager_id"/>
+        <field name="stage"/>
+        <field name="project_count"/>
+        <field name="engagement_count"/>
+        <field name="invoice_count"/>
+        <field name="company_id"/>
+      </tree>
+    </field>
+  </record>
+
+  <record id="view_ipai_workspace_form" model="ir.ui.view">
+    <field name="name">ipai.workspace.form</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <form string="Workspace">
+        <sheet>
+          <group>
+            <field name="name"/>
+            <field name="industry"/>
+            <field name="client_id"/>
+            <field name="account_manager_id"/>
+            <field name="stage"/>
+            <field name="company_id"/>
+          </group>
+          <group>
+            <field name="project_count" readonly="1"/>
+            <field name="engagement_count" readonly="1"/>
+            <field name="invoice_count" readonly="1"/>
+          </group>
+          <notebook>
+            <page string="Links">
+              <field name="link_ids">
+                <tree editable="bottom">
+                  <field name="link_type"/>
+                  <field name="res_model"/>
+                  <field name="res_id"/>
+                  <field name="display_name" readonly="1"/>
+                </tree>
+              </field>
+            </page>
+            <page string="Chatter">
+              <field name="message_follower_ids" widget="mail_followers"/>
+              <field name="activity_ids" widget="mail_activity"/>
+              <field name="message_ids" widget="mail_thread"/>
+            </page>
+          </notebook>
+        </sheet>
+      </form>
+    </field>
+  </record>
+</odoo>
