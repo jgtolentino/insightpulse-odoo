@@ -21,15 +21,23 @@ The system is designed to:
 <!-- REPO_TREE_START -->
 ```text
 .
+|-- .agent
+|   |-- workflows
+|   `-- rules.md
+|-- .claude
+|   `-- settings.local.json
 |-- .github
 |   `-- workflows
 |-- addons
 |   |-- flutter_receipt_ocr
+|   |-- ipai_cash_advance
 |   |-- ipai_ce_cleaner
 |   |-- ipai_docs
+|   |-- ipai_docs_project
 |   |-- ipai_equipment
 |   |-- ipai_expense
 |   |-- ipai_finance_monthly_closing
+|   |-- ipai_finance_ppm
 |   |-- ipai_ocr_expense
 |   |-- ipai_ppm_monthly_close
 |   `-- tbwa_spectra_integration
@@ -48,6 +56,14 @@ The system is designed to:
 |   `-- n8n
 |-- baselines
 |   `-- v0.2.1-quality-baseline-20251121.txt
+|-- bin
+|   |-- README.md
+|   |-- finance-cli.sh
+|   |-- import_bir_schedules.py
+|   `-- postdeploy-finance.sh
+|-- calendar
+|   |-- 2026_FinanceClosing_Master.csv
+|   `-- FinanceClosing_RecurringTasks.ics
 |-- data
 |   `-- month_end_tasks.csv
 |-- deploy
@@ -69,12 +85,14 @@ The system is designed to:
 |   `-- SAAS_PARITY_READINESS.md
 |-- notion-n8n-monthly-close
 |   |-- scripts
+|   |-- supabase
 |   |-- workflows
 |   |-- DEPLOYMENT_STATUS.md
 |   |-- N8N_CLI_README.md
 |   `-- WORKFLOW_CONVENTIONS.md
 |-- ocr-adapter
 |   |-- scripts
+|   |-- test_receipts
 |   |-- .gitignore
 |   |-- DEPLOYMENT.md
 |   |-- Dockerfile
@@ -84,22 +102,33 @@ The system is designed to:
 |   |-- nginx-site.conf
 |   |-- requirements.txt
 |   `-- test-ocr.sh
+|-- odoo
+|   `-- ipai_finance_closing_seed.json
 |-- scripts
+|   |-- ci
 |   |-- README.md
 |   |-- apply-supabase-schema.sh
 |   |-- backup_odoo.sh
 |   |-- baseline-validation.sh
 |   |-- check_project_tasks.py
+|   |-- convert_csv_to_xml.py
+|   |-- convert_seed_to_xml.py
 |   |-- deploy-odoo-modules.sh
 |   |-- deploy-to-server.sh
 |   |-- deployment-checklist.sh
 |   |-- gen_repo_tree.sh
+|   |-- generate_2026_finance_calendar.py
+|   |-- generate_2026_schedule.py
+|   |-- generate_finance_dashboard.py
 |   |-- import_month_end_tasks.py
 |   |-- install-git-hooks.sh
+|   |-- report_ci_telemetry.sh
 |   |-- run_clarity_ppm_reverse.sh
+|   |-- run_odoo_migrations.sh
 |   `-- validate_m1.sh
 |-- specs
 |   |-- 002-odoo-expense-equipment-mvp.prd.md
+|   |-- 003-finance-ppm.prd.md
 |   |-- INSTALL_SEQUENCE.md
 |   |-- MODULE_SERVICE_MATRIX.md
 |   |-- README.md
@@ -107,15 +136,45 @@ The system is designed to:
 |-- supabase
 |   |-- migrations
 |   `-- seed
+|-- tasks
+|   `-- infra
+|-- workflows
+|   `-- finance_ppm
+|-- .agentignore
 |-- .gitignore
+|-- CHANGELOG.md
+|-- CI_CD_AUTOMATION_SUMMARY.md
+|-- DEPLOYMENT_MVP.md
+|-- DEPLOYMENT_STATUS.md
+|-- INFRASTRUCTURE_AUDIT_REPORT.md
+|-- INFRASTRUCTURE_PLAN.md
+|-- MATTERMOST_OPEX_INTEGRATION.md
 |-- OCR_PROJECT_COMPLETE.md
 |-- ODOO_OCR_SETUP.md
 |-- README.md
 |-- TAG_LABEL_VOCABULARY.md
+|-- TBWA_IPAI_MODULE_STANDARD.md
+|-- bir_deadlines_2026.csv
+|-- custom_module_inventory.md
 |-- deploy_m1.sh.template
+|-- deployment_readiness_assessment.md
+|-- finance_calendar_2026.csv
+|-- finance_calendar_2026.html
+|-- finance_events_2026.json
+|-- implementation_plan.md
+|-- implementation_plan_agent.md
+|-- n8n_automation_strategy.md
+|-- n8n_opex_cli.sh
+|-- odoo-bin
+|-- odoo_ce_expert_prompt.md
+|-- ph_holidays_2026.csv
 |-- plan.md
 |-- spec.md
-`-- tasks.md
+|-- task.md
+|-- tasks.md
+|-- verify_finance_ppm.py
+|-- walkthrough.md
+`-- workflow_template.csv
 ```
 <!-- REPO_TREE_END -->
 
