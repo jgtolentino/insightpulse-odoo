@@ -71,6 +71,47 @@ class Workspace(models.Model):
     )
     color = fields.Integer("Color Index")  # kanban color
 
+    # WBS HIERARCHY (Clarity PPM parity)
+    workspace_type = fields.Selection(
+        [
+            ("phase", "Phase"),
+            ("milestone", "Milestone"),
+            ("task", "Task"),
+            ("todo", "To-Do Item"),
+        ],
+        string="Type",
+        required=True,
+        default="task",
+        tracking=True,
+    )
+    parent_id = fields.Many2one(
+        "ipai.workspace",
+        string="Parent",
+        index=True,
+        ondelete="cascade",
+    )
+    child_ids = fields.One2many(
+        "ipai.workspace",
+        "parent_id",
+        string="Children",
+    )
+
+    # TIMELINE & PROGRESS (Clarity PPM parity)
+    date_start = fields.Datetime(string="Start", tracking=True)
+    date_end = fields.Datetime(string="Finish", tracking=True)
+
+    planned_hours = fields.Float(string="Planned Effort (Hours)")
+    remaining_hours = fields.Float(string="ETC (Hours)")
+    progress = fields.Float(
+        string="Percent Complete",
+        digits="Product Unit of Measure",
+    )
+
+    is_critical = fields.Boolean(
+        string="Critical",
+        help="Critical path flag",
+    )
+
     # RELATION TO ANY ODOO OBJECT (GENERIC LINK TABLE)
     link_ids = fields.One2many(
         "ipai.workspace.link",

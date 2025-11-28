@@ -1,0 +1,92 @@
+# Smart Delta 3-Edition Odoo CE Deployment
+# Core, Marketing, Accounting editions share Postgres but have different module sets
+
+version: '3.8'
+
+services:
+  # ===== SHARED POSTGRES =====
+  postgres:
+    image: postgres:15-alpine
+    container_name: odoo-postgres
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    volumes:
+      - odoo-postgres-data:/var/lib/postgresql/data
+    networks:
+      - odoo-network
+    restart: unless-stopped
+
+  # ===== CORE EDITION (Port 8069) =====
+  odoo-core:
+    image: odoo:18.0
+    container_name: odoo-core
+    depends_on:
+      - postgres
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_NAME=odoo_core
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - odoo-core-web-data:/var/lib/odoo
+    command: ["odoo", "-d", "odoo_core", "-i", "ipai_dev_studio_base,ipai_workspace_core,ipai_ce_branding", "--stop-after-init"]
+    networks:
+      - odoo-network
+    restart: unless-stopped
+
+  # ===== MARKETING EDITION (Port 8070) =====
+  odoo-marketing:
+    image: odoo:18.0
+    container_name: odoo-marketing
+    depends_on:
+      - postgres
+    ports:
+      - "8070:8069"
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_NAME=odoo_marketing
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - odoo-marketing-web-data:/var/lib/odoo
+    command: ["odoo", "-d", "odoo_marketing", "-i", "ipai_dev_studio_base,ipai_workspace_core,ipai_ce_branding,ipai_industry_marketing_agency", "--stop-after-init"]
+    networks:
+      - odoo-network
+    restart: unless-stopped
+
+  # ===== ACCOUNTING EDITION (Port 8071) =====
+  odoo-accounting:
+    image: odoo:18.0
+    container_name: odoo-accounting
+    depends_on:
+      - postgres
+    ports:
+      - "8071:8069"
+    environment:
+      - HOST=postgres
+      - USER=odoo
+      - PASSWORD=odoo
+      - DB_NAME=odoo_accounting
+    volumes:
+      - ./addons:/mnt/extra-addons
+      - odoo-accounting-web-data:/var/lib/odoo
+    command: ["odoo", "-d", "odoo_accounting", "-i", "ipai_dev_studio_base,ipai_workspace_core,ipai_ce_branding,ipai_industry_accounting_firm", "--stop-after-init"]
+    networks:
+      - odoo-network
+    restart: unless-stopped
+
+volumes:
+  odoo-postgres-data:
+  odoo-core-web-data:
+  odoo-marketing-web-data:
+  odoo-accounting-web-data:
+
+networks:
+  odoo-network:
+    driver: bridge

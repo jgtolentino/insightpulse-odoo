@@ -1,23 +1,34 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
+  <!-- 1. TREE VIEW: WBS-style with hierarchy, progress, ETC -->
   <record id="view_ipai_workspace_tree" model="ir.ui.view">
     <field name="name">ipai.workspace.tree</field>
     <field name="model">ipai.workspace</field>
     <field name="arch" type="xml">
       <tree string="Workspaces">
+        <field name="sequence" widget="handle"/>
         <field name="name"/>
+        <field name="workspace_type"/>
+        <field name="parent_id"/>
         <field name="industry"/>
         <field name="client_id"/>
         <field name="account_manager_id"/>
         <field name="stage"/>
+        <field name="date_start"/>
+        <field name="date_end"/>
+        <field name="planned_hours" sum="Total Planned"/>
+        <field name="remaining_hours" sum="Total ETC"/>
+        <field name="progress" widget="progressbar"/>
+        <field name="is_critical"/>
         <field name="project_count"/>
         <field name="engagement_count"/>
         <field name="invoice_count"/>
-        <field name="company_id"/>
+        <field name="company_id" groups="base.group_multi_company"/>
       </tree>
     </field>
   </record>
 
+  <!-- 2. FORM VIEW: Clarity-style with WBS hierarchy tab -->
   <record id="view_ipai_workspace_form" model="ir.ui.view">
     <field name="name">ipai.workspace.form</field>
     <field name="model">ipai.workspace</field>
@@ -25,12 +36,24 @@
       <form string="Workspace">
         <sheet>
           <group>
-            <field name="name"/>
-            <field name="industry"/>
-            <field name="client_id"/>
-            <field name="account_manager_id"/>
-            <field name="stage"/>
-            <field name="company_id"/>
+            <group>
+              <field name="name"/>
+              <field name="workspace_type"/>
+              <field name="parent_id" domain="[('id', '!=', id)]"/>
+              <field name="industry"/>
+              <field name="client_id"/>
+              <field name="account_manager_id"/>
+              <field name="stage"/>
+              <field name="company_id" groups="base.group_multi_company"/>
+            </group>
+            <group>
+              <field name="date_start"/>
+              <field name="date_end"/>
+              <field name="planned_hours"/>
+              <field name="remaining_hours"/>
+              <field name="progress" widget="progressbar"/>
+              <field name="is_critical"/>
+            </group>
           </group>
           <group>
             <field name="project_count" readonly="1"/>
@@ -38,6 +61,21 @@
             <field name="invoice_count" readonly="1"/>
           </group>
           <notebook>
+            <page string="Hierarchy">
+              <field name="child_ids">
+                <tree>
+                  <field name="sequence" widget="handle"/>
+                  <field name="name"/>
+                  <field name="workspace_type"/>
+                  <field name="date_start"/>
+                  <field name="date_end"/>
+                  <field name="planned_hours"/>
+                  <field name="remaining_hours"/>
+                  <field name="progress" widget="progressbar"/>
+                  <field name="is_critical"/>
+                </tree>
+              </field>
+            </page>
             <page string="Links">
               <field name="link_ids">
                 <tree editable="bottom">
@@ -56,6 +94,145 @@
           </notebook>
         </sheet>
       </form>
+    </field>
+  </record>
+
+  <!-- 3. KANBAN VIEW: Board-style grouped by workspace_type -->
+  <record id="view_ipai_workspace_kanban" model="ir.ui.view">
+    <field name="name">ipai.workspace.kanban</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <kanban default_group_by="workspace_type">
+        <field name="id"/>
+        <field name="name"/>
+        <field name="workspace_type"/>
+        <field name="stage"/>
+        <field name="color"/>
+        <field name="progress"/>
+        <field name="is_critical"/>
+        <field name="client_id"/>
+        <templates>
+          <t t-name="kanban-box">
+            <div t-attf-class="oe_kanban_color_#{kanban_getcolor(record.color.raw_value)} oe_kanban_global_click">
+              <div class="oe_kanban_content">
+                <div class="o_kanban_record_top">
+                  <div class="o_kanban_record_headings">
+                    <strong class="o_kanban_record_title"><field name="name"/></strong>
+                  </div>
+                  <div class="o_kanban_record_top_right">
+                    <field name="is_critical" widget="boolean" invisible="1"/>
+                    <span t-if="record.is_critical.raw_value" class="badge badge-danger">CRITICAL</span>
+                  </div>
+                </div>
+                <div class="o_kanban_record_body">
+                  <field name="client_id"/>
+                  <div class="text-muted">
+                    Stage: <field name="stage"/>
+                  </div>
+                  <div>
+                    <field name="progress" widget="progressbar"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </t>
+        </templates>
+      </kanban>
+    </field>
+  </record>
+
+  <!-- 4. CALENDAR VIEW: Timeline visualization -->
+  <record id="view_ipai_workspace_calendar" model="ir.ui.view">
+    <field name="name">ipai.workspace.calendar</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <calendar string="Workspace Timeline"
+                date_start="date_start"
+                date_stop="date_end"
+                color="workspace_type"
+                mode="month">
+        <field name="name"/>
+        <field name="workspace_type"/>
+        <field name="client_id"/>
+        <field name="progress"/>
+        <field name="is_critical"/>
+      </calendar>
+    </field>
+  </record>
+
+  <!-- 5. PIVOT VIEW: Analytics/reporting -->
+  <record id="view_ipai_workspace_pivot" model="ir.ui.view">
+    <field name="name">ipai.workspace.pivot</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <pivot string="Workspace Analytics">
+        <field name="workspace_type" type="row"/>
+        <field name="industry" type="row"/>
+        <field name="stage" type="col"/>
+        <field name="planned_hours" type="measure"/>
+        <field name="remaining_hours" type="measure"/>
+        <field name="progress" type="measure"/>
+      </pivot>
+    </field>
+  </record>
+
+  <!-- 6. GRAPH VIEW: Load visualization -->
+  <record id="view_ipai_workspace_graph" model="ir.ui.view">
+    <field name="name">ipai.workspace.graph</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <graph string="Workspace Metrics" type="bar">
+        <field name="workspace_type"/>
+        <field name="planned_hours" type="measure"/>
+        <field name="remaining_hours" type="measure"/>
+      </graph>
+    </field>
+  </record>
+
+  <!-- SEARCH VIEW: Filters and grouping -->
+  <record id="view_ipai_workspace_search" model="ir.ui.view">
+    <field name="name">ipai.workspace.search</field>
+    <field name="model">ipai.workspace</field>
+    <field name="arch" type="xml">
+      <search string="Search Workspaces">
+        <field name="name"/>
+        <field name="client_id"/>
+        <field name="account_manager_id"/>
+        <field name="workspace_type"/>
+        <field name="industry"/>
+        <field name="stage"/>
+        <filter string="Critical" name="filter_critical" domain="[('is_critical', '=', True)]"/>
+        <filter string="Active" name="filter_active" domain="[('active', '=', True)]"/>
+        <filter string="My Workspaces" name="filter_my" domain="[('account_manager_id', '=', uid)]"/>
+        <separator/>
+        <filter string="Phase" name="filter_phase" domain="[('workspace_type', '=', 'phase')]"/>
+        <filter string="Milestone" name="filter_milestone" domain="[('workspace_type', '=', 'milestone')]"/>
+        <filter string="Task" name="filter_task" domain="[('workspace_type', '=', 'task')]"/>
+        <filter string="To-Do" name="filter_todo" domain="[('workspace_type', '=', 'todo')]"/>
+        <group expand="0" string="Group By">
+          <filter string="Workspace Type" name="group_type" context="{'group_by': 'workspace_type'}"/>
+          <filter string="Industry" name="group_industry" context="{'group_by': 'industry'}"/>
+          <filter string="Stage" name="group_stage" context="{'group_by': 'stage'}"/>
+          <filter string="Client" name="group_client" context="{'group_by': 'client_id'}"/>
+          <filter string="Account Manager" name="group_manager" context="{'group_by': 'account_manager_id'}"/>
+        </group>
+      </search>
+    </field>
+  </record>
+
+  <!-- ACTION: All 6 views enabled -->
+  <record id="action_ipai_workspace" model="ir.actions.act_window">
+    <field name="name">Workspaces</field>
+    <field name="res_model">ipai.workspace</field>
+    <field name="view_mode">tree,form,kanban,calendar,pivot,graph</field>
+    <field name="context">{}</field>
+    <field name="help" type="html">
+      <p class="o_view_nocontent_smiling_face">
+        Create your first Workspace
+      </p>
+      <p>
+        Workspaces organize your client projects, campaigns, and engagements.
+      </p>
     </field>
   </record>
 </odoo>

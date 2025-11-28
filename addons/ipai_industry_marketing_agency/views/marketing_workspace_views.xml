@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!-- Inherit workspace form to add marketing fields when industry='marketing_agency' -->
+  <record id="view_ipai_workspace_form_marketing" model="ir.ui.view">
+    <field name="name">ipai.workspace.form.marketing</field>
+    <field name="model">ipai.workspace</field>
+    <field name="inherit_id" ref="ipai_workspace_core.view_ipai_workspace_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group[field[@name='company_id']]" position="after">
+        <group string="Marketing Campaign Details" invisible="industry != 'marketing_agency'">
+          <field name="campaign_type"/>
+          <field name="brand_name"/>
+          <field name="channel_mix"/>
+        </group>
+      </xpath>
+    </field>
+  </record>
+</odoo>

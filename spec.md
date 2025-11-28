@@ -31,13 +31,17 @@ The system is designed to:
 |-- addons
 |   |-- flutter_receipt_ocr
 |   |-- ipai_cash_advance
+|   |-- ipai_ce_branding
 |   |-- ipai_ce_cleaner
+|   |-- ipai_dev_studio_base
 |   |-- ipai_docs
 |   |-- ipai_docs_project
 |   |-- ipai_equipment
 |   |-- ipai_expense
 |   |-- ipai_finance_monthly_closing
 |   |-- ipai_finance_ppm
+|   |-- ipai_industry_accounting_firm
+|   |-- ipai_industry_marketing_agency
 |   |-- ipai_ocr_expense
 |   |-- ipai_ppm_monthly_close
 |   |-- ipai_workspace_core
@@ -159,6 +163,7 @@ The system is designed to:
 |-- custom_module_inventory.md
 |-- deploy_m1.sh.template
 |-- deployment_readiness_assessment.md
+|-- docker-compose.yml
 |-- finance_calendar_2026.csv
 |-- finance_calendar_2026.html
 |-- finance_events_2026.json

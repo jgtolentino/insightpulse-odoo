@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!--
+    InsightPulse CE Branding
+
+    Purpose: Clean CE-only interface without Enterprise upsell prompts
+    Strategy: Minimal overrides to keep maintenance low
+  -->
+
+  <!-- Remove Enterprise upgrade prompts (if present in CE) -->
+  <template id="web.login" inherit_id="web.login" name="InsightPulse Login">
+    <xpath expr="//div[@class='oe_single_form_container']" position="attributes">
+      <attribute name="style">background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);</attribute>
+    </xpath>
+  </template>
+
+  <!-- Custom app drawer branding -->
+  <template id="web.webclient_bootstrap" inherit_id="web.webclient_bootstrap" name="InsightPulse Webclient">
+    <xpath expr="//title" position="replace">
+      <title>InsightPulse Workspaces</title>
+    </xpath>
+  </template>
+</odoo>

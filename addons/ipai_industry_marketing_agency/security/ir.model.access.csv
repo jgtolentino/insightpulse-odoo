@@ -1,0 +1,2 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_ipai_workspace_marketing_user,ipai.workspace marketing user,ipai_workspace_core.model_ipai_workspace,base.group_user,1,1,1,0

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+  <!-- Inherit workspace form to add accounting fields when industry='accounting_firm' -->
+  <record id="view_ipai_workspace_form_accounting" model="ir.ui.view">
+    <field name="name">ipai.workspace.form.accounting</field>
+    <field name="model">ipai.workspace</field>
+    <field name="inherit_id" ref="ipai_workspace_core.view_ipai_workspace_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//group[field[@name='company_id']]" position="after">
+        <group string="Month-End Closing Details" invisible="industry != 'accounting_firm'">
+          <field name="fiscal_period"/>
+          <field name="entity_code"/>
+          <field name="closing_stage"/>
+        </group>
+      </xpath>
+    </field>
+  </record>
+</odoo>
