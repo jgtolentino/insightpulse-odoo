@@ -1,5 +1,8 @@
 # 🚀 InsightPulse Odoo - Enterprise SaaS Replacement Suite
 
+[![Run in Smithery](https://smithery.ai/badge/skills/jgtolentino)](https://smithery.ai/skills?ns=jgtolentino&utm_source=github&utm_medium=badge)
+
+
 [![CI Status](https://github.com/jgtolentino/insightpulse-odoo/workflows/CI/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
 [![Deploy Status](https://github.com/jgtolentino/insightpulse-odoo/workflows/Deploy/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
 [![Stack Validation](https://github.com/jgtolentino/insightpulse-odoo/workflows/Stack%20Validation/badge.svg)](https://github.com/jgtolentino/insightpulse-odoo/actions)
