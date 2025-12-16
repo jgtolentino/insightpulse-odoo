@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- BIR Filing Schedule: Nov 2025 - Dec 2026 -->
+        <!-- Philippine Holidays Factored In -->
+        <!-- ========================================== -->
+
+        <!-- Philippine Regular Holidays 2025-2026 -->
+        <!-- 2025: New Year (Jan 1), Maundy Thursday (Apr 17), Good Friday (Apr 18), -->
+        <!--       Araw ng Kagitingan (Apr 9), Labor Day (May 1), Independence Day (Jun 12), -->
+        <!--       Ninoy Aquino Day (Aug 21), National Heroes Day (Aug 25), -->
+        <!--       Bonifacio Day (Nov 30), Christmas (Dec 25), Rizal Day (Dec 30) -->
+        <!-- 2026: New Year (Jan 1), EDSA Revolution (Feb 25), Maundy Thursday (Apr 2), -->
+        <!--       Good Friday (Apr 3), Araw ng Kagitingan (Apr 9), Labor Day (May 1), -->
+        <!--       Independence Day (Jun 12), Ninoy Aquino Day (Aug 21), -->
+        <!--       National Heroes Day (Aug 31), Bonifacio Day (Nov 30), -->
+        <!--       Christmas (Dec 25), Rizal Day (Dec 30) -->
+
+        <!-- ============================ -->
+        <!-- NOVEMBER 2025 BIR Forms -->
+        <!-- ============================ -->
+
+        <!-- BIR 1601-C (Withholding Tax) - October 2025 filing -->
+        <record id="bir_1601c_oct_2025" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (October 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2025-11-10</field>  <!-- BIR deadline -->
+            <field name="description">Monthly withholding tax return for October 2025</field>
+        </record>
+
+        <record id="task_bir_1601c_oct_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Oct 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_oct_2025"/>
+            <field name="date_deadline">2025-11-06</field>  <!-- 4 days before BIR deadline -->
+            <field name="planned_hours">8</field>
+        </record>
+
+        <record id="task_bir_1601c_oct_review" model="project.task">
+            <field name="name">BIR 1601-C Review (Oct 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_oct_2025"/>
+            <field name="date_deadline">2025-11-08</field>  <!-- 2 days before deadline -->
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_bir_1601c_oct_approval" model="project.task">
+            <field name="name">BIR 1601-C Approval (Oct 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_oct_2025"/>
+            <field name="date_deadline">2025-11-09</field>  <!-- 1 day before deadline -->
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- ============================ -->
+        <!-- DECEMBER 2025 BIR Forms -->
+        <!-- ============================ -->
+
+        <!-- BIR 1601-C (Withholding Tax) - November 2025 filing -->
+        <record id="bir_1601c_nov_2025" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (November 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2025-12-10</field>
+            <field name="description">Monthly withholding tax return for November 2025</field>
+        </record>
+
+        <record id="task_bir_1601c_nov_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_nov_2025"/>
+            <field name="date_deadline">2025-12-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <record id="task_bir_1601c_nov_review" model="project.task">
+            <field name="name">BIR 1601-C Review (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_nov_2025"/>
+            <field name="date_deadline">2025-12-08</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_bir_1601c_nov_approval" model="project.task">
+            <field name="name">BIR 1601-C Approval (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_nov_2025"/>
+            <field name="date_deadline">2025-12-09</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- BIR 0619-E (Monthly Remittance) - November 2025 -->
+        <record id="bir_0619e_nov_2025" model="project.milestone">
+            <field name="name">BIR 0619-E Filing (November 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2025-12-10</field>
+            <field name="description">Monthly remittance return for November 2025</field>
+        </record>
+
+        <record id="task_bir_0619e_nov_prep" model="project.task">
+            <field name="name">BIR 0619-E Preparation (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_0619e_nov_2025"/>
+            <field name="date_deadline">2025-12-06</field>
+            <field name="planned_hours">6</field>
+        </record>
+
+        <!-- ============================ -->
+        <!-- 2026 MONTHLY BIR Forms -->
+        <!-- ============================ -->
+
+        <!-- January 2026 - BIR 1601-C (Dec 2025 filing) -->
+        <record id="bir_1601c_dec_2025" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (December 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-01-10</field>  <!-- Jan 10 is Saturday, but BIR accepts -->
+            <field name="description">Monthly withholding tax return for December 2025</field>
+        </record>
+
+        <record id="task_bir_1601c_dec_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_dec_2025"/>
+            <field name="date_deadline">2026-01-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <record id="task_bir_1601c_dec_review" model="project.task">
+            <field name="name">BIR 1601-C Review (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_dec_2025"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_bir_1601c_dec_approval" model="project.task">
+            <field name="name">BIR 1601-C Approval (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_dec_2025"/>
+            <field name="date_deadline">2026-01-09</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- February 2026 - BIR 1601-C (Jan 2026 filing) -->
+        <record id="bir_1601c_jan_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (January 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-02-10</field>
+            <field name="description">Monthly withholding tax return for January 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_jan_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Jan 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_jan_2026"/>
+            <field name="date_deadline">2026-02-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- March 2026 - BIR 1601-C (Feb 2026 filing) -->
+        <record id="bir_1601c_feb_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (February 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-03-10</field>
+            <field name="description">Monthly withholding tax return for February 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_feb_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Feb 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_feb_2026"/>
+            <field name="date_deadline">2026-03-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- April 2026 - BIR 1601-C (Mar 2026 filing) -->
+        <!-- Note: Apr 9-10 affected by Araw ng Kagitingan (Apr 9) and Maundy Thursday (Apr 2) -->
+        <record id="bir_1601c_mar_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (March 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-04-13</field>  <!-- Moved to Apr 13 due to Apr 9 holiday + Apr 2-3 Holy Week -->
+            <field name="description">Monthly withholding tax return for March 2026 (deadline extended due to Araw ng Kagitingan)</field>
+        </record>
+
+        <record id="task_bir_1601c_mar_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Mar 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_mar_2026"/>
+            <field name="date_deadline">2026-04-07</field>  <!-- Before Holy Week -->
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- May 2026 - BIR 1601-C (Apr 2026 filing) -->
+        <record id="bir_1601c_apr_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (April 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-05-11</field>  <!-- May 1 is Labor Day, moved to May 11 -->
+            <field name="description">Monthly withholding tax return for April 2026 (deadline extended due to Labor Day)</field>
+        </record>
+
+        <record id="task_bir_1601c_apr_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Apr 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_apr_2026"/>
+            <field name="date_deadline">2026-05-07</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- June 2026 - BIR 1601-C (May 2026 filing) -->
+        <record id="bir_1601c_may_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (May 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-06-10</field>
+            <field name="description">Monthly withholding tax return for May 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_may_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (May 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_may_2026"/>
+            <field name="date_deadline">2026-06-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- July 2026 - BIR 1601-C (Jun 2026 filing) -->
+        <!-- Note: Jun 12 is Independence Day, filing deadline moved -->
+        <record id="bir_1601c_jun_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (June 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-07-13</field>  <!-- Jun 12 is Independence Day -->
+            <field name="description">Monthly withholding tax return for June 2026 (deadline extended due to Independence Day)</field>
+        </record>
+
+        <record id="task_bir_1601c_jun_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Jun 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_jun_2026"/>
+            <field name="date_deadline">2026-07-09</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- August 2026 - BIR 1601-C (Jul 2026 filing) -->
+        <record id="bir_1601c_jul_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (July 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-08-10</field>
+            <field name="description">Monthly withholding tax return for July 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_jul_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Jul 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_jul_2026"/>
+            <field name="date_deadline">2026-08-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- September 2026 - BIR 1601-C (Aug 2026 filing) -->
+        <!-- Note: Aug 21 is Ninoy Aquino Day, Aug 31 is National Heroes Day -->
+        <record id="bir_1601c_aug_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (August 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-09-10</field>
+            <field name="description">Monthly withholding tax return for August 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_aug_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Aug 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_aug_2026"/>
+            <field name="date_deadline">2026-09-04</field>  <!-- Avoid Aug 31 holiday -->
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- October 2026 - BIR 1601-C (Sep 2026 filing) -->
+        <record id="bir_1601c_sep_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (September 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-10-10</field>
+            <field name="description">Monthly withholding tax return for September 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_sep_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Sep 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_sep_2026"/>
+            <field name="date_deadline">2026-10-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- November 2026 - BIR 1601-C (Oct 2026 filing) -->
+        <record id="bir_1601c_oct_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (October 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-11-10</field>
+            <field name="description">Monthly withholding tax return for October 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_oct_2026_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Oct 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_oct_2026"/>
+            <field name="date_deadline">2026-11-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- December 2026 - BIR 1601-C (Nov 2026 filing) -->
+        <!-- Note: Nov 30 is Bonifacio Day -->
+        <record id="bir_1601c_nov_2026" model="project.milestone">
+            <field name="name">BIR 1601-C Filing (November 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-12-10</field>
+            <field name="description">Monthly withholding tax return for November 2026</field>
+        </record>
+
+        <record id="task_bir_1601c_nov_2026_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Nov 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1601c_nov_2026"/>
+            <field name="date_deadline">2026-12-04</field>  <!-- Avoid Nov 30 Bonifacio Day -->
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- ============================ -->
+        <!-- QUARTERLY BIR Forms 2026 -->
+        <!-- ============================ -->
+
+        <!-- Q1 2026 - BIR 2550Q (Jan-Mar 2026) -->
+        <record id="bir_2550q_q1_2026" model="project.milestone">
+            <field name="name">BIR 2550Q Filing (Q1 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-05-30</field>  <!-- 60 days after Q1 end -->
+            <field name="description">Quarterly income tax return for Q1 2026 (Jan-Mar)</field>
+        </record>
+
+        <record id="task_bir_2550q_q1_prep" model="project.task">
+            <field name="name">BIR 2550Q Preparation (Q1 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q1_2026"/>
+            <field name="date_deadline">2026-05-26</field>
+            <field name="planned_hours">16</field>
+        </record>
+
+        <record id="task_bir_2550q_q1_review" model="project.task">
+            <field name="name">BIR 2550Q Review (Q1 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q1_2026"/>
+            <field name="date_deadline">2026-05-28</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <record id="task_bir_2550q_q1_approval" model="project.task">
+            <field name="name">BIR 2550Q Approval (Q1 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q1_2026"/>
+            <field name="date_deadline">2026-05-29</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <!-- Q2 2026 - BIR 2550Q (Apr-Jun 2026) -->
+        <record id="bir_2550q_q2_2026" model="project.milestone">
+            <field name="name">BIR 2550Q Filing (Q2 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-08-30</field>  <!-- 60 days after Q2 end -->
+            <field name="description">Quarterly income tax return for Q2 2026 (Apr-Jun)</field>
+        </record>
+
+        <record id="task_bir_2550q_q2_prep" model="project.task">
+            <field name="name">BIR 2550Q Preparation (Q2 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q2_2026"/>
+            <field name="date_deadline">2026-08-26</field>
+            <field name="planned_hours">16</field>
+        </record>
+
+        <!-- Q3 2026 - BIR 2550Q (Jul-Sep 2026) -->
+        <record id="bir_2550q_q3_2026" model="project.milestone">
+            <field name="name">BIR 2550Q Filing (Q3 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2026-11-30</field>  <!-- 60 days after Q3 end -->
+            <field name="description">Quarterly income tax return for Q3 2026 (Jul-Sep)</field>
+        </record>
+
+        <record id="task_bir_2550q_q3_prep" model="project.task">
+            <field name="name">BIR 2550Q Preparation (Q3 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q3_2026"/>
+            <field name="date_deadline">2026-11-24</field>  <!-- Before Bonifacio Day Nov 30 -->
+            <field name="planned_hours">16</field>
+        </record>
+
+        <!-- Q4 2026 - BIR 2550Q (Oct-Dec 2026) -->
+        <record id="bir_2550q_q4_2026" model="project.milestone">
+            <field name="name">BIR 2550Q Filing (Q4 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2027-02-28</field>  <!-- 60 days after Q4 end -->
+            <field name="description">Quarterly income tax return for Q4 2026 (Oct-Dec)</field>
+        </record>
+
+        <record id="task_bir_2550q_q4_prep" model="project.task">
+            <field name="name">BIR 2550Q Preparation (Q4 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_2550q_q4_2026"/>
+            <field name="date_deadline">2027-02-24</field>
+            <field name="planned_hours">16</field>
+        </record>
+
+        <!-- ============================ -->
+        <!-- ANNUAL BIR Forms 2026 -->
+        <!-- ============================ -->
+
+        <!-- BIR 1702-RT (Annual Income Tax) - Fiscal Year 2026 -->
+        <record id="bir_1702rt_2026" model="project.milestone">
+            <field name="name">BIR 1702-RT Filing (FY 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="date">2027-04-15</field>  <!-- April 15 following year -->
+            <field name="description">Annual income tax return for fiscal year 2026</field>
+        </record>
+
+        <record id="task_bir_1702rt_2026_prep" model="project.task">
+            <field name="name">BIR 1702-RT Preparation (FY 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1702rt_2026"/>
+            <field name="date_deadline">2027-04-07</field>  <!-- Avoid Apr 9 Araw ng Kagitingan -->
+            <field name="planned_hours">40</field>
+        </record>
+
+        <record id="task_bir_1702rt_2026_review" model="project.task">
+            <field name="name">BIR 1702-RT Review (FY 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1702rt_2026"/>
+            <field name="date_deadline">2027-04-11</field>
+            <field name="planned_hours">16</field>
+        </record>
+
+        <record id="task_bir_1702rt_2026_approval" model="project.task">
+            <field name="name">BIR 1702-RT Approval (FY 2026)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="bir_1702rt_2026"/>
+            <field name="date_deadline">2027-04-14</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+    </data>
+</odoo>

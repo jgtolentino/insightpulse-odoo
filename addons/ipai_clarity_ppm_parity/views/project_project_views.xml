@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Enhanced Project Form View -->
+    <record id="view_project_project_form_clarity" model="ir.ui.view">
+        <field name="name">project.project.form.clarity</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.edit_project"/>
+        <field name="arch" type="xml">
+
+            <!-- Add Clarity ID field after project name -->
+            <field name="name" position="after">
+                <field name="clarity_id" placeholder="e.g., PRJ-2025-001"/>
+            </field>
+
+            <!-- Add Health Status -->
+            <field name="partner_id" position="after">
+                <field name="health_status" widget="badge" decoration-success="health_status == 'green'" decoration-warning="health_status == 'yellow'" decoration-danger="health_status == 'red'"/>
+                <field name="overall_status" widget="badge" decoration-success="overall_status == 'on_track'" decoration-warning="overall_status == 'at_risk'" decoration-danger="overall_status == 'off_track'"/>
+            </field>
+
+            <!-- Add Baseline & Variance Tab -->
+            <xpath expr="//notebook" position="inside">
+                <page name="clarity_baseline" string="Baseline &amp; Variance">
+                    <group>
+                        <group string="Baseline Dates">
+                            <field name="baseline_start"/>
+                            <field name="baseline_finish"/>
+                            <button name="action_set_baseline" string="Set Current as Baseline" type="object" class="btn-primary"/>
+                        </group>
+                        <group string="Actual Dates">
+                            <field name="actual_start"/>
+                            <field name="actual_finish"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Variance Analysis">
+                            <field name="variance_start" decoration-danger="variance_start > 7" decoration-warning="variance_start > 0"/>
+                            <field name="variance_finish" decoration-danger="variance_finish > 14" decoration-warning="variance_finish > 7"/>
+                        </group>
+                        <group string="Progress Metrics">
+                            <field name="overall_progress" widget="progressbar"/>
+                            <field name="phase_count"/>
+                            <field name="milestone_count"/>
+                            <field name="critical_milestone_count" decoration-danger="critical_milestone_count > 0"/>
+                        </group>
+                    </group>
+                </page>
+
+                <page name="clarity_phases" string="Phases">
+                    <button name="action_view_phases" string="View All Phases" type="object" class="btn-primary"/>
+                    <separator/>
+                    <field name="task_ids" domain="[('is_phase', '=', True)]" context="{'default_is_phase': True}"/>
+                </page>
+
+                <page name="clarity_milestones" string="Milestones">
+                    <button name="action_view_milestones" string="View All Milestones" type="object" class="btn-primary"/>
+                    <separator/>
+                    <!-- Milestones tree would go here via related field if added -->
+                </page>
+            </xpath>
+
+            <!-- Add stat buttons -->
+            <div name="button_box" position="inside">
+                <button name="action_view_phases" type="object" class="oe_stat_button" icon="fa-sitemap">
+                    <field name="phase_count" widget="statinfo" string="Phases"/>
+                </button>
+                <button name="action_view_milestones" type="object" class="oe_stat_button" icon="fa-flag-checkered">
+                    <field name="milestone_count" widget="statinfo" string="Milestones"/>
+                </button>
+                <button name="action_health_check" type="object" class="oe_stat_button" icon="fa-heartbeat">
+                    <div class="o_field_widget o_stat_info">
+                        <span class="o_stat_text">Health</span>
+                        <span class="o_stat_value">
+                            <field name="health_status" widget="badge" decoration-success="health_status == 'green'" decoration-warning="health_status == 'yellow'" decoration-danger="health_status == 'red'"/>
+                        </span>
+                    </div>
+                </button>
+            </div>
+
+        </field>
+    </record>
+
+    <!-- Enhanced Project Tree View -->
+    <record id="view_project_project_tree_clarity" model="ir.ui.view">
+        <field name="name">project.project.tree.clarity</field>
+        <field name="model">project.project</field>
+        <field name="inherit_id" ref="project.view_project"/>
+        <field name="arch" type="xml">
+            <field name="name" position="after">
+                <field name="clarity_id"/>
+                <field name="health_status" widget="badge" decoration-success="health_status == 'green'" decoration-warning="health_status == 'yellow'" decoration-danger="health_status == 'red'"/>
+                <field name="overall_progress" widget="progressbar"/>
+                <field name="variance_finish" optional="show" decoration-danger="variance_finish > 14" decoration-warning="variance_finish > 7"/>
+            </field>
+        </field>
+    </record>
+
+</odoo>

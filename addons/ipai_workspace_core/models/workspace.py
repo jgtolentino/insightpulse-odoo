@@ -72,8 +72,16 @@ class Workspace(models.Model):
     color = fields.Integer("Color Index")  # kanban color
 
     # WBS HIERARCHY (Clarity PPM parity)
+    code = fields.Char(
+        string="Code",
+        help="Short code for tracking (e.g., G-2025-26, PH-202511, TSK-202511-TB)",
+        index=True,
+    )
     workspace_type = fields.Selection(
         [
+            ("goal", "Goal"),
+            ("outcome", "Outcome"),
+            ("objective", "Immediate Objective"),
             ("phase", "Phase"),
             ("milestone", "Milestone"),
             ("task", "Task"),
@@ -179,7 +187,7 @@ class Workspace(models.Model):
             "type": "ir.actions.act_window",
             "name": _("Workspace Links"),
             "res_model": "ipai.workspace.link",
-            "view_mode": "tree,form",
+            "view_mode": "list,form",
             "domain": [("workspace_id", "=", self.id)],
             "context": {"default_workspace_id": self.id},
         }

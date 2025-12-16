@@ -61,7 +61,7 @@ class MaintenanceEquipment(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Bookings',
             'res_model': 'ipai.equipment.booking',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('equipment_ids', 'in', self.id)],
             'context': {'default_equipment_ids': [self.id]},
         }
@@ -71,7 +71,7 @@ class MaintenanceEquipment(models.Model):
             'type': 'ir.actions.act_window',
             'name': 'Incidents',
             'res_model': 'ipai.equipment.incident',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'domain': [('equipment_id', '=', self.id)],
             'context': {'default_equipment_id': self.id},
         }

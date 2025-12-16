@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- Month-End Closing Tasks (Nov-Dec 2025) -->
+        <!-- ========================================== -->
+
+        <!-- NOVEMBER 2025 CLOSING CYCLE -->
+        <!-- Closing deadline: 5 business days after month-end (Nov 7, 2025) -->
+
+        <!-- Phase 1: Bank Reconciliation (Nov 1-3) -->
+        <record id="milestone_nov_2025_bank_recon" model="project.milestone">
+            <field name="name">November 2025 - Bank Reconciliation Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-11-03</field>
+        </record>
+
+        <record id="task_nov_bank_recon_download" model="project.task">
+            <field name="name">Download Bank Statements (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_bank_recon"/>
+            <field name="date_deadline">2025-11-01</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_nov_bank_recon_import" model="project.task">
+            <field name="name">Import Transactions to Odoo (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_bank_recon"/>
+            <field name="date_deadline">2025-11-02</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_nov_bank_recon_match" model="project.task">
+            <field name="name">Match Transactions &amp; Reconcile (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_bank_recon"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">6</field>
+        </record>
+
+        <!-- Phase 2: GL Reconciliation (Nov 3-5) -->
+        <record id="milestone_nov_2025_gl_recon" model="project.milestone">
+            <field name="name">November 2025 - GL Reconciliation Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-11-05</field>
+        </record>
+
+        <record id="task_nov_gl_review_accounts" model="project.task">
+            <field name="name">Review Major GL Accounts (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_gl_recon"/>
+            <field name="date_deadline">2025-11-04</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_nov_gl_aging_reports" model="project.task">
+            <field name="name">Run AR/AP Aging Reports (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_gl_recon"/>
+            <field name="date_deadline">2025-11-04</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_nov_gl_adjustments" model="project.task">
+            <field name="name">Post Adjusting Journal Entries (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_gl_recon"/>
+            <field name="date_deadline">2025-11-05</field>
+            <field name="planned_hours">5</field>
+        </record>
+
+        <!-- Phase 3: Closing Review (Nov 6-7) -->
+        <record id="milestone_nov_2025_closing_review" model="project.milestone">
+            <field name="name">November 2025 - Month-End Closing Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-11-07</field>
+        </record>
+
+        <record id="task_nov_closing_financials" model="project.task">
+            <field name="name">Generate Financial Statements (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_closing_review"/>
+            <field name="date_deadline">2025-11-06</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_nov_closing_variance" model="project.task">
+            <field name="name">Budget vs Actual Variance Analysis (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_closing_review"/>
+            <field name="date_deadline">2025-11-06</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_nov_closing_approval" model="project.task">
+            <field name="name">Finance Director Approval (Nov 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_nov_2025_closing_review"/>
+            <field name="date_deadline">2025-11-07</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- ========================================== -->
+
+        <!-- DECEMBER 2025 CLOSING CYCLE -->
+        <!-- Closing deadline: 5 business days after month-end (Jan 8, 2026) -->
+        <!-- Note: Dec 25, 30 are holidays; Jan 1 is New Year -->
+
+        <!-- Phase 1: Bank Reconciliation (Jan 2-5) -->
+        <record id="milestone_dec_2025_bank_recon" model="project.milestone">
+            <field name="name">December 2025 - Bank Reconciliation Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2026-01-05</field>
+        </record>
+
+        <record id="task_dec_bank_recon_download" model="project.task">
+            <field name="name">Download Bank Statements (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_bank_recon"/>
+            <field name="date_deadline">2026-01-02</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_dec_bank_recon_import" model="project.task">
+            <field name="name">Import Transactions to Odoo (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_bank_recon"/>
+            <field name="date_deadline">2026-01-03</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_dec_bank_recon_match" model="project.task">
+            <field name="name">Match Transactions &amp; Reconcile (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_bank_recon"/>
+            <field name="date_deadline">2026-01-05</field>
+            <field name="planned_hours">6</field>
+        </record>
+
+        <!-- Phase 2: GL Reconciliation (Jan 5-7) -->
+        <record id="milestone_dec_2025_gl_recon" model="project.milestone">
+            <field name="name">December 2025 - GL Reconciliation Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2026-01-07</field>
+        </record>
+
+        <record id="task_dec_gl_review_accounts" model="project.task">
+            <field name="name">Review Major GL Accounts (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_gl_recon"/>
+            <field name="date_deadline">2026-01-06</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_dec_gl_aging_reports" model="project.task">
+            <field name="name">Run AR/AP Aging Reports (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_gl_recon"/>
+            <field name="date_deadline">2026-01-06</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_dec_gl_year_end_adj" model="project.task">
+            <field name="name">Post Year-End Adjusting Entries (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_gl_recon"/>
+            <field name="date_deadline">2026-01-07</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <!-- Phase 3: Year-End Closing Review (Jan 8) -->
+        <record id="milestone_dec_2025_closing_review" model="project.milestone">
+            <field name="name">December 2025 - Year-End Closing Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2026-01-08</field>
+        </record>
+
+        <record id="task_dec_closing_financials" model="project.task">
+            <field name="name">Generate Year-End Financial Statements (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_closing_review"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">6</field>
+        </record>
+
+        <record id="task_dec_closing_variance" model="project.task">
+            <field name="name">Annual Budget vs Actual Analysis (2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_closing_review"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_dec_closing_audit_prep" model="project.task">
+            <field name="name">Prepare Audit Documentation (2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_closing_review"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">6</field>
+        </record>
+
+        <record id="task_dec_closing_approval" model="project.task">
+            <field name="name">Finance Director Year-End Approval (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_dec_2025_closing_review"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+    </data>
+</odoo>

@@ -78,7 +78,7 @@
             <field name="inherit_id" ref="hr_expense.hr_expense_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//group" position="inside">
-                    <field name="project_id" attrs="{'required': [('requires_project', '=', True)]}"/>
+                    <field name="project_id" required="requires_project"/>
                     <field name="travel_request_id"/>
                     <field name="requires_project" invisible="1"/>
                 </xpath>

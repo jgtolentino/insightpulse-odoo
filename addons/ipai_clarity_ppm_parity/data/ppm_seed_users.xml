@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- Finance PPM Team Users -->
+        <!-- ========================================== -->
+
+        <!-- Finance Director (CKVC) - Project Manager -->
+        <record id="user_finance_director_ckvc" model="res.users">
+            <field name="name">Khalil Veracruz</field>
+            <field name="login">khalil.veracruz@omc.com</field>
+            <field name="email">khalil.veracruz@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_manager'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Senior Finance Manager (RIM/SFM) -->
+        <record id="user_senior_finance_manager_rim" model="res.users">
+            <field name="name">Rey Meran</field>
+            <field name="login">rey.meran@omc.com</field>
+            <field name="email">rey.meran@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Finance Supervisor (BOM) -->
+        <record id="user_finance_supervisor_bom" model="res.users">
+            <field name="name">Beng Manalo</field>
+            <field name="login">beng.manalo@omc.com</field>
+            <field name="email">beng.manalo@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- GL Accountant (JPAL) -->
+        <record id="user_gl_accountant_jpal" model="res.users">
+            <field name="name">Jinky Paladin</field>
+            <field name="login">jinky.paladin@omc.com</field>
+            <field name="email">jinky.paladin@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- AP/AR Specialist (JPL) - Mapped from JLI -->
+        <record id="user_apar_specialist_jpl" model="res.users">
+            <field name="name">Jerald Loterte</field>
+            <field name="login">jerald.loterte@omc.com</field>
+            <field name="email">jerald.loterte@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Tax Compliance Officer (JI) - Mapped from JAP -->
+        <record id="user_tax_compliance_ji" model="res.users">
+            <field name="name">Jasmin Ignacio</field>
+            <field name="login">jasmin.ignacio@omc.com</field>
+            <field name="email">jasmin.ignacio@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Financial Analyst (LAS) -->
+        <record id="user_financial_analyst_las" model="res.users">
+            <field name="name">Amor Lasaga</field>
+            <field name="login">amor.lasaga@omc.com</field>
+            <field name="email">amor.lasaga@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Finance Clerk (RMQB) -->
+        <record id="user_finance_clerk_rmqb" model="res.users">
+            <field name="name">Sally Brillantes</field>
+            <field name="login">sally.brillantes@omc.com</field>
+            <field name="email">sally.brillantes@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Finance Assistant (JO) - Mapped from JRMO -->
+        <record id="user_finance_assistant_jo" model="res.users">
+            <field name="name">Jhoee Oliva</field>
+            <field name="login">jhoee.oliva@omc.com</field>
+            <field name="email">jhoee.oliva@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+        <!-- Additional Finance Staff (JM) -->
+        <record id="user_finance_staff_jm" model="res.users">
+            <field name="name">Joana Maravillas</field>
+            <field name="login">joana.maravillas@omc.com</field>
+            <field name="email">joana.maravillas@omc.com</field>
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_user'), ref('base.group_user')])]"/>
+        </record>
+
+    </data>
+</odoo>

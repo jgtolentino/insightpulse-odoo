@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- Clarity Projects with Baseline Dates -->
+        <!-- ========================================== -->
+
+        <record id="project_erp_implementation_q1" model="project.project">
+            <field name="name">ERP Implementation Q1 2025</field>
+            <field name="clarity_id">PRJ-2025-001</field>
+            <field name="health_status">green</field>
+            <field name="baseline_start">2025-01-06</field>
+            <field name="baseline_finish">2025-03-31</field>
+            <field name="date_start">2025-01-06</field>
+            <field name="date">2025-03-31</field>
+        </record>
+
+        <record id="project_finance_ppm" model="project.project">
+            <field name="name">Finance PPM &amp; BIR Compliance Q4 2025</field>
+            <field name="clarity_id">PRJ-2025-002</field>
+            <field name="health_status">green</field>
+            <field name="baseline_start">2025-10-01</field>
+            <field name="baseline_finish">2025-12-31</field>
+            <field name="date_start">2025-10-01</field>
+            <field name="date">2025-12-31</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- Phases (Parent Tasks with is_phase=True) -->
+        <!-- ========================================== -->
+
+        <!-- ERP Implementation Project Phases -->
+
+        <record id="phase_erp_planning" model="project.task">
+            <field name="name">Planning Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">planning</field>
+            <field name="date_deadline">2025-01-31</field>
+            <field name="phase_baseline_start">2025-01-06</field>
+            <field name="phase_baseline_finish">2025-01-31</field>
+            <field name="has_gate" eval="True"/>
+        </record>
+
+        <record id="phase_erp_design" model="project.task">
+            <field name="name">Design Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">design</field>
+            <field name="date_deadline">2025-02-15</field>
+            <field name="phase_baseline_start">2025-02-01</field>
+            <field name="phase_baseline_finish">2025-02-15</field>
+            <field name="has_gate" eval="True"/>
+        </record>
+
+        <record id="phase_erp_implementation" model="project.task">
+            <field name="name">Implementation Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">implementation</field>
+            <field name="date_deadline">2025-03-15</field>
+            <field name="phase_baseline_start">2025-02-16</field>
+            <field name="phase_baseline_finish">2025-03-15</field>
+            <field name="has_gate" eval="True"/>
+        </record>
+
+        <record id="phase_erp_testing" model="project.task">
+            <field name="name">Testing Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">testing</field>
+            <field name="date_deadline">2025-03-25</field>
+            <field name="phase_baseline_start">2025-03-16</field>
+            <field name="phase_baseline_finish">2025-03-25</field>
+        </record>
+
+        <record id="phase_erp_deployment" model="project.task">
+            <field name="name">Deployment Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">deployment</field>
+            <field name="date_deadline">2025-03-28</field>
+            <field name="phase_baseline_start">2025-03-26</field>
+            <field name="phase_baseline_finish">2025-03-28</field>
+        </record>
+
+        <record id="phase_erp_closeout" model="project.task">
+            <field name="name">Closeout Phase</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">closeout</field>
+            <field name="date_deadline">2025-03-31</field>
+            <field name="phase_baseline_start">2025-03-29</field>
+            <field name="phase_baseline_finish">2025-03-31</field>
+        </record>
+
+        <!-- Finance PPM Project Phases -->
+
+        <record id="phase_finance_planning" model="project.task">
+            <field name="name">Month-End Closing Planning</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">planning</field>
+            <field name="date_deadline">2025-10-15</field>
+        </record>
+
+        <record id="phase_finance_closeout" model="project.task">
+            <field name="name">Tax Filing &amp; Compliance</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="is_phase" eval="True"/>
+            <field name="phase_type">closeout</field>
+            <field name="date_deadline">2025-12-31</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- Milestones with Clarity Properties -->
+        <!-- ========================================== -->
+
+        <record id="milestone_planning_gate" model="project.milestone">
+            <field name="name">Planning Phase Gate</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="milestone_type">phase_gate</field>
+            <field name="deadline">2025-01-31</field>
+            <field name="baseline_deadline">2025-01-31</field>
+            <field name="approval_required" eval="True"/>
+            <field name="completion_criteria">All planning documents approved, requirements signed off, stakeholders aligned</field>
+            <field name="deliverables">- Project Charter&#10;- Requirement Specification&#10;- Resource Plan&#10;- Budget Approval</field>
+        </record>
+
+        <record id="milestone_design_gate" model="project.milestone">
+            <field name="name">Design Phase Gate</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="milestone_type">phase_gate</field>
+            <field name="deadline">2025-02-15</field>
+            <field name="baseline_deadline">2025-02-15</field>
+            <field name="approval_required" eval="True"/>
+            <field name="completion_criteria">All design documents reviewed and approved</field>
+            <field name="deliverables">- System Architecture Document&#10;- Database Schema&#10;- UI/UX Mockups</field>
+        </record>
+
+        <record id="milestone_implementation_gate" model="project.milestone">
+            <field name="name">Implementation Phase Gate</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="milestone_type">phase_gate</field>
+            <field name="deadline">2025-03-15</field>
+            <field name="baseline_deadline">2025-03-15</field>
+            <field name="approval_required" eval="True"/>
+            <field name="completion_criteria">All modules developed and code reviewed</field>
+        </record>
+
+        <record id="milestone_go_live" model="project.milestone">
+            <field name="name">Production Go-Live</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="milestone_type">deliverable</field>
+            <field name="deadline">2025-03-28</field>
+            <field name="baseline_deadline">2025-03-28</field>
+            <field name="approval_required" eval="True"/>
+            <field name="risk_level">critical</field>
+            <field name="completion_criteria">System deployed to production, users trained, cutover complete</field>
+        </record>
+
+        <!-- Finance PPM Milestones -->
+
+        <record id="milestone_bir_1601c_dec" model="project.milestone">
+            <field name="name">BIR 1601-C (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_type">approval</field>
+            <field name="deadline">2026-01-10</field>
+            <field name="approval_required" eval="True"/>
+            <field name="completion_criteria">Monthly withholding tax filed and paid on time</field>
+        </record>
+
+        <record id="milestone_bir_2550q_q4" model="project.milestone">
+            <field name="name">BIR 2550Q (Q4 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_type">approval</field>
+            <field name="deadline">2026-02-28</field>
+            <field name="approval_required" eval="True"/>
+            <field name="completion_criteria">Quarterly income tax filed for Q4 2025</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- Tasks under Phases -->
+        <!-- ========================================== -->
+
+        <!-- Planning Phase Tasks -->
+
+        <record id="task_gather_requirements" model="project.task">
+            <field name="name">Gather Requirements</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_planning"/>
+            <field name="milestone_id" ref="milestone_planning_gate"/>
+            <field name="date_deadline">2025-01-15</field>
+            <field name="planned_hours">40</field>
+            <field name="planned_value">20000</field>
+        </record>
+
+        <record id="task_create_charter" model="project.task">
+            <field name="name">Create Project Charter</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_planning"/>
+            <field name="milestone_id" ref="milestone_planning_gate"/>
+            <field name="date_deadline">2025-01-20</field>
+            <field name="planned_hours">16</field>
+            <field name="planned_value">8000</field>
+        </record>
+
+        <record id="task_stakeholder_alignment" model="project.task">
+            <field name="name">Stakeholder Alignment Meeting</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_planning"/>
+            <field name="milestone_id" ref="milestone_planning_gate"/>
+            <field name="date_deadline">2025-01-25</field>
+            <field name="planned_hours">8</field>
+            <field name="planned_value">4000</field>
+        </record>
+
+        <!-- Design Phase Tasks -->
+
+        <record id="task_system_architecture" model="project.task">
+            <field name="name">Design System Architecture</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_design"/>
+            <field name="milestone_id" ref="milestone_design_gate"/>
+            <field name="date_deadline">2025-02-08</field>
+            <field name="planned_hours">32</field>
+            <field name="planned_value">16000</field>
+        </record>
+
+        <record id="task_database_schema" model="project.task">
+            <field name="name">Design Database Schema</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_design"/>
+            <field name="milestone_id" ref="milestone_design_gate"/>
+            <field name="date_deadline">2025-02-10</field>
+            <field name="planned_hours">24</field>
+            <field name="planned_value">12000</field>
+        </record>
+
+        <!-- Implementation Phase Tasks -->
+
+        <record id="task_develop_core_modules" model="project.task">
+            <field name="name">Develop Core Modules</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_implementation"/>
+            <field name="milestone_id" ref="milestone_implementation_gate"/>
+            <field name="date_deadline">2025-03-10</field>
+            <field name="planned_hours">160</field>
+            <field name="planned_value">80000</field>
+        </record>
+
+        <record id="task_integrate_modules" model="project.task">
+            <field name="name">Integrate Modules</field>
+            <field name="project_id" ref="project_erp_implementation_q1"/>
+            <field name="parent_id" ref="phase_erp_implementation"/>
+            <field name="milestone_id" ref="milestone_implementation_gate"/>
+            <field name="date_deadline">2025-03-13</field>
+            <field name="planned_hours">40</field>
+            <field name="planned_value">20000</field>
+        </record>
+
+        <!-- Finance PPM Tasks -->
+
+        <record id="task_bir_1601c_prep" model="project.task">
+            <field name="name">BIR 1601-C Preparation (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="parent_id" ref="phase_finance_closeout"/>
+            <field name="milestone_id" ref="milestone_bir_1601c_dec"/>
+            <field name="date_deadline">2026-01-06</field>
+            <field name="planned_hours">8</field>
+        </record>
+
+        <record id="task_bir_1601c_review" model="project.task">
+            <field name="name">BIR 1601-C Review (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="parent_id" ref="phase_finance_closeout"/>
+            <field name="milestone_id" ref="milestone_bir_1601c_dec"/>
+            <field name="date_deadline">2026-01-08</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_bir_1601c_approval" model="project.task">
+            <field name="name">BIR 1601-C Approval (Dec 2025)</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="parent_id" ref="phase_finance_closeout"/>
+            <field name="milestone_id" ref="milestone_bir_1601c_dec"/>
+            <field name="date_deadline">2026-01-09</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+    </data>
+</odoo>

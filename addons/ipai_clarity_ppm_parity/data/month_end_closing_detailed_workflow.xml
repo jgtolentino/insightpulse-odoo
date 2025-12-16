@@ -1,0 +1,1065 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <!-- ========================================== -->
+        <!-- Detailed Month-End Closing Workflow -->
+        <!-- ========================================== -->
+        <!-- Complete task breakdown with user assignments -->
+        <!-- Categories: I. Initial & Compliance, II. Accruals & Amortization, III. WIP, IV. Final Adjustments & Close -->
+
+        <!-- ========================================== -->
+        <!-- CATEGORY I: INITIAL & COMPLIANCE -->
+        <!-- ========================================== -->
+
+        <!-- Payroll Processing & Tax Provision -->
+        <record id="milestone_payroll_tax_provision" model="project.milestone">
+            <field name="name">Payroll Processing &amp; Tax Provision Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-28</field>
+        </record>
+
+        <!-- Task 1: Payroll, Final Pay, SL Conversions -->
+        <record id="task_payroll_prep" model="project.task">
+            <field name="name">Payroll Processing - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-24</field>
+            <field name="planned_hours">8</field>
+            <field name="description">Process and record Payroll, Final Pay, SL Conversions, and early retirement accrual</field>
+        </record>
+
+        <record id="task_payroll_review" model="project.task">
+            <field name="name">Payroll Processing - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">4</field>
+        </record>
+
+        <record id="task_payroll_approval" model="project.task">
+            <field name="name">Payroll Processing - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- Task 2: Tax Provision & PPB Provision -->
+        <record id="task_tax_provision_prep" model="project.task">
+            <field name="name">Tax &amp; PPB Provision - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">6</field>
+            <field name="description">Calculate and record monthly Tax Provision and PPB Provision (performance bonuses)</field>
+        </record>
+
+        <record id="task_tax_provision_review" model="project.task">
+            <field name="name">Tax &amp; PPB Provision - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_tax_provision_approval" model="project.task">
+            <field name="name">Tax &amp; PPB Provision - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_payroll_tax_provision"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- VAT Data/Filing -->
+        <record id="milestone_vat_filing" model="project.milestone">
+            <field name="name">VAT Data &amp; Filing Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-28</field>
+        </record>
+
+        <!-- VAT Report Task 1 -->
+        <record id="task_vat_report_prep" model="project.task">
+            <field name="name">Monthly VAT Report - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_tax_compliance_ji'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">6</field>
+            <field name="description">Compile, review, and record monthly VAT Report (Initial and additional entries)</field>
+        </record>
+
+        <record id="task_vat_report_review" model="project.task">
+            <field name="name">Monthly VAT Report - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_vat_report_approval" model="project.task">
+            <field name="name">Monthly VAT Report - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- Input VAT Task 2 -->
+        <record id="task_input_vat_prep" model="project.task">
+            <field name="name">Input VAT Entries - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_apar_specialist_jpl'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">5</field>
+            <field name="description">Compile and record monthly Input VAT entries (VAT paid on purchases)</field>
+        </record>
+
+        <record id="task_input_vat_review" model="project.task">
+            <field name="name">Input VAT Entries - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_input_vat_approval" model="project.task">
+            <field name="name">Input VAT Entries - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_vat_filing"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- CA Liquidations -->
+        <record id="milestone_ca_liquidations" model="project.milestone">
+            <field name="name">Cash Advance Liquidations Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-29</field>
+        </record>
+
+        <!-- CA Liquidations Task 1 (Project-related) -->
+        <record id="task_ca_project_prep" model="project.task">
+            <field name="name">CA Liquidations (Project) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Process and record CA Liquidations for project-related expenses</field>
+        </record>
+
+        <record id="task_ca_project_review" model="project.task">
+            <field name="name">CA Liquidations (Project) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_ca_project_approval" model="project.task">
+            <field name="name">CA Liquidations (Project) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- CA Liquidations Task 2 (Employee) -->
+        <record id="task_ca_employee_prep" model="project.task">
+            <field name="name">CA Liquidations (Employee) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_clerk_rmqb'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Process and record CA Liquidations submitted by employees</field>
+        </record>
+
+        <record id="task_ca_employee_review" model="project.task">
+            <field name="name">CA Liquidations (Employee) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_ca_employee_approval" model="project.task">
+            <field name="name">CA Liquidations (Employee) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_ca_liquidations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CATEGORY II: ACCRUALS & AMORTIZATION -->
+        <!-- ========================================== -->
+
+        <!-- Revenue/Fees Accruals -->
+        <record id="milestone_revenue_accruals" model="project.milestone">
+            <field name="name">Revenue &amp; Fee Accruals Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-29</field>
+        </record>
+
+        <!-- Accrual 1: Consultancy Fees & General Expenses -->
+        <record id="task_consultancy_accrual_prep" model="project.task">
+            <field name="name">Consultancy &amp; General Expense Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">5</field>
+            <field name="description">Record accruals for Consultancy Fees and General Expense Accruals (estimated expense without vendor invoice)</field>
+        </record>
+
+        <record id="task_consultancy_accrual_review" model="project.task">
+            <field name="name">Consultancy &amp; General Expense Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_consultancy_accrual_approval" model="project.task">
+            <field name="name">Consultancy &amp; General Expense Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Accrual 2: Management & Royalty Fees -->
+        <record id="task_mgmt_royalty_prep" model="project.task">
+            <field name="name">Management &amp; Royalty Fee Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Accrue monthly expenses for Management/Royalty fees, consulting fees, Innovations/Initiatives funds</field>
+        </record>
+
+        <record id="task_mgmt_royalty_review" model="project.task">
+            <field name="name">Management &amp; Royalty Fee Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_mgmt_royalty_approval" model="project.task">
+            <field name="name">Management &amp; Royalty Fee Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Accrual 3: Client Revenue (Production, Retainer, Media, Creative) -->
+        <record id="task_client_revenue_prep" model="project.task">
+            <field name="name">Client Revenue Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">6</field>
+            <field name="description">Accrue Production, Retainer Fees, Media Commission, Creative Fees, OOPC based on client contracts</field>
+        </record>
+
+        <record id="task_client_revenue_review" model="project.task">
+            <field name="name">Client Revenue Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_client_revenue_approval" model="project.task">
+            <field name="name">Client Revenue Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- Accrual 4: Recurring Expenses -->
+        <record id="task_recurring_expense_prep" model="project.task">
+            <field name="name">Recurring Expense Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Accrue recurring expenses (regularly occurring services)</field>
+        </record>
+
+        <record id="task_recurring_expense_review" model="project.task">
+            <field name="name">Recurring Expense Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_recurring_expense_approval" model="project.task">
+            <field name="name">Recurring Expense Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Accrual 5: Computer Related Costs -->
+        <record id="task_computer_costs_prep" model="project.task">
+            <field name="name">Computer Related Costs Capitalization - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Record monthly recognition/capitalization of Other Computer Related Costs</field>
+        </record>
+
+        <record id="task_computer_costs_review" model="project.task">
+            <field name="name">Computer Related Costs Capitalization - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_computer_costs_approval" model="project.task">
+            <field name="name">Computer Related Costs Capitalization - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Accrual 6: Cellphone Allowance -->
+        <record id="task_cellphone_allowance_prep" model="project.task">
+            <field name="name">Cellphone Allowance Accrual - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_clerk_rmqb'))]"/>
+            <field name="date_deadline">2025-10-27</field>
+            <field name="planned_hours">2</field>
+            <field name="description">Accrue monthly employee cellphone allowance</field>
+        </record>
+
+        <record id="task_cellphone_allowance_review" model="project.task">
+            <field name="name">Cellphone Allowance Accrual - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <record id="task_cellphone_allowance_approval" model="project.task">
+            <field name="name">Cellphone Allowance Accrual - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Accrual 7: Revenue Accrual Documentation -->
+        <record id="task_revenue_accrual_docs" model="project.task">
+            <field name="name">Revenue Accrual Documentation - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_revenue_accruals"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_assistant_jo'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Compile supporting documents for revenue accruals</field>
+        </record>
+
+        <!-- IT/Fixed Asset Amortizations -->
+        <record id="milestone_amortizations" model="project.milestone">
+            <field name="name">IT &amp; Fixed Asset Amortizations Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-30</field>
+        </record>
+
+        <!-- Amortization 1: Rental & Hospitalization -->
+        <record id="task_rental_hosp_prep" model="project.task">
+            <field name="name">Rental &amp; Hospitalization Amortization - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Record monthly Rental Income/Expense and employee hospitalization plan amortization</field>
+        </record>
+
+        <record id="task_rental_hosp_review" model="project.task">
+            <field name="name">Rental &amp; Hospitalization Amortization - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_rental_hosp_approval" model="project.task">
+            <field name="name">Rental &amp; Hospitalization Amortization - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 2: Depreciation & Tech Licenses -->
+        <record id="task_depreciation_prep" model="project.task">
+            <field name="name">Depreciation &amp; Tech License Amortization - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">5</field>
+            <field name="description">Record monthly Depreciation, Amortization for vehicles/purchases/LOA, technology licenses, shared service costs</field>
+        </record>
+
+        <record id="task_depreciation_review" model="project.task">
+            <field name="name">Depreciation &amp; Tech License Amortization - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_depreciation_approval" model="project.task">
+            <field name="name">Depreciation &amp; Tech License Amortization - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- Amortization 3: Corporate Investments -->
+        <record id="task_corporate_invest_prep" model="project.task">
+            <field name="name">Corporate Investment Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Accrue expenses for internal projects and strategic corporate investments</field>
+        </record>
+
+        <record id="task_corporate_invest_review" model="project.task">
+            <field name="name">Corporate Investment Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_corporate_invest_approval" model="project.task">
+            <field name="name">Corporate Investment Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 4: Insurance -->
+        <record id="task_insurance_prep" model="project.task">
+            <field name="name">Corporate Insurance Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Record monthly accruals for Corporate Insurance, amortize prepaid Health Insurance</field>
+        </record>
+
+        <record id="task_insurance_review" model="project.task">
+            <field name="name">Corporate Insurance Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_insurance_approval" model="project.task">
+            <field name="name">Corporate Insurance Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 5: Business Permit & LOA -->
+        <record id="task_permit_loa_prep" model="project.task">
+            <field name="name">Business Permit &amp; LOA Amortization - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+            <field name="description">Record monthly amortization of Business Permit and LOA</field>
+        </record>
+
+        <record id="task_permit_loa_review" model="project.task">
+            <field name="name">Business Permit &amp; LOA Amortization - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <record id="task_permit_loa_approval" model="project.task">
+            <field name="name">Business Permit &amp; LOA Amortization - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 6: Audit Fees -->
+        <record id="task_audit_fees_prep" model="project.task">
+            <field name="name">Audit Fee Accruals - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+            <field name="description">Accrue estimated monthly audit fees</field>
+        </record>
+
+        <record id="task_audit_fees_review" model="project.task">
+            <field name="name">Audit Fee Accruals - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <record id="task_audit_fees_approval" model="project.task">
+            <field name="name">Audit Fee Accruals - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 7: Intercompany Rent -->
+        <record id="task_interco_rent_prep" model="project.task">
+            <field name="name">Intercompany Rental - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">2</field>
+            <field name="description">Record monthly Rental Expense/Income for intercompany transactions</field>
+        </record>
+
+        <record id="task_interco_rent_review" model="project.task">
+            <field name="name">Intercompany Rental - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <record id="task_interco_rent_approval" model="project.task">
+            <field name="name">Intercompany Rental - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 8: Intercompany Revaluation -->
+        <record id="task_interco_reval_prep" model="project.task">
+            <field name="name">Intercompany Revaluation - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Perform month-end revaluation of Intercompany Balances at current exchange rates</field>
+        </record>
+
+        <record id="task_interco_reval_review" model="project.task">
+            <field name="name">Intercompany Revaluation - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_interco_reval_approval" model="project.task">
+            <field name="name">Intercompany Revaluation - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Amortization 9: Leased Assets -->
+        <record id="task_leased_assets_prep" model="project.task">
+            <field name="name">Leased Asset Interest &amp; Amortization - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Record monthly interest expense on leased assets and amortization reclassifications for prepaid corporate fees</field>
+        </record>
+
+        <record id="task_leased_assets_review" model="project.task">
+            <field name="name">Leased Asset Interest &amp; Amortization - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_leased_assets_approval" model="project.task">
+            <field name="name">Leased Asset Interest &amp; Amortization - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_amortizations"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CATEGORY III: WIP (Work-in-Progress) -->
+        <!-- ========================================== -->
+
+        <record id="milestone_wip_reconciliation" model="project.milestone">
+            <field name="name">WIP/OOP Reconciliation Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-10-30</field>
+        </record>
+
+        <!-- WIP Task 1: OOP to WIP Reclassifications -->
+        <record id="task_wip_reclass_prep" model="project.task">
+            <field name="name">WIP/OOP Reclassifications - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">6</field>
+            <field name="description">Perform month-end reclassifications of OOP to WIP and WIP to OOP to ensure correct billable categorization</field>
+        </record>
+
+        <record id="task_wip_reclass_review" model="project.task">
+            <field name="name">WIP/OOP Reclassifications - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_wip_reclass_approval" model="project.task">
+            <field name="name">WIP/OOP Reclassifications - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- WIP Task 2: WIP Schedule -->
+        <record id="task_wip_schedule_prep" model="project.task">
+            <field name="name">WIP Schedule Summary - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_assistant_jo'))]"/>
+            <field name="date_deadline">2025-10-28</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Prepare WIP schedule summary per Job#</field>
+        </record>
+
+        <record id="task_wip_schedule_review" model="project.task">
+            <field name="name">WIP Schedule Summary - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_wip_schedule_approval" model="project.task">
+            <field name="name">WIP Schedule Summary - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_wip_reconciliation"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- ========================================== -->
+        <!-- CATEGORY IV: FINAL ADJUSTMENTS & CLOSE -->
+        <!-- ========================================== -->
+
+        <record id="milestone_final_close" model="project.milestone">
+            <field name="name">Final Adjustments &amp; Month-End Close Complete</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="deadline">2025-11-03</field>
+        </record>
+
+        <!-- Final Task 1: Prior Period Reversals (RIM) -->
+        <record id="task_prior_period_rim_prep" model="project.task">
+            <field name="name">Prior Period Reversals (Accruals) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Process reversal entries for prior month accruals and reclassifications</field>
+        </record>
+
+        <record id="task_prior_period_rim_review" model="project.task">
+            <field name="name">Prior Period Reversals (Accruals) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_prior_period_rim_approval" model="project.task">
+            <field name="name">Prior Period Reversals (Accruals) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 2: Prior Period Reversals (BOM) -->
+        <record id="task_prior_period_bom_prep" model="project.task">
+            <field name="name">Prior Period Reversals (Trainings/Production) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Process reversal entries for prior month trainings, production, retainers accruals</field>
+        </record>
+
+        <record id="task_prior_period_bom_review" model="project.task">
+            <field name="name">Prior Period Reversals (Trainings/Production) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_prior_period_bom_approval" model="project.task">
+            <field name="name">Prior Period Reversals (Trainings/Production) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 3: Flash/Wins/Revenue Reports -->
+        <record id="task_flash_reports_prep" model="project.task">
+            <field name="name">Flash/Wins/Revenue Reports - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">5</field>
+            <field name="description">Prepare Flash, Wins &amp; Losses, and Revenue reports</field>
+        </record>
+
+        <record id="task_flash_reports_review" model="project.task">
+            <field name="name">Flash/Wins/Revenue Reports - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">3</field>
+        </record>
+
+        <record id="task_flash_reports_approval" model="project.task">
+            <field name="name">Flash/Wins/Revenue Reports - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <!-- Final Task 4: AR Aging (Working Capital) -->
+        <record id="task_ar_aging_prep" model="project.task">
+            <field name="name">AR Aging Report (Working Capital) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Prepare AR Aging report for Working Capital submission</field>
+        </record>
+
+        <record id="task_ar_aging_review" model="project.task">
+            <field name="name">AR Aging Report (Working Capital) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_supervisor_bom'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_ar_aging_approval" model="project.task">
+            <field name="name">AR Aging Report (Working Capital) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 5: AP Aging (Working Capital) -->
+        <record id="task_ap_aging_wc_prep" model="project.task">
+            <field name="name">AP Aging Report (Working Capital) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Prepare AP Aging report for Working Capital submission</field>
+        </record>
+
+        <record id="task_ap_aging_wc_review" model="project.task">
+            <field name="name">AP Aging Report (Working Capital) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_ap_aging_wc_approval" model="project.task">
+            <field name="name">AP Aging Report (Working Capital) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-11-03</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 6: HOW Summary -->
+        <record id="task_how_summary_prep" model="project.task">
+            <field name="name">HOW Summary Report - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Prepare HOW's summary report</field>
+        </record>
+
+        <record id="task_how_summary_review" model="project.task">
+            <field name="name">HOW Summary Report - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_how_summary_approval" model="project.task">
+            <field name="name">HOW Summary Report - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 7: GL Reclassifications -->
+        <record id="task_gl_reclass_prep" model="project.task">
+            <field name="name">GL Reclassifications - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Process required reclassifications between GL accounts and Marketing Expense categories</field>
+        </record>
+
+        <record id="task_gl_reclass_review" model="project.task">
+            <field name="name">GL Reclassifications - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_gl_reclass_approval" model="project.task">
+            <field name="name">GL Reclassifications - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 8: AP Aging (Detailed) -->
+        <record id="task_ap_aging_detail_prep" model="project.task">
+            <field name="name">AP Aging Report (Detailed) - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_apar_specialist_jpl'))]"/>
+            <field name="date_deadline">2025-10-29</field>
+            <field name="planned_hours">4</field>
+            <field name="description">Prepare AP Aging report with detailed status per invoice</field>
+        </record>
+
+        <record id="task_ap_aging_detail_review" model="project.task">
+            <field name="name">AP Aging Report (Detailed) - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_financial_analyst_las'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_ap_aging_detail_approval" model="project.task">
+            <field name="name">AP Aging Report (Detailed) - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 9: Expense Reclassifications -->
+        <record id="task_expense_reclass_prep" model="project.task">
+            <field name="name">Expense Category Reclassifications - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_clerk_rmqb'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Process expense reclassifications (General Expense to Wireless/Meals, etc.)</field>
+        </record>
+
+        <record id="task_expense_reclass_review" model="project.task">
+            <field name="name">Expense Category Reclassifications - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_expense_reclass_approval" model="project.task">
+            <field name="name">Expense Category Reclassifications - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 10: Job Code Transfers -->
+        <record id="task_job_code_transfer_prep" model="project.task">
+            <field name="name">Job Code Transfers - Preparation</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_tax_compliance_ji'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Process job code transfers for consultancy fees and corporate projects</field>
+        </record>
+
+        <record id="task_job_code_transfer_review" model="project.task">
+            <field name="name">Job Code Transfers - Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_gl_accountant_jpal'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">2</field>
+        </record>
+
+        <record id="task_job_code_transfer_approval" model="project.task">
+            <field name="name">Job Code Transfers - Approval</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">1</field>
+        </record>
+
+        <!-- Final Task 11: Final TB Review -->
+        <record id="task_final_tb_review" model="project.task">
+            <field name="name">Final Trial Balance Review</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_senior_finance_manager_rim'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">6</field>
+            <field name="description">Comprehensive review of final Trial Balance</field>
+        </record>
+
+        <!-- Final Task 12: Final TB Sign-off -->
+        <record id="task_final_tb_signoff" model="project.task">
+            <field name="name">Final Trial Balance Sign-off &amp; Filing</field>
+            <field name="project_id" ref="project_finance_ppm"/>
+            <field name="milestone_id" ref="milestone_final_close"/>
+            <field name="user_ids" eval="[(4, ref('user_finance_director_ckvc'))]"/>
+            <field name="date_deadline">2025-10-30</field>
+            <field name="planned_hours">3</field>
+            <field name="description">Final approval and filing of Trial Balance</field>
+        </record>
+
+    </data>
+</odoo>

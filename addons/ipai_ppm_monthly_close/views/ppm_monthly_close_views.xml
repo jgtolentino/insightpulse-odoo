@@ -106,8 +106,8 @@
         </field>
     </record>
 
-    <!-- Gantt View -->
-    <record id="view_ppm_monthly_close_gantt" model="ir.ui.view">
+    <!-- Gantt View - DISABLED (not available in CE) -->
+    <!-- <record id="view_ppm_monthly_close_gantt" model="ir.ui.view">
         <field name="name">ppm.monthly.close.gantt</field>
         <field name="model">ppm.monthly.close</field>
         <field name="arch" type="xml">
@@ -116,7 +116,7 @@
                 <field name="state"/>
             </gantt>
         </field>
-    </record>
+    </record> -->
 
     <!-- Search View -->
     <record id="view_ppm_monthly_close_search" model="ir.ui.view">
@@ -144,7 +144,7 @@
     <record id="action_ppm_monthly_close" model="ir.actions.act_window">
         <field name="name">Monthly Close Schedules</field>
         <field name="res_model">ppm.monthly.close</field>
-        <field name="view_mode">tree,form,calendar,gantt</field>
+        <field name="view_mode">list,form,calendar</field>
         <field name="context">{}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">
