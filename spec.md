@@ -30,9 +30,11 @@ The system is designed to:
 |   `-- workflows
 |-- addons
 |   |-- flutter_receipt_ocr
+|   |-- ipai
 |   |-- ipai_cash_advance
 |   |-- ipai_ce_branding
 |   |-- ipai_ce_cleaner
+|   |-- ipai_clarity_ppm_parity
 |   |-- ipai_dev_studio_base
 |   |-- ipai_docs
 |   |-- ipai_docs_project
@@ -45,6 +47,7 @@ The system is designed to:
 |   |-- ipai_ocr_expense
 |   |-- ipai_ppm_monthly_close
 |   |-- ipai_workspace_core
+|   |-- omc_finance_ppm
 |   `-- tbwa_spectra_integration
 |-- agents
 |   |-- capabilities
@@ -73,9 +76,11 @@ The system is designed to:
 |   `-- month_end_tasks.csv
 |-- deploy
 |   |-- nginx
+|   |-- odoo-industry
 |   |-- docker-compose.yml
 |   `-- odoo.conf
 |-- docs
+|   |-- incidents
 |   |-- AGENT_FRAMEWORK_SESSION_REPORT.md
 |   |-- DEPLOYMENT.md
 |   |-- DEPLOYMENT_GUIDE.md
@@ -84,10 +89,13 @@ The system is designed to:
 |   |-- FEATURE_CONCUR_PARITY.md
 |   |-- FEATURE_WORKSPACE_PARITY.md
 |   |-- HEALTH_CHECK.md
+|   |-- MODULE_RISK_ASSESSMENT.md
 |   |-- ODOO_ARCHITECT_PERSONA.md
 |   |-- ODOO_MODULE_DEPLOYMENT.md
+|   |-- ODOO_PRODUCTION_RESEARCH.md
 |   |-- PRD_ipai_ppm_portfolio.md
-|   `-- SAAS_PARITY_READINESS.md
+|   |-- SAAS_PARITY_READINESS.md
+|   `-- TROUBLESHOOTING_500_ERROR.md
 |-- notion-n8n-monthly-close
 |   |-- scripts
 |   |-- supabase
@@ -109,6 +117,12 @@ The system is designed to:
 |   `-- test-ocr.sh
 |-- odoo
 |   `-- ipai_finance_closing_seed.json
+|-- ops
+|   |-- BREAK_GLASS_RECOVERY.md
+|   |-- INCIDENT_RESPONSE_500_ERROR.md
+|   |-- POSTMORTEM_TEMPLATE.md
+|   |-- README.md
+|   `-- verify_prod.sh
 |-- scripts
 |   |-- ci
 |   |-- README.md
@@ -127,10 +141,12 @@ The system is designed to:
 |   |-- generate_finance_dashboard.py
 |   |-- import_month_end_tasks.py
 |   |-- install-git-hooks.sh
+|   |-- oca-sync.sh
 |   |-- report_ci_telemetry.sh
 |   |-- run_clarity_ppm_reverse.sh
 |   |-- run_odoo_migrations.sh
-|   `-- validate_m1.sh
+|   |-- validate_m1.sh
+|   `-- validate_manifest_deps.py
 |-- specs
 |   |-- 002-odoo-expense-equipment-mvp.prd.md
 |   |-- 003-finance-ppm.prd.md
@@ -143,8 +159,11 @@ The system is designed to:
 |   `-- seed
 |-- tasks
 |   `-- infra
+|-- vendor
+|   `-- oca
 |-- workflows
 |   `-- finance_ppm
+|-- .Rhistory
 |-- .agentignore
 |-- .gitignore
 |-- CHANGELOG.md
@@ -157,12 +176,14 @@ The system is designed to:
 |-- OCR_PROJECT_COMPLETE.md
 |-- ODOO_OCR_SETUP.md
 |-- README.md
+|-- SKILLS.md
 |-- TAG_LABEL_VOCABULARY.md
 |-- TBWA_IPAI_MODULE_STANDARD.md
 |-- bir_deadlines_2026.csv
 |-- custom_module_inventory.md
 |-- deploy_m1.sh.template
 |-- deployment_readiness_assessment.md
+|-- docker-compose.test.yml
 |-- docker-compose.yml
 |-- finance_calendar_2026.csv
 |-- finance_calendar_2026.html
@@ -171,6 +192,7 @@ The system is designed to:
 |-- implementation_plan_agent.md
 |-- n8n_automation_strategy.md
 |-- n8n_opex_cli.sh
+|-- oca.lock.json
 |-- odoo-bin
 |-- odoo_ce_expert_prompt.md
 |-- ph_holidays_2026.csv

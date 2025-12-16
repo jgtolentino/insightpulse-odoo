@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "updated": "2025-12-17T04:33:00Z",
+  "repositories": {
+    "web": {
+      "url": "https://github.com/OCA/web",
+      "branch": "18.0",
+      "commit": "dbff15b4a07ad5b22dc61de095e2b1bea1b4ad1d",
+      "modules": [
+        "web_responsive",
+        "web_refresher",
+        "web_theme_classic"
+      ]
+    },
+    "project": {
+      "url": "https://github.com/OCA/project",
+      "branch": "18.0",
+      "commit": "5bbd81fed7a9b68e365e7781750a67b72eb2691a",
+      "modules": [
+        "project_wbs",
+        "project_template",
+        "project_task_template"
+      ]
+    },
+    "account-financial-reporting": {
+      "url": "https://github.com/OCA/account-financial-reporting",
+      "branch": "18.0",
+      "commit": "bdae054eeff60e4a6d19952f4f3d488484582f5e",
+      "modules": [
+        "account_financial_report"
+      ]
+    },
+    "account-reconcile": {
+      "url": "https://github.com/OCA/account-reconcile",
+      "branch": "18.0",
+      "commit": "40de3ff4fa81453d07122296012e6998c533e8a8",
+      "modules": [
+        "account_reconcile_oca"
+      ]
+    },
+    "server-tools": {
+      "url": "https://github.com/OCA/server-tools",
+      "branch": "18.0",
+      "commit": "adec64e27900e7527262ef02071b74d2e1d47c8f",
+      "modules": [
+        "base_view_inheritance_extension"
+      ]
+    }
+  }
+}
