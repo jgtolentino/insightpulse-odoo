@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Logframe Tree View -->
+    <record id="view_finance_logframe_tree" model="ir.ui.view">
+        <field name="name">ipai.finance.logframe.tree</field>
+        <field name="model">ipai.finance.logframe</field>
+        <field name="arch" type="xml">
+            <tree string="Finance Logframe">
+                <field name="sequence" widget="handle"/>
+                <field name="level"/>
+                <field name="code"/>
+                <field name="name"/>
+                <field name="indicator"/>
+                <field name="target_value"/>
+                <field name="task_count"/>
+                <field name="parent_id"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Logframe Form View -->
+    <record id="view_finance_logframe_form" model="ir.ui.view">
+        <field name="name">ipai.finance.logframe.form</field>
+        <field name="model">ipai.finance.logframe</field>
+        <field name="arch" type="xml">
+            <form string="Finance Logframe">
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_tasks" type="object" class="oe_stat_button" icon="fa-tasks">
+                            <field name="task_count" widget="statinfo" string="Tasks"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" placeholder="Objective Name"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="level"/>
+                            <field name="code"/>
+                            <field name="parent_id"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="indicator"/>
+                            <field name="target_value"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Description" name="description">
+                            <field name="description" placeholder="Detailed description of the objective..."/>
+                        </page>
+                        <page string="Means of Verification" name="verification">
+                            <field name="means_of_verification" placeholder="How to verify the indicator was achieved (e.g., BIR submission receipts, bank reconciliation reports)..."/>
+                        </page>
+                        <page string="Assumptions &amp; Risks" name="assumptions">
+                            <field name="assumptions" placeholder="Risk factors and assumptions (e.g., stable tax regulations, timely bank statement availability)..."/>
+                        </page>
+                        <page string="Child Objectives" name="children">
+                            <field name="child_ids"/>
+                        </page>
+                        <page string="Tasks" name="tasks">
+                            <field name="task_ids"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Logframe Action -->
+    <record id="action_finance_logframe" model="ir.actions.act_window">
+        <field name="name">Finance Logframe</field>
+        <field name="res_model">ipai.finance.logframe</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
