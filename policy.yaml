@@ -1,0 +1,29 @@
+---
+# Superset Hybrid Control Plane Policy
+# Enforces GitOps + drift-safe + debuggable deployment workflow
+
+db:
+  mode: migrations_and_seed
+  migrations_dir: db/migrations
+  seed_dir: db/seed
+
+apply:
+  dev:
+    mode: overwrite_git_wins
+    drift_gate: warn
+  staging:
+    mode: strict_fail_on_drift
+    drift_gate: fail
+  prod:
+    mode: strict_fail_on_drift
+    drift_gate: fail
+
+export:
+  format: superset_cli_yaml
+
+deploy:
+  mode: script_with_retry
+  steps:
+    - db_sync
+    - apply_assets
+    - drift_check
