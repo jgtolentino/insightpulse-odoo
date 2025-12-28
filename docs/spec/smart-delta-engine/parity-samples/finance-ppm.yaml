@@ -1,0 +1,102 @@
+# Sample Parity Output — Finance / PPM Domain
+# These examples demonstrate the parity mapping format
+
+---
+# Gap Level 1 — OCA module available
+capability: Budget Commitments & Forecast Control
+enterprise_refs:
+  - sap:finance:budget-control
+  - sap:ppm:cost-forecast
+odoo_core:
+  - account
+  - analytic
+  - project
+oca_modules:
+  - repo: OCA/account-budgeting
+    module: account_budget
+  - repo: OCA/project
+    module: project_budget
+alt_stack: []
+gap_level: 1
+smart_delta: OCA
+implementation_notes:
+  - Enable analytic budgets
+  - Lock periods via accounting periods
+  - Forecast via project budgets
+
+---
+# Gap Level 2 — Minimal custom required
+capability: Multi-Level Budget Approval Workflow
+enterprise_refs:
+  - sap:finance:approval-workflows
+odoo_core:
+  - mail
+  - approval
+oca_modules:
+  - repo: OCA/server-ux
+    module: base_approval
+alt_stack:
+  - n8n.workflow.approval_matrix
+gap_level: 2
+smart_delta: Minimal Custom
+implementation_notes:
+  - Extend approval rules (no controllers)
+  - Use server actions + n8n orchestration
+  - Custom module for approval matrix UI only
+
+---
+# Gap Level 3 — External service required
+capability: Real-Time Budget Consumption Analytics
+enterprise_refs:
+  - sap:analytics:real-time-finance
+odoo_core: []
+oca_modules: []
+alt_stack:
+  - supabase.postgres
+  - apache.superset
+gap_level: 3
+smart_delta: External
+implementation_notes:
+  - Read-only replication from Odoo
+  - No write-back allowed
+  - Superset dashboard for real-time views
+  - RLS enforced on Supabase
+
+---
+# Gap Level 0 — Native Odoo config only
+capability: Cost Center Tracking
+enterprise_refs:
+  - sap:finance:cost-centers
+odoo_core:
+  - account
+  - analytic
+oca_modules: []
+alt_stack: []
+gap_level: 0
+smart_delta: Config
+implementation_notes:
+  - Use analytic accounts as cost centers
+  - Configure analytic distribution models
+  - Enable analytic accounting in settings
+
+---
+# Gap Level 1 — OCA module for project budgets
+capability: Project Cost Budgeting
+enterprise_refs:
+  - sap:ppm:project-budget
+  - sap:ppm:cost-planning
+odoo_core:
+  - project
+  - analytic
+oca_modules:
+  - repo: OCA/project
+    module: project_budget
+  - repo: OCA/project
+    module: project_forecast
+alt_stack: []
+gap_level: 1
+smart_delta: OCA
+implementation_notes:
+  - Install project_budget module
+  - Link projects to analytic accounts
+  - Configure budget templates per project type

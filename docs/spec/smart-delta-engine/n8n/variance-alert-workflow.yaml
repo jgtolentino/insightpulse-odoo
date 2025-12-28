@@ -1,0 +1,252 @@
+# n8n Workflow: Budget Variance Alert
+# Trigger: Scheduled (daily 08:00 UTC)
+# Target: Mattermost alerts + Odoo issue creation
+
+name: Budget Variance Alert Workflow
+description: |
+  Daily check of project budget vs actuals.
+  Alerts when variance exceeds threshold.
+
+trigger:
+  type: schedule
+  cron: "0 8 * * *"  # Daily at 08:00 UTC
+
+environment:
+  VARIANCE_THRESHOLD: 10  # Percentage
+
+nodes:
+  - id: trigger_schedule
+    type: n8n-nodes-base.scheduleTrigger
+    parameters:
+      rule:
+        interval:
+          - field: cronExpression
+            expression: "0 8 * * *"
+    position: [100, 200]
+
+  - id: get_project_budgets
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "crossovered.budget",
+              "method": "search_read",
+              "args": [[["state", "=", "validate"]]],
+              "kwargs": {
+                "fields": ["id", "name", "project_id", "planned_amount", "practical_amount"]
+              }
+            },
+            "id": 1
+          }
+    position: [300, 200]
+
+  - id: get_project_actuals
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "account.analytic.line",
+              "method": "read_group",
+              "args": [[["project_id", "!=", false]]],
+              "kwargs": {
+                "fields": ["project_id", "amount:sum"],
+                "groupby": ["project_id"]
+              }
+            },
+            "id": 2
+          }
+    position: [500, 200]
+
+  - id: calculate_variance
+    type: n8n-nodes-base.code
+    parameters:
+      language: javascript
+      code: |
+        const budgets = $('get_project_budgets').item.json.result || [];
+        const actuals = $('get_project_actuals').item.json.result || [];
+
+        // Create actuals lookup
+        const actualsMap = {};
+        for (const a of actuals) {
+          if (a.project_id) {
+            actualsMap[a.project_id[0]] = Math.abs(a.amount || 0);
+          }
+        }
+
+        const alerts = [];
+        const threshold = parseFloat($env.VARIANCE_THRESHOLD) || 10;
+
+        for (const budget of budgets) {
+          const projectId = budget.project_id?.[0];
+          const projectName = budget.project_id?.[1] || 'Unknown';
+          const planned = budget.planned_amount || 0;
+          const actual = actualsMap[projectId] || 0;
+
+          if (planned > 0) {
+            const variance = ((actual - planned) / planned) * 100;
+            const varianceAbs = Math.abs(variance);
+
+            if (varianceAbs > threshold) {
+              alerts.push({
+                project_id: projectId,
+                project_name: projectName,
+                budget_id: budget.id,
+                budget_name: budget.name,
+                planned: planned,
+                actual: actual,
+                variance_pct: variance.toFixed(2),
+                variance_type: variance > 0 ? 'OVER' : 'UNDER',
+                severity: varianceAbs > 25 ? 'HIGH' : 'MEDIUM'
+              });
+            }
+          }
+        }
+
+        return alerts.map(a => ({ json: a }));
+    position: [700, 200]
+
+  - id: check_alerts_exist
+    type: n8n-nodes-base.if
+    parameters:
+      conditions:
+        number:
+          - value1: "={{ $items().length }}"
+            operation: larger
+            value2: 0
+    position: [900, 200]
+
+  - id: loop_alerts
+    type: n8n-nodes-base.splitInBatches
+    parameters:
+      batchSize: 1
+    position: [1100, 100]
+
+  - id: post_mattermost_alert
+    type: n8n-nodes-base.mattermost
+    parameters:
+      resource: message
+      operation: post
+      channel: finance-alerts
+      message: |
+        ## ⚠️ Budget Variance Alert
+
+        **Project:** {{ $json.project_name }}
+        **Budget:** {{ $json.budget_name }}
+
+        | Metric | Value |
+        |--------|-------|
+        | Planned | ${{ $json.planned.toLocaleString() }} |
+        | Actual | ${{ $json.actual.toLocaleString() }} |
+        | Variance | {{ $json.variance_pct }}% ({{ $json.variance_type }}) |
+        | Severity | {{ $json.severity }} |
+
+        ---
+        Action required: Review project spending.
+    position: [1300, 100]
+
+  - id: create_odoo_issue
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "project.issue",
+              "method": "create",
+              "args": [{
+                "name": "Budget Variance Alert - {{ $json.project_name }}",
+                "project_id": {{ $json.project_id }},
+                "description": "Variance of {{ $json.variance_pct }}% detected ({{ $json.variance_type }}). Planned: ${{ $json.planned }}, Actual: ${{ $json.actual }}",
+                "priority": "{{ $json.severity === 'HIGH' ? '2' : '1' }}"
+              }],
+              "kwargs": {}
+            },
+            "id": 3
+          }
+    position: [1500, 100]
+
+  - id: update_notion_variance
+    type: n8n-nodes-base.notion
+    parameters:
+      resource: databasePage
+      operation: search
+      text: "={{ $json.project_name }}"
+      filterType: databasePage
+    position: [1700, 100]
+
+  - id: log_to_supabase
+    type: n8n-nodes-base.supabase
+    parameters:
+      resource: row
+      operation: create
+      tableId: project_workflow_audit
+      fieldsUi:
+        fieldValues:
+          - fieldName: workflow_type
+            fieldValue: variance_alert
+          - fieldName: source_system
+            fieldValue: odoo
+          - fieldName: source_record_id
+            fieldValue: "={{ $json.project_id }}"
+          - fieldName: action
+            fieldValue: "alert_{{ $json.severity.toLowerCase() }}"
+          - fieldName: metadata
+            fieldValue: "={{ JSON.stringify($json) }}"
+    position: [1900, 100]
+
+  - id: no_alerts_log
+    type: n8n-nodes-base.noOp
+    parameters: {}
+    position: [1100, 300]
+
+connections:
+  trigger_schedule:
+    main:
+      - - node: get_project_budgets
+  get_project_budgets:
+    main:
+      - - node: get_project_actuals
+  get_project_actuals:
+    main:
+      - - node: calculate_variance
+  calculate_variance:
+    main:
+      - - node: check_alerts_exist
+  check_alerts_exist:
+    main:
+      - - node: loop_alerts
+      - - node: no_alerts_log
+  loop_alerts:
+    main:
+      - - node: post_mattermost_alert
+  post_mattermost_alert:
+    main:
+      - - node: create_odoo_issue
+  create_odoo_issue:
+    main:
+      - - node: update_notion_variance
+  update_notion_variance:
+    main:
+      - - node: log_to_supabase
+  log_to_supabase:
+    main:
+      - - node: loop_alerts

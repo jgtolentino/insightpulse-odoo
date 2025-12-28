@@ -1,0 +1,270 @@
+# n8n Workflow: Portfolio Intake → Project Creation
+# Trigger: Notion button click (New Portfolio Request)
+# Target: Odoo project.portfolio + Mattermost notification
+
+name: Portfolio Intake Workflow
+description: |
+  Receives portfolio requests from Notion, routes for approval via Mattermost,
+  and creates Odoo project upon approval.
+
+trigger:
+  type: webhook
+  path: /webhook/portfolio-intake
+  method: POST
+  authentication: header_auth
+  header_name: X-Notion-Signature
+
+nodes:
+  - id: receive_webhook
+    type: n8n-nodes-base.webhook
+    parameters:
+      httpMethod: POST
+      path: portfolio-intake
+      responseMode: onReceived
+    position: [100, 200]
+
+  - id: parse_notion_payload
+    type: n8n-nodes-base.code
+    parameters:
+      language: javascript
+      code: |
+        // Parse Notion database row
+        const payload = $input.first().json;
+
+        return [{
+          json: {
+            portfolio_name: payload.properties?.Name?.title?.[0]?.plain_text || 'Untitled',
+            sponsor_email: payload.properties?.Sponsor?.email || '',
+            budget_total: payload.properties?.Budget?.number || 0,
+            start_date: payload.properties?.StartDate?.date?.start || null,
+            description: payload.properties?.Description?.rich_text?.[0]?.plain_text || '',
+            notion_page_id: payload.id,
+            priority: payload.properties?.Priority?.select?.name || 'Medium'
+          }
+        }];
+    position: [300, 200]
+
+  - id: post_approval_request
+    type: n8n-nodes-base.mattermost
+    parameters:
+      resource: message
+      operation: post
+      channel: portfolio-review
+      message: |
+        ## 📋 New Portfolio Request
+
+        **Name:** {{ $json.portfolio_name }}
+        **Sponsor:** {{ $json.sponsor_email }}
+        **Budget:** ${{ $json.budget_total.toLocaleString() }}
+        **Priority:** {{ $json.priority }}
+        **Start Date:** {{ $json.start_date || 'TBD' }}
+
+        **Description:**
+        {{ $json.description }}
+
+        ---
+        React with ✅ to approve or ❌ to reject.
+      attachments: []
+    credentials:
+      mattermostApi: mattermost_bot
+    position: [500, 200]
+
+  - id: wait_for_reaction
+    type: n8n-nodes-base.wait
+    parameters:
+      resume: webhook
+      options:
+        webhookSuffix: /approval-response
+    position: [700, 200]
+
+  - id: check_approval
+    type: n8n-nodes-base.if
+    parameters:
+      conditions:
+        boolean:
+          - value1: "={{ $json.reaction }}"
+            operation: equals
+            value2: approved
+    position: [900, 200]
+
+  - id: create_odoo_portfolio
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      authentication: predefinedCredentialType
+      nodeCredentialType: httpBasicAuth
+      sendHeaders: true
+      headerParameters:
+        parameters:
+          - name: Content-Type
+            value: application/json
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "project.portfolio",
+              "method": "create",
+              "args": [{
+                "name": "{{ $('parse_notion_payload').item.json.portfolio_name }}",
+                "sponsor_id": false,
+                "budget_total": {{ $('parse_notion_payload').item.json.budget_total }},
+                "notion_db_id": "{{ $('parse_notion_payload').item.json.notion_page_id }}",
+                "status": "approved"
+              }],
+              "kwargs": {}
+            },
+            "id": 1
+          }
+    credentials:
+      httpBasicAuth: odoo_api
+    position: [1100, 100]
+
+  - id: create_analytic_account
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "account.analytic.account",
+              "method": "create",
+              "args": [{
+                "name": "Portfolio - {{ $('parse_notion_payload').item.json.portfolio_name }}",
+                "plan_id": 1
+              }],
+              "kwargs": {}
+            },
+            "id": 2
+          }
+    position: [1300, 100]
+
+  - id: update_notion_status
+    type: n8n-nodes-base.notion
+    parameters:
+      resource: databasePage
+      operation: update
+      pageId: "={{ $('parse_notion_payload').item.json.notion_page_id }}"
+      propertiesUi:
+        propertyValues:
+          - key: Status
+            type: select
+            selectValue: Approved
+          - key: OdooProjectId
+            type: number
+            numberValue: "={{ $('create_odoo_portfolio').item.json.result }}"
+    credentials:
+      notionApi: notion_integration
+    position: [1500, 100]
+
+  - id: notify_approval
+    type: n8n-nodes-base.mattermost
+    parameters:
+      resource: message
+      operation: post
+      channel: portfolio-review
+      message: |
+        ✅ **Portfolio Approved:** {{ $('parse_notion_payload').item.json.portfolio_name }}
+
+        Odoo Project ID: {{ $('create_odoo_portfolio').item.json.result }}
+    position: [1700, 100]
+
+  - id: update_notion_rejected
+    type: n8n-nodes-base.notion
+    parameters:
+      resource: databasePage
+      operation: update
+      pageId: "={{ $('parse_notion_payload').item.json.notion_page_id }}"
+      propertiesUi:
+        propertyValues:
+          - key: Status
+            type: select
+            selectValue: On Hold
+    credentials:
+      notionApi: notion_integration
+    position: [1100, 300]
+
+  - id: notify_rejection
+    type: n8n-nodes-base.mattermost
+    parameters:
+      resource: message
+      operation: post
+      channel: portfolio-review
+      message: |
+        ❌ **Portfolio Rejected:** {{ $('parse_notion_payload').item.json.portfolio_name }}
+
+        Status updated to "On Hold" in Notion.
+    position: [1300, 300]
+
+  - id: log_to_supabase
+    type: n8n-nodes-base.supabase
+    parameters:
+      resource: row
+      operation: create
+      tableId: project_workflow_audit
+      fieldsUi:
+        fieldValues:
+          - fieldName: workflow_type
+            fieldValue: portfolio_intake
+          - fieldName: source_system
+            fieldValue: notion
+          - fieldName: source_record_id
+            fieldValue: "={{ $('parse_notion_payload').item.json.notion_page_id }}"
+          - fieldName: action
+            fieldValue: "={{ $json.reaction === 'approved' ? 'approved' : 'rejected' }}"
+          - fieldName: actor_email
+            fieldValue: "={{ $json.approver_email }}"
+          - fieldName: metadata
+            fieldValue: "={{ JSON.stringify($('parse_notion_payload').item.json) }}"
+    credentials:
+      supabaseApi: supabase_service
+    position: [1900, 200]
+
+connections:
+  receive_webhook:
+    main:
+      - - node: parse_notion_payload
+  parse_notion_payload:
+    main:
+      - - node: post_approval_request
+  post_approval_request:
+    main:
+      - - node: wait_for_reaction
+  wait_for_reaction:
+    main:
+      - - node: check_approval
+  check_approval:
+    main:
+      - - node: create_odoo_portfolio
+      - - node: update_notion_rejected
+  create_odoo_portfolio:
+    main:
+      - - node: create_analytic_account
+  create_analytic_account:
+    main:
+      - - node: update_notion_status
+  update_notion_status:
+    main:
+      - - node: notify_approval
+  notify_approval:
+    main:
+      - - node: log_to_supabase
+  update_notion_rejected:
+    main:
+      - - node: notify_rejection
+  notify_rejection:
+    main:
+      - - node: log_to_supabase
+
+settings:
+  executionTimeout: 3600
+  saveDataSuccessExecution: all
+  saveDataErrorExecution: all

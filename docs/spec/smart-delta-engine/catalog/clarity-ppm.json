@@ -1,0 +1,380 @@
+{
+  "site_id": "clarity-ppm",
+  "root_url": "https://techdocs.broadcom.com/us/en/ca-enterprise-software/business-management/clarity-project-and-portfolio-management-ppm-on-demand/",
+  "description": "Broadcom Clarity PPM v15.6.1 - Enterprise Project & Portfolio Management",
+  "nodes": [
+    {
+      "id": "clarity-root",
+      "parent_id": null,
+      "depth": 0,
+      "title": "Clarity PPM SaaS",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/",
+      "breadcrumb": ["Clarity PPM"],
+      "page_type": "index",
+      "tags": ["ppm", "portfolio", "project", "enterprise"],
+      "summary": "Enterprise PPM platform for portfolio, project, resource, and financial management"
+    },
+    {
+      "id": "clarity-portfolio",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Portfolio Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/portfolio",
+      "breadcrumb": ["Clarity PPM", "Using", "Portfolio Management"],
+      "page_type": "category",
+      "tags": ["portfolio", "governance", "prioritization"],
+      "summary": "Portfolio creation, prioritization, roadmap planning, what-if analysis"
+    },
+    {
+      "id": "clarity-portfolio-creation",
+      "parent_id": "clarity-portfolio",
+      "depth": 2,
+      "title": "Portfolio Creation & Governance",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/portfolio/creation",
+      "breadcrumb": ["Clarity PPM", "Portfolio Management", "Creation"],
+      "page_type": "leaf",
+      "tags": ["portfolio", "governance", "creation"],
+      "summary": "Create portfolios, define governance rules, assign sponsors",
+      "leaf_extractions": {
+        "key_points": [
+          "Portfolio hierarchy management",
+          "Strategic alignment scoring",
+          "Portfolio lifecycle states",
+          "Governance workflows"
+        ],
+        "relevant_api": ["portfolioService.create()", "portfolioService.update()"],
+        "implementation_notes": "Maps to custom project.portfolio model in Odoo"
+      }
+    },
+    {
+      "id": "clarity-portfolio-prioritization",
+      "parent_id": "clarity-portfolio",
+      "depth": 2,
+      "title": "Portfolio Prioritization",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/portfolio/prioritization",
+      "breadcrumb": ["Clarity PPM", "Portfolio Management", "Prioritization"],
+      "page_type": "leaf",
+      "tags": ["prioritization", "scoring", "ranking"],
+      "summary": "Weighted scoring, project ranking, optimization algorithms"
+    },
+    {
+      "id": "clarity-portfolio-roadmap",
+      "parent_id": "clarity-portfolio",
+      "depth": 2,
+      "title": "Roadmap Planning",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/portfolio/roadmap",
+      "breadcrumb": ["Clarity PPM", "Portfolio Management", "Roadmap"],
+      "page_type": "leaf",
+      "tags": ["roadmap", "timeline", "planning"],
+      "summary": "Strategic roadmap views, milestone planning, dependency mapping"
+    },
+    {
+      "id": "clarity-portfolio-whatif",
+      "parent_id": "clarity-portfolio",
+      "depth": 2,
+      "title": "What-If Analysis",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/portfolio/whatif",
+      "breadcrumb": ["Clarity PPM", "Portfolio Management", "What-If"],
+      "page_type": "leaf",
+      "tags": ["scenario", "simulation", "analysis"],
+      "summary": "Scenario planning, resource impact simulation, budget trade-offs"
+    },
+    {
+      "id": "clarity-project",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Project Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/project",
+      "breadcrumb": ["Clarity PPM", "Using", "Project Management"],
+      "page_type": "category",
+      "tags": ["project", "scheduling", "tracking"],
+      "summary": "Project planning, scheduling, resource allocation, tracking"
+    },
+    {
+      "id": "clarity-project-planning",
+      "parent_id": "clarity-project",
+      "depth": 2,
+      "title": "Project Planning",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/project/planning",
+      "breadcrumb": ["Clarity PPM", "Project Management", "Planning"],
+      "page_type": "leaf",
+      "tags": ["planning", "wbs", "milestones"],
+      "summary": "Project creation, WBS definition, milestone planning",
+      "leaf_extractions": {
+        "key_points": [
+          "Work Breakdown Structure (WBS)",
+          "Project templates",
+          "Milestone definitions",
+          "Baseline management"
+        ],
+        "relevant_api": ["projectService.create()", "taskService.create()"],
+        "implementation_notes": "Maps to Odoo project.project + project.task"
+      }
+    },
+    {
+      "id": "clarity-project-schedule",
+      "parent_id": "clarity-project",
+      "depth": 2,
+      "title": "Schedule Management (Gantt)",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/project/schedule",
+      "breadcrumb": ["Clarity PPM", "Project Management", "Schedule"],
+      "page_type": "leaf",
+      "tags": ["gantt", "scheduling", "dependencies"],
+      "summary": "Gantt charts, critical path, task dependencies, leveling"
+    },
+    {
+      "id": "clarity-project-resource",
+      "parent_id": "clarity-project",
+      "depth": 2,
+      "title": "Resource Allocation",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/project/resource",
+      "breadcrumb": ["Clarity PPM", "Project Management", "Resource"],
+      "page_type": "leaf",
+      "tags": ["resource", "allocation", "assignment"],
+      "summary": "Team assignment, role-based allocation, effort tracking"
+    },
+    {
+      "id": "clarity-project-issues",
+      "parent_id": "clarity-project",
+      "depth": 2,
+      "title": "Issue & Risk Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/project/issues",
+      "breadcrumb": ["Clarity PPM", "Project Management", "Issues"],
+      "page_type": "leaf",
+      "tags": ["issues", "risks", "tracking"],
+      "summary": "Issue tracking, risk register, mitigation plans"
+    },
+    {
+      "id": "clarity-resource",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Resource Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/resource",
+      "breadcrumb": ["Clarity PPM", "Using", "Resource Management"],
+      "page_type": "category",
+      "tags": ["resource", "capacity", "skills"],
+      "summary": "Resource capacity, skills matrix, utilization, staffing"
+    },
+    {
+      "id": "clarity-resource-capacity",
+      "parent_id": "clarity-resource",
+      "depth": 2,
+      "title": "Capacity Planning",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/resource/capacity",
+      "breadcrumb": ["Clarity PPM", "Resource Management", "Capacity"],
+      "page_type": "leaf",
+      "tags": ["capacity", "planning", "forecast"],
+      "summary": "Resource capacity planning, demand forecasting, availability",
+      "leaf_extractions": {
+        "key_points": [
+          "Capacity vs demand views",
+          "Resource calendars",
+          "Availability tracking",
+          "Capacity simulation"
+        ],
+        "implementation_notes": "Maps to custom resource_capacity model + Supabase sync"
+      }
+    },
+    {
+      "id": "clarity-resource-skills",
+      "parent_id": "clarity-resource",
+      "depth": 2,
+      "title": "Skills Matrix",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/resource/skills",
+      "breadcrumb": ["Clarity PPM", "Resource Management", "Skills"],
+      "page_type": "leaf",
+      "tags": ["skills", "competencies", "matching"],
+      "summary": "Skills inventory, competency tracking, skill-based matching"
+    },
+    {
+      "id": "clarity-resource-utilization",
+      "parent_id": "clarity-resource",
+      "depth": 2,
+      "title": "Utilization Reporting",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/resource/utilization",
+      "breadcrumb": ["Clarity PPM", "Resource Management", "Utilization"],
+      "page_type": "leaf",
+      "tags": ["utilization", "reporting", "metrics"],
+      "summary": "Resource utilization reports, billable vs non-billable tracking"
+    },
+    {
+      "id": "clarity-financial",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Financial Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/financial",
+      "breadcrumb": ["Clarity PPM", "Using", "Financial Management"],
+      "page_type": "category",
+      "tags": ["financial", "budget", "billing"],
+      "summary": "Budget planning, cost tracking, EVM, billing, forecasting"
+    },
+    {
+      "id": "clarity-financial-budget",
+      "parent_id": "clarity-financial",
+      "depth": 2,
+      "title": "Budget Planning",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/financial/budget",
+      "breadcrumb": ["Clarity PPM", "Financial Management", "Budget"],
+      "page_type": "leaf",
+      "tags": ["budget", "planning", "allocation"],
+      "summary": "Budget creation, allocation by WBS, approval workflows",
+      "leaf_extractions": {
+        "key_points": [
+          "Multi-level budget hierarchy",
+          "Budget approval workflows",
+          "Allocation by project phase",
+          "Version control"
+        ],
+        "implementation_notes": "Maps to OCA budget module + Notion sync"
+      }
+    },
+    {
+      "id": "clarity-financial-actuals",
+      "parent_id": "clarity-financial",
+      "depth": 2,
+      "title": "Actual Cost Tracking",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/financial/actuals",
+      "breadcrumb": ["Clarity PPM", "Financial Management", "Actuals"],
+      "page_type": "leaf",
+      "tags": ["actuals", "costs", "tracking"],
+      "summary": "Labor costs, expense tracking, material costs, overhead"
+    },
+    {
+      "id": "clarity-financial-evm",
+      "parent_id": "clarity-financial",
+      "depth": 2,
+      "title": "Earned Value Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/financial/evm",
+      "breadcrumb": ["Clarity PPM", "Financial Management", "EVM"],
+      "page_type": "leaf",
+      "tags": ["evm", "earned-value", "performance"],
+      "summary": "EV, PV, AC calculations, CPI, SPI, variance analysis"
+    },
+    {
+      "id": "clarity-financial-billing",
+      "parent_id": "clarity-financial",
+      "depth": 2,
+      "title": "Project Billing",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/financial/billing",
+      "breadcrumb": ["Clarity PPM", "Financial Management", "Billing"],
+      "page_type": "leaf",
+      "tags": ["billing", "invoicing", "revenue"],
+      "summary": "T&M billing, fixed-price milestones, invoice generation"
+    },
+    {
+      "id": "clarity-demand",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Demand Management",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/demand",
+      "breadcrumb": ["Clarity PPM", "Using", "Demand Management"],
+      "page_type": "category",
+      "tags": ["demand", "intake", "approval"],
+      "summary": "Request intake, scoring, prioritization, approval workflows"
+    },
+    {
+      "id": "clarity-demand-intake",
+      "parent_id": "clarity-demand",
+      "depth": 2,
+      "title": "Request Intake",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/demand/intake",
+      "breadcrumb": ["Clarity PPM", "Demand Management", "Intake"],
+      "page_type": "leaf",
+      "tags": ["intake", "forms", "requests"],
+      "summary": "Request forms, submission workflows, initial triage"
+    },
+    {
+      "id": "clarity-demand-scoring",
+      "parent_id": "clarity-demand",
+      "depth": 2,
+      "title": "Request Scoring",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/demand/scoring",
+      "breadcrumb": ["Clarity PPM", "Demand Management", "Scoring"],
+      "page_type": "leaf",
+      "tags": ["scoring", "prioritization", "ranking"],
+      "summary": "Scoring models, weighted criteria, ranking algorithms"
+    },
+    {
+      "id": "clarity-reporting",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Reporting & Analytics",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/reporting",
+      "breadcrumb": ["Clarity PPM", "Using", "Reporting"],
+      "page_type": "category",
+      "tags": ["reporting", "analytics", "dashboards"],
+      "summary": "Jaspersoft integration, dashboards, ad-hoc reporting, KPIs"
+    },
+    {
+      "id": "clarity-reporting-jasper",
+      "parent_id": "clarity-reporting",
+      "depth": 2,
+      "title": "Jaspersoft Integration",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/reporting/jasper",
+      "breadcrumb": ["Clarity PPM", "Reporting", "Jaspersoft"],
+      "page_type": "leaf",
+      "tags": ["jaspersoft", "reports", "bi"],
+      "summary": "Advanced reporting with Jaspersoft, report scheduling, bursting"
+    },
+    {
+      "id": "clarity-admin",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Administration",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/admin",
+      "breadcrumb": ["Clarity PPM", "Administration"],
+      "page_type": "category",
+      "tags": ["admin", "security", "config"],
+      "summary": "User management, security, customization, integration"
+    },
+    {
+      "id": "clarity-admin-security",
+      "parent_id": "clarity-admin",
+      "depth": 2,
+      "title": "Security & Access Control",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/admin/security",
+      "breadcrumb": ["Clarity PPM", "Administration", "Security"],
+      "page_type": "leaf",
+      "tags": ["security", "rbac", "sso"],
+      "summary": "RBAC, SSO, 2FA, delegation rules, audit logs"
+    },
+    {
+      "id": "clarity-integration",
+      "parent_id": "clarity-root",
+      "depth": 1,
+      "title": "Add-Ins and Integrations",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/integrations",
+      "breadcrumb": ["Clarity PPM", "Integrations"],
+      "page_type": "category",
+      "tags": ["integration", "api", "connectors"],
+      "summary": "REST/SOAP APIs, XML Gateway, native integrations"
+    },
+    {
+      "id": "clarity-integration-api",
+      "parent_id": "clarity-integration",
+      "depth": 2,
+      "title": "REST & SOAP APIs",
+      "url": "https://techdocs.broadcom.com/clarity-ppm/integrations/api",
+      "breadcrumb": ["Clarity PPM", "Integrations", "API"],
+      "page_type": "leaf",
+      "tags": ["api", "rest", "soap"],
+      "summary": "REST API endpoints, SOAP web services, authentication",
+      "leaf_extractions": {
+        "key_points": [
+          "RESTful project/resource endpoints",
+          "SOAP legacy support",
+          "OAuth2 authentication",
+          "Rate limiting"
+        ],
+        "relevant_api": ["/ppm/rest/v1/projects", "/ppm/rest/v1/resources"],
+        "implementation_notes": "n8n HTTP nodes for integration"
+      }
+    }
+  ],
+  "coverage_stats": {
+    "pages_discovered": 120,
+    "leaves": 45,
+    "duplicates_removed": 5,
+    "crawl_notes": "Structure derived from Broadcom TechDocs navigation"
+  }
+}

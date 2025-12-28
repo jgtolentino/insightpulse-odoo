@@ -1,0 +1,306 @@
+# n8n Workflow: Invoice Generation from Timesheet
+# Trigger: Odoo event - timesheet.sheet.approve
+# Target: Odoo sale.order + account.move
+
+name: Invoice Generation Workflow
+description: |
+  Generates invoices from approved timesheets.
+  Supports T&M and Fixed Price billing methods.
+
+trigger:
+  type: webhook
+  path: /webhook/timesheet-approved
+  method: POST
+
+nodes:
+  - id: receive_webhook
+    type: n8n-nodes-base.webhook
+    parameters:
+      httpMethod: POST
+      path: timesheet-approved
+      responseMode: onReceived
+    position: [100, 200]
+
+  - id: get_timesheet_details
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "account.analytic.line",
+              "method": "search_read",
+              "args": [[
+                ["timesheet_invoice_id", "=", false],
+                ["project_id", "=", {{ $json.project_id }}],
+                ["date", ">=", "{{ $json.period_start }}"],
+                ["date", "<=", "{{ $json.period_end }}"]
+              ]],
+              "kwargs": {
+                "fields": ["id", "name", "unit_amount", "employee_id", "task_id", "project_id", "date"]
+              }
+            },
+            "id": 1
+          }
+    position: [300, 200]
+
+  - id: get_billing_config
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "project.billing.config",
+              "method": "search_read",
+              "args": [[["project_id", "=", {{ $json.project_id }}]]],
+              "kwargs": {
+                "fields": ["billing_type", "base_rate", "markup_percentage"]
+              }
+            },
+            "id": 2
+          }
+    position: [500, 200]
+
+  - id: get_resource_rates
+    type: n8n-nodes-base.notion
+    parameters:
+      resource: database
+      operation: search
+      databaseId: "{{ $env.NOTION_RESOURCE_DB }}"
+      filterType: databasePage
+    credentials:
+      notionApi: notion_integration
+    position: [700, 200]
+
+  - id: calculate_invoice_lines
+    type: n8n-nodes-base.code
+    parameters:
+      language: javascript
+      code: |
+        const timesheets = $('get_timesheet_details').item.json.result || [];
+        const config = $('get_billing_config').item.json.result?.[0] || {};
+        const resources = $('get_resource_rates').all() || [];
+
+        const billingType = config.billing_type || 'tm';
+        const baseRate = config.base_rate || 150;
+        const markup = (config.markup_percentage || 15) / 100;
+
+        // Build resource rate lookup from Notion
+        const rateMap = {};
+        for (const r of resources) {
+          const email = r.json?.properties?.Email?.email;
+          const rate = r.json?.properties?.HourlyRate?.number;
+          if (email && rate) {
+            rateMap[email] = rate;
+          }
+        }
+
+        if (billingType === 'tm') {
+          // Time & Materials billing
+          const lines = [];
+          const groupedByEmployee = {};
+
+          for (const ts of timesheets) {
+            const empId = ts.employee_id?.[0];
+            const empName = ts.employee_id?.[1] || 'Unknown';
+
+            if (!groupedByEmployee[empId]) {
+              groupedByEmployee[empId] = {
+                employee_name: empName,
+                hours: 0,
+                entries: []
+              };
+            }
+            groupedByEmployee[empId].hours += ts.unit_amount || 0;
+            groupedByEmployee[empId].entries.push(ts);
+          }
+
+          for (const [empId, data] of Object.entries(groupedByEmployee)) {
+            const rate = rateMap[data.employee_name] || baseRate;
+            const effectiveRate = rate * (1 + markup);
+
+            lines.push({
+              name: `Labor - ${data.employee_name}`,
+              quantity: data.hours,
+              price_unit: effectiveRate,
+              subtotal: data.hours * effectiveRate,
+              timesheet_ids: data.entries.map(e => e.id)
+            });
+          }
+
+          return [{
+            json: {
+              billing_type: 'tm',
+              lines: lines,
+              total: lines.reduce((sum, l) => sum + l.subtotal, 0),
+              period_start: $input.first().json.period_start,
+              period_end: $input.first().json.period_end,
+              project_id: $input.first().json.project_id
+            }
+          }];
+        } else {
+          // Fixed price - milestone billing handled separately
+          return [{
+            json: {
+              billing_type: 'fixed',
+              message: 'Fixed price billing requires milestone completion check',
+              project_id: $input.first().json.project_id
+            }
+          }];
+        }
+    position: [900, 200]
+
+  - id: check_billing_type
+    type: n8n-nodes-base.if
+    parameters:
+      conditions:
+        string:
+          - value1: "={{ $json.billing_type }}"
+            operation: equals
+            value2: tm
+    position: [1100, 200]
+
+  - id: create_sale_order
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "sale.order",
+              "method": "create",
+              "args": [{
+                "partner_id": {{ $json.partner_id || 1 }},
+                "project_id": {{ $json.project_id }},
+                "order_line": [
+                  {{#each $json.lines}}
+                  [0, 0, {
+                    "name": "{{ this.name }}",
+                    "product_uom_qty": {{ this.quantity }},
+                    "price_unit": {{ this.price_unit }}
+                  }]{{#unless @last}},{{/unless}}
+                  {{/each}}
+                ]
+              }],
+              "kwargs": {}
+            },
+            "id": 3
+          }
+    position: [1300, 100]
+
+  - id: link_timesheets_to_invoice
+    type: n8n-nodes-base.httpRequest
+    parameters:
+      method: POST
+      url: "{{ $env.ODOO_URL }}/web/dataset/call_kw"
+      sendBody: true
+      bodyParameters:
+        json: |
+          {
+            "jsonrpc": "2.0",
+            "method": "call",
+            "params": {
+              "model": "account.analytic.line",
+              "method": "write",
+              "args": [
+                {{ JSON.stringify($('calculate_invoice_lines').item.json.lines.flatMap(l => l.timesheet_ids)) }},
+                {"timesheet_invoice_id": {{ $('create_sale_order').item.json.result }}}
+              ],
+              "kwargs": {}
+            },
+            "id": 4
+          }
+    position: [1500, 100]
+
+  - id: post_billing_notification
+    type: n8n-nodes-base.mattermost
+    parameters:
+      resource: message
+      operation: post
+      channel: billing
+      message: |
+        ## 💰 Invoice Generated
+
+        **Project:** {{ $('calculate_invoice_lines').item.json.project_id }}
+        **Period:** {{ $('calculate_invoice_lines').item.json.period_start }} to {{ $('calculate_invoice_lines').item.json.period_end }}
+        **Total:** ${{ $('calculate_invoice_lines').item.json.total.toLocaleString() }}
+
+        **Line Items:**
+        {{#each $('calculate_invoice_lines').item.json.lines}}
+        - {{ this.name }}: {{ this.quantity }}h × ${{ this.price_unit }} = ${{ this.subtotal.toLocaleString() }}
+        {{/each}}
+
+        ---
+        Sale Order ID: {{ $('create_sale_order').item.json.result }}
+    position: [1700, 100]
+
+  - id: log_to_supabase
+    type: n8n-nodes-base.supabase
+    parameters:
+      resource: row
+      operation: create
+      tableId: project_workflow_audit
+      fieldsUi:
+        fieldValues:
+          - fieldName: workflow_type
+            fieldValue: invoice_generation
+          - fieldName: source_system
+            fieldValue: odoo
+          - fieldName: source_record_id
+            fieldValue: "={{ $('create_sale_order').item.json.result }}"
+          - fieldName: action
+            fieldValue: created
+          - fieldName: metadata
+            fieldValue: "={{ JSON.stringify($('calculate_invoice_lines').item.json) }}"
+    position: [1900, 100]
+
+  - id: fixed_price_handler
+    type: n8n-nodes-base.noOp
+    parameters: {}
+    position: [1300, 300]
+
+connections:
+  receive_webhook:
+    main:
+      - - node: get_timesheet_details
+  get_timesheet_details:
+    main:
+      - - node: get_billing_config
+  get_billing_config:
+    main:
+      - - node: get_resource_rates
+  get_resource_rates:
+    main:
+      - - node: calculate_invoice_lines
+  calculate_invoice_lines:
+    main:
+      - - node: check_billing_type
+  check_billing_type:
+    main:
+      - - node: create_sale_order
+      - - node: fixed_price_handler
+  create_sale_order:
+    main:
+      - - node: link_timesheets_to_invoice
+  link_timesheets_to_invoice:
+    main:
+      - - node: post_billing_notification
+  post_billing_notification:
+    main:
+      - - node: log_to_supabase

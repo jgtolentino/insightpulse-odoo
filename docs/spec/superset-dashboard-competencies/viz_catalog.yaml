@@ -1,0 +1,344 @@
+# Superset Visualization Catalog
+# ECharts-first with automatic fallback to classic viz types
+#
+# Reference: https://echarts.apache.org/examples/en/
+
+version: 2
+defaults:
+  library: echarts
+  reference_gallery: "https://echarts.apache.org/examples/en/"
+
+# Chart type definitions with ECharts candidates and fallbacks
+charts:
+  # ============================================================================
+  # TIME SERIES
+  # ============================================================================
+  line:
+    description: "Line chart for time series data"
+    echarts_candidates:
+      - "echarts_timeseries_line"
+      - "echarts_line"
+      - "echarts_timeseries"
+    superset_fallback:
+      - "line"
+    template: "echarts_timeseries.yaml.j2"
+    requires: ["metric_name", "time_col"]
+    optional: ["group_by", "time_grain"]
+
+  area:
+    description: "Area chart (stacked or regular)"
+    echarts_candidates:
+      - "echarts_timeseries_area"
+      - "echarts_area"
+    superset_fallback:
+      - "area"
+      - "line"
+    template: "echarts_area.yaml.j2"
+    requires: ["metric_name", "time_col"]
+    optional: ["group_by", "stacked"]
+
+  # ============================================================================
+  # BAR / COLUMN
+  # ============================================================================
+  bar:
+    description: "Bar chart (horizontal or vertical)"
+    echarts_candidates:
+      - "echarts_bar"
+      - "echarts_timeseries_bar"
+    superset_fallback:
+      - "bar"
+      - "dist_bar"
+    template: "echarts_bar.yaml.j2"
+    requires: ["metric_name", "category_col"]
+    optional: ["orientation", "stacked"]
+
+  bar_stacked:
+    description: "Stacked bar chart"
+    echarts_candidates:
+      - "echarts_bar_stack"
+      - "echarts_bar"
+    superset_fallback:
+      - "bar"
+    template: "echarts_bar_stacked.yaml.j2"
+    requires: ["metric_name", "category_col", "stack_by"]
+
+  # ============================================================================
+  # PIE / DONUT
+  # ============================================================================
+  pie:
+    description: "Pie chart for part-to-whole"
+    echarts_candidates:
+      - "echarts_pie"
+    superset_fallback:
+      - "pie"
+    template: "echarts_pie.yaml.j2"
+    requires: ["metric_name", "category_col"]
+
+  donut:
+    description: "Donut chart (pie with hole)"
+    echarts_candidates:
+      - "echarts_pie"  # donut is pie with innerRadius
+    superset_fallback:
+      - "pie"
+    template: "echarts_donut.yaml.j2"
+    requires: ["metric_name", "category_col"]
+
+  # ============================================================================
+  # SCATTER / BUBBLE
+  # ============================================================================
+  scatter:
+    description: "Scatter plot for correlation"
+    echarts_candidates:
+      - "echarts_scatter"
+      - "echarts_timeseries_scatter"
+    superset_fallback:
+      - "scatter"
+    template: "echarts_scatter.yaml.j2"
+    requires: ["x_col", "y_col"]
+    optional: ["category_col", "size_col"]
+
+  bubble:
+    description: "Bubble chart (scatter with size)"
+    echarts_candidates:
+      - "echarts_bubble"
+      - "echarts_scatter"
+    superset_fallback:
+      - "bubble"
+      - "scatter"
+    template: "echarts_bubble.yaml.j2"
+    requires: ["x_col", "y_col", "size_col"]
+    optional: ["category_col"]
+
+  # ============================================================================
+  # HEATMAP
+  # ============================================================================
+  heatmap:
+    description: "Heatmap for 2D density"
+    echarts_candidates:
+      - "echarts_heatmap"
+    superset_fallback:
+      - "heatmap"
+      - "cal_heatmap"
+    template: "echarts_heatmap.yaml.j2"
+    requires: ["x_col", "y_col", "metric_name"]
+
+  calendar_heatmap:
+    description: "Calendar-style heatmap"
+    echarts_candidates:
+      - "echarts_heatmap"
+    superset_fallback:
+      - "cal_heatmap"
+      - "heatmap"
+    template: "echarts_calendar_heatmap.yaml.j2"
+    requires: ["date_col", "metric_name"]
+
+  # ============================================================================
+  # FUNNEL
+  # ============================================================================
+  funnel:
+    description: "Funnel chart for conversion"
+    echarts_candidates:
+      - "echarts_funnel"
+    superset_fallback:
+      - "funnel"
+    template: "echarts_funnel.yaml.j2"
+    requires: ["metric_name", "category_col"]
+
+  # ============================================================================
+  # GAUGE
+  # ============================================================================
+  gauge:
+    description: "Gauge chart for KPI"
+    echarts_candidates:
+      - "echarts_gauge"
+    superset_fallback:
+      - "big_number"
+    template: "echarts_gauge.yaml.j2"
+    requires: ["metric_name"]
+    optional: ["min_val", "max_val"]
+
+  # ============================================================================
+  # KPI / BIG NUMBER
+  # ============================================================================
+  kpi:
+    description: "KPI card with trend"
+    echarts_candidates: []  # No echarts equivalent
+    superset_fallback:
+      - "big_number"
+      - "big_number_total"
+    template: "big_number.yaml.j2"
+    requires: ["metric_name"]
+    optional: ["time_col", "compare_lag"]
+
+  kpi_total:
+    description: "KPI card without trend"
+    echarts_candidates: []
+    superset_fallback:
+      - "big_number_total"
+      - "big_number"
+    template: "big_number_total.yaml.j2"
+    requires: ["metric_name"]
+
+  # ============================================================================
+  # TREE / HIERARCHY
+  # ============================================================================
+  treemap:
+    description: "Treemap for hierarchical data"
+    echarts_candidates:
+      - "echarts_treemap"
+    superset_fallback:
+      - "treemap"
+    template: "echarts_treemap.yaml.j2"
+    requires: ["metric_name", "category_col"]
+    optional: ["hierarchy"]
+
+  sunburst:
+    description: "Sunburst for hierarchical data"
+    echarts_candidates:
+      - "echarts_sunburst"
+    superset_fallback:
+      - "sunburst"
+    template: "echarts_sunburst.yaml.j2"
+    requires: ["metric_name", "category_col"]
+    optional: ["hierarchy"]
+
+  tree:
+    description: "Tree diagram"
+    echarts_candidates:
+      - "echarts_tree"
+    superset_fallback:
+      - "partition"
+    template: "echarts_tree.yaml.j2"
+    requires: ["id_col", "parent_col"]
+    optional: ["label_col"]
+
+  # ============================================================================
+  # RADAR / POLAR
+  # ============================================================================
+  radar:
+    description: "Radar/spider chart"
+    echarts_candidates:
+      - "echarts_radar"
+    superset_fallback:
+      - "bar"  # grouped bar as fallback
+    template: "echarts_radar.yaml.j2"
+    requires: ["category_col", "metrics"]
+
+  # ============================================================================
+  # GRAPH / NETWORK
+  # ============================================================================
+  graph:
+    description: "Network graph"
+    echarts_candidates:
+      - "echarts_graph"
+    superset_fallback:
+      - "graph_chart"
+    template: "echarts_graph.yaml.j2"
+    requires: ["source_col", "target_col"]
+    optional: ["weight_col"]
+
+  # ============================================================================
+  # TABLE
+  # ============================================================================
+  table:
+    description: "Data table"
+    echarts_candidates: []
+    superset_fallback:
+      - "table"
+    template: "data_table.yaml.j2"
+    requires: ["columns"]
+    optional: ["metrics", "order_by"]
+
+  pivot_table:
+    description: "Pivot table"
+    echarts_candidates: []
+    superset_fallback:
+      - "pivot_table"
+      - "pivot_table_v2"
+    template: "pivot_table.yaml.j2"
+    requires: ["groupby", "columns", "metrics"]
+
+  # ============================================================================
+  # MAP / GEO
+  # ============================================================================
+  choropleth:
+    description: "Choropleth map"
+    echarts_candidates:
+      - "echarts_map"
+    superset_fallback:
+      - "country_map"
+      - "world_map"
+    template: "choropleth_map.yaml.j2"
+    requires: ["geo_col", "metric_name"]
+    optional: ["map_type"]
+
+  scatter_map:
+    description: "Scatter points on map"
+    echarts_candidates:
+      - "deck_scatter"
+    superset_fallback:
+      - "deck_scatter"
+      - "mapbox"
+    template: "scatter_map.yaml.j2"
+    requires: ["lat_col", "lon_col"]
+    optional: ["size_col", "color_col"]
+
+  # ============================================================================
+  # STATISTICAL
+  # ============================================================================
+  boxplot:
+    description: "Box plot for distribution"
+    echarts_candidates:
+      - "echarts_boxplot"
+    superset_fallback:
+      - "box_plot"
+    template: "echarts_boxplot.yaml.j2"
+    requires: ["metric_name", "category_col"]
+
+  histogram:
+    description: "Histogram for distribution"
+    echarts_candidates:
+      - "echarts_histogram"
+    superset_fallback:
+      - "histogram"
+    template: "histogram.yaml.j2"
+    requires: ["column"]
+    optional: ["bins"]
+
+  # ============================================================================
+  # TEXT / ANNOTATION
+  # ============================================================================
+  word_cloud:
+    description: "Word cloud"
+    echarts_candidates:
+      - "echarts_wordcloud"
+    superset_fallback:
+      - "word_cloud"
+    template: "word_cloud.yaml.j2"
+    requires: ["text_col", "size_col"]
+
+# Power BI to Superset viz type mapping
+powerbi_mapping:
+  clusteredColumnChart: bar
+  clusteredBarChart: bar
+  stackedColumnChart: bar_stacked
+  stackedBarChart: bar_stacked
+  lineChart: line
+  areaChart: area
+  lineStackedChart: area
+  pieChart: pie
+  donutChart: donut
+  card: kpi
+  multiRowCard: kpi
+  gauge: gauge
+  kpi: kpi
+  funnel: funnel
+  tableEx: table
+  matrix: pivot_table
+  scatterChart: scatter
+  map: choropleth
+  filledMap: choropleth
+  treemap: treemap
+  decompositionTree: tree
+  waterfall: bar  # no direct equivalent
+  ribbon: area    # approximate

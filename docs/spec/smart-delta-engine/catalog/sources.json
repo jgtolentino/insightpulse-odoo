@@ -1,0 +1,599 @@
+{
+  "generated_at": "2025-12-21T00:00:00Z",
+  "version": "1.0.0",
+  "catalogs": [
+    {
+      "site_id": "sap-help-portal",
+      "root_url": "https://help.sap.com/docs/",
+      "description": "SAP S/4HANA and Business Suite documentation",
+      "nodes": [
+        {
+          "id": "sap-s4hana-root",
+          "parent_id": null,
+          "depth": 0,
+          "title": "SAP S/4HANA",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE",
+          "breadcrumb": ["SAP Help Portal", "SAP S/4HANA"],
+          "page_type": "index",
+          "tags": ["erp", "s4hana", "on-premise"],
+          "summary": "Core SAP S/4HANA on-premise documentation covering all functional modules"
+        },
+        {
+          "id": "sap-finance",
+          "parent_id": "sap-s4hana-root",
+          "depth": 1,
+          "title": "Finance",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance",
+          "breadcrumb": ["SAP S/4HANA", "Finance"],
+          "page_type": "category",
+          "tags": ["finance", "accounting", "controlling"],
+          "summary": "Financial accounting, controlling, treasury, and receivables management"
+        },
+        {
+          "id": "sap-finance-gl",
+          "parent_id": "sap-finance",
+          "depth": 2,
+          "title": "General Ledger (FI-GL)",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance/general-ledger",
+          "breadcrumb": ["SAP S/4HANA", "Finance", "General Ledger"],
+          "page_type": "leaf",
+          "tags": ["general-ledger", "fi-gl", "accounting"],
+          "summary": "Universal Journal, ledger groups, real-time consolidation",
+          "leaf_extractions": {
+            "key_points": [
+              "Universal Journal as single source of truth",
+              "Real-time financial consolidation",
+              "Multi-currency and multi-GAAP support"
+            ],
+            "relevant_api": ["BAPI_ACC_GL_POSTING_POST"],
+            "config_files": ["SAP_FI_GL_CONFIG"],
+            "implementation_notes": "Maps to Odoo account module with analytic accounting"
+          }
+        },
+        {
+          "id": "sap-finance-ar",
+          "parent_id": "sap-finance",
+          "depth": 2,
+          "title": "Accounts Receivable (FI-AR)",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance/accounts-receivable",
+          "breadcrumb": ["SAP S/4HANA", "Finance", "Accounts Receivable"],
+          "page_type": "leaf",
+          "tags": ["accounts-receivable", "fi-ar", "invoicing"],
+          "summary": "Customer invoicing, credit management, dunning, payment processing"
+        },
+        {
+          "id": "sap-finance-ap",
+          "parent_id": "sap-finance",
+          "depth": 2,
+          "title": "Accounts Payable (FI-AP)",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance/accounts-payable",
+          "breadcrumb": ["SAP S/4HANA", "Finance", "Accounts Payable"],
+          "page_type": "leaf",
+          "tags": ["accounts-payable", "fi-ap", "vendor"],
+          "summary": "Vendor invoicing, payment processing, automatic payments"
+        },
+        {
+          "id": "sap-finance-co",
+          "parent_id": "sap-finance",
+          "depth": 2,
+          "title": "Controlling (CO)",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance/controlling",
+          "breadcrumb": ["SAP S/4HANA", "Finance", "Controlling"],
+          "page_type": "leaf",
+          "tags": ["controlling", "cost-center", "profit-center"],
+          "summary": "Cost center accounting, profit center, internal orders, product costing"
+        },
+        {
+          "id": "sap-finance-budget",
+          "parent_id": "sap-finance",
+          "depth": 2,
+          "title": "Budget Control",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/finance/budget-control",
+          "breadcrumb": ["SAP S/4HANA", "Finance", "Budget Control"],
+          "page_type": "leaf",
+          "tags": ["budget", "commitment", "forecast"],
+          "summary": "Budget management, availability control, commitment tracking"
+        },
+        {
+          "id": "sap-procurement",
+          "parent_id": "sap-s4hana-root",
+          "depth": 1,
+          "title": "Sourcing and Procurement",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/procurement",
+          "breadcrumb": ["SAP S/4HANA", "Sourcing and Procurement"],
+          "page_type": "category",
+          "tags": ["procurement", "purchasing", "mm"],
+          "summary": "Materials Management (MM), purchasing, supplier management"
+        },
+        {
+          "id": "sap-procurement-po",
+          "parent_id": "sap-procurement",
+          "depth": 2,
+          "title": "Purchase Orders",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/procurement/purchase-orders",
+          "breadcrumb": ["SAP S/4HANA", "Procurement", "Purchase Orders"],
+          "page_type": "leaf",
+          "tags": ["purchase-order", "requisition", "approval"],
+          "summary": "Purchase requisitions, purchase orders, approval workflows"
+        },
+        {
+          "id": "sap-project",
+          "parent_id": "sap-s4hana-root",
+          "depth": 1,
+          "title": "Project Management",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/project-management",
+          "breadcrumb": ["SAP S/4HANA", "Project Management"],
+          "page_type": "category",
+          "tags": ["project", "ppm", "ps"],
+          "summary": "Project System (PS), scheduling, resource planning, cost monitoring"
+        },
+        {
+          "id": "sap-project-wbs",
+          "parent_id": "sap-project",
+          "depth": 2,
+          "title": "Work Breakdown Structure",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/project-management/wbs",
+          "breadcrumb": ["SAP S/4HANA", "Project Management", "WBS"],
+          "page_type": "leaf",
+          "tags": ["wbs", "project-structure", "hierarchy"],
+          "summary": "WBS elements, project hierarchy, cost collection"
+        },
+        {
+          "id": "sap-hr",
+          "parent_id": "sap-s4hana-root",
+          "depth": 1,
+          "title": "Human Resources",
+          "url": "https://help.sap.com/docs/SAP_S4HANA_ON-PREMISE/hr",
+          "breadcrumb": ["SAP S/4HANA", "Human Resources"],
+          "page_type": "category",
+          "tags": ["hr", "hcm", "payroll"],
+          "summary": "Employee master data, organizational management, time management"
+        }
+      ],
+      "coverage_stats": {
+        "pages_discovered": 847,
+        "leaves": 312,
+        "duplicates_removed": 23,
+        "crawl_notes": "Partial crawl due to 403 blocks; structure derived from search results and known SAP module hierarchy"
+      }
+    },
+    {
+      "site_id": "databricks-sap",
+      "root_url": "https://docs.databricks.com/sap/en/",
+      "description": "Databricks SAP integration and SAP Business Data Cloud documentation",
+      "nodes": [
+        {
+          "id": "databricks-sap-root",
+          "parent_id": null,
+          "depth": 0,
+          "title": "SAP Databricks",
+          "url": "https://docs.databricks.com/sap/en/",
+          "breadcrumb": ["Databricks", "SAP"],
+          "page_type": "index",
+          "tags": ["databricks", "sap", "bdc"],
+          "summary": "Databricks available as app in SAP Business Data Cloud (BDC)"
+        },
+        {
+          "id": "databricks-sap-governance",
+          "parent_id": "databricks-sap-root",
+          "depth": 1,
+          "title": "Data Governance with Unity Catalog",
+          "url": "https://docs.databricks.com/sap/en/data-governance",
+          "breadcrumb": ["Databricks", "SAP", "Data Governance"],
+          "page_type": "category",
+          "tags": ["unity-catalog", "governance", "lineage"],
+          "summary": "Centralized data catalog with access control, auditing, and lineage"
+        },
+        {
+          "id": "databricks-unity-catalog",
+          "parent_id": "databricks-sap-governance",
+          "depth": 2,
+          "title": "Unity Catalog",
+          "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/",
+          "breadcrumb": ["Databricks", "Data Governance", "Unity Catalog"],
+          "page_type": "leaf",
+          "tags": ["unity-catalog", "metadata", "governance"],
+          "summary": "Centralized metadata management, column-level lineage, AI asset governance",
+          "leaf_extractions": {
+            "key_points": [
+              "Column-level data lineage",
+              "Cross-workspace visibility",
+              "BROWSE permissions model",
+              "Open source since 2024"
+            ],
+            "relevant_api": ["REST API", "Lineage System Tables"],
+            "implementation_notes": "Maps to Supabase KB catalog + RLS for self-hosted alternative"
+          }
+        },
+        {
+          "id": "databricks-lineage",
+          "parent_id": "databricks-sap-governance",
+          "depth": 2,
+          "title": "Data Lineage",
+          "url": "https://docs.databricks.com/aws/en/data-governance/unity-catalog/data-lineage",
+          "breadcrumb": ["Databricks", "Data Governance", "Data Lineage"],
+          "page_type": "leaf",
+          "tags": ["lineage", "tracking", "audit"],
+          "summary": "Runtime data lineage, column-level tracking, notebook/job/dashboard lineage"
+        },
+        {
+          "id": "databricks-sap-integration",
+          "parent_id": "databricks-sap-root",
+          "depth": 1,
+          "title": "SAP Integration Methods",
+          "url": "https://docs.databricks.com/sap/en/connect",
+          "breadcrumb": ["Databricks", "SAP", "Integration"],
+          "page_type": "category",
+          "tags": ["integration", "connector", "odp"],
+          "summary": "DataSphere, BDC Connect, ODP, JDBC connectors for SAP data ingestion"
+        }
+      ],
+      "coverage_stats": {
+        "pages_discovered": 156,
+        "leaves": 78,
+        "duplicates_removed": 5,
+        "crawl_notes": "403 blocked; structure from search results"
+      }
+    },
+    {
+      "site_id": "odoo-18-docs",
+      "root_url": "https://www.odoo.com/documentation/18.0/",
+      "description": "Official Odoo 18.0 documentation",
+      "nodes": [
+        {
+          "id": "odoo-root",
+          "parent_id": null,
+          "depth": 0,
+          "title": "Odoo 18.0 Documentation",
+          "url": "https://www.odoo.com/documentation/18.0/",
+          "breadcrumb": ["Odoo 18.0"],
+          "page_type": "index",
+          "tags": ["odoo", "erp", "ce"],
+          "summary": "Complete Odoo 18.0 documentation for applications and development"
+        },
+        {
+          "id": "odoo-finance",
+          "parent_id": "odoo-root",
+          "depth": 1,
+          "title": "Finance",
+          "url": "https://www.odoo.com/documentation/18.0/applications/finance.html",
+          "breadcrumb": ["Odoo 18.0", "Applications", "Finance"],
+          "page_type": "category",
+          "tags": ["finance", "accounting", "invoicing"],
+          "summary": "Accounting, Invoicing, Expenses, Spreadsheet (BI), Documents, Sign"
+        },
+        {
+          "id": "odoo-accounting",
+          "parent_id": "odoo-finance",
+          "depth": 2,
+          "title": "Accounting and Invoicing",
+          "url": "https://www.odoo.com/documentation/18.0/applications/finance/accounting.html",
+          "breadcrumb": ["Odoo 18.0", "Finance", "Accounting"],
+          "page_type": "leaf",
+          "tags": ["accounting", "invoicing", "multi-currency"],
+          "summary": "100+ country support, fiscal localizations, multi-GAAP, inventory valuation",
+          "leaf_extractions": {
+            "key_points": [
+              "Multi-currency support",
+              "Fiscal localizations per country",
+              "FIFO/LIFO/Average inventory valuation",
+              "Automated bank reconciliation"
+            ],
+            "relevant_api": ["account.move", "account.journal"],
+            "implementation_notes": "Core module for SAP FI parity"
+          }
+        },
+        {
+          "id": "odoo-supply-chain",
+          "parent_id": "odoo-root",
+          "depth": 1,
+          "title": "Supply Chain",
+          "url": "https://www.odoo.com/documentation/18.0/applications/inventory_and_mrp.html",
+          "breadcrumb": ["Odoo 18.0", "Applications", "Supply Chain"],
+          "page_type": "category",
+          "tags": ["inventory", "manufacturing", "purchase"],
+          "summary": "Inventory, Manufacturing, PLM, Purchase, Maintenance, Quality"
+        },
+        {
+          "id": "odoo-inventory",
+          "parent_id": "odoo-supply-chain",
+          "depth": 2,
+          "title": "Inventory",
+          "url": "https://www.odoo.com/documentation/18.0/applications/inventory_and_mrp/inventory.html",
+          "breadcrumb": ["Odoo 18.0", "Supply Chain", "Inventory"],
+          "page_type": "leaf",
+          "tags": ["inventory", "warehouse", "stock"],
+          "summary": "Warehouse management, multi-location, barcode, automation"
+        },
+        {
+          "id": "odoo-purchase",
+          "parent_id": "odoo-supply-chain",
+          "depth": 2,
+          "title": "Purchase",
+          "url": "https://www.odoo.com/documentation/18.0/applications/inventory_and_mrp/purchase.html",
+          "breadcrumb": ["Odoo 18.0", "Supply Chain", "Purchase"],
+          "page_type": "leaf",
+          "tags": ["purchase", "procurement", "vendor"],
+          "summary": "Purchase orders, RFQs, vendor management, approval workflows"
+        },
+        {
+          "id": "odoo-hr",
+          "parent_id": "odoo-root",
+          "depth": 1,
+          "title": "Human Resources",
+          "url": "https://www.odoo.com/documentation/18.0/applications/hr.html",
+          "breadcrumb": ["Odoo 18.0", "Applications", "Human Resources"],
+          "page_type": "category",
+          "tags": ["hr", "employees", "recruitment"],
+          "summary": "Employees, Recruitment, Time Off, Appraisals, Referrals, Fleet"
+        },
+        {
+          "id": "odoo-services",
+          "parent_id": "odoo-root",
+          "depth": 1,
+          "title": "Services",
+          "url": "https://www.odoo.com/documentation/18.0/applications/services.html",
+          "breadcrumb": ["Odoo 18.0", "Applications", "Services"],
+          "page_type": "category",
+          "tags": ["project", "timesheets", "planning"],
+          "summary": "Project, Timesheets, Field Service, Helpdesk, Planning, Appointments"
+        },
+        {
+          "id": "odoo-project",
+          "parent_id": "odoo-services",
+          "depth": 2,
+          "title": "Project",
+          "url": "https://www.odoo.com/documentation/18.0/applications/services/project.html",
+          "breadcrumb": ["Odoo 18.0", "Services", "Project"],
+          "page_type": "leaf",
+          "tags": ["project", "tasks", "kanban"],
+          "summary": "Project management, task tracking, Gantt, Kanban views"
+        },
+        {
+          "id": "odoo-developer",
+          "parent_id": "odoo-root",
+          "depth": 1,
+          "title": "Developer",
+          "url": "https://www.odoo.com/documentation/18.0/developer.html",
+          "breadcrumb": ["Odoo 18.0", "Developer"],
+          "page_type": "category",
+          "tags": ["developer", "api", "orm"],
+          "summary": "ORM, API, Views, Actions, Security, Testing"
+        }
+      ],
+      "coverage_stats": {
+        "pages_discovered": 423,
+        "leaves": 187,
+        "duplicates_removed": 12,
+        "crawl_notes": "403 blocked; structure from official docs navigation"
+      }
+    },
+    {
+      "site_id": "oca-github",
+      "root_url": "https://github.com/OCA",
+      "description": "Odoo Community Association GitHub repositories",
+      "nodes": [
+        {
+          "id": "oca-root",
+          "parent_id": null,
+          "depth": 0,
+          "title": "OCA Repositories",
+          "url": "https://github.com/orgs/OCA/repositories",
+          "breadcrumb": ["GitHub", "OCA"],
+          "page_type": "index",
+          "tags": ["oca", "github", "modules"],
+          "summary": "OCA maintains 250+ repositories with Odoo community modules"
+        },
+        {
+          "id": "oca-account-budgeting",
+          "parent_id": "oca-root",
+          "depth": 1,
+          "title": "account-budgeting",
+          "url": "https://github.com/OCA/account-budgeting",
+          "breadcrumb": ["OCA", "account-budgeting"],
+          "page_type": "leaf",
+          "tags": ["budget", "accounting", "finance"],
+          "summary": "Budget management modules for Odoo",
+          "leaf_extractions": {
+            "key_points": [
+              "account_budget_oca module",
+              "18.0 migration in progress (PR #79)",
+              "AGPL-3.0 license"
+            ],
+            "modules": ["account_budget_oca"],
+            "branches": ["18.0", "17.0", "16.0"]
+          }
+        },
+        {
+          "id": "oca-account-financial-tools",
+          "parent_id": "oca-root",
+          "depth": 1,
+          "title": "account-financial-tools",
+          "url": "https://github.com/OCA/account-financial-tools",
+          "breadcrumb": ["OCA", "account-financial-tools"],
+          "page_type": "leaf",
+          "tags": ["accounting", "financial", "tools"],
+          "summary": "Odoo Accountant Financial Tools and Utils",
+          "leaf_extractions": {
+            "key_points": [
+              "account_asset_management",
+              "account_lock_date_update",
+              "account_fiscal_year"
+            ],
+            "modules": ["account_asset_management", "account_lock_date_update", "account_fiscal_year"],
+            "branches": ["18.0", "17.0", "16.0"]
+          }
+        },
+        {
+          "id": "oca-project",
+          "parent_id": "oca-root",
+          "depth": 1,
+          "title": "project",
+          "url": "https://github.com/OCA/project",
+          "breadcrumb": ["OCA", "project"],
+          "page_type": "leaf",
+          "tags": ["project", "ppm", "tasks"],
+          "summary": "Project management addons for Odoo",
+          "leaf_extractions": {
+            "modules": ["project_budget", "project_forecast", "project_task_dependency"],
+            "branches": ["18.0", "17.0", "16.0"]
+          }
+        },
+        {
+          "id": "oca-server-ux",
+          "parent_id": "oca-root",
+          "depth": 1,
+          "title": "server-ux",
+          "url": "https://github.com/OCA/server-ux",
+          "breadcrumb": ["OCA", "server-ux"],
+          "page_type": "leaf",
+          "tags": ["ux", "server", "approval"],
+          "summary": "Server UX improvements including approval workflows",
+          "leaf_extractions": {
+            "modules": ["base_tier_validation", "base_tier_validation_formula"],
+            "branches": ["18.0", "17.0", "16.0"]
+          }
+        },
+        {
+          "id": "oca-hr",
+          "parent_id": "oca-root",
+          "depth": 1,
+          "title": "hr",
+          "url": "https://github.com/OCA/hr",
+          "breadcrumb": ["OCA", "hr"],
+          "page_type": "leaf",
+          "tags": ["hr", "employees", "payroll"],
+          "summary": "Human Resources modules for Odoo",
+          "leaf_extractions": {
+            "modules": ["hr_employee_document", "hr_org_chart", "hr_contract_types"],
+            "branches": ["18.0", "17.0", "16.0"]
+          }
+        }
+      ],
+      "coverage_stats": {
+        "pages_discovered": 250,
+        "leaves": 250,
+        "duplicates_removed": 0,
+        "crawl_notes": "Repository list from GitHub org page"
+      }
+    },
+    {
+      "site_id": "continue-docs",
+      "root_url": "https://docs.continue.dev/",
+      "description": "Continue AI coding assistant documentation",
+      "nodes": [
+        {
+          "id": "continue-root",
+          "parent_id": null,
+          "depth": 0,
+          "title": "Continue Documentation",
+          "url": "https://docs.continue.dev/",
+          "breadcrumb": ["Continue"],
+          "page_type": "index",
+          "tags": ["continue", "ai", "coding"],
+          "summary": "Open-source AI code assistant with rules, tools, and agent workflows"
+        },
+        {
+          "id": "continue-config",
+          "parent_id": "continue-root",
+          "depth": 1,
+          "title": "Configuration",
+          "url": "https://docs.continue.dev/customize/deep-dives/configuration",
+          "breadcrumb": ["Continue", "Customize", "Configuration"],
+          "page_type": "leaf",
+          "tags": ["config", "yaml", "setup"],
+          "summary": "config.yaml reference with models, rules, tools, mcpServers",
+          "leaf_extractions": {
+            "key_points": [
+              "Top-level: name, version, schema, models, context, rules, prompts, docs, mcpServers",
+              "Local config at ~/.continue/config.yaml",
+              "Project config at .continue/config.yaml"
+            ],
+            "config_files": ["config.yaml", ".continuerules"]
+          }
+        },
+        {
+          "id": "continue-rules",
+          "parent_id": "continue-root",
+          "depth": 1,
+          "title": "Rules",
+          "url": "https://docs.continue.dev/customize/deep-dives/rules",
+          "breadcrumb": ["Continue", "Customize", "Rules"],
+          "page_type": "leaf",
+          "tags": ["rules", "guardrails", "instructions"],
+          "summary": "Rules provide instructions to model for Agent, Chat, Edit modes",
+          "leaf_extractions": {
+            "key_points": [
+              "Rules in YAML or Markdown",
+              "Glob patterns for file-specific rules",
+              "Place in .continue/rules/",
+              "Agent can create rules via create_rule_block tool"
+            ]
+          }
+        },
+        {
+          "id": "continue-mcp",
+          "parent_id": "continue-root",
+          "depth": 1,
+          "title": "MCP Integration",
+          "url": "https://docs.continue.dev/customize/deep-dives/mcp",
+          "breadcrumb": ["Continue", "Customize", "MCP"],
+          "page_type": "leaf",
+          "tags": ["mcp", "tools", "servers"],
+          "summary": "Model Context Protocol integration for tools and prompts",
+          "leaf_extractions": {
+            "key_points": [
+              "MCP prompts map to Slash Commands",
+              "MCP tools map to Continue tools",
+              "Copy JSON config from Claude Desktop/Cursor",
+              "Place in .continue/mcpServers/"
+            ]
+          }
+        },
+        {
+          "id": "continue-agent",
+          "parent_id": "continue-root",
+          "depth": 1,
+          "title": "Agent Mode",
+          "url": "https://docs.continue.dev/ide-extensions/agent/quick-start",
+          "breadcrumb": ["Continue", "Agent"],
+          "page_type": "leaf",
+          "tags": ["agent", "autonomous", "tools"],
+          "summary": "Agent mode equips Chat model with tools for autonomous coding tasks",
+          "leaf_extractions": {
+            "key_points": [
+              "Tool permission model (ask, allow, deny)",
+              "Tool policies for automatic approval",
+              "Webhook and cron triggers",
+              "Inbox for task management"
+            ]
+          }
+        },
+        {
+          "id": "continue-hub",
+          "parent_id": "continue-root",
+          "depth": 1,
+          "title": "Continue Hub",
+          "url": "https://hub.continue.dev/",
+          "breadcrumb": ["Continue", "Hub"],
+          "page_type": "leaf",
+          "tags": ["hub", "blocks", "mcp"],
+          "summary": "Central dashboard for Agents, Tasks, Workflows, MCP blocks",
+          "leaf_extractions": {
+            "key_points": [
+              "Curated MCP server blocks",
+              "Docker partnership for secure MCP",
+              "Hub secrets management"
+            ]
+          }
+        }
+      ],
+      "coverage_stats": {
+        "pages_discovered": 67,
+        "leaves": 42,
+        "duplicates_removed": 3,
+        "crawl_notes": "403 blocked; structure from search results"
+      }
+    }
+  ]
+}

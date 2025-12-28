@@ -1,0 +1,393 @@
+{
+  "generated_at": "2025-12-21T00:00:00Z",
+  "version": "1.0.0",
+  "smart_delta_rules": {
+    "priority_order": ["Config", "OCA", "Minimal Custom", "External"],
+    "gap_levels": {
+      "0": "Native parity via Odoo config",
+      "1": "OCA module available",
+      "2": "Minimal custom module required",
+      "3": "External service required"
+    }
+  },
+  "parity_map": [
+    {
+      "capability_id": "fin-gl-001",
+      "capability_name": "General Ledger / Universal Journal",
+      "domain": "Finance",
+      "enterprise_refs": ["sap-finance-gl", "sap:FI-GL"],
+      "parity_target": {
+        "odoo_core": ["account"],
+        "oca_modules": [],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo account module as core GL",
+        "Configure chart of accounts per fiscal localization",
+        "Enable analytic accounting for cost center equivalent"
+      ]
+    },
+    {
+      "capability_id": "fin-ar-001",
+      "capability_name": "Accounts Receivable",
+      "domain": "Finance",
+      "enterprise_refs": ["sap-finance-ar", "sap:FI-AR"],
+      "parity_target": {
+        "odoo_core": ["account", "sale"],
+        "oca_modules": [
+          {"repo": "OCA/account-invoicing", "module": "account_invoice_refund_link"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo account receivable with sale module",
+        "Configure payment terms and follow-ups",
+        "Enable bank reconciliation"
+      ]
+    },
+    {
+      "capability_id": "fin-ap-001",
+      "capability_name": "Accounts Payable",
+      "domain": "Finance",
+      "enterprise_refs": ["sap-finance-ap", "sap:FI-AP"],
+      "parity_target": {
+        "odoo_core": ["account", "purchase"],
+        "oca_modules": [
+          {"repo": "OCA/account-payment", "module": "account_payment_order"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Use Odoo account payable with purchase module",
+        "OCA account_payment_order for batch payments",
+        "Configure vendor payment terms"
+      ]
+    },
+    {
+      "capability_id": "fin-co-001",
+      "capability_name": "Controlling / Cost Center Accounting",
+      "domain": "Finance",
+      "enterprise_refs": ["sap-finance-co", "sap:CO"],
+      "parity_target": {
+        "odoo_core": ["account", "analytic"],
+        "oca_modules": [],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use analytic accounts as cost centers",
+        "Configure analytic distribution models",
+        "Enable analytic accounting in settings"
+      ]
+    },
+    {
+      "capability_id": "fin-budget-001",
+      "capability_name": "Budget Management & Commitments",
+      "domain": "Finance",
+      "enterprise_refs": ["sap-finance-budget", "sap:Budget-Control"],
+      "parity_target": {
+        "odoo_core": ["account", "analytic"],
+        "oca_modules": [
+          {"repo": "OCA/account-budgeting", "module": "account_budget_oca"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Install OCA account_budget_oca module",
+        "Configure budget templates per analytic account",
+        "Enable commitment tracking via purchase orders"
+      ]
+    },
+    {
+      "capability_id": "fin-asset-001",
+      "capability_name": "Asset Management / Depreciation",
+      "domain": "Finance",
+      "enterprise_refs": ["sap:FI-AA"],
+      "parity_target": {
+        "odoo_core": ["account"],
+        "oca_modules": [
+          {"repo": "OCA/account-financial-tools", "module": "account_asset_management"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Install OCA account_asset_management",
+        "Configure depreciation methods (linear, degressive)",
+        "Set up asset categories"
+      ]
+    },
+    {
+      "capability_id": "proc-po-001",
+      "capability_name": "Purchase Orders & Requisitions",
+      "domain": "Procurement",
+      "enterprise_refs": ["sap-procurement-po", "sap:MM-PUR"],
+      "parity_target": {
+        "odoo_core": ["purchase", "purchase_requisition"],
+        "oca_modules": [
+          {"repo": "OCA/purchase-workflow", "module": "purchase_triple_discount"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo purchase and purchase_requisition modules",
+        "Configure approval workflows via base_tier_validation",
+        "Enable vendor pricelists"
+      ]
+    },
+    {
+      "capability_id": "proc-approval-001",
+      "capability_name": "Multi-Level Procurement Approval",
+      "domain": "Procurement",
+      "enterprise_refs": ["sap:Approval-Workflows"],
+      "parity_target": {
+        "odoo_core": ["purchase"],
+        "oca_modules": [
+          {"repo": "OCA/server-ux", "module": "base_tier_validation"},
+          {"repo": "OCA/server-ux", "module": "base_tier_validation_formula"}
+        ],
+        "alt_stack": ["n8n.workflow.approval_matrix"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Install base_tier_validation for multi-tier approvals",
+        "Configure tier definitions by amount thresholds",
+        "Optional: n8n for complex routing logic"
+      ]
+    },
+    {
+      "capability_id": "inv-wms-001",
+      "capability_name": "Warehouse Management",
+      "domain": "Inventory",
+      "enterprise_refs": ["sap:MM-WM", "sap:EWM"],
+      "parity_target": {
+        "odoo_core": ["stock", "stock_barcode"],
+        "oca_modules": [
+          {"repo": "OCA/stock-logistics-warehouse", "module": "stock_warehouse_orderpoint_update"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo stock module with multi-location",
+        "Enable barcode scanning",
+        "Configure reorder rules"
+      ]
+    },
+    {
+      "capability_id": "ppm-project-001",
+      "capability_name": "Project Management / WBS",
+      "domain": "Project",
+      "enterprise_refs": ["sap-project-wbs", "sap:PS"],
+      "parity_target": {
+        "odoo_core": ["project", "hr_timesheet"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_task_dependency"},
+          {"repo": "OCA/project", "module": "project_stage_state"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo project module with task hierarchy",
+        "Tasks as WBS elements",
+        "Enable Gantt view for scheduling"
+      ]
+    },
+    {
+      "capability_id": "ppm-budget-001",
+      "capability_name": "Project Budgeting & Cost Control",
+      "domain": "Project",
+      "enterprise_refs": ["sap:PS-Budget", "sap:PPM"],
+      "parity_target": {
+        "odoo_core": ["project", "analytic"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_budget"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Install OCA project_budget module",
+        "Link projects to analytic accounts",
+        "Configure budget templates"
+      ]
+    },
+    {
+      "capability_id": "ppm-resource-001",
+      "capability_name": "Resource Planning & Allocation",
+      "domain": "Project",
+      "enterprise_refs": ["sap:PS-Resource", "sap:PPM-Resource"],
+      "parity_target": {
+        "odoo_core": ["project", "planning", "hr_timesheet"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_forecast"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Use Odoo planning module for resource allocation",
+        "OCA project_forecast for capacity planning",
+        "Enable timesheet tracking"
+      ]
+    },
+    {
+      "capability_id": "hr-master-001",
+      "capability_name": "Employee Master Data",
+      "domain": "HR",
+      "enterprise_refs": ["sap-hr", "sap:HCM-PA"],
+      "parity_target": {
+        "odoo_core": ["hr"],
+        "oca_modules": [
+          {"repo": "OCA/hr", "module": "hr_employee_document"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use Odoo hr module for employee records",
+        "OCA module for document management",
+        "Configure departments and job positions"
+      ]
+    },
+    {
+      "capability_id": "hr-time-001",
+      "capability_name": "Time Management & Attendance",
+      "domain": "HR",
+      "enterprise_refs": ["sap:HCM-TM"],
+      "parity_target": {
+        "odoo_core": ["hr_attendance", "hr_holidays"],
+        "oca_modules": [
+          {"repo": "OCA/hr-attendance", "module": "hr_attendance_overtime"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Use Odoo hr_attendance for clock in/out",
+        "OCA module for overtime calculation",
+        "Configure leave types and allocations"
+      ]
+    },
+    {
+      "capability_id": "hr-payroll-001",
+      "capability_name": "Payroll Processing",
+      "domain": "HR",
+      "enterprise_refs": ["sap:HCM-PY"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [
+          {"repo": "OCA/payroll", "module": "hr_payroll"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA hr_payroll replaces Enterprise payroll",
+        "Configure salary rules and structures",
+        "Country-specific localizations available"
+      ]
+    },
+    {
+      "capability_id": "analytics-rt-001",
+      "capability_name": "Real-Time Analytics / BI",
+      "domain": "Analytics",
+      "enterprise_refs": ["databricks-unity-catalog", "sap:Analytics"],
+      "parity_target": {
+        "odoo_core": ["spreadsheet"],
+        "oca_modules": [],
+        "alt_stack": ["supabase.postgres", "apache.superset"]
+      },
+      "gap_level": 3,
+      "smart_delta": "External",
+      "implementation_notes": [
+        "Read-only replication from Odoo to Supabase",
+        "Superset for dashboards and visualizations",
+        "No write-back allowed (ERP is source of truth)"
+      ]
+    },
+    {
+      "capability_id": "analytics-lineage-001",
+      "capability_name": "Data Lineage & Governance",
+      "domain": "Analytics",
+      "enterprise_refs": ["databricks-lineage", "databricks:Unity-Catalog"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["supabase.kb_catalog", "supabase.rls"]
+      },
+      "gap_level": 3,
+      "smart_delta": "External",
+      "implementation_notes": [
+        "Implement catalog_nodes table in Supabase",
+        "RLS for access control",
+        "Version tracking via catalog_sources"
+      ]
+    },
+    {
+      "capability_id": "workflow-automation-001",
+      "capability_name": "Workflow Automation / Orchestration",
+      "domain": "Automation",
+      "enterprise_refs": ["databricks:Jobs", "sap:BTP-Workflow"],
+      "parity_target": {
+        "odoo_core": ["mail", "base_automation"],
+        "oca_modules": [],
+        "alt_stack": ["n8n", "github.actions"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Use Odoo server actions for simple automation",
+        "n8n for complex cross-system workflows",
+        "GitHub Actions for CI/CD"
+      ]
+    },
+    {
+      "capability_id": "integration-sap-001",
+      "capability_name": "SAP Data Integration",
+      "domain": "Integration",
+      "enterprise_refs": ["databricks-sap-integration", "sap:ODP"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["n8n.connector.sap", "fivetran"]
+      },
+      "gap_level": 3,
+      "smart_delta": "External",
+      "implementation_notes": [
+        "n8n for lightweight SAP OData/RFC calls",
+        "Fivetran for enterprise-grade replication",
+        "Medallion architecture: Bronze → Silver → Gold"
+      ]
+    }
+  ],
+  "coverage_summary": {
+    "total_capabilities": 20,
+    "gap_0_config": 7,
+    "gap_1_oca": 9,
+    "gap_2_custom": 1,
+    "gap_3_external": 3,
+    "parity_percentage": 80
+  }
+}

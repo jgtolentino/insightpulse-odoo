@@ -1,0 +1,86 @@
+{
+  "generated_at": "2025-12-21T00:00:00Z",
+  "version": "1.0.0",
+  "catalogs": [
+    {
+      "site_id": "sap-help-portal",
+      "root_url": "https://help.sap.com/docs/",
+      "coverage_stats": {
+        "pages_discovered": 847,
+        "leaves": 312,
+        "crawl_status": "partial"
+      }
+    },
+    {
+      "site_id": "databricks-sap",
+      "root_url": "https://docs.databricks.com/sap/en/",
+      "coverage_stats": {
+        "pages_discovered": 156,
+        "leaves": 78,
+        "crawl_status": "partial"
+      }
+    },
+    {
+      "site_id": "odoo-18-docs",
+      "root_url": "https://www.odoo.com/documentation/18.0/",
+      "coverage_stats": {
+        "pages_discovered": 423,
+        "leaves": 187,
+        "crawl_status": "partial"
+      }
+    },
+    {
+      "site_id": "oca-github",
+      "root_url": "https://github.com/OCA",
+      "coverage_stats": {
+        "pages_discovered": 250,
+        "leaves": 250,
+        "crawl_status": "complete"
+      }
+    },
+    {
+      "site_id": "continue-docs",
+      "root_url": "https://docs.continue.dev/",
+      "coverage_stats": {
+        "pages_discovered": 67,
+        "leaves": 42,
+        "crawl_status": "partial"
+      }
+    }
+  ],
+  "parity_map": {
+    "total_capabilities": 20,
+    "coverage": {
+      "gap_0_config": 7,
+      "gap_1_oca": 9,
+      "gap_2_custom": 1,
+      "gap_3_external": 3
+    },
+    "parity_percentage": 80,
+    "file": "parity-map.json"
+  },
+  "spec_kit": {
+    "constitution_md": "spec/smart-delta-engine/constitution.md",
+    "prd_md": "spec/smart-delta-engine/prd.md",
+    "plan_md": "spec/smart-delta-engine/plan.md",
+    "tasks_md": "spec/smart-delta-engine/tasks.md"
+  },
+  "continue_integration": {
+    "rules_files": [
+      {"path": ".continue/rules/odoo-first.md", "purpose": "OCA-first coding rules"},
+      {"path": ".continue/rules/migrations-source-of-truth.md", "purpose": "Schema governance"},
+      {"path": ".continue/rules/rls-required.md", "purpose": "Security requirements"},
+      {"path": ".continue/rules/ci-gates.md", "purpose": "CI validation rules"},
+      {"path": ".continue/rules/no-controllers.md", "purpose": "Controller restrictions"}
+    ],
+    "config_file": ".continue/config.yaml",
+    "workflows": [
+      {"path": ".github/workflows/smart-delta-engine.yml", "purpose": "CI validation + catalog refresh"}
+    ]
+  },
+  "smart_delta_rules": {
+    "priority_order": ["Config", "OCA", "Minimal Custom", "External"],
+    "enforcement": "CI gates block violations",
+    "documentation": "spec/smart-delta-engine/constitution.md"
+  }
+}

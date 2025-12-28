@@ -1,0 +1,569 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Apache Superset Dashboard Competencies Matrix",
+  "version": "1.0.0",
+  "generated": "2024-12-28",
+  "source": "Apache Superset 4.x",
+  "levels": {
+    "L1": {
+      "title": "Contributor",
+      "description": "Can fix bugs, add small features, write tests",
+      "minContributions": 1,
+      "requiresPR": true
+    },
+    "L2": {
+      "title": "Active Contributor",
+      "description": "Understands core architecture, reviews PRs, adds features",
+      "minContributions": 10,
+      "requiresReviews": true
+    },
+    "L3": {
+      "title": "Committer",
+      "description": "Deep expertise, architectural decisions, mentors others",
+      "requiresElection": true,
+      "hasWriteAccess": true
+    },
+    "L4": {
+      "title": "PMC Member",
+      "description": "Project governance, release management, strategic direction",
+      "requiresPMCVote": true,
+      "hasGovernanceRights": true
+    }
+  },
+  "domains": {
+    "frontend": {
+      "name": "Frontend Development",
+      "technologies": ["React", "TypeScript", "Redux", "Ant Design", "Emotion CSS"],
+      "competencies": [
+        {
+          "id": "FE-001",
+          "name": "React Fundamentals",
+          "level": "L1",
+          "skills": [
+            "React Hooks (useState, useEffect, useCallback, useMemo)",
+            "Functional components",
+            "Props and state management",
+            "Event handling",
+            "Conditional rendering"
+          ]
+        },
+        {
+          "id": "FE-002",
+          "name": "TypeScript Proficiency",
+          "level": "L1",
+          "skills": [
+            "Type annotations",
+            "Interfaces and types",
+            "Generics",
+            "Union and intersection types",
+            "Type guards"
+          ]
+        },
+        {
+          "id": "FE-003",
+          "name": "Redux State Management",
+          "level": "L2",
+          "skills": [
+            "Redux store architecture",
+            "Actions and action creators",
+            "Reducers",
+            "Redux Thunk for async operations",
+            "Selectors and memoization (reselect)",
+            "Redux DevTools debugging"
+          ]
+        },
+        {
+          "id": "FE-004",
+          "name": "Dashboard Component Architecture",
+          "level": "L2",
+          "skills": [
+            "DashboardContainer understanding",
+            "Grid layout system (react-grid-layout)",
+            "Chart holder components",
+            "Filter bar implementation",
+            "Component communication patterns"
+          ]
+        },
+        {
+          "id": "FE-005",
+          "name": "Native Filter System",
+          "level": "L3",
+          "skills": [
+            "Filter types (time, dimension, cross-filter)",
+            "Filter scope configuration",
+            "Cascading filter dependencies",
+            "updateDataMask action flow",
+            "Filter URL synchronization"
+          ]
+        },
+        {
+          "id": "FE-006",
+          "name": "Superset-UI Plugin Development",
+          "level": "L3",
+          "skills": [
+            "@superset-ui/core usage",
+            "Chart plugin architecture",
+            "Control panel configuration",
+            "transformProps implementation",
+            "Plugin registration"
+          ]
+        },
+        {
+          "id": "FE-007",
+          "name": "Performance Optimization",
+          "level": "L3",
+          "skills": [
+            "React.memo for chart components",
+            "Lazy loading strategies",
+            "Virtualization (react-window)",
+            "Bundle size optimization",
+            "React DevTools profiling"
+          ]
+        }
+      ]
+    },
+    "backend": {
+      "name": "Backend Development",
+      "technologies": ["Python", "Flask", "SQLAlchemy", "Celery", "Redis"],
+      "competencies": [
+        {
+          "id": "BE-001",
+          "name": "Python Fundamentals",
+          "level": "L1",
+          "skills": [
+            "Python 3.9+ syntax",
+            "Type hints",
+            "Context managers",
+            "Decorators",
+            "Async/await basics"
+          ]
+        },
+        {
+          "id": "BE-002",
+          "name": "Flask Application Structure",
+          "level": "L2",
+          "skills": [
+            "Flask app factory pattern",
+            "Blueprints",
+            "Request/response handling",
+            "Flask-AppBuilder integration",
+            "Extension patterns"
+          ]
+        },
+        {
+          "id": "BE-003",
+          "name": "SQLAlchemy ORM",
+          "level": "L2",
+          "skills": [
+            "Model definitions",
+            "Relationships (one-to-many, many-to-many)",
+            "Query building",
+            "Migrations (Alembic)",
+            "Session management"
+          ]
+        },
+        {
+          "id": "BE-004",
+          "name": "Dashboard Data Models",
+          "level": "L2",
+          "skills": [
+            "Dashboard model structure",
+            "Slice (chart) model",
+            "Position JSON format",
+            "JSON metadata schema",
+            "Model relationships"
+          ]
+        },
+        {
+          "id": "BE-005",
+          "name": "REST API Development",
+          "level": "L2",
+          "skills": [
+            "API endpoint design",
+            "Request validation (Marshmallow)",
+            "Response serialization",
+            "Error handling",
+            "API versioning"
+          ]
+        },
+        {
+          "id": "BE-006",
+          "name": "Security & Permissions",
+          "level": "L3",
+          "skills": [
+            "Flask-AppBuilder RBAC",
+            "Permission decorators",
+            "Row-level security",
+            "Guest token authentication",
+            "OAuth/OIDC integration"
+          ]
+        },
+        {
+          "id": "BE-007",
+          "name": "Command Pattern Implementation",
+          "level": "L3",
+          "skills": [
+            "BaseCommand extension",
+            "Validation logic",
+            "Transaction management",
+            "Error aggregation",
+            "Event dispatching"
+          ]
+        },
+        {
+          "id": "BE-008",
+          "name": "Query Processing",
+          "level": "L3",
+          "skills": [
+            "Query object construction",
+            "Jinja SQL templating",
+            "Query context handling",
+            "Result caching",
+            "Async query execution"
+          ]
+        }
+      ]
+    },
+    "infrastructure": {
+      "name": "Infrastructure & DevOps",
+      "technologies": ["Docker", "Kubernetes", "PostgreSQL", "Redis", "Celery"],
+      "competencies": [
+        {
+          "id": "INF-001",
+          "name": "Development Environment",
+          "level": "L1",
+          "skills": [
+            "Docker Compose setup",
+            "Node.js/npm for frontend",
+            "Python virtual environments",
+            "Git workflow",
+            "IDE configuration"
+          ]
+        },
+        {
+          "id": "INF-002",
+          "name": "Configuration Management",
+          "level": "L2",
+          "skills": [
+            "superset_config.py structure",
+            "Environment variables",
+            "Feature flags",
+            "Database configuration",
+            "Cache configuration"
+          ]
+        },
+        {
+          "id": "INF-003",
+          "name": "Database Administration",
+          "level": "L2",
+          "skills": [
+            "PostgreSQL setup",
+            "Schema migrations",
+            "Connection pooling",
+            "Backup strategies",
+            "Performance tuning"
+          ]
+        },
+        {
+          "id": "INF-004",
+          "name": "Caching Strategy",
+          "level": "L3",
+          "skills": [
+            "Redis configuration",
+            "Query result caching",
+            "Dashboard caching",
+            "Cache invalidation",
+            "Results backend setup"
+          ]
+        },
+        {
+          "id": "INF-005",
+          "name": "Production Deployment",
+          "level": "L3",
+          "skills": [
+            "Kubernetes orchestration",
+            "Horizontal scaling",
+            "Load balancing",
+            "Health checks",
+            "Monitoring integration"
+          ]
+        }
+      ]
+    },
+    "testing": {
+      "name": "Testing & Quality Assurance",
+      "technologies": ["Jest", "pytest", "Cypress", "React Testing Library", "Storybook"],
+      "competencies": [
+        {
+          "id": "TEST-001",
+          "name": "Unit Testing",
+          "level": "L1",
+          "skills": [
+            "Jest for JavaScript/TypeScript",
+            "pytest for Python",
+            "Mocking and stubbing",
+            "Test isolation",
+            "Coverage reporting"
+          ]
+        },
+        {
+          "id": "TEST-002",
+          "name": "Component Testing",
+          "level": "L2",
+          "skills": [
+            "React Testing Library",
+            "User event simulation",
+            "Redux store mocking",
+            "Async testing",
+            "Snapshot testing"
+          ]
+        },
+        {
+          "id": "TEST-003",
+          "name": "Integration Testing",
+          "level": "L2",
+          "skills": [
+            "API testing (pytest)",
+            "Database fixture setup",
+            "Factory patterns",
+            "Test database management",
+            "CI/CD integration"
+          ]
+        },
+        {
+          "id": "TEST-004",
+          "name": "E2E Testing",
+          "level": "L3",
+          "skills": [
+            "Cypress test writing",
+            "Playwright alternatives",
+            "Visual regression testing",
+            "Test data management",
+            "Parallel test execution"
+          ]
+        },
+        {
+          "id": "TEST-005",
+          "name": "Storybook Development",
+          "level": "L2",
+          "skills": [
+            "Story writing",
+            "Component documentation",
+            "Interactive props",
+            "Visual testing",
+            "Accessibility checks"
+          ]
+        }
+      ]
+    },
+    "dashboardsAsCode": {
+      "name": "Dashboards as Code",
+      "technologies": ["preset-cli", "backend-sdk", "GitHub Actions", "YAML"],
+      "competencies": [
+        {
+          "id": "DAC-001",
+          "name": "CLI Fundamentals",
+          "level": "L1",
+          "skills": [
+            "preset-cli installation",
+            "Authentication (token/secret)",
+            "Basic export-assets command",
+            "Basic sync native command",
+            "Understanding YAML asset structure"
+          ]
+        },
+        {
+          "id": "DAC-002",
+          "name": "Asset Management",
+          "level": "L2",
+          "skills": [
+            "Database definition YAML",
+            "Dataset definition YAML",
+            "Chart definition YAML",
+            "Dashboard definition YAML",
+            "Asset dependency ordering"
+          ]
+        },
+        {
+          "id": "DAC-003",
+          "name": "Version Control Integration",
+          "level": "L2",
+          "skills": [
+            "Git workflow for assets",
+            "PR-based dashboard changes",
+            "Diff review for YAML changes",
+            "Branch strategies for environments",
+            "Merge conflict resolution"
+          ]
+        },
+        {
+          "id": "DAC-004",
+          "name": "CI/CD Pipeline Design",
+          "level": "L3",
+          "skills": [
+            "GitHub Actions for deployment",
+            "Multi-environment promotion",
+            "Secrets management in CI",
+            "Dry-run validation",
+            "Rollback procedures"
+          ]
+        },
+        {
+          "id": "DAC-005",
+          "name": "Enterprise Patterns",
+          "level": "L3",
+          "skills": [
+            "Multi-workspace management",
+            "Self-hosted vs Preset Cloud",
+            "Credential separation",
+            "Audit trail maintenance",
+            "Disaster recovery"
+          ]
+        }
+      ]
+    },
+    "visualization": {
+      "name": "Data Visualization",
+      "technologies": ["ECharts", "D3.js", "@superset-ui", "Chart.js"],
+      "competencies": [
+        {
+          "id": "VIZ-001",
+          "name": "Chart Types Understanding",
+          "level": "L1",
+          "skills": [
+            "Bar/Line/Area charts",
+            "Pie/Donut charts",
+            "Tables and pivot tables",
+            "Time series visualization",
+            "Geographic visualizations"
+          ]
+        },
+        {
+          "id": "VIZ-002",
+          "name": "ECharts Integration",
+          "level": "L2",
+          "skills": [
+            "ECharts options configuration",
+            "Theme customization",
+            "Event handling",
+            "Responsive design",
+            "Animation configuration"
+          ]
+        },
+        {
+          "id": "VIZ-003",
+          "name": "Custom Plugin Development",
+          "level": "L3",
+          "skills": [
+            "Plugin scaffolding",
+            "Control panel design",
+            "Data transformation",
+            "Tooltip customization",
+            "Legend management"
+          ]
+        },
+        {
+          "id": "VIZ-004",
+          "name": "Performance Optimization",
+          "level": "L3",
+          "skills": [
+            "Data sampling",
+            "Canvas vs SVG rendering",
+            "Lazy rendering",
+            "Progressive loading",
+            "Memory management"
+          ]
+        }
+      ]
+    }
+  },
+  "pathways": {
+    "dashboardDeveloper": {
+      "name": "Dashboard Developer Track",
+      "description": "Focus on dashboard UI and user experience",
+      "requiredCompetencies": [
+        "FE-001", "FE-002", "FE-003", "FE-004",
+        "TEST-001", "TEST-002",
+        "VIZ-001", "VIZ-002"
+      ],
+      "advancedCompetencies": [
+        "FE-005", "FE-006", "FE-007",
+        "VIZ-003", "VIZ-004"
+      ]
+    },
+    "backendDeveloper": {
+      "name": "Backend Developer Track",
+      "description": "Focus on API, data models, and security",
+      "requiredCompetencies": [
+        "BE-001", "BE-002", "BE-003", "BE-004", "BE-005",
+        "TEST-001", "TEST-003",
+        "INF-001", "INF-002"
+      ],
+      "advancedCompetencies": [
+        "BE-006", "BE-007", "BE-008",
+        "INF-003", "INF-004", "INF-005"
+      ]
+    },
+    "fullStackDeveloper": {
+      "name": "Full Stack Developer Track",
+      "description": "Comprehensive dashboard development",
+      "requiredCompetencies": [
+        "FE-001", "FE-002", "FE-003", "FE-004",
+        "BE-001", "BE-002", "BE-003", "BE-004", "BE-005",
+        "TEST-001", "TEST-002", "TEST-003",
+        "INF-001", "INF-002",
+        "VIZ-001", "VIZ-002"
+      ],
+      "advancedCompetencies": [
+        "FE-005", "FE-006", "FE-007",
+        "BE-006", "BE-007", "BE-008",
+        "INF-003", "INF-004", "INF-005",
+        "VIZ-003", "VIZ-004",
+        "TEST-004", "TEST-005"
+      ]
+    },
+    "platformEngineer": {
+      "name": "Platform Engineer Track",
+      "description": "Focus on Dashboards-as-Code, CI/CD, and infrastructure",
+      "requiredCompetencies": [
+        "INF-001", "INF-002", "INF-003",
+        "DAC-001", "DAC-002", "DAC-003",
+        "TEST-001", "TEST-003"
+      ],
+      "advancedCompetencies": [
+        "INF-004", "INF-005",
+        "DAC-004", "DAC-005",
+        "BE-006",
+        "TEST-004"
+      ]
+    }
+  },
+  "assessmentCriteria": {
+    "L1": {
+      "codeQuality": "Follows style guidelines, passes linting",
+      "testing": "Includes unit tests for new code",
+      "documentation": "Updates docs when needed",
+      "communication": "Responds to PR feedback"
+    },
+    "L2": {
+      "codeQuality": "Writes clean, maintainable code",
+      "testing": "Writes comprehensive tests, maintains coverage",
+      "documentation": "Documents complex features",
+      "communication": "Reviews others' PRs constructively",
+      "architecture": "Understands system design decisions"
+    },
+    "L3": {
+      "codeQuality": "Sets quality standards, refactors legacy code",
+      "testing": "Designs testing strategies",
+      "documentation": "Creates architectural documentation",
+      "communication": "Mentors contributors, leads discussions",
+      "architecture": "Makes architectural decisions, designs features"
+    },
+    "L4": {
+      "governance": "Participates in project governance",
+      "releases": "Manages release processes",
+      "community": "Grows and nurtures community",
+      "strategy": "Guides project direction"
+    }
+  }
+}

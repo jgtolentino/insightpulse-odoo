@@ -1,0 +1,255 @@
+{
+  "site_id": "notion-ppm",
+  "root_url": "https://notion.so/",
+  "description": "Notion as Project/Portfolio Database Layer",
+  "nodes": [
+    {
+      "id": "notion-root",
+      "parent_id": null,
+      "depth": 0,
+      "title": "Notion Workspace",
+      "url": "https://notion.so/",
+      "breadcrumb": ["Notion"],
+      "page_type": "index",
+      "tags": ["notion", "database", "collaboration"],
+      "summary": "Flexible database and collaboration platform for project intake and tracking"
+    },
+    {
+      "id": "notion-databases",
+      "parent_id": "notion-root",
+      "depth": 1,
+      "title": "Core Data Models",
+      "url": "https://notion.so/help/databases",
+      "breadcrumb": ["Notion", "Databases"],
+      "page_type": "category",
+      "tags": ["database", "tables", "views"],
+      "summary": "Table databases with views, relations, rollups, formulas"
+    },
+    {
+      "id": "notion-db-views",
+      "parent_id": "notion-databases",
+      "depth": 2,
+      "title": "Database Views",
+      "url": "https://notion.so/help/views",
+      "breadcrumb": ["Notion", "Databases", "Views"],
+      "page_type": "leaf",
+      "tags": ["views", "grid", "kanban", "timeline"],
+      "summary": "Grid, Board, Calendar, Gallery, Timeline views",
+      "leaf_extractions": {
+        "key_points": [
+          "5 view types for same data",
+          "Filters and sorting per view",
+          "Saved views for teams",
+          "Timeline for Gantt-like planning"
+        ],
+        "implementation_notes": "Timeline view maps to project.task Gantt in Odoo"
+      }
+    },
+    {
+      "id": "notion-db-relations",
+      "parent_id": "notion-databases",
+      "depth": 2,
+      "title": "Relations & Rollups",
+      "url": "https://notion.so/help/relations-rollups",
+      "breadcrumb": ["Notion", "Databases", "Relations"],
+      "page_type": "leaf",
+      "tags": ["relations", "rollups", "aggregation"],
+      "summary": "Cross-database relations, rollup aggregations"
+    },
+    {
+      "id": "notion-db-formulas",
+      "parent_id": "notion-databases",
+      "depth": 2,
+      "title": "Formula Fields",
+      "url": "https://notion.so/help/formulas",
+      "breadcrumb": ["Notion", "Databases", "Formulas"],
+      "page_type": "leaf",
+      "tags": ["formulas", "calculations", "automation"],
+      "summary": "Calculated fields, conditional logic, date math"
+    },
+    {
+      "id": "notion-portfolio-ws",
+      "parent_id": "notion-root",
+      "depth": 1,
+      "title": "Portfolio Management Workspace",
+      "url": "https://notion.so/templates/portfolio",
+      "breadcrumb": ["Notion", "Templates", "Portfolio"],
+      "page_type": "category",
+      "tags": ["portfolio", "projects", "resources"],
+      "summary": "Portfolio, Project, and Resource databases for PPM"
+    },
+    {
+      "id": "notion-portfolio-db",
+      "parent_id": "notion-portfolio-ws",
+      "depth": 2,
+      "title": "Portfolio Database",
+      "url": "https://notion.so/templates/portfolio/db",
+      "breadcrumb": ["Notion", "Portfolio", "Database"],
+      "page_type": "leaf",
+      "tags": ["portfolio", "strategy", "governance"],
+      "summary": "Portfolio master with linked projects, business case, scorecard",
+      "leaf_extractions": {
+        "key_points": [
+          "Portfolio name, status, strategy fields",
+          "M2M relation to Projects",
+          "Business case documents",
+          "Financial KPI scorecard (rollups)"
+        ],
+        "implementation_notes": "Syncs to Odoo project.portfolio via n8n webhook"
+      }
+    },
+    {
+      "id": "notion-project-db",
+      "parent_id": "notion-portfolio-ws",
+      "depth": 2,
+      "title": "Project Database",
+      "url": "https://notion.so/templates/portfolio/project",
+      "breadcrumb": ["Notion", "Portfolio", "Project"],
+      "page_type": "leaf",
+      "tags": ["project", "tasks", "tracking"],
+      "summary": "Project master with team, tasks, budget, risks",
+      "leaf_extractions": {
+        "key_points": [
+          "Project name, PM, dates, status",
+          "Kanban and Timeline views for tasks",
+          "Budget relation (linked to Finance DB)",
+          "Risks & Issues sub-database"
+        ],
+        "implementation_notes": "Syncs to Odoo project.project via n8n"
+      }
+    },
+    {
+      "id": "notion-resource-db",
+      "parent_id": "notion-portfolio-ws",
+      "depth": 2,
+      "title": "Resource Database",
+      "url": "https://notion.so/templates/portfolio/resource",
+      "breadcrumb": ["Notion", "Portfolio", "Resource"],
+      "page_type": "leaf",
+      "tags": ["resource", "capacity", "allocation"],
+      "summary": "Resource master with skills, availability, allocation",
+      "leaf_extractions": {
+        "key_points": [
+          "Resource name, skills, rates",
+          "Capacity calendar (availability by week)",
+          "Allocation relation to Projects",
+          "Utilization rollup formulas"
+        ],
+        "implementation_notes": "Syncs to Supabase resource_capacity table"
+      }
+    },
+    {
+      "id": "notion-financial-ws",
+      "parent_id": "notion-root",
+      "depth": 1,
+      "title": "Financial Management Workspace",
+      "url": "https://notion.so/templates/financial",
+      "breadcrumb": ["Notion", "Templates", "Financial"],
+      "page_type": "category",
+      "tags": ["financial", "budget", "cash-flow"],
+      "summary": "Budget, Actuals, and Cash Flow databases"
+    },
+    {
+      "id": "notion-budget-db",
+      "parent_id": "notion-financial-ws",
+      "depth": 2,
+      "title": "Budget Database",
+      "url": "https://notion.so/templates/financial/budget",
+      "breadcrumb": ["Notion", "Financial", "Budget"],
+      "page_type": "leaf",
+      "tags": ["budget", "planning", "variance"],
+      "summary": "Budget items by project/phase, approval workflow, variance"
+    },
+    {
+      "id": "notion-actuals-db",
+      "parent_id": "notion-financial-ws",
+      "depth": 2,
+      "title": "Actuals Database",
+      "url": "https://notion.so/templates/financial/actuals",
+      "breadcrumb": ["Notion", "Financial", "Actuals"],
+      "page_type": "leaf",
+      "tags": ["actuals", "costs", "expenses"],
+      "summary": "Cost entries by project/resource, invoice linkage"
+    },
+    {
+      "id": "notion-automation",
+      "parent_id": "notion-root",
+      "depth": 1,
+      "title": "Automation & Integration",
+      "url": "https://notion.so/help/automations",
+      "breadcrumb": ["Notion", "Automation"],
+      "page_type": "category",
+      "tags": ["automation", "api", "webhooks"],
+      "summary": "Button automations, API, Zapier/n8n integration"
+    },
+    {
+      "id": "notion-api",
+      "parent_id": "notion-automation",
+      "depth": 2,
+      "title": "Notion API",
+      "url": "https://developers.notion.com/",
+      "breadcrumb": ["Notion", "Automation", "API"],
+      "page_type": "leaf",
+      "tags": ["api", "rest", "integration"],
+      "summary": "REST API for databases, pages, blocks, users, search",
+      "leaf_extractions": {
+        "key_points": [
+          "Database query (filter, sort, paginate)",
+          "Page operations (create, update, delete)",
+          "Block operations for content",
+          "OAuth2 integration tokens"
+        ],
+        "relevant_api": ["/databases/{id}/query", "/pages", "/blocks"],
+        "implementation_notes": "n8n Notion connector for bi-directional sync"
+      }
+    },
+    {
+      "id": "notion-webhooks",
+      "parent_id": "notion-automation",
+      "depth": 2,
+      "title": "Webhooks & Integrations",
+      "url": "https://notion.so/help/webhooks",
+      "breadcrumb": ["Notion", "Automation", "Webhooks"],
+      "page_type": "leaf",
+      "tags": ["webhooks", "zapier", "n8n"],
+      "summary": "Webhook triggers, Zapier/Make/n8n integration"
+    },
+    {
+      "id": "notion-ai",
+      "parent_id": "notion-root",
+      "depth": 1,
+      "title": "AI Features",
+      "url": "https://notion.so/help/ai",
+      "breadcrumb": ["Notion", "AI"],
+      "page_type": "category",
+      "tags": ["ai", "meeting-notes", "summarization"],
+      "summary": "AI Meeting Notes, content generation, summarization"
+    },
+    {
+      "id": "notion-ai-meetings",
+      "parent_id": "notion-ai",
+      "depth": 2,
+      "title": "AI Meeting Notes",
+      "url": "https://notion.so/help/ai-meeting-notes",
+      "breadcrumb": ["Notion", "AI", "Meeting Notes"],
+      "page_type": "leaf",
+      "tags": ["ai", "meetings", "transcription"],
+      "summary": "Automatic meeting transcription and summary generation",
+      "leaf_extractions": {
+        "key_points": [
+          "Meeting recording integration",
+          "AI-generated summaries",
+          "Action item extraction",
+          "Link to project tasks"
+        ],
+        "implementation_notes": "Action items sync to Odoo tasks via n8n"
+      }
+    }
+  ],
+  "coverage_stats": {
+    "pages_discovered": 50,
+    "leaves": 25,
+    "duplicates_removed": 2,
+    "crawl_notes": "Structure based on Notion documentation and templates"
+  }
+}

@@ -1,0 +1,526 @@
+{
+  "generated_at": "2025-12-21T00:00:00Z",
+  "version": "1.0.0",
+  "domain": "PPM",
+  "description": "Clarity PPM / SAP PPM → Odoo CE 18 + OCA 18 Parity Map",
+  "smart_delta_rules": {
+    "priority_order": ["Config", "OCA", "Minimal Custom", "External"],
+    "gap_levels": {
+      "0": "Native parity via Odoo config",
+      "1": "OCA module available",
+      "2": "Minimal custom module required",
+      "3": "External service required"
+    }
+  },
+  "parity_map": [
+    {
+      "capability_id": "ppm-portfolio-001",
+      "capability_name": "Portfolio Creation & Governance",
+      "domain": "Portfolio",
+      "enterprise_refs": ["clarity-portfolio-creation", "sap:PPM-Portfolio"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [],
+        "alt_stack": ["notion.portfolio_db"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Create custom project.portfolio model",
+        "Notion as intake layer via n8n",
+        "Approval workflow via base_tier_validation"
+      ],
+      "automation_pipeline": "portfolio_intake_workflow"
+    },
+    {
+      "capability_id": "ppm-portfolio-002",
+      "capability_name": "Portfolio Prioritization & Scoring",
+      "domain": "Portfolio",
+      "enterprise_refs": ["clarity-portfolio-prioritization", "sap:PPM-Optimizer"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [],
+        "alt_stack": ["notion.scoring_formula"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Scoring fields on project.portfolio model",
+        "Notion formula calculates weighted score",
+        "n8n syncs scores to Odoo for ranking"
+      ],
+      "automation_pipeline": "portfolio_scoring_workflow"
+    },
+    {
+      "capability_id": "ppm-portfolio-003",
+      "capability_name": "Roadmap Planning",
+      "domain": "Portfolio",
+      "enterprise_refs": ["clarity-portfolio-roadmap", "sap:PPM-Roadmap"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_timeline"}
+        ],
+        "alt_stack": ["notion.timeline_view"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Use Odoo Gantt view for roadmap",
+        "OCA project_timeline for enhanced views",
+        "Notion timeline syncs via n8n"
+      ]
+    },
+    {
+      "capability_id": "ppm-portfolio-004",
+      "capability_name": "What-If Scenario Analysis",
+      "domain": "Portfolio",
+      "enterprise_refs": ["clarity-portfolio-whatif", "sap:PA-Simulation"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["notion.scenario_db", "supabase.simulation"]
+      },
+      "gap_level": 3,
+      "smart_delta": "External",
+      "implementation_notes": [
+        "Notion scenario database for input",
+        "n8n triggers Supabase function for simulation",
+        "Results displayed in Superset dashboard"
+      ]
+    },
+    {
+      "capability_id": "ppm-project-001",
+      "capability_name": "Project Creation & Planning",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-planning", "sap:PS-Project"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Use native Odoo project.project",
+        "Project templates for standardization",
+        "Notion intake → n8n → project.create()"
+      ],
+      "automation_pipeline": "project_creation_workflow"
+    },
+    {
+      "capability_id": "ppm-project-002",
+      "capability_name": "Schedule Management (Gantt)",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-schedule", "sap:PS-Network"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_task_dependency"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Native Odoo Gantt view",
+        "OCA adds task dependencies",
+        "Critical path via computed fields"
+      ]
+    },
+    {
+      "capability_id": "ppm-project-003",
+      "capability_name": "Task Management & Tracking",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-planning", "sap:PS-Activities"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_task_pull_request"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Native project.task model",
+        "Kanban and Gantt views",
+        "Notion tasks sync via n8n webhook"
+      ],
+      "automation_pipeline": "task_sync_workflow"
+    },
+    {
+      "capability_id": "ppm-project-004",
+      "capability_name": "Resource Allocation (Project)",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-resource", "sap:PS-Resource"],
+      "parity_target": {
+        "odoo_core": ["project", "hr_timesheet"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_forecast"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "project.task.user_ids for assignment",
+        "OCA project_forecast for capacity view",
+        "Notion allocation → n8n → Odoo"
+      ],
+      "automation_pipeline": "resource_allocation_workflow"
+    },
+    {
+      "capability_id": "ppm-project-005",
+      "capability_name": "Issue & Risk Management",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-issues", "sap:PS-Issues"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_issue"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA project_issue module",
+        "Risk register as custom model",
+        "Notion issues sync via n8n"
+      ]
+    },
+    {
+      "capability_id": "ppm-project-006",
+      "capability_name": "Milestone Management",
+      "domain": "Project",
+      "enterprise_refs": ["clarity-project-planning", "sap:PS-Milestone"],
+      "parity_target": {
+        "odoo_core": ["project"],
+        "oca_modules": [],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "project.milestone native model",
+        "Link milestones to billing",
+        "Notion milestone sync"
+      ]
+    },
+    {
+      "capability_id": "ppm-resource-001",
+      "capability_name": "Resource Capacity Planning",
+      "domain": "Resource",
+      "enterprise_refs": ["clarity-resource-capacity", "sap:Workforce-Planning"],
+      "parity_target": {
+        "odoo_core": ["hr", "planning"],
+        "oca_modules": [],
+        "alt_stack": ["supabase.resource_capacity", "notion.resource_db"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Custom resource_capacity model",
+        "Sync to Supabase for cross-project view",
+        "Notion as capacity input layer"
+      ],
+      "automation_pipeline": "capacity_sync_workflow"
+    },
+    {
+      "capability_id": "ppm-resource-002",
+      "capability_name": "Skills Matrix & Matching",
+      "domain": "Resource",
+      "enterprise_refs": ["clarity-resource-skills", "sap:Talent-Management"],
+      "parity_target": {
+        "odoo_core": ["hr"],
+        "oca_modules": [
+          {"repo": "OCA/hr", "module": "hr_skills"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA hr_skills module",
+        "Skill-based resource search",
+        "Notion skills sync"
+      ]
+    },
+    {
+      "capability_id": "ppm-resource-003",
+      "capability_name": "Resource Request Workflow",
+      "domain": "Resource",
+      "enterprise_refs": ["clarity-resource-capacity", "sap:Resource-Request"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [
+          {"repo": "OCA/server-ux", "module": "base_tier_validation"}
+        ],
+        "alt_stack": ["n8n.approval_workflow"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Custom resource.request model",
+        "base_tier_validation for approvals",
+        "n8n orchestrates approval chain"
+      ]
+    },
+    {
+      "capability_id": "ppm-resource-004",
+      "capability_name": "Utilization Reporting",
+      "domain": "Resource",
+      "enterprise_refs": ["clarity-resource-utilization", "sap:Resource-Utilization"],
+      "parity_target": {
+        "odoo_core": ["hr_timesheet"],
+        "oca_modules": [
+          {"repo": "OCA/project", "module": "project_timesheet_time_control"}
+        ],
+        "alt_stack": ["supabase.analytics", "superset"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Timesheet data aggregation",
+        "OCA module for time control",
+        "Superset dashboard for visualization"
+      ]
+    },
+    {
+      "capability_id": "ppm-financial-001",
+      "capability_name": "Budget Planning & Allocation",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-budget", "sap:PS-Budget"],
+      "parity_target": {
+        "odoo_core": ["account", "analytic"],
+        "oca_modules": [
+          {"repo": "OCA/account-budgeting", "module": "account_budget_oca"}
+        ],
+        "alt_stack": ["notion.budget_db"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA account_budget_oca module",
+        "Notion budget DB as input",
+        "n8n syncs approved budgets to Odoo"
+      ],
+      "automation_pipeline": "budget_sync_workflow"
+    },
+    {
+      "capability_id": "ppm-financial-002",
+      "capability_name": "Actual Cost Tracking",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-actuals", "sap:PS-Actuals"],
+      "parity_target": {
+        "odoo_core": ["account", "hr_timesheet"],
+        "oca_modules": [],
+        "alt_stack": []
+      },
+      "gap_level": 0,
+      "smart_delta": "Config",
+      "implementation_notes": [
+        "Timesheet costs via analytic lines",
+        "GL posting for project costs",
+        "Expense entries via hr_expense"
+      ]
+    },
+    {
+      "capability_id": "ppm-financial-003",
+      "capability_name": "Earned Value Management (EVM)",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-evm", "sap:PS-EVM"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["supabase.evm_calc", "superset"]
+      },
+      "gap_level": 3,
+      "smart_delta": "External",
+      "implementation_notes": [
+        "Custom SQL views for EV/PV/AC",
+        "Supabase function for CPI/SPI calc",
+        "Superset EVM dashboard"
+      ],
+      "automation_pipeline": "evm_calculation_workflow"
+    },
+    {
+      "capability_id": "ppm-financial-004",
+      "capability_name": "Variance Analysis",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-actuals", "sap:PS-Variance"],
+      "parity_target": {
+        "odoo_core": ["account"],
+        "oca_modules": [
+          {"repo": "OCA/account-budgeting", "module": "account_budget_oca"}
+        ],
+        "alt_stack": ["n8n.variance_alert"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Budget vs Actual comparison",
+        "n8n scheduled variance check",
+        "Alert to Mattermost on threshold breach"
+      ],
+      "automation_pipeline": "variance_alert_workflow"
+    },
+    {
+      "capability_id": "ppm-financial-005",
+      "capability_name": "Project Billing (T&M)",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-billing", "sap:PS-Billing"],
+      "parity_target": {
+        "odoo_core": ["sale", "hr_timesheet"],
+        "oca_modules": [
+          {"repo": "OCA/sale-workflow", "module": "sale_timesheet_invoice_description"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "Timesheet → Invoice generation",
+        "OCA module for line descriptions",
+        "Configurable billing rates"
+      ],
+      "automation_pipeline": "invoice_generation_workflow"
+    },
+    {
+      "capability_id": "ppm-financial-006",
+      "capability_name": "Project Billing (Fixed Price)",
+      "domain": "Financial",
+      "enterprise_refs": ["clarity-financial-billing", "sap:PS-Milestone-Billing"],
+      "parity_target": {
+        "odoo_core": ["sale", "project"],
+        "oca_modules": [
+          {"repo": "OCA/sale-workflow", "module": "sale_invoice_plan"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA sale_invoice_plan for milestones",
+        "Phase-based invoicing schedule",
+        "Revenue recognition on completion"
+      ]
+    },
+    {
+      "capability_id": "ppm-demand-001",
+      "capability_name": "Request Intake Forms",
+      "domain": "Demand",
+      "enterprise_refs": ["clarity-demand-intake", "sap:Demand-Management"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["notion.intake_form"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Notion form for intake",
+        "n8n creates Odoo project.request",
+        "Custom project.request model"
+      ],
+      "automation_pipeline": "demand_intake_workflow"
+    },
+    {
+      "capability_id": "ppm-demand-002",
+      "capability_name": "Request Scoring & Prioritization",
+      "domain": "Demand",
+      "enterprise_refs": ["clarity-demand-scoring", "sap:Demand-Scoring"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [],
+        "alt_stack": ["notion.scoring_formula"]
+      },
+      "gap_level": 2,
+      "smart_delta": "Minimal Custom",
+      "implementation_notes": [
+        "Notion formula for weighted scoring",
+        "n8n syncs ranked list to Odoo",
+        "Approval queue by score"
+      ]
+    },
+    {
+      "capability_id": "ppm-demand-003",
+      "capability_name": "Approval Workflows",
+      "domain": "Demand",
+      "enterprise_refs": ["clarity-demand-intake", "sap:Approval-Workflows"],
+      "parity_target": {
+        "odoo_core": [],
+        "oca_modules": [
+          {"repo": "OCA/server-ux", "module": "base_tier_validation"}
+        ],
+        "alt_stack": ["n8n.approval_chain", "mattermost"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "base_tier_validation for multi-tier",
+        "n8n orchestrates approval notifications",
+        "Mattermost for approval actions"
+      ]
+    },
+    {
+      "capability_id": "ppm-reporting-001",
+      "capability_name": "Dashboard Creation",
+      "domain": "Reporting",
+      "enterprise_refs": ["clarity-reporting-jasper", "sap:Analytics-Cloud"],
+      "parity_target": {
+        "odoo_core": ["spreadsheet"],
+        "oca_modules": [
+          {"repo": "OCA/reporting-engine", "module": "mis_builder"}
+        ],
+        "alt_stack": ["superset", "metabase"]
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "OCA mis_builder for Odoo dashboards",
+        "Superset for advanced BI",
+        "Read-only replication to Supabase"
+      ]
+    },
+    {
+      "capability_id": "ppm-reporting-002",
+      "capability_name": "KPI Tracking",
+      "domain": "Reporting",
+      "enterprise_refs": ["clarity-reporting-jasper", "sap:Analytics-KPI"],
+      "parity_target": {
+        "odoo_core": ["analytic"],
+        "oca_modules": [
+          {"repo": "OCA/reporting-engine", "module": "mis_builder"}
+        ],
+        "alt_stack": []
+      },
+      "gap_level": 1,
+      "smart_delta": "OCA",
+      "implementation_notes": [
+        "mis_builder for custom KPIs",
+        "Analytic lines as data source",
+        "Scheduled KPI calculation"
+      ]
+    }
+  ],
+  "coverage_summary": {
+    "total_capabilities": 24,
+    "gap_0_config": 5,
+    "gap_1_oca": 11,
+    "gap_2_custom": 6,
+    "gap_3_external": 2,
+    "parity_percentage": 67
+  },
+  "automation_pipelines": [
+    "portfolio_intake_workflow",
+    "project_creation_workflow",
+    "resource_allocation_workflow",
+    "budget_sync_workflow",
+    "variance_alert_workflow",
+    "invoice_generation_workflow",
+    "demand_intake_workflow",
+    "evm_calculation_workflow"
+  ]
+}
