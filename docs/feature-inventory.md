@@ -1,5 +1,5 @@
 # Feature Inventory
-Generated: 2025-11-14T18:39:03.373555+00:00Z
+Generated: 2026-01-07T23:37:23.607713+00:00Z
 
 | Module | Source | Version | State | Summary | Depends | Path |
 |---|---|---|---|---|---|---|
@@ -13,8 +13,10 @@ Generated: 2025-11-14T18:39:03.373555+00:00Z
 | ip_superset_integration | Custom | 18.0.1.0.0 | unknown | Apache Superset BI dashboards integration - Tableau alternative | base,web | custom_addons/ip_superset_integration |
 | ipai_agent | Custom | 1.0.0 | unknown | AI-powered chatbot for Odoo Discuss with automation capabilities | base,mail,hr_expense,account | addons/ipai_agent |
 | ipai_agent_hybrid | Custom | 18.0.1.0.0 | unknown | Odoo Studio × Notion Agent - Hybrid no-code + AI orchestration | base,web,mail,project,calendar | addons/ipai_agent_hybrid |
+| ipai_aiux_chat | Custom | 18.0.0.1.0 | unknown | AIUX Chat Interface | base,web,mail | addons/ipai/ipai_aiux_chat |
 | ipai_approvals | Custom | 18.0.1.0.0 | unknown | Unified Approvals Engine - Epic 1 (Clarity PPM Parity) | ipai_core,purchase,hr_expense,account,queue_job | addons/custom/ipai_approvals |
 | ipai_ariba_cxml | Custom | 19.0.1.0.0 | unknown | SAP Ariba cXML (PO/Invoice) → purchase/account.move | base,purchase,account | odoo_addons/ipai_ariba_cxml |
+| ipai_ask_ai | Custom | 18.0.1.0.0 | unknown | Ask AI Backend Integration | base,web | addons/ipai/ipai_ask_ai |
 | ipai_audit_discovery | Custom | 19.0.1.0.0 | unknown | Immutable audit trail, legal hold, eDiscovery export | ipai_chat_core,auditlog | odoo_addons/ipai_audit_discovery |
 | ipai_bir_compliance | Custom | 18.0.1.0.0 | unknown | Philippine BIR Tax Forms Automation (1601-C, 2550Q, 1702-RT) | base,account,account_accountant,l10n_ph | odoo_addons/ipai_bir_compliance |
 | ipai_bir_compliance | Custom | 18.0.1.0.0 | unknown | Philippine BIR compliance (Forms 2307, 2316, 1601-C, 1702-RT) | base,account | addons/ipai_bir_compliance |
@@ -27,7 +29,9 @@ Generated: 2025-11-14T18:39:03.373555+00:00Z
 | ipai_core | Custom | 18.0.1.0.0 | unknown | Core infrastructure for InsightPulse Enterprise SaaS Parity | base,mail,queue_job | addons/custom/ipai_core |
 | ipai_dlp_guard | Custom | 19.0.1.0.0 | unknown | Data Loss Prevention - pattern detection, quarantine, review | ipai_chat_core | odoo_addons/ipai_dlp_guard |
 | ipai_doc_ai | Custom | 19.0.1.0.0 | unknown | OCR → entity map → Odoo drafts | base,mail | odoo_addons/ipai_doc_ai |
+| ipai_document_ai | Custom | 18.0.1.0.0 | unknown | Document Intelligence Integration | base | addons/ipai/ipai_document_ai |
 | ipai_expense | Custom | 18.0.20251026.1 | unknown | Cash advance lifecycle, expense policy, OCR audit | base,mail,hr,hr_expense,account,report_xlsx,queue_job,server_environment | addons/custom/ipai_expense |
+| ipai_expense_ocr | Custom | 18.0.1.0.0 | unknown | OCR Bridge for Expenses | base,hr_expense | addons/ipai/ipai_expense_ocr |
 | ipai_files_spaces | Custom | 19.0.1.0.0 | unknown | S3/DigitalOcean Spaces integration for large files | base | odoo_addons/ipai_files_spaces |
 | ipai_huddles_webrtc | Custom | 19.0.1.0.0 | unknown | Jitsi integration for audio/video calls and huddles | ipai_chat_core | odoo_addons/ipai_huddles_webrtc |
 | ipai_mattermost_bridge | Custom | 1.0.0 | unknown | Webhook ingestion for GitHub/Jira/ServiceNow into Odoo | base | custom_addons/ipai_mattermost_bridge |
@@ -44,6 +48,7 @@ Generated: 2025-11-14T18:39:03.373555+00:00Z
 | ipai_statement_engine | Custom | 19.0.1.0.0 | unknown | Statements of Account + email dispatch | base,account,mail | odoo_addons/ipai_statement_engine |
 | ipai_subscriptions | Custom | 18.0.20251026.1 | unknown | Recurring revenue management with MRR/ARR tracking | base,mail,account,product,uom,contract,contract_sale,contract_invoice,queue_job | addons/custom/ipai_subscriptions |
 | ipai_te_seed | Custom | 1.0.0 | unknown | IPAI seed: T&E accounts, journals, categories, MIS KPIs | account,hr_expense,mis_builder | custom_addons/ipai_te_seed |
+| ipai_theme_aiux | Custom | 18.0.0.1.0 | unknown | AIUX Design System Theme | base,web | addons/ipai/ipai_theme_aiux |
 | ipai_visual_gate | Custom | 19.0.1.0.0 | unknown | Percy-style visual snapshot gating | base | odoo_addons/ipai_visual_gate |
 | ipai_workflow_bot | Custom | 19.0.1.0.0 | unknown | Slash commands, interactive dialogs, workflow automation | ipai_chat_core,base_automation | odoo_addons/ipai_workflow_bot |
 | mcp_integration | Custom | 18.0.1.0.0 | unknown | Model Context Protocol integration for Odoo workflows | base,web | addons/mcp_integration |
