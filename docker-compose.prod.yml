@@ -22,7 +22,7 @@ services:
       - ./backups:/backups
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-odoo}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -74,12 +74,12 @@ services:
   redis:
     image: redis:7-alpine
     container_name: insightpulse-redis
-    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+    command: [ "redis-server", "--appendonly", "yes", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru" ]
     volumes:
       - redisdata:/data
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
       timeout: 3s
       retries: 3
@@ -108,13 +108,13 @@ services:
       ODOO_MAX_CRON_THREADS: ${ODOO_MAX_CRON_THREADS:-2}
       ODOO_DB_MAXCONN: ${ODOO_DB_MAXCONN:-64}
       # Memory limits (adjust based on available RAM)
-      ODOO_LIMIT_MEMORY_HARD: ${ODOO_LIMIT_MEMORY_HARD:-2684354560}   # 2.5GB
-      ODOO_LIMIT_MEMORY_SOFT: ${ODOO_LIMIT_MEMORY_SOFT:-2147483648}   # 2GB
+      ODOO_LIMIT_MEMORY_HARD: ${ODOO_LIMIT_MEMORY_HARD:-2684354560} # 2.5GB
+      ODOO_LIMIT_MEMORY_SOFT: ${ODOO_LIMIT_MEMORY_SOFT:-2147483648} # 2GB
       ODOO_LIMIT_TIME_CPU: ${ODOO_LIMIT_TIME_CPU:-120}
       ODOO_LIMIT_TIME_REAL: ${ODOO_LIMIT_TIME_REAL:-240}
       ODOO_LIMIT_TIME_REAL_CRON: ${ODOO_LIMIT_TIME_REAL_CRON:-3600}
-      # Security
-      ODOO_DB_FILTER: ${ODOO_DB_FILTER:-^%d$}
+      # Security - Canonical PRD Config
+      ODOO_DB_FILTER: ^(odoo|insightpulse)$
       ODOO_PROXY_MODE: "True"
       ODOO_LIST_DB: "False"
     volumes:
@@ -124,11 +124,11 @@ services:
       - ./addons/custom:/mnt/extra-addons/custom:ro
       - ./custom_addons:/mnt/custom-addons:ro
     ports:
-      - "127.0.0.1:8069:8069"  # Only bind to localhost (Caddy will proxy)
-      - "127.0.0.1:8072:8072"  # Longpolling
+      - "127.0.0.1:8069:8069" # Only bind to localhost (Caddy will proxy)
+      - "127.0.0.1:8072:8072" # Longpolling
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8069/web/health"]
+      test: [ "CMD", "curl", "-fsS", "http://localhost:8069/web/health" ]
       interval: 30s
       timeout: 5s
       retries: 10
