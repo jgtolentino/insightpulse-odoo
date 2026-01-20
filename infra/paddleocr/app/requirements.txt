@@ -8,6 +8,7 @@ paddleocr==2.7.0.3
 paddlepaddle==3.3.0
 
 # Image processing
+numpy<2.0.0  # PaddlePaddle 3.3.0 requires numpy<2.0
 Pillow==10.1.0
 opencv-python-headless==4.8.1.78
 
