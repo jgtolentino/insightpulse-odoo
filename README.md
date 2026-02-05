@@ -84,6 +84,17 @@ chmod +x *.sh && bash deploy-all.sh
 
 📚 **[Full Deployment Guide](docs/deployment/digitalocean-production.md)**
 
+### Repository Structure
+
+This repository follows a **Supabase-first monorepo layout** with clear separation of concerns:
+- **`supabase/`** - Canonical deploy surface (migrations, edge functions)
+- **`runtime/`** - Execution scaffolding (Odoo 19, local dev)
+- **`addons/`** - Custom Odoo modules
+- **`vendor/`** - External dependencies (Odoo source, OCA modules)
+- **`tools/claude-plugin/`** - AI agents, skills, and automation
+
+📐 **[Detailed Structure Documentation](MONOREPO_STRUCTURE.md)** - Directory layout, integration patterns, deployment strategies
+
 ---
 
 ## 📦 What's Included
