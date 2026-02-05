@@ -1,0 +1,50 @@
+# Guardrail: POS Custom Field Backend Sync
+id: GR-POS-001
+name: Ensure POS custom fields propagate to backend
+severity: critical
+module: pos
+category: sync_error
+
+trigger:
+  - pos_module_update
+  - custom_field_added_to_pos
+
+condition:
+  description: Custom fields exist in pos.order.line but not syncing to backend
+  detection:
+    - check_model: pos.order.line
+    - check_methods: [export_json, import_json]
+    - verify_field_in_both: [pos_model, backend_model]
+
+prevention:
+  enforce:
+    - override export_json() to include custom field
+    - override import_json() to handle custom field
+    - verify field exists in both POS model and backend model
+    - add field to POS session sync payload
+
+reason: >
+  POS custom fields must be explicitly added to export/import JSON methods.
+  Without this, data entered in POS will not sync to backend,
+  causing data loss and reporting errors.
+
+autopatch: apply_pos_export_import_fix
+
+documentation_url: https://www.odoo.com/forum/help-1/pos-order-line-custom-field-not-synced
+
+impact:
+  business: Data loss in POS transactions
+  users: POS operators, accounting team
+  fix_complexity: medium
+
+example_code: |
+  # In your pos.order.line model extension
+  def export_json(self):
+      res = super().export_json()
+      res['your_custom_field'] = self.your_custom_field
+      return res
+
+  def import_json(self, data):
+      super().import_json(data)
+      if 'your_custom_field' in data:
+          self.your_custom_field = data['your_custom_field']

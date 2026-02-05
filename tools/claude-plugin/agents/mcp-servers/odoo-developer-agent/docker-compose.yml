@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  odoo-developer-agent:
+    build: .
+    container_name: odoo-dev-agent
+    restart: unless-stopped
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_KEY=${SUPABASE_KEY}
+      - ODOO_ADDONS_PATH=/odoo/custom-addons
+      - MCP_PORT=3001
+    volumes:
+      # Mount Odoo addons directory
+      - ${ODOO_ADDONS_PATH:-./odoo-addons}:/odoo/custom-addons
+      # Mount knowledge base
+      - ./knowledge-base:/data/knowledge-base
+      # Mount logs
+      - ./logs:/logs
+    ports:
+      - "3001:3001"
+    networks:
+      - agent-network
+    depends_on:
+      - knowledge-db
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+  
+  knowledge-db:
+    image: supabase/postgres:15
+    container_name: odoo-knowledge-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=odoo_knowledge
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - pgvector-data:/var/lib/postgresql/data
+      # Enable pgvector extension
+      - ./init-scripts/enable-pgvector.sql:/docker-entrypoint-initdb.d/01-enable-pgvector.sql
+    ports:
+      - "5433:5432"
+    networks:
+      - agent-network
+    command: postgres -c shared_preload_libraries=vector
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  
+  # Optional: Prometheus for monitoring
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: agent-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - agent-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+  
+  # Optional: Grafana for dashboards
+  grafana:
+    image: grafana/grafana:latest
+    container_name: agent-grafana
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./monitoring/grafana-dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - agent-network
+    depends_on:
+      - prometheus
+
+networks:
+  agent-network:
+    driver: bridge
+
+volumes:
+  pgvector-data:
+  prometheus-data:
+  grafana-data:

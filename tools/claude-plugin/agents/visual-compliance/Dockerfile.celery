@@ -1,0 +1,47 @@
+# Dockerfile.celery - Celery workers for Visual Compliance Agent RAG/CAG pipeline
+FROM python:3.11-slim
+
+# Metadata
+LABEL maintainer="InsightPulseAI <jgtolentino_rn@yahoo.com>"
+LABEL description="Celery workers for knowledge graph ingestion, embedding generation, and validation"
+LABEL version="1.0.0"
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    # Build essentials for Python packages
+    build-essential \
+    # Git for cloning OCA repositories
+    git \
+    # Utilities
+    wget \
+    curl \
+    # Cleanup
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY requirements-celery.txt /app/requirements-celery.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements-celery.txt
+
+# Copy visual_compliance package
+COPY src/visual_compliance /app/visual_compliance
+
+# Create directories for logs and temp files
+RUN mkdir -p /var/log/celery /tmp/oca_repos && \
+    chmod 755 /var/log/celery /tmp/oca_repos
+
+# Set environment variables
+ENV PYTHONUNBUFFERED=1
+ENV CELERY_BROKER_URL=redis://redis:6379/0
+ENV CELERY_RESULT_BACKEND=redis://redis:6379/0
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 --start-period=40s \
+  CMD celery -A visual_compliance.celery_app inspect ping -d celery@$HOSTNAME || exit 1
+
+# Default command (override in docker-compose.yml)
+CMD ["celery", "-A", "visual_compliance.celery_app", "worker", "--loglevel=info"]

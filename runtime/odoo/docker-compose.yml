@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${ODOO_DB_NAME:-odoo}
+      POSTGRES_USER: ${ODOO_DB_USER:-odoo}
+      POSTGRES_PASSWORD: ${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_pgdata:/var/lib/postgresql/data
+
+  odoo:
+    # Assumption/TODO: choose either pinned official image OR build from vendor/odoo.
+    image: odoo:19.0
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=db
+      - USER=${ODOO_DB_USER:-odoo}
+      - PASSWORD=${ODOO_DB_PASSWORD:-odoo}
+    volumes:
+      - odoo_webdata:/var/lib/odoo
+      - ../../addons:/mnt/addons:ro
+      - ../../vendor/oca:/mnt/oca:ro
+      - ./odoo.conf:/etc/odoo/odoo.conf:ro
+
+volumes:
+  odoo_pgdata:
+  odoo_webdata:

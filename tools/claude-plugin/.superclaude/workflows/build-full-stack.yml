@@ -1,0 +1,531 @@
+# Build Full Stack Workflow
+# Parallel execution with 5 agents using git worktrees
+# Builds entire system 5x faster than sequential
+
+workflow:
+  name: build_full_stack
+  description: "Build entire system in parallel with 5 specialized agents"
+  version: 1.0.0
+  parallel: true
+  estimated_time: "5-7 days"
+  serial_equivalent: "35-48 days"
+  efficiency_gain: "5-7x faster"
+
+# Prerequisites
+prerequisites:
+  - Bootstrap workflow completed
+  - Git repository clean
+  - Skills indexed
+  - Agent definitions loaded
+
+# Parallel execution using git worktrees
+execution_strategy:
+  type: worktrees
+  base_path: .worktrees/
+  cleanup_on_complete: false  # Keep for review
+  merge_strategy: auto
+
+  # Worktree configuration
+  worktrees:
+    - name: worktree-ai
+      agent: ai_engineer
+      branch: feature/ai-infrastructure
+      base: main
+
+    - name: worktree-devops
+      agent: devops
+      branch: feature/devops-automation
+      base: main
+
+    - name: worktree-docs
+      agent: doc_writer
+      branch: feature/documentation
+      base: main
+
+    - name: worktree-tests
+      agent: qa_engineer
+      branch: feature/testing
+      base: main
+
+    - name: worktree-arch
+      agent: architect
+      branch: feature/architecture
+      base: main
+
+# Parallel agent tasks
+agents:
+  # Agent 1: AI Engineer (2 days estimated)
+  - agent: ai_engineer
+    worktree: worktree-ai
+    branch: feature/ai-infrastructure
+    description: "Build AI/LLM infrastructure"
+    estimated_time: "2 days"
+
+    tasks:
+      # Prompt Templates (1 day)
+      - category: prompt_templates
+        description: "Create 50 production-ready prompt templates"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "System prompts for Odoo operations"
+            count: 10
+            path: prompts/odoo/
+            examples:
+              - month-end-closing-assistant.md
+              - bir-form-validator.md
+              - multi-agency-coordinator.md
+
+          - name: "RAG prompts for document QA"
+            count: 15
+            path: prompts/rag/
+            examples:
+              - expense-policy-qa.md
+              - vendor-contract-analyzer.md
+              - compliance-checker.md
+
+          - name: "Superset dashboard generation"
+            count: 10
+            path: prompts/bi/
+            examples:
+              - dashboard-designer.md
+              - sql-optimizer.md
+              - chart-recommender.md
+
+          - name: "Code generation prompts"
+            count: 15
+            path: prompts/code/
+            examples:
+              - odoo-model-generator.md
+              - test-generator.md
+              - migration-assistant.md
+
+      # RAG Pipeline (0.5 days)
+      - category: rag_pipeline
+        description: "Build RAG pipeline with pgvector"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Vector database setup"
+            files:
+              - rag/vector_store.py
+              - rag/embeddings.py
+              - rag/indexing.py
+
+          - name: "Semantic search"
+            files:
+              - rag/search.py
+              - rag/retrieval.py
+              - rag/ranking.py
+
+          - name: "RAG orchestration"
+            files:
+              - rag/pipeline.py
+              - rag/cache.py
+              - rag/monitoring.py
+
+      # Evaluation Framework (0.5 days)
+      - category: evaluation
+        description: "Create AI evaluation framework"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Evaluation metrics"
+            count: 10
+            path: evaluations/
+            examples:
+              - prompt-quality-scorer.py
+              - rag-accuracy-tester.py
+              - cost-tracker.py
+
+          - name: "Test suites"
+            count: 20
+            path: evaluations/test_suites/
+            examples:
+              - odoo-operations-tests.json
+              - bir-compliance-tests.json
+              - expense-automation-tests.json
+
+    validation:
+      - All 50 prompts created and tested
+      - RAG pipeline functional with pgvector
+      - Evaluation framework measuring quality
+      - Documentation complete
+
+  # Agent 2: DevOps Engineer (2 days estimated)
+  - agent: devops
+    worktree: worktree-devops
+    branch: feature/devops-automation
+    description: "Build DevOps automation"
+    estimated_time: "2 days"
+
+    tasks:
+      # CI/CD Workflows (1 day)
+      - category: cicd
+        description: "Create 18 GitHub Actions workflows"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Core CI workflows"
+            count: 8
+            path: .github/workflows/
+            files:
+              - test.yml
+              - lint.yml
+              - build.yml
+              - deploy-dev.yml
+              - deploy-staging.yml
+              - deploy-prod.yml
+              - security-scan.yml
+              - dependency-update.yml
+
+          - name: "AI-specific workflows"
+            count: 5
+            files:
+              - prompt-validation.yml
+              - rag-indexing.yml
+              - eval-regression.yml
+              - skill-generation.yml
+              - cost-monitoring.yml
+
+          - name: "Odoo workflows"
+            count: 5
+            files:
+              - odoo-module-test.yml
+              - oca-compliance.yml
+              - visual-parity.yml
+              - migration-test.yml
+              - database-backup.yml
+
+      # Monitoring (0.5 days)
+      - category: monitoring
+        description: "Setup Prometheus + Grafana monitoring"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Monitoring configuration"
+            files:
+              - monitoring/prometheus.yml
+              - monitoring/grafana-dashboards.json
+              - monitoring/alert-rules.yml
+
+          - name: "Monitoring scripts"
+            count: 15
+            path: scripts/monitoring/
+            examples:
+              - odoo-health-check.sh
+              - superset-metrics.sh
+              - ai-cost-tracker.sh
+
+      # Auto-healing (0.5 days)
+      - category: auto_healing
+        description: "Implement auto-healing and recovery"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Auto-healing scripts"
+            count: 15
+            path: scripts/auto-healing/
+            examples:
+              - restart-odoo.sh
+              - clear-cache.sh
+              - database-recovery.sh
+
+    validation:
+      - All 18 workflows created and tested
+      - Monitoring dashboards functional
+      - Auto-healing tested in dev environment
+      - Documentation complete
+
+  # Agent 3: Documentation Writer (2 days estimated)
+  - agent: doc_writer
+    worktree: worktree-docs
+    branch: feature/documentation
+    description: "Create comprehensive documentation"
+    estimated_time: "2 days"
+
+    tasks:
+      # Knowledge Base (1 day)
+      - category: knowledge_base
+        description: "Create 100-page knowledge base"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Architecture documentation"
+            pages: 20
+            path: docs/architecture/
+            topics:
+              - System overview
+              - Component architecture
+              - Data flow diagrams
+              - Integration patterns
+
+          - name: "Development guides"
+            pages: 30
+            path: docs/guides/
+            topics:
+              - Odoo module development
+              - AI integration guide
+              - Superset dashboard creation
+              - Testing guide
+
+          - name: "Operations documentation"
+            pages: 30
+            path: docs/operations/
+            topics:
+              - Deployment procedures
+              - Monitoring guide
+              - Troubleshooting
+              - Backup and recovery
+
+          - name: "API documentation"
+            pages: 20
+            path: docs/api/
+            topics:
+              - REST API reference
+              - RPC functions
+              - Webhooks
+              - Authentication
+
+      # Runbooks (1 day)
+      - category: runbooks
+        description: "Create 25 operational runbooks"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Incident response runbooks"
+            count: 10
+            path: docs/runbooks/incidents/
+            examples:
+              - odoo-down.md
+              - database-connection-failure.md
+              - ai-service-error.md
+
+          - name: "Maintenance runbooks"
+            count: 10
+            path: docs/runbooks/maintenance/
+            examples:
+              - database-backup.md
+              - odoo-upgrade.md
+              - ssl-certificate-renewal.md
+
+          - name: "Operational runbooks"
+            count: 5
+            path: docs/runbooks/operations/
+            examples:
+              - month-end-closing-procedure.md
+              - bir-filing-checklist.md
+              - user-onboarding.md
+
+    validation:
+      - 100+ pages of documentation created
+      - All 25 runbooks complete and tested
+      - Documentation searchable
+      - Examples and screenshots included
+
+  # Agent 4: QA Engineer (2 days estimated)
+  - agent: qa_engineer
+    worktree: worktree-tests
+    branch: feature/testing
+    description: "Create comprehensive test suite"
+    estimated_time: "2 days"
+
+    tasks:
+      # Unit Tests (1 day)
+      - category: unit_tests
+        description: "Write 50 unit tests"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Odoo model tests"
+            count: 20
+            path: tests/unit/odoo/
+            coverage_target: "≥80%"
+
+          - name: "AI pipeline tests"
+            count: 15
+            path: tests/unit/ai/
+            coverage_target: "≥80%"
+
+          - name: "Utility tests"
+            count: 15
+            path: tests/unit/utils/
+            coverage_target: "≥80%"
+
+      # Integration Tests (0.5 days)
+      - category: integration_tests
+        description: "Create 10 integration tests"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "End-to-end workflows"
+            count: 10
+            path: tests/integration/
+            examples:
+              - month-end-closing-workflow.py
+              - expense-automation-flow.py
+              - bir-filing-workflow.py
+
+      # CI Integration (0.5 days)
+      - category: ci_integration
+        description: "Setup tests in CI"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "CI test configuration"
+            files:
+              - .github/workflows/test.yml (enhanced)
+              - pytest.ini
+              - .coveragerc
+              - tests/conftest.py
+
+    validation:
+      - 50+ unit tests passing
+      - 10+ integration tests passing
+      - CI integration working
+      - Coverage ≥80%
+
+  # Agent 5: Architect (1 day estimated)
+  - agent: architect
+    worktree: worktree-arch
+    branch: feature/architecture
+    description: "Document architecture decisions and patterns"
+    estimated_time: "1 day"
+
+    tasks:
+      # ADRs (0.5 days)
+      - category: adrs
+        description: "Write 15 Architecture Decision Records"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "ADRs"
+            count: 15
+            path: docs/adr/
+            examples:
+              - 0002-ai-pipeline-architecture.md
+              - 0003-vector-database-choice.md
+              - 0004-multi-agency-data-model.md
+              - 0005-caching-strategy.md
+
+      # Diagrams (0.3 days)
+      - category: diagrams
+        description: "Create 10 architecture diagrams"
+        estimated: "0.3 days"
+
+        deliverables:
+          - name: "System diagrams"
+            count: 10
+            path: docs/architecture/diagrams/
+            formats: [svg, png, drawio]
+            examples:
+              - system-overview.drawio
+              - data-flow.drawio
+              - deployment-topology.drawio
+              - integration-architecture.drawio
+
+      # Pattern Documentation (0.2 days)
+      - category: patterns
+        description: "Document 10 design patterns"
+        estimated: "0.2 days"
+
+        deliverables:
+          - name: "Pattern docs"
+            count: 10
+            path: docs/patterns/
+            examples:
+              - state-machine-pattern.md
+              - repository-pattern.md
+              - cqrs-pattern.md
+
+    validation:
+      - 15 ADRs created
+      - 10 diagrams complete
+      - 10 patterns documented
+      - All reviewed and approved
+
+# Merge Strategy
+merge_strategy:
+  type: auto_merge
+  order:
+    - worktree-arch    # Architecture first
+    - worktree-ai      # AI implementation
+    - worktree-devops  # DevOps setup
+    - worktree-tests   # Tests
+    - worktree-docs    # Documentation last
+
+  validation:
+    - All tests pass in each worktree
+    - No merge conflicts
+    - CI passes after each merge
+    - Code review approved
+
+  post_merge:
+    - Run full test suite
+    - Generate metrics report
+    - Create summary PR
+    - Notify team
+
+# Success Criteria
+success_criteria:
+  ai_engineer:
+    - 50 prompts created
+    - RAG pipeline functional
+    - Evaluation framework working
+
+  devops:
+    - 18 workflows created
+    - Monitoring dashboards live
+    - Auto-healing tested
+
+  doc_writer:
+    - 100+ pages documentation
+    - 25 runbooks complete
+
+  qa_engineer:
+    - 50+ unit tests passing
+    - 10+ integration tests passing
+    - Coverage ≥80%
+
+  architect:
+    - 15 ADRs created
+    - 10 diagrams complete
+    - Patterns documented
+
+# Timeline
+timeline:
+  total_estimated: "7 days"
+  parallel_execution: true
+  efficiency_gain: "5-7x faster than sequential"
+
+  milestones:
+    day_1:
+      - All worktrees created
+      - Agents started work
+
+    day_3:
+      - 50% completion target
+      - Mid-point sync
+
+    day_5:
+      - 80% completion target
+      - Review and adjustments
+
+    day_7:
+      - 100% completion
+      - Merge and validation
+      - Final delivery
+
+# Monitoring
+monitoring:
+  track:
+    - Task completion rate per agent
+    - Blockers and dependencies
+    - Quality metrics
+    - Timeline adherence
+
+  reporting:
+    - Daily progress updates
+    - Blocker alerts
+    - Quality gate results
+    - Final summary report
