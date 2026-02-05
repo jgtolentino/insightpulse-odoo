@@ -1,0 +1,284 @@
+# InsightPulseAI Service Inventory
+# Single Source of Truth for deployed services, apps, and URLs
+# Used by CI/CD for health checks, DNS validation, and deployment verification
+
+version: "1.0"
+updated: "2026-02-05"
+organization: "InsightPulseAI / TBWA-SMP"
+
+# Root domain
+domain: "insightpulseai.com"
+
+# Service categories
+services:
+  # Core Infrastructure
+  core:
+    - name: "Root Website"
+      url: "https://insightpulseai.com"
+      type: "web"
+      criticality: "high"
+      health_check:
+        method: "GET"
+        expected_status: [200, 301, 302]
+        timeout: 10
+      owner: "platform"
+      description: "Primary landing page and marketing site"
+    
+    - name: "Auth Gateway"
+      url: "https://auth.insightpulseai.com"
+      type: "auth"
+      criticality: "critical"
+      health_check:
+        method: "GET"
+        expected_status: [200, 401, 403]
+        timeout: 10
+      owner: "platform"
+      description: "SSO and authentication gateway"
+  
+  # ERP & Business Apps
+  erp:
+    - name: "Odoo ERP"
+      url: "https://erp.insightpulseai.com"
+      type: "app"
+      criticality: "critical"
+      health_check:
+        method: "GET"
+        expected_status: [200, 303]
+        timeout: 15
+      owner: "finance"
+      description: "Production ERP system (Odoo 19)"
+      runtime: "digitalocean"
+      compose_file: "runtime/odoo/docker-compose.yml"
+  
+  # Automation & Orchestration
+  automation:
+    - name: "n8n Workflows"
+      url: "https://n8n.insightpulseai.com"
+      type: "automation"
+      criticality: "high"
+      health_check:
+        method: "GET"
+        expected_status: [200, 401]
+        timeout: 10
+      owner: "platform"
+      description: "Workflow automation and integration platform"
+      runtime: "digitalocean"
+    
+    - name: "MCP Hub"
+      url: "https://mcp.insightpulseai.com"
+      type: "api"
+      criticality: "high"
+      health_check:
+        method: "GET"
+        expected_status: [200, 404]
+        timeout: 10
+      owner: "platform"
+      description: "Model Context Protocol hub and agent gateway"
+      runtime: "digitalocean"
+  
+  # Analytics & BI
+  analytics:
+    - name: "Apache Superset"
+      url: "https://superset.insightpulseai.com"
+      type: "bi"
+      criticality: "high"
+      health_check:
+        method: "GET"
+        expected_status: [200, 302]
+        timeout: 15
+      owner: "analytics"
+      description: "Business intelligence and data visualization"
+      runtime: "digitalocean"
+  
+  # Data Platform (external/managed)
+  data:
+    - name: "Supabase API"
+      url: "https://[project-ref].supabase.co"
+      type: "backend"
+      criticality: "critical"
+      health_check:
+        method: "GET"
+        path: "/rest/v1/"
+        expected_status: [200, 401]
+        timeout: 10
+      owner: "platform"
+      description: "Supabase database, auth, storage, edge functions"
+      runtime: "supabase-managed"
+      note: "Replace [project-ref] with actual Supabase project reference"
+
+# Email & Communications
+email:
+  transactional:
+    - name: "Mailgun Sending Domain"
+      domain: "mg.insightpulseai.com"
+      type: "email"
+      criticality: "high"
+      owner: "platform"
+      description: "Transactional email delivery"
+      dns_records:
+        - type: "TXT"
+          name: "mg.insightpulseai.com"
+          value: "v=spf1 include:mailgun.org ~all"
+        - type: "CNAME"
+          name: "email.mg.insightpulseai.com"
+          value: "mailgun.org"
+        - type: "CNAME"
+          name: "mta._domainkey.mg.insightpulseai.com"
+          value: "mta._domainkey.mailgun.org"
+  
+  mailboxes:
+    - name: "Zoho Mail"
+      domains: ["insightpulseai.com"]
+      type: "email"
+      criticality: "medium"
+      owner: "operations"
+      description: "Human mailboxes (business@, billing@, etc.)"
+      mailboxes:
+        - "business@insightpulseai.com"
+        - "billing@insightpulseai.com"
+        - "support@insightpulseai.com"
+
+# Frontend Apps (recommended/planned)
+frontends:
+  deployed:
+    # Add actual deployed frontends here
+  
+  planned:
+    - name: "Scout Dashboard"
+      url: "https://scout.insightpulseai.com"
+      type: "web"
+      criticality: "medium"
+      description: "Retail analytics and AI BI Genie"
+      runtime: "vercel"
+      status: "planned"
+    
+    - name: "CES Intelligence"
+      url: "https://ces.insightpulseai.com"
+      type: "web"
+      criticality: "medium"
+      description: "LIONS intelligence dashboard"
+      runtime: "vercel"
+      status: "planned"
+
+# Infrastructure Metadata
+infrastructure:
+  dns_provider: "digitalocean"  # or cloudflare, route53, etc.
+  primary_region: "sgp1"  # DigitalOcean Singapore
+  backup_region: "nyc3"   # DigitalOcean New York
+  
+  monitoring:
+    uptime: "UptimeRobot"  # or equivalent
+    apm: "Sentry"
+    logs: "DigitalOcean Monitoring"
+  
+  ssl:
+    provider: "Let's Encrypt"
+    renewal: "automatic"
+  
+  backup:
+    frequency: "daily"
+    retention: "30d"
+    destinations:
+      - "DigitalOcean Spaces"
+      - "Supabase automated backups"
+
+# Deployment Targets
+deployment_targets:
+  digitalocean:
+    droplets:
+      - name: "erp-prod"
+        services: ["Odoo ERP"]
+        size: "s-4vcpu-8gb"
+        region: "sgp1"
+      
+      - name: "automation-prod"
+        services: ["n8n", "MCP Hub"]
+        size: "s-2vcpu-4gb"
+        region: "sgp1"
+      
+      - name: "analytics-prod"
+        services: ["Apache Superset"]
+        size: "s-2vcpu-4gb"
+        region: "sgp1"
+  
+  vercel:
+    projects:
+      - name: "insightpulse-landing"
+        domain: "insightpulseai.com"
+        framework: "nextjs"
+      
+      # Add Scout, CES when deployed
+  
+  supabase:
+    projects:
+      - name: "insightpulse-prod"
+        region: "Southeast Asia (Singapore)"
+        plan: "Pro"
+        services:
+          - "Database"
+          - "Auth"
+          - "Storage"
+          - "Edge Functions"
+
+# Health Check Configuration
+health_check_defaults:
+  timeout: 10  # seconds
+  retries: 3
+  retry_delay: 5  # seconds
+  user_agent: "InsightPulseAI-HealthCheck/1.0"
+  follow_redirects: true
+  verify_ssl: true
+
+# Alerting Rules
+alerting:
+  channels:
+    - type: "slack"
+      webhook: "${SLACK_WEBHOOK_URL}"
+    
+    - type: "email"
+      recipients:
+        - "ops@insightpulseai.com"
+  
+  rules:
+    - name: "Critical Service Down"
+      condition: "criticality == 'critical' && status != 200"
+      action: "page_oncall"
+    
+    - name: "High Priority Service Degraded"
+      condition: "criticality == 'high' && response_time > 5s"
+      action: "notify_team"
+    
+    - name: "SSL Certificate Expiring"
+      condition: "ssl_expiry < 30d"
+      action: "notify_ops"
+
+# Compliance & Governance
+compliance:
+  data_residency: "Singapore (primary), US East (backup)"
+  gdpr_compliant: true
+  soc2_target: "2026-Q3"
+  
+  security:
+    secrets_management: "GitHub Secrets, Supabase Vault"
+    access_control: "SSO + 2FA required"
+    audit_logging: "enabled"
+
+# Change Management
+change_management:
+  deploy_windows:
+    production: "Mon-Thu 10:00-16:00 SGT"
+    maintenance: "Sat 02:00-06:00 SGT"
+  
+  approval_required:
+    - "erp"
+    - "auth"
+    - "data"
+  
+  rollback_sla: "< 30 minutes"
+
+# Documentation
+documentation:
+  runbooks: "docs/runbooks/"
+  architecture: "ARCHITECTURE.md"
+  deployment: "DEPLOYMENT_GUIDE.md"
+  monitoring: "MONITORING.md"
