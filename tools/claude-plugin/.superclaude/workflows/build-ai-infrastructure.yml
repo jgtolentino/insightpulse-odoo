@@ -1,0 +1,236 @@
+# Build AI Infrastructure Workflow
+# Focused workflow for AI/LLM capabilities
+# Parallel execution with 3 agents
+
+workflow:
+  name: build_ai_infrastructure
+  description: "Build AI/LLM infrastructure components"
+  version: 1.0.0
+  parallel: true
+  estimated_time: "2-3 days"
+  agents_used: 3
+
+# Prerequisites
+prerequisites:
+  - Bootstrap workflow completed
+  - pgvector extension installed in PostgreSQL
+  - OpenAI API key configured
+  - Anthropic API key configured (optional)
+
+# Parallel agent tasks
+agents:
+  # Agent 1: AI Engineer (Primary)
+  - agent: ai_engineer
+    worktree: worktree-ai-infra
+    branch: feature/ai-infrastructure
+    description: "Build core AI/LLM infrastructure"
+    estimated_time: "2 days"
+
+    tasks:
+      # Prompt Engineering (1 day)
+      - category: prompt_templates
+        description: "Create production-ready prompt library"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Document extraction prompts"
+            path: prompts/templates/document-extraction/
+            files:
+              - receipt-parser.md
+              - invoice-extractor.md
+              - bir-form-reader.md
+              - contract-analyzer.md
+
+          - name: "Classification prompts"
+            path: prompts/templates/classification/
+            files:
+              - expense-category.md
+              - vendor-classification.md
+              - document-type-classifier.md
+
+          - name: "Generation prompts"
+            path: prompts/templates/generation/
+            files:
+              - journal-entry-description.md
+              - expense-justification.md
+              - month-end-summary.md
+
+      # RAG Pipeline (0.5 days)
+      - category: rag_pipeline
+        description: "Implement RAG with pgvector"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Vector store setup"
+            files:
+              - context-engineering/rag/vector-stores/pgvector-config.sql
+              - context-engineering/rag/embeddings/openai-ada-002.py
+
+          - name: "RAG pipelines"
+            files:
+              - context-engineering/rag/pipelines/simple-rag.py
+              - context-engineering/rag/pipelines/conversational-rag.py
+
+      # Evaluation Framework (0.5 days)
+      - category: evaluation
+        description: "Create AI evaluation framework"
+        estimated: "0.5 days"
+
+        deliverables:
+          - name: "Evaluation datasets"
+            count: 3
+            path: evals/datasets/
+            examples:
+              - receipt-extraction/test-cases.json
+              - bir-compliance/validation-rules.json
+              - expense-classification/labeled-expenses.csv
+
+          - name: "Metrics & benchmarks"
+            files:
+              - evals/metrics/accuracy/exact-match.py
+              - evals/benchmarks/ocr-benchmark.py
+
+    validation:
+      - All prompt templates created
+      - RAG pipeline functional
+      - Evaluation framework working
+      - CI integration complete
+
+  # Agent 2: DevOps Engineer (Supporting)
+  - agent: devops
+    worktree: worktree-ai-devops
+    branch: feature/ai-devops
+    description: "Setup AI infrastructure"
+    estimated_time: "1 day"
+
+    tasks:
+      # Vector Database Setup
+      - category: vector_db
+        description: "Setup pgvector in PostgreSQL"
+        estimated: "0.3 days"
+
+        deliverables:
+          - name: "Database setup"
+            files:
+              - infrastructure/postgres/extensions/pgvector.sql
+              - infrastructure/postgres/init-scripts/create-vector-tables.sql
+
+      # AI Observability
+      - category: observability
+        description: "Setup AI-specific monitoring"
+        estimated: "0.4 days"
+
+        deliverables:
+          - name: "AI metrics collection"
+            files:
+              - ai-observability/metrics/token-usage-tracker.py
+              - ai-observability/metrics/cost-tracker.py
+              - ai-observability/metrics/latency-tracker.py
+
+          - name: "AI dashboards"
+            files:
+              - ai-observability/dashboards/llm-performance.json
+              - ai-observability/dashboards/rag-quality.json
+
+      # Guardrails
+      - category: guardrails
+        description: "Implement AI safety guardrails"
+        estimated: "0.3 days"
+
+        deliverables:
+          - name: "Input validation"
+            files:
+              - guardrails/input-validation/prompt-injection-detector.py
+              - guardrails/input-validation/pii-detector.py
+
+          - name: "Output validation"
+            files:
+              - guardrails/output-validation/hallucination-detector.py
+
+    validation:
+      - pgvector installed and tested
+      - AI metrics tracked
+      - Guardrails functional
+
+  # Agent 3: Documentation Writer (Supporting)
+  - agent: doc_writer
+    worktree: worktree-ai-docs
+    branch: feature/ai-documentation
+    description: "Document AI infrastructure"
+    estimated_time: "1 day"
+
+    tasks:
+      # AI Documentation
+      - category: documentation
+        description: "Create comprehensive AI documentation"
+        estimated: "1 day"
+
+        deliverables:
+          - name: "Prompt engineering guide"
+            files:
+              - prompts/PROMPT_ENGINEERING_GUIDE.md
+
+          - name: "RAG architecture docs"
+            files:
+              - context-engineering/CONTEXT_STRATEGY.md
+
+          - name: "Evaluation methodology"
+            files:
+              - evals/EVALUATION_STRATEGY.md
+
+          - name: "API documentation"
+            files:
+              - docs/api/ai-endpoints.md
+
+    validation:
+      - All guides complete
+      - Examples included
+      - API documented
+
+# Integration Steps
+integration:
+  # Integrate with existing Odoo modules
+  - name: Connect to expense_automation
+    description: "Use OCR prompts in expense module"
+    actions:
+      - Import receipt-parser prompt
+      - Setup RAG for policy lookup
+      - Add evaluation in CI
+
+  - name: Connect to bir_compliance
+    description: "Use BIR form prompts"
+    actions:
+      - Import bir-form-reader prompt
+      - Setup validation pipeline
+      - Add compliance metrics
+
+# Success Criteria
+success_criteria:
+  ai_engineer:
+    - ≥15 prompt templates created
+    - RAG pipeline returning relevant results
+    - Evaluation framework operational
+    - CI/CD integration complete
+
+  devops:
+    - pgvector installed and indexed
+    - AI metrics dashboards live
+    - Guardrails blocking malicious inputs
+
+  doc_writer:
+    - Prompt engineering guide complete
+    - RAG architecture documented
+    - API docs published
+
+# Cost Budget
+budget:
+  openai_api:
+    monthly_limit: $500
+    monitoring: token-usage-tracker.py
+    alerts: cost-spike.yml
+
+  infrastructure:
+    compute: Included in existing
+    storage: +100GB for vector embeddings
+
+  total_monthly: $500

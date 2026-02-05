@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_{{ model_name.replace('.', '_') }}_search" model="ir.ui.view">
+        <field name="name">{{ model_name }}.search</field>
+        <field name="model">{{ model_name }}</field>
+        <field name="arch" type="xml">
+            <search string="{{ view.title | default(model_name.replace('.', ' ').title()) }}">
+                {% for field in view.search_fields | default([]) %}
+                <field name="{{ field.name }}"{% if field.filter_domain %} filter_domain="{{ field.filter_domain }}"{% endif %}/>
+                {% endfor %}
+
+                {% if view.filters %}
+                <separator/>
+                {% for filter in view.filters %}
+                <filter string="{{ filter.string }}" name="{{ filter.name }}" domain="{{ filter.domain }}"/>
+                {% endfor %}
+                {% endif %}
+
+                {% if view.group_by %}
+                <group expand="0" string="Group By">
+                    {% for group in view.group_by %}
+                    <filter string="{{ group.string }}" name="{{ group.name }}" context="{'group_by':'{{ group.field }}'}"/>
+                    {% endfor %}
+                </group>
+                {% endif %}
+            </search>
+        </field>
+    </record>
+</odoo>

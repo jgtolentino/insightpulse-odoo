@@ -1,0 +1,61 @@
+# Guardrail: Custom Field Propagation
+id: GR-CUSTOM-005
+name: Ensure custom fields propagate across related models
+severity: medium
+module: studio
+category: custom_field_error
+
+trigger:
+  - custom_field_creation
+  - studio_customization
+  - field_inheritance
+
+condition:
+  description: Custom fields not appearing in related records or views
+  detection:
+    - check_field_in_model: true
+    - verify_field_in_views: true
+    - check_related_model_access: true
+    - validate_compute_dependencies: true
+
+prevention:
+  enforce:
+    - add field to relevant views (form, tree, search)
+    - update security access rights if needed
+    - propagate to related models when applicable
+    - add @api.depends for computed fields
+
+reason: >
+  Custom fields often don't appear because they're added to the model
+  but not to the views, or security access isn't granted,
+  or they need to be propagated to related models.
+
+autopatch: propagate_custom_field
+
+documentation_url: https://www.odoo.com/forum/help-1/custom-field-not-showing
+
+impact:
+  business: Missing data in reports and forms
+  users: All users of the customized module
+  fix_complexity: low
+
+example_code: |
+  # In your model
+  class SaleOrder(models.Model):
+      _inherit = 'sale.order'
+
+      custom_field = fields.Char('Custom Field')
+
+  # Don't forget to add to views!
+  <record id="view_order_form_inherit" model="ir.ui.view">
+      <field name="model">sale.order</field>
+      <field name="inherit_id" ref="sale.view_order_form"/>
+      <field name="arch" type="xml">
+          <field name="partner_id" position="after">
+              <field name="custom_field"/>
+          </field>
+      </field>
+  </record>
+
+  # And security if needed
+  # In ir.model.access.csv, ensure the field's model has read/write access

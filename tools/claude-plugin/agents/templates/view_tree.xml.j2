@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_{{ model_name.replace('.', '_') }}_tree" model="ir.ui.view">
+        <field name="name">{{ model_name }}.tree</field>
+        <field name="model">{{ model_name }}</field>
+        <field name="arch" type="xml">
+            <tree string="{{ view.title | default(model_name.replace('.', ' ').title()) }}"{% if view.editable %} editable="{{ view.editable }}"{% endif %}>
+                {% for field in view.fields | default([]) %}
+                <field name="{{ field.name }}"{% if field.widget %} widget="{{ field.widget }}"{% endif %}{% if field.optional %} optional="{{ field.optional }}"{% endif %}/>
+                {% endfor %}
+            </tree>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,78 @@
+version: '3.8'
+
+services:
+  skills-runner:
+    build:
+      context: ..
+      dockerfile: agents/Dockerfile.skills
+    image: insightpulseai/skills-runner:latest
+    container_name: ipai-skills-runner
+    volumes:
+      # Mount repository for live testing
+      - ..:/app
+      # Mount Anthropic skills
+      - ../anthropic_skills:/app/anthropic_skills:ro
+    environment:
+      # Visual Compliance Knowledge Graph (optional)
+      - VISUAL_KG_SUPABASE_URL=${VISUAL_KG_SUPABASE_URL:-}
+      - VISUAL_KG_SUPABASE_KEY=${VISUAL_KG_SUPABASE_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+
+      # Supabase configuration (for RAG-enhanced skills)
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+
+      # Python environment
+      - PYTHONPATH=/app
+      - PYTHONUNBUFFERED=1
+    working_dir: /app
+    networks:
+      - skills-network
+    command: python3 -m agents.run_skill --list
+
+  # CI runner for automated checks
+  skills-ci:
+    build:
+      context: ..
+      dockerfile: agents/Dockerfile.skills
+    image: insightpulseai/skills-runner:latest
+    container_name: ipai-skills-ci
+    volumes:
+      - ..:/app
+    environment:
+      - PYTHONPATH=/app
+      - CI=true
+    working_dir: /app
+    networks:
+      - skills-network
+    profiles:
+      - ci
+    command: |
+      sh -c "
+      echo '=== Running Fast Check Profile ===' &&
+      python3 -m agents.run_skill --profile fast_check --repo-path . --json
+      "
+
+  # Profile runners (can be used in CI/CD)
+  skills-fast-check:
+    extends: skills-ci
+    container_name: ipai-fast-check
+    command: python3 -m agents.run_skill --profile fast_check --repo-path . --json
+
+  skills-full-compliance:
+    extends: skills-ci
+    container_name: ipai-full-compliance
+    command: python3 -m agents.run_skill --profile full_compliance --repo-path . --json
+
+  skills-rag-compliance:
+    extends: skills-ci
+    container_name: ipai-rag-compliance
+    environment:
+      - PYTHONPATH=/app
+      - VISUAL_KG_SUPABASE_URL=${VISUAL_KG_SUPABASE_URL}
+      - VISUAL_KG_SUPABASE_KEY=${VISUAL_KG_SUPABASE_KEY}
+    command: python3 -m agents.run_skill --profile rag_full_compliance --repo-path . --json
+
+networks:
+  skills-network:
+    driver: bridge

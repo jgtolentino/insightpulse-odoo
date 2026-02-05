@@ -1,0 +1,171 @@
+# SAP Process Intelligence Executor Agent
+# Agent definition for SAP process mining and predictive analytics
+
+name: sap-executor
+version: 0.1.0
+description: |
+  Specialized agent for SAP Process Intelligence operations. Executes process mining,
+  variant analysis, bottleneck detection, and KPI prediction across SAP S/4HANA and
+  integrated ERP systems.
+
+role: sap_process_intelligence_executor
+
+capabilities:
+  - sap_event_extraction
+  - process_variant_analysis
+  - bottleneck_detection
+  - kpi_prediction
+  - process_visualization
+  - conformance_checking
+
+skills:
+  - sap_process_intelligence
+  - drawio_adapter
+
+tools:
+  - name: extract_process_events
+    skill: sap_process_intelligence
+    entrypoint: extract_process_events
+    description: Extract event logs from SAP via OData/BAPI
+
+  - name: correlate_variants
+    skill: sap_process_intelligence
+    entrypoint: correlate_variants
+    description: Identify process variants and deviations
+
+  - name: predict_kpi
+    skill: sap_process_intelligence
+    entrypoint: predict_kpi
+    description: Predict throughput, delay, or anomaly risk
+
+  - name: analyze_bottlenecks
+    skill: sap_process_intelligence
+    entrypoint: analyze_bottlenecks
+    description: Identify process bottlenecks and resource constraints
+
+  - name: generate_process_map
+    skill: sap_process_intelligence
+    entrypoint: generate_process_map
+    description: Generate visual process map from event traces
+
+  - name: create_process_diagram
+    skill: drawio_adapter
+    entrypoint: create_from_process_events
+    description: Create Draw.io diagram from process events
+
+  - name: export_diagram
+    skill: drawio_adapter
+    entrypoint: export_diagram
+    description: Export diagram to PNG/SVG/PDF
+
+security:
+  authentication: sap_bot_user
+  authorization: role_based
+  data_classification: confidential
+  audit_logging: enabled
+  encryption: AES-256
+  compliance:
+    - SOC2
+    - GDPR
+    - ISO27001
+
+execution:
+  runtime: python3.11
+  memory_limit: 2Gi
+  timeout: 300s
+  concurrency: 5
+  retry_policy:
+    max_attempts: 3
+    backoff_multiplier: 2
+    max_backoff: 60s
+
+environment:
+  SAP_ODATA_ENDPOINT: ${SAP_ODATA_ENDPOINT}
+  SAP_BAPI_ENDPOINT: ${SAP_BAPI_ENDPOINT}
+  SAP_CLIENT: ${SAP_CLIENT:-001}
+  SAP_LANGUAGE: ${SAP_LANGUAGE:-EN}
+  SUPABASE_URL: ${SUPABASE_URL}
+  SUPABASE_KEY: ${SUPABASE_SERVICE_ROLE_KEY}
+  DRAWIO_CLI_PATH: ${DRAWIO_CLI_PATH:-/usr/local/bin/draw.io}
+
+dependencies:
+  python:
+    - pydantic>=2.0.0
+    - requests>=2.31.0
+    - lxml>=4.9.0
+    - pandas>=2.0.0
+    - numpy>=1.24.0
+  system:
+    - drawio
+
+monitoring:
+  metrics:
+    - event_extraction_count
+    - variant_analysis_duration
+    - prediction_accuracy
+    - bottleneck_detection_rate
+  alerts:
+    - type: error_rate
+      threshold: 5%
+      window: 5m
+    - type: latency
+      threshold: 30s
+      window: 5m
+
+workflows:
+  - name: procure_to_pay_analysis
+    description: Complete P2P process analysis
+    steps:
+      - extract_process_events:
+          process_type: PROCURE_TO_PAY
+      - correlate_variants
+      - analyze_bottlenecks
+      - predict_kpi:
+          kpi_type: delay
+      - generate_process_map:
+          output_format: mermaid
+      - create_process_diagram
+      - export_diagram:
+          format: png
+
+  - name: order_to_cash_analysis
+    description: Complete O2C process analysis
+    steps:
+      - extract_process_events:
+          process_type: ORDER_TO_CASH
+      - correlate_variants
+      - analyze_bottlenecks
+      - predict_kpi:
+          kpi_type: throughput
+      - generate_process_map:
+          output_format: bpmn
+
+examples:
+  - name: analyze_purchase_orders
+    description: Analyze purchase order process for bottlenecks
+    input:
+      process_id: PO_4500012345
+      date_range: 2025-01-01/2025-01-31
+    expected_output:
+      variants: 5
+      bottlenecks: 2
+      avg_duration: 432000  # seconds
+
+  - name: predict_invoice_delay
+    description: Predict invoice processing delays
+    input:
+      process_type: RECORD_TO_REPORT
+      kpi_type: delay
+    expected_output:
+      predicted_delay_hours: 48
+      confidence: 0.85
+
+metadata:
+  author: InsightPulse AI
+  created: 2025-11-08
+  updated: 2025-11-08
+  tags:
+    - sap
+    - process-mining
+    - predictive-analytics
+    - erp

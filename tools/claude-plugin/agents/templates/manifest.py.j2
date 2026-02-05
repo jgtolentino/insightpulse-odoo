@@ -1,0 +1,17 @@
+# -*- coding: utf-8 -*-
+{
+    'name': '{{ manifest.name }}',
+    'version': '{{ manifest.version }}',
+    'summary': '{{ manifest.summary }}',
+    'author': '{{ manifest.author }}',
+    'license': '{{ manifest.license }}',
+    'category': '{{ manifest.category }}',
+    'depends': {{ manifest.depends }},
+    'data': {{ manifest.data }},
+    {% if manifest.demo %}
+    'demo': {{ manifest.demo }},
+    {% endif %}
+    'installable': {{ manifest.installable }},
+    'application': {{ manifest.application }},
+    'auto_install': {{ manifest.auto_install }},
+}

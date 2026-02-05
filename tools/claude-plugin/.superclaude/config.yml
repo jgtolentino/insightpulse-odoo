@@ -1,0 +1,538 @@
+# SuperClaude Multi-Agent Framework Configuration
+# Project: InsightPulse Odoo 19.0 Finance SSC
+# Version: 1.0.0
+
+superclaude:
+  version: 1.0.0
+  project: insightpulse-odoo
+  description: "Multi-agency Finance SSC with Odoo 19.0, Superset BI, and AI automation"
+
+  # User context (always applied)
+  user:
+    name: Jake Tolentino
+    role: Finance SSC Manager / Odoo Developer
+    agencies: [RIM, CKVC, BOM, JPAL, JLI, JAP, LAS, RMQB]
+    infrastructure:
+      digitalocean_project: 29cde7a1-8280-46ad-9fdf-dea7b21a7825
+      supabase_project: spdtwktxdalcfigzeqrz
+      odoobo_expert: https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run
+      pulse_hub_web: https://pulse-hub-web-an645.ondigitalocean.app
+
+# Agent Definitions
+agents:
+  architect:
+    name: Repository Architect
+    description: "Designs repo structure, makes architecture decisions, creates ADRs"
+    role: architect
+    expertise_level: Expert
+
+    # Skills this agent can use
+    skills:
+      primary:
+        - repo-architect-ai-engineer
+        - odoo-agile-scrum-devops
+      secondary:
+        - drawio-diagrams-enhanced
+        - pmbok-project-management
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+      - https://github.com/OCA/OpenUpgrade
+
+    # Capabilities
+    capabilities:
+      - Design repository structure
+      - Make architecture decisions
+      - Create ADRs (Architecture Decision Records)
+      - Define technical standards
+      - Review code architecture
+      - Plan technical roadmap
+      - Design database upgrade strategies
+      - Design Odoo module architecture
+      - Design low-code Studio customizations
+      - Design automated workflow actions
+
+    # Tools this agent prefers
+    preferred_tools:
+      - Read
+      - Write
+      - Glob
+      - Grep
+      - Bash
+
+    # When this agent auto-activates
+    triggers:
+      keywords: [architecture, design, structure, adr, technical-decision]
+      file_patterns: ["docs/adr/*.md", "docs/architecture/*.md"]
+      complexity_threshold: 0.8
+
+  ai_engineer:
+    name: AI/LLM Engineer
+    description: "Builds prompt templates, RAG pipelines, evaluation frameworks"
+    role: ai_engineer
+    expertise_level: Expert
+
+    skills:
+      primary:
+        - mcp-complete-guide
+        - mcp-builder
+        - supabase-rpc-manager
+      secondary:
+        - neon-database-architect
+        - librarian-indexer
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+
+    capabilities:
+      - Build prompt templates
+      - Design RAG pipelines
+      - Create evaluation frameworks
+      - Setup vector databases
+      - Integrate LLM APIs
+      - Build AI workflows
+      - Integrate AI with Odoo modules
+      - Design AI-driven automated actions
+
+    preferred_tools:
+      - Read
+      - Write
+      - Edit
+      - Bash
+
+    triggers:
+      keywords: [prompt, rag, llm, ai, embedding, vector]
+      file_patterns: ["prompts/**/*.md", "ai/**/*.py"]
+
+  devops:
+    name: DevOps Engineer
+    description: "Infrastructure as Code, CI/CD, monitoring, auto-healing"
+    role: devops
+    expertise_level: Expert
+
+    skills:
+      primary:
+        - odoo-agile-scrum-devops
+      secondary:
+        - supabase-automation
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
+      - https://github.com/OCA/OpenUpgrade
+
+    capabilities:
+      - Write IaC (Terraform, Docker)
+      - Build CI/CD pipelines
+      - Setup monitoring (Prometheus, Grafana)
+      - Implement auto-healing
+      - Configure load balancers
+      - Manage secrets
+      - Execute Odoo database upgrades
+      - Deploy Odoo modules and addons
+      - Configure Odoo mobile administration
+      - Manage Odoo.sh deployments
+
+    preferred_tools:
+      - Bash
+      - Write
+      - Edit
+      - Read
+
+    triggers:
+      keywords: [deploy, docker, ci/cd, terraform, monitoring, infrastructure]
+      file_patterns: [".github/workflows/*.yml", "infrastructure/**/*", "Dockerfile*"]
+
+  doc_writer:
+    name: Documentation Specialist
+    description: "Technical writing, knowledge management, runbooks"
+    role: doc_writer
+    expertise_level: Intermediate
+
+    skills:
+      primary:
+        - docx
+        - technical-writer
+      secondary:
+        - drawio-diagrams-enhanced
+        - pmbok-project-management
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/administration/mobile.html
+
+    capabilities:
+      - Write technical documentation
+      - Create runbooks
+      - Build knowledge base
+      - Generate API docs
+      - Write user guides
+      - Create training materials
+      - Document Odoo modules and customizations
+      - Document Studio customizations
+      - Document mobile app configurations
+
+    preferred_tools:
+      - Write
+      - Edit
+      - Read
+
+    triggers:
+      keywords: [document, runbook, guide, wiki, readme, manual]
+      file_patterns: ["docs/**/*.md", "README*.md", "runbooks/**/*"]
+
+  qa_engineer:
+    name: QA Engineer
+    description: "Testing frameworks, benchmarks, CI integration"
+    role: qa_engineer
+    expertise_level: Intermediate
+
+    skills:
+      primary:
+        - audit-skill
+      secondary:
+        - odoo-agile-scrum-devops
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://github.com/OCA/OpenUpgrade
+      - https://github.com/OCA/openupgradelib
+
+    capabilities:
+      - Write unit tests
+      - Create integration tests
+      - Build benchmarks
+      - Setup CI testing
+      - Generate test reports
+      - Define quality gates
+      - Test database upgrade procedures
+      - Test Odoo modules and customizations
+      - Test OpenUpgrade migration scripts
+
+    preferred_tools:
+      - Write
+      - Bash
+      - Read
+
+    triggers:
+      keywords: [test, testing, benchmark, quality, ci-test]
+      file_patterns: ["tests/**/*.py", "test_*.py", "*_test.py"]
+
+  finance_specialist:
+    name: Finance SSC Specialist
+    description: "Philippine BIR compliance, multi-agency workflows, month-end closing"
+    role: finance_specialist
+    expertise_level: Expert
+
+    skills:
+      primary:
+        - odoo-finance-automation
+        - bir-tax-filing
+      secondary:
+        - multi-agency-orchestrator
+        - procurement-sourcing
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+      - https://www.odoo.com/documentation/18.0/developer/howtos/upgrade_custom_db.html
+      - https://www.odoo.com/documentation/18.0/applications/studio.html
+      - https://www.odoo.com/documentation/18.0/applications/studio/automated_actions.html
+
+    capabilities:
+      - BIR form automation (1601-C, 2550Q, 1702-RT)
+      - Month-end closing workflows
+      - Multi-agency reconciliation
+      - Financial reporting
+      - Tax compliance validation
+      - Expense automation
+      - Upgrade Finance SSC custom modules
+      - Develop custom Odoo financial modules
+      - Build automated financial workflows with Studio
+
+    preferred_tools:
+      - Read
+      - Write
+      - Edit
+      - Bash
+
+    triggers:
+      keywords: [bir, tax, 1601-c, 2550q, month-end, closing, agency, finance]
+      file_patterns: ["custom/finance_ssc/**/*", "addons/bir_*/**/*"]
+
+  bi_architect:
+    name: Business Intelligence Architect
+    description: "Apache Superset dashboards, SQL optimization, data modeling"
+    role: bi_architect
+    expertise_level: Expert
+
+    skills:
+      primary:
+        - superset-dashboard-automation
+        - superset-chart-builder
+        - superset-sql-developer
+      secondary:
+        - neon-database-architect
+        - database-optimizer
+
+    # Reference documentation
+    reference_docs:
+      - https://www.odoo.com/documentation/18.0/developer/reference.html
+
+    capabilities:
+      - Design Superset dashboards
+      - Optimize SQL queries
+      - Create data models
+      - Build analytics views
+      - Setup RLS policies
+      - Generate chart configurations
+      - Query Odoo database for BI analytics
+
+    preferred_tools:
+      - Read
+      - Write
+      - Bash
+
+    triggers:
+      keywords: [superset, dashboard, sql, analytics, bi, chart]
+      file_patterns: ["superset/**/*", "analytics/**/*.sql"]
+
+# Parallel Execution Settings
+parallel_execution:
+  enabled: true
+  max_concurrent: 5
+
+  # Use git worktrees for parallel work
+  work_trees:
+    enabled: true
+    base_path: .worktrees/
+    auto_cleanup: true
+
+  # Coordination strategy
+  coordination:
+    mode: auto  # auto | manual | sequential
+    conflict_resolution: merge  # merge | pick-best | prompt
+    merge_strategy: auto  # auto | manual | squash
+
+# Shared Memory (cross-agent state)
+shared_memory:
+  type: file  # file | redis | postgres
+  path: .superclaude/shared-context/
+  ttl: 3600  # seconds
+
+  # What gets shared
+  shared_data:
+    - project_context
+    - architecture_decisions
+    - recent_changes
+    - active_tasks
+    - blockers
+
+# Workflow Definitions
+workflows:
+  # Bootstrap workflow (first-time setup)
+  bootstrap:
+    description: "Initialize SuperClaude framework and generate initial skills"
+    parallel: false
+    steps:
+      - agent: architect
+        task: "Design initial repository structure"
+        output: docs/architecture/repo-structure.md
+
+      - agent: ai_engineer
+        task: "Setup librarian-indexer and generate initial skills"
+        parallel: true
+
+      - agent: doc_writer
+        task: "Create documentation structure and README"
+        parallel: true
+
+      - agent: devops
+        task: "Create Makefile and initial IaC templates"
+        parallel: true
+
+  # Parallel build (build everything at once)
+  build_full_stack:
+    description: "Build entire system in parallel with 5 agents"
+    parallel: true
+    steps:
+      - agent: ai_engineer
+        work_tree: worktree-ai
+        tasks:
+          - Create 50 prompt templates
+          - Build RAG pipeline with pgvector
+          - Setup evaluation framework
+        estimated: 2 days
+
+      - agent: devops
+        work_tree: worktree-devops
+        tasks:
+          - Write 18 CI/CD workflows
+          - Setup Prometheus + Grafana monitoring
+          - Implement auto-healing scripts
+        estimated: 2 days
+
+      - agent: doc_writer
+        work_tree: worktree-docs
+        tasks:
+          - Create 100-page knowledge base
+          - Write 25 runbooks
+          - Generate API documentation
+        estimated: 2 days
+
+      - agent: qa_engineer
+        work_tree: worktree-tests
+        tasks:
+          - Write 50 unit tests
+          - Create 10 integration tests
+          - Setup CI test integration
+        estimated: 2 days
+
+      - agent: architect
+        work_tree: worktree-arch
+        tasks:
+          - Write 15 ADRs
+          - Create 10 architecture diagrams
+          - Document design patterns
+        estimated: 1 day
+
+    merge_strategy: auto
+    post_merge:
+      - Index all generated skills
+      - Validate CI passes
+      - Generate final summary
+
+  # Build AI infrastructure (focused workflow)
+  build_ai_infrastructure:
+    description: "Build AI/LLM infrastructure components"
+    parallel: true
+    steps:
+      - agent: ai_engineer
+        tasks:
+          - Design prompt template system
+          - Build RAG pipeline
+          - Setup vector database
+          - Create evaluation framework
+
+      - agent: devops
+        tasks:
+          - Deploy vector database
+          - Setup LLM API connections
+          - Configure monitoring
+
+      - agent: doc_writer
+        tasks:
+          - Document prompt engineering guide
+          - Create RAG architecture docs
+          - Write evaluation methodology
+
+# Quality Gates
+quality_gates:
+  enabled: true
+
+  # Pre-execution checks
+  pre_execution:
+    - check_git_clean: true
+    - validate_agents: true
+    - check_dependencies: true
+
+  # Post-execution checks
+  post_execution:
+    - run_tests: true
+    - check_lint: true
+    - validate_merge: true
+
+  # Failure handling
+  on_failure:
+    action: rollback  # rollback | prompt | continue
+    notify: true
+
+# Monitoring & Logging
+monitoring:
+  enabled: true
+  log_level: INFO
+  log_path: .superclaude/logs/
+
+  # Metrics to track
+  metrics:
+    - agent_execution_time
+    - task_completion_rate
+    - parallel_efficiency
+    - skill_usage_frequency
+
+  # Export metrics to
+  export:
+    - console
+    - file: .superclaude/metrics.json
+
+# Performance Optimization
+optimization:
+  # Caching
+  cache:
+    enabled: true
+    directory: .superclaude/cache/
+    ttl: 86400  # 24 hours
+
+  # Parallelization
+  parallelization:
+    auto_detect: true
+    max_workers: 5
+    batch_size: 10
+
+  # Resource limits
+  resource_limits:
+    max_memory_mb: 4096
+    max_cpu_percent: 80
+    timeout_seconds: 3600
+
+# Integration with Existing Tools
+integrations:
+  # Git worktrees for parallel work
+  git:
+    worktrees_enabled: true
+    auto_commit: false
+    auto_push: false
+
+  # Skill system
+  skills:
+    auto_load: true
+    skills_dir: skills/
+    index_file: skills/INDEX.json
+
+  # MCP servers (when available)
+  mcp:
+    enabled: true
+    servers:
+      - supabase
+      - github
+
+  # External agents
+  external_agents:
+    odoobo_expert:
+      url: https://wr2azp5dsl6mu6xvxtpglk5v.agents.do-ai.run
+      capabilities: [odoo-deployment, module-testing, oca-compliance]
+
+# Notifications
+notifications:
+  enabled: true
+  channels:
+    - console
+
+  events:
+    - workflow_start
+    - workflow_complete
+    - agent_failure
+    - quality_gate_failure

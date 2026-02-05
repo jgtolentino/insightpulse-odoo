@@ -1,0 +1,54 @@
+# Guardrail: Portal View Inheritance
+id: GR-PORTAL-003
+name: Portal view override integrity check
+severity: medium
+module: portal
+category: view_error
+
+trigger:
+  - portal_view_customization
+  - helpdesk_view_customization
+
+condition:
+  description: inherit_id not found when customizing portal/helpdesk views
+  detection:
+    - check_inherit_id_exists: true
+    - verify_base_module: [portal, helpdesk, website]
+    - validate_xpath_targets: true
+
+prevention:
+  enforce:
+    - search for view in correct base module (portal/helpdesk/website)
+    - require view existence check before inherit
+    - validate XML ID references
+    - test view loading before deployment
+
+reason: >
+  Portal and helpdesk views often come from different modules than expected.
+  The view must exist in the module you're inheriting from,
+  and the inherit_id must reference the correct XML ID.
+
+autopatch: correct_inherit_view
+
+documentation_url: https://www.odoo.com/forum/help-1/portal-ticket-view-not-found
+
+impact:
+  business: Broken customer portal, support tickets inaccessible
+  users: Customers, support team
+  fix_complexity: low
+
+example_code: |
+  <!-- Correct approach -->
+  <record id="portal_ticket_view_inherit" model="ir.ui.view">
+      <field name="name">portal.ticket.form.inherit</field>
+      <field name="model">helpdesk.ticket</field>
+      <field name="inherit_id" ref="helpdesk.portal_ticket_view"/>
+      <field name="arch" type="xml">
+          <xpath expr="//div[@class='ticket_details']" position="after">
+              <div>Your custom content</div>
+          </xpath>
+      </field>
+  </record>
+
+  <!-- Wrong approach - referencing wrong module -->
+  <!-- <field name="inherit_id" ref="website.portal_ticket_view"/> -->
