@@ -164,20 +164,40 @@ SUPABASE_DB_PASSWORD=your_db_password
 
 ### Supabase ↔ Odoo Sync
 
-For bidirectional sync between Supabase and Odoo:
+**✅ IMPLEMENTED**: Bidirectional sync with checkpointing, pagination, and retry logic.
 
-1. Implement Edge Functions in `supabase/functions/odoo-sync/`
-2. Use Odoo XML-RPC/JSON-RPC connectors
-3. Add idempotent migrations in `supabase/migrations/`
-4. Keep sync logic in Supabase (canonical surface)
+The `odoo-sync` Edge Function provides:
+- **Pull Mode**: Fetch records from Odoo → Upsert into Supabase
+- **Push Mode**: Process outbox queue → Write to Odoo  
+- **Checkpointing**: Resume pagination from last offset
+- **Retry Logic**: Exponential backoff for failed operations
 
-Example:
+Structure:
 ```
 supabase/functions/odoo-sync/
-├── index.ts              # Main edge function
-├── odoo-client.ts        # XML-RPC client
-└── sync-handlers.ts      # Sync logic
+├── index.ts              # Main edge function with pagination & retry
+├── deno.json             # Deno dependencies
+├── .env.example          # Environment variable template
+└── README.md             # Complete documentation
+
+supabase/migrations/
+├── *_odoo_sync.sql               # Core tables (outbox, runs, partners)
+└── *_odoo_sync_checkpointing.sql # Checkpoints & config
 ```
+
+**Quick Start:**
+```bash
+# Deploy
+supabase functions deploy odoo-sync
+
+# Pull from Odoo
+curl "https://your-project.supabase.co/functions/v1/odoo-sync?mode=odoo_to_sb"
+
+# Push to Odoo
+curl "https://your-project.supabase.co/functions/v1/odoo-sync?mode=sb_to_odoo"
+```
+
+📚 **[Full Sync Documentation](supabase/functions/odoo-sync/README.md)** - Setup, configuration, scheduling, troubleshooting
 
 ### Adding Custom Odoo Modules
 
