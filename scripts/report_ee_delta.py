@@ -2,16 +2,19 @@
 from __future__ import annotations
 
 import sys
-from pathlib import Path
-import yaml
 from collections import Counter
+from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+
 
 def load_yaml(p: Path) -> dict:
     if not p.exists():
         return {}
     return yaml.safe_load(p.read_text(encoding="utf-8")) or {}
+
 
 def main():
     matrix_path = ROOT / "parity" / "ee_parity_matrix.yaml"
@@ -39,8 +42,15 @@ def main():
         by_status[status] += 1
         by_level[level] += 1
 
-        if status in {"missing", "not_started", "todo", "blocked"} or level in {"none", "partial", "external_service", "custom_adapter"}:
-            deltas.append((key, status, level, spec.get("ee_module"), spec.get("oca_equivalent")))
+        if status in {"missing", "not_started", "todo", "blocked"} or level in {
+            "none",
+            "partial",
+            "external_service",
+            "custom_adapter",
+        }:
+            deltas.append(
+                (key, status, level, spec.get("ee_module"), spec.get("oca_equivalent"))
+            )
 
         if status == "blocked" or spec.get("blocker"):
             blockers.append((key, spec.get("blocker")))
@@ -56,7 +66,9 @@ def main():
 
     print("\n=== Remaining Delta (Top 50) ===")
     for i, (k, status, level, ee_mod, oca_eq) in enumerate(deltas[:50], 1):
-        print(f"{i:02d}. {k} | status={status} | level={level} | ee={ee_mod} | oca={oca_eq}")
+        print(
+            f"{i:02d}. {k} | status={status} | level={level} | ee={ee_mod} | oca={oca_eq}"
+        )
 
     if blockers:
         print("\n=== Blockers ===")
@@ -64,6 +76,7 @@ def main():
             print(f"- {k}: {b}")
 
     sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
