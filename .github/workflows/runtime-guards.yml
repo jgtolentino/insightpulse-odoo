@@ -2,7 +2,7 @@ name: runtime-guards
 on:
   pull_request:
   push:
-    branches: [ main, pinned-odoo-19-setup, copilot/add-report-ee-delta-script-again ]
+    branches: [ main ]
 jobs:
   guards:
     runs-on: ubuntu-latest
