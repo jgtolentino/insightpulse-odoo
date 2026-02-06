@@ -430,8 +430,7 @@ class HRFinalPayComputation(models.Model):
 
             # 5. Log computation
             record.message_post(
-                body=_(
-                    """
+                body=_("""
                     <p>Final pay computed successfully:</p>
                     <ul>
                         <li>Prorated Salary: %s</li>
@@ -440,8 +439,7 @@ class HRFinalPayComputation(models.Model):
                         <li>Withholding Tax: %s</li>
                         <li><strong>Net Amount: %s</strong></li>
                     </ul>
-                """
-                )
+                """)
                 % (
                     record.prorated_salary,
                     record.prorated_13th_month,

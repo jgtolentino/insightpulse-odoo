@@ -166,13 +166,11 @@ class MicroservicesConfig(models.Model):
         _logger.info("Starting credential migration: encrypting plaintext credentials")
 
         # Use SQL to read old plaintext values before field change
-        self.env.cr.execute(
-            """
+        self.env.cr.execute("""
             SELECT id, api_key, auth_token
             FROM microservices_config
             WHERE api_key IS NOT NULL OR auth_token IS NOT NULL
-        """
-        )
+        """)
         records_to_migrate = self.env.cr.fetchall()
 
         migrated_count = 0
@@ -201,13 +199,11 @@ class MicroservicesConfig(models.Model):
         )
 
         # Clear old plaintext columns (SQL ALTER TABLE in post_init hook would be better)
-        self.env.cr.execute(
-            """
+        self.env.cr.execute("""
             UPDATE microservices_config
             SET api_key = NULL, auth_token = NULL
             WHERE api_key IS NOT NULL OR auth_token IS NOT NULL
-        """
-        )
+        """)
 
         return True
 

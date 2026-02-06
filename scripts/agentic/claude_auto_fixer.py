@@ -12,6 +12,7 @@ Usage:
         --suggested-fix fix.txt \
         --auto-commit true
 """
+
 import argparse
 import json
 import os

@@ -11,6 +11,7 @@ Usage:
 Options:
     --with-prod-status    Query production Odoo for installation status via XML-RPC
 """
+
 import argparse
 import ast
 import csv

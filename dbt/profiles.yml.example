@@ -1,0 +1,41 @@
+# dbt profiles.yml example
+# Copy this to ~/.dbt/profiles.yml and fill in your credentials
+
+insightpulse_odoo:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('SUPABASE_DB_HOST') }}"
+      user: "{{ env_var('SUPABASE_DB_USER') }}"
+      password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
+      port: 5432
+      dbname: "{{ env_var('SUPABASE_DB_NAME', 'postgres') }}"
+      schema: staging
+      threads: 4
+      keepalives_idle: 0
+      connect_timeout: 10
+      search_path: "staging,odoo_raw,public"
+      
+    prod:
+      type: postgres
+      host: "{{ env_var('SUPABASE_DB_HOST') }}"
+      user: "{{ env_var('SUPABASE_DB_USER') }}"
+      password: "{{ env_var('SUPABASE_DB_PASSWORD') }}"
+      port: 5432
+      dbname: "{{ env_var('SUPABASE_DB_NAME', 'postgres') }}"
+      schema: staging
+      threads: 8
+      keepalives_idle: 0
+      connect_timeout: 10
+      search_path: "staging,intermediate,semantic,metrics,odoo_raw,public"
+
+# Usage:
+# 1. Copy this file to ~/.dbt/profiles.yml
+# 2. Set environment variables:
+#    export SUPABASE_DB_HOST="db.xxx.supabase.co"
+#    export SUPABASE_DB_USER="postgres"
+#    export SUPABASE_DB_PASSWORD="your_password"
+#    export SUPABASE_DB_NAME="postgres"
+# 3. Test connection: dbt debug
+# 4. Run models: dbt run --target dev

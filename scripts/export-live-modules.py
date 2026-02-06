@@ -12,6 +12,7 @@ Usage:
     export ODOO_PASSWORD="password"
     python3 scripts/export-live-modules.py
 """
+
 import csv
 import datetime
 import os

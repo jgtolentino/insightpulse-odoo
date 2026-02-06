@@ -1,0 +1,119 @@
+version: 2
+
+sources:
+  - name: odoo_raw
+    description: Raw Odoo data synced from Odoo PostgreSQL via Airbyte
+    database: postgres
+    schema: odoo_raw
+    tables:
+      - name: res_partner
+        description: Partners (customers, vendors, contacts)
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Partner name
+            tests:
+              - not_null
+          - name: write_date
+            description: Last update timestamp (used as CDC cursor)
+            
+      - name: account_move
+        description: Accounting entries (invoices, bills, journal entries)
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: move_type
+            description: Type of accounting move
+          - name: write_date
+            description: Last update timestamp (used as CDC cursor)
+            
+      - name: account_move_line
+        description: Journal entry lines (invoice lines, payments)
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: move_id
+            description: Foreign key to account_move
+            
+      - name: sale_order
+        description: Sales orders and quotations
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: name
+            description: Order number
+          - name: write_date
+            description: Last update timestamp (used as CDC cursor)
+            
+      - name: sale_order_line
+        description: Sales order line items
+        columns:
+          - name: id
+            description: Primary key
+          - name: order_id
+            description: Foreign key to sale_order
+            
+      - name: purchase_order
+        description: Purchase orders
+        columns:
+          - name: id
+            description: Primary key
+            tests:
+              - unique
+              - not_null
+          - name: write_date
+            description: Last update timestamp
+            
+      - name: purchase_order_line
+        description: Purchase order line items
+        
+      - name: stock_move
+        description: Inventory movements
+        
+      - name: stock_picking
+        description: Delivery orders and receipts
+        
+      - name: hr_expense
+        description: Employee expense claims
+        
+      - name: hr_expense_sheet
+        description: Expense claim batches
+        
+      # Custom IPAI tables
+      - name: ipai_subscription
+        description: SaaS subscription management
+        
+      - name: ipai_subscription_line
+        description: Subscription line items
+        
+      - name: ipai_purchase_requisition
+        description: Purchase requisitions (pre-PO approval)
+        
+      - name: ipai_purchase_req_line
+        description: Purchase requisition line items
+        
+      - name: ipai_expense_advance
+        description: Expense advances/cash advances
+        
+      - name: ipai_expense_policy
+        description: Expense policies and approval rules
+
+# Freshness checks (optional)
+# sources:
+#   - name: odoo_raw
+#     freshness:
+#       warn_after: {count: 1, period: hour}
+#       error_after: {count: 6, period: hour}
