@@ -6,6 +6,8 @@ on:
 jobs:
   guards:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       - name: No floating images
