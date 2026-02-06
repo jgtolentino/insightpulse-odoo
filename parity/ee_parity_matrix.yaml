@@ -1,0 +1,181 @@
+# EE Parity Matrix
+# Tracks the parity status of Odoo Enterprise features vs Community + OCA equivalents
+# This file is used by scripts/report_ee_delta.py to generate delta reports
+
+ee_parity:
+  # Accounting & Finance
+  accounting_reports:
+    status: complete
+    parity_level: full
+    ee_module: account_reports
+    oca_equivalent: account_financial_report
+    notes: Financial reports fully covered by OCA
+
+  inter_company_rules:
+    status: complete
+    parity_level: full
+    ee_module: account_inter_company_rules
+    oca_equivalent: account_invoice_inter_company
+    notes: Inter-company transactions handled
+
+  budget_management:
+    status: partial
+    parity_level: partial
+    ee_module: account_budget
+    oca_equivalent: account_budget_oca
+    notes: Basic budgeting available, advanced features missing
+
+  # Manufacturing
+  mrp_plm:
+    status: missing
+    parity_level: none
+    ee_module: mrp_plm
+    oca_equivalent: null
+    notes: Product Lifecycle Management not available in OCA
+
+  mrp_workorder:
+    status: partial
+    parity_level: partial
+    ee_module: mrp_workorder
+    oca_equivalent: mrp_production_note
+    notes: Work order tracking partially covered
+
+  quality_control:
+    status: missing
+    parity_level: external_service
+    ee_module: quality_control
+    oca_equivalent: quality_control_oca
+    notes: Basic QC available, but advanced checks missing
+
+  # HR & Payroll
+  hr_payroll:
+    status: blocked
+    parity_level: partial
+    ee_module: hr_payroll
+    oca_equivalent: hr_payroll_community
+    blocker: Localization for PH tax rules incomplete
+    notes: Community version exists but lacks PH compliance
+
+  hr_appraisal:
+    status: complete
+    parity_level: full
+    ee_module: hr_appraisal
+    oca_equivalent: hr_appraisal_survey
+    notes: Performance appraisals covered
+
+  # CRM & Sales
+  crm_enterprise:
+    status: not_started
+    parity_level: none
+    ee_module: crm_enterprise
+    oca_equivalent: null
+    notes: Advanced CRM features like lead scoring missing
+
+  sale_subscription:
+    status: partial
+    parity_level: custom_adapter
+    ee_module: sale_subscription
+    oca_equivalent: contract
+    notes: Contract module provides partial subscription functionality
+
+  # Marketing
+  marketing_automation:
+    status: missing
+    parity_level: external_service
+    ee_module: marketing_automation
+    oca_equivalent: null
+    notes: Can integrate with Mautic or other marketing automation tools
+
+  social_marketing:
+    status: not_started
+    parity_level: none
+    ee_module: social_marketing
+    oca_equivalent: null
+    notes: No equivalent for social media management
+
+  # Helpdesk & Support
+  helpdesk:
+    status: complete
+    parity_level: full
+    ee_module: helpdesk
+    oca_equivalent: helpdesk_mgmt
+    notes: Helpdesk management fully covered by OCA
+
+  # Studio & Customization
+  web_studio:
+    status: blocked
+    parity_level: none
+    ee_module: web_studio
+    oca_equivalent: null
+    blocker: No-code customization tool - requires manual development instead
+    notes: Custom development required for customizations
+
+  # IoT & Hardware
+  iot:
+    status: missing
+    parity_level: custom_adapter
+    ee_module: iot
+    oca_equivalent: null
+    notes: Can implement custom IoT integrations via APIs
+
+  # Accounting Advanced
+  documents:
+    status: partial
+    parity_level: partial
+    ee_module: documents
+    oca_equivalent: dms
+    notes: Document Management System (DMS) provides basic functionality
+
+  sign:
+    status: missing
+    parity_level: external_service
+    ee_module: sign
+    oca_equivalent: null
+    notes: Can integrate with DocuSign or Adobe Sign
+
+  # Inventory & Logistics
+  stock_barcode:
+    status: complete
+    parity_level: full
+    ee_module: stock_barcode
+    oca_equivalent: stock_barcodes
+    notes: Barcode scanning fully supported
+
+  stock_forecasting:
+    status: todo
+    parity_level: partial
+    ee_module: stock_forecasting
+    oca_equivalent: null
+    notes: Basic forecasting rules exist, ML-based forecasting missing
+
+  # Project Management
+  project_forecast:
+    status: missing
+    parity_level: none
+    ee_module: project_forecast
+    oca_equivalent: null
+    notes: Resource forecasting not available
+
+  timesheet_grid:
+    status: complete
+    parity_level: full
+    ee_module: timesheet_grid
+    oca_equivalent: hr_timesheet_sheet
+    notes: Timesheet management covered
+
+  # E-commerce
+  website_studio:
+    status: blocked
+    parity_level: none
+    ee_module: website_studio
+    oca_equivalent: null
+    blocker: Requires Studio which is EE-only
+    notes: Manual theme development required
+
+  # Mobile
+  mobile_app:
+    status: not_started
+    parity_level: custom_adapter
+    ee_module: odoo_mobile
+    oca_equivalent: null
+    notes: Can build custom mobile apps using Odoo API
