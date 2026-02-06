@@ -1,0 +1,128 @@
+# EE Parity Matrix
+# Tracks InsightPulse's coverage of Odoo Enterprise features using OCA equivalents
+
+ee_parity:
+  # Finance & Accounting
+  accounting_reports:
+    status: complete
+    parity_level: full
+    ee_module: account_reports
+    oca_equivalent: mis_builder
+    notes: "MIS Builder provides equivalent financial reporting"
+
+  consolidation:
+    status: complete
+    parity_level: full
+    ee_module: account_consolidation
+    oca_equivalent: account_consolidation_oca
+    notes: "OCA consolidation module"
+
+  budget_management:
+    status: complete
+    parity_level: full
+    ee_module: account_budget
+    oca_equivalent: mis_builder_budget
+    notes: "Budget tracking via MIS Builder"
+
+  # Document Management
+  documents:
+    status: missing
+    parity_level: partial
+    ee_module: documents
+    oca_equivalent: dms
+    notes: "DMS provides document storage but lacks some EE features"
+
+  approvals:
+    status: not_started
+    parity_level: none
+    ee_module: approvals
+    oca_equivalent: null
+    notes: "No direct OCA equivalent - needs custom development"
+
+  # Project Management
+  project_forecast:
+    status: missing
+    parity_level: external_service
+    ee_module: project_forecast
+    oca_equivalent: null
+    notes: "Could use external PM tools"
+
+  # HR & Payroll
+  payroll:
+    status: blocked
+    parity_level: custom_adapter
+    ee_module: hr_payroll
+    oca_equivalent: hr_payroll_oca
+    blocker: "Philippines BIR compliance requirements"
+    notes: "OCA payroll needs BIR customization"
+
+  attendance_kiosk:
+    status: todo
+    parity_level: partial
+    ee_module: hr_attendance
+    oca_equivalent: hr_attendance_oca
+    notes: "Basic attendance tracking available"
+
+  # Manufacturing
+  mrp_plm:
+    status: missing
+    parity_level: none
+    ee_module: mrp_plm
+    oca_equivalent: null
+    notes: "PLM not in scope for Finance SSC"
+
+  # Sales & CRM
+  crm_enterprise:
+    status: complete
+    parity_level: full
+    ee_module: crm_enterprise
+    oca_equivalent: crm_community
+    notes: "Community CRM sufficient for Finance SSC"
+
+  # Studio & Customization
+  studio:
+    status: missing
+    parity_level: external_service
+    ee_module: web_studio
+    oca_equivalent: null
+    notes: "Using Claude Code for custom development instead"
+
+  # Reporting & BI
+  spreadsheet_dashboard:
+    status: missing
+    parity_level: external_service
+    ee_module: spreadsheet_dashboard
+    oca_equivalent: null
+    notes: "Using Superset for BI/dashboards"
+
+  # Inventory & Logistics
+  stock_barcode:
+    status: not_started
+    parity_level: partial
+    ee_module: stock_barcode
+    oca_equivalent: stock_barcodes_oca
+    notes: "OCA barcodes module available"
+
+  # Marketing
+  marketing_automation:
+    status: missing
+    parity_level: none
+    ee_module: marketing_automation
+    oca_equivalent: null
+    notes: "Not in scope for Finance SSC"
+
+  # IoT & Hardware
+  iot:
+    status: missing
+    parity_level: none
+    ee_module: iot
+    oca_equivalent: null
+    notes: "Not in scope"
+
+  # Sign
+  sign:
+    status: missing
+    parity_level: external_service
+    ee_module: sign
+    oca_equivalent: null
+    notes: "Could use DocuSign or SignNow integration"

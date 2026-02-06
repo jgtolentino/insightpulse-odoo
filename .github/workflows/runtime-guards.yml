@@ -1,0 +1,14 @@
+name: runtime-guards
+on:
+  pull_request:
+  push:
+    branches: [ main, pinned-odoo-19-setup, copilot/add-report-ee-delta-script-again ]
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: No floating images
+        run: ./guards/ci_guard_no_floating_images.sh
+      - name: No version branching
+        run: ./guards/ci_guard_no_version_branching.sh

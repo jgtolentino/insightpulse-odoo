@@ -4,7 +4,8 @@ services:
   # For detailed service configurations, see infrastructure/docker/
 
   odoo:
-    image: odoo:18.0
+    # Image set via env var with pinned digest. Use scripts/pin_images.sh to generate .env file.
+    image: ${ODOO_IMAGE:-odoo:19.0}
     depends_on:
       - postgres
     ports:
@@ -30,7 +31,7 @@ services:
       - odoo_data:/var/lib/odoo
 
   postgres:
-    image: postgres:15
+    image: ${PG_IMAGE:-postgres:16-alpine}
     environment:
       - POSTGRES_DB=odoo
       - POSTGRES_USER=odoo
@@ -39,7 +40,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   caddy:
-    image: caddy:2
+    image: ${CADDY_IMAGE:-caddy:2-alpine}
     restart: unless-stopped
     environment:
       - ACME_AGREE=true

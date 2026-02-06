@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16
+    image: ${PG_IMAGE:-postgres:16-alpine}
     environment:
       POSTGRES_DB: ${ODOO_DB_NAME:-odoo}
       POSTGRES_USER: ${ODOO_DB_USER:-odoo}
@@ -9,8 +9,8 @@ services:
       - odoo_pgdata:/var/lib/postgresql/data
 
   odoo:
-    # Assumption/TODO: choose either pinned official image OR build from vendor/odoo.
-    image: odoo:19.0
+    # Image set via env var with pinned digest. Use scripts/pin_images.sh to generate .env file.
+    image: ${ODOO_IMAGE:-odoo:19.0}
     depends_on:
       - db
     ports:

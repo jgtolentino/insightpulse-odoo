@@ -1,0 +1,40 @@
+services:
+  web:
+    # DO NOT USE floating tags. Image is set via env var with pinned digest.
+    image: ${ODOO_IMAGE}
+    depends_on:
+      - db
+    ports:
+      - "8069:8069"
+    volumes:
+      - odoo-19-web-data:/var/lib/odoo
+      - ../../config:/etc/odoo:ro
+      - ../../addons:/mnt/extra-addons
+    command: ["--dev=xml,qweb,assets"]
+    environment:
+      - HOST=db
+      - USER=odoo
+      - PASSWORD=odoo
+
+  db:
+    image: ${PG_IMAGE}
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_PASSWORD=odoo
+      - POSTGRES_USER=odoo
+    volumes:
+      - odoo-19-db-data:/var/lib/postgresql/data
+
+  db-admin:
+    image: ${PGADMIN_IMAGE}
+    depends_on:
+      - db
+    ports:
+      - "5050:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+
+volumes:
+  odoo-19-web-data:
+  odoo-19-db-data:
