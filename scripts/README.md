@@ -2,6 +2,42 @@
 
 This directory contains automation scripts, utilities, and tools for managing InsightPulse Odoo infrastructure and development workflows.
 
+## 🆕 New Core Scripts
+
+### EE Parity & OCA Management
+
+#### `report_ee_delta.py` ⭐
+Generates a summary of remaining gaps between Odoo Enterprise features and OCA/community alternatives.
+
+```bash
+python3 scripts/report_ee_delta.py
+```
+
+#### `inventory_addon_deps.py` ⭐
+Analyzes Odoo addon dependency graphs and generates installation order.
+
+```bash
+ODOO_SELECTED_ADDONS="mis_builder,dms" python3 scripts/inventory_addon_deps.py
+```
+
+### Runtime Management
+
+#### `pin_images.sh` ⭐
+Computes and stores digest pins for Docker images to ensure deterministic builds.
+
+```bash
+./scripts/pin_images.sh
+```
+
+#### `dev_up_odoo19.sh` ⭐
+One-command startup for Odoo 19 development stack.
+
+```bash
+./scripts/dev_up_odoo19.sh
+```
+
+See detailed documentation for these scripts at the end of this README.
+
 ## 📁 Directory Structure
 
 ```
@@ -324,6 +360,265 @@ Scripts used in GitHub Actions workflows:
 - [Infrastructure](../infrastructure/README.md)
 - [Deployment Guide](../docs/DEPLOYMENT.md)
 - [Makefile](../Makefile)
+- [Colima Setup Guide](../docs/COLIMA_SETUP.md) ⭐
+- [Runtime Dev README](../runtime/dev/README.md) ⭐
+
+---
+
+## 📚 Detailed Script Documentation
+
+### `report_ee_delta.py`
+
+**Purpose:** Track and report gaps between Odoo Enterprise features and OCA/community alternatives.
+
+**Usage:**
+```bash
+python3 scripts/report_ee_delta.py
+```
+
+**Output:**
+- Summary by status (missing, complete, blocked, etc.)
+- Summary by parity level (full, partial, none, etc.)
+- Top 50 remaining delta items
+- List of blockers
+
+**Data Source:** `parity/ee_parity_matrix.yaml`
+
+**Example Output:**
+```
+=== EE Parity Delta Summary ===
+By status:
+  - missing: 8
+  - complete: 4
+  - not_started: 2
+  - blocked: 1
+
+=== Blockers ===
+- payroll: Philippines BIR compliance requirements
+```
+
+### `inventory_addon_deps.py`
+
+**Purpose:** Analyze Odoo addon dependency graphs and generate topologically sorted installation order.
+
+**Usage:**
+```bash
+# Single addon
+ODOO_SELECTED_ADDONS="mis_builder" python3 scripts/inventory_addon_deps.py
+
+# Multiple addons
+ODOO_SELECTED_ADDONS="mis_builder,dms,ipai_base" python3 scripts/inventory_addon_deps.py
+
+# Save to file
+ODOO_SELECTED_ADDONS="mis_builder,dms" python3 scripts/inventory_addon_deps.py > /tmp/deps.json
+```
+
+**Output (JSON):**
+```json
+{
+  "addons_roots": ["/path/to/addons", "/path/to/oca"],
+  "selected": ["mis_builder", "dms"],
+  "found_addons_count": 150,
+  "install_order": ["base", "mail", "account", "mis_builder", "dms"],
+  "missing_or_core_deps": ["base", "mail", "web"]
+}
+```
+
+**Addon Search Paths:**
+- `addons/` - Custom addons
+- `custom_addons/` - Alternative custom location
+- `vendor/oca/` - Vendored OCA addons
+- `oca/` - Alternative OCA location
+- `odoo/addons/` - Core Odoo addons
+
+### `pin_images.sh`
+
+**Purpose:** Compute and store digest pins for Docker images to ensure deterministic, reproducible builds.
+
+**Usage:**
+```bash
+./scripts/pin_images.sh
+```
+
+**What it does:**
+1. Reads tags from `ops/pins/*.tag.txt`
+2. Pulls Docker images for those tags
+3. Extracts digest hashes (`sha256:...`)
+4. Writes `runtime/dev/.env.odoo19` with pinned digests
+
+**Pin Files:**
+- `ops/pins/odoo_19.tag.txt` - Odoo 19 dated tag (e.g., `odoo:19.0-20260119`)
+- `ops/pins/postgres_16.tag.txt` - PostgreSQL 16 image tag
+- `ops/pins/pgadmin.tag.txt` - pgAdmin 4 image tag
+
+**Generated Output:**
+```bash
+ODOO_IMAGE=odoo@sha256:abc123...
+PG_IMAGE=postgres@sha256:def456...
+PGADMIN_IMAGE=dpage/pgadmin4@sha256:ghi789...
+```
+
+### `dev_up_odoo19.sh`
+
+**Purpose:** One-command startup for Odoo 19 development stack with health checks.
+
+**Usage:**
+```bash
+./scripts/dev_up_odoo19.sh
+```
+
+**What it does:**
+1. Runs `pin_images.sh` to ensure digests are current
+2. Sets proper permissions on config/addons directories (no `chmod 777`)
+3. Starts Docker Compose stack in detached mode
+4. Waits for services to start
+5. Probes Odoo health endpoint
+6. Displays access URLs
+
+**Stack includes:**
+- Odoo 19 web server (port 8069)
+- PostgreSQL 16 database
+- pgAdmin 4 (port 5050)
+
+**Access URLs:**
+- Odoo: http://localhost:8069
+- pgAdmin: http://localhost:5050 (admin@admin.com / admin)
+
+### CI Guards
+
+#### `guards/ci_guard_no_floating_images.sh`
+
+**Purpose:** Prevent floating Docker image tags in compose files (enforces determinism).
+
+**Usage:**
+```bash
+./guards/ci_guard_no_floating_images.sh
+```
+
+**Blocks:**
+- `:latest`
+- `:19`, `:18`, `:17` (version-only tags)
+- Any tag without `${VAR}` or `@sha256:` digest
+
+**Allows:**
+- `${ODOO_IMAGE}` (env var substitution)
+- `image@sha256:...` (digest pins)
+
+**Scanned:**
+- `runtime/**/*.yml`, `runtime/**/*.yaml`
+- `docker-compose.yml`
+- `compose.yml`
+
+#### `guards/ci_guard_no_version_branching.sh`
+
+**Purpose:** Prevent version-specific code branches (enforces "version as configuration" pattern).
+
+**Usage:**
+```bash
+./guards/ci_guard_no_version_branching.sh
+```
+
+**Blocked Patterns:**
+- `odoo.release`
+- `server_version`
+- `tools.config.get(...server_version`
+- `if ... (odoo|version)`
+- `>= 18`, `>= 19`
+
+**Rationale:** Version should be configuration (env file), not code branching. This keeps the codebase version-agnostic.
+
+**Scanned Files:**
+- `*.py`, `*.xml`, `*.js`, `*.ts`, `*.tsx`
+
+**Excluded:**
+- `templates/`, `runtime/`, `scripts/`, `guards/`, `docs/`
+
+## 🎯 Common Workflows
+
+### Setting up a new development environment
+
+```bash
+# 1. Start Colima (macOS with Apple Silicon)
+colima start --cpu 4 --memory 8 --disk 60 --vm-type=vz --mount-type=virtiofs
+
+# 2. Start Odoo stack
+./scripts/dev_up_odoo19.sh
+
+# 3. Access Odoo
+open http://localhost:8069
+```
+
+### Analyzing addon dependencies before installation
+
+```bash
+# Check installation order
+ODOO_SELECTED_ADDONS="account_reports,mis_builder" \
+  python3 scripts/inventory_addon_deps.py | \
+  jq '.install_order[]'
+
+# Identify missing OCA modules
+ODOO_SELECTED_ADDONS="account_reports,mis_builder" \
+  python3 scripts/inventory_addon_deps.py | \
+  jq '.missing_or_core_deps[]'
+```
+
+### Checking EE parity status
+
+```bash
+# Full report
+python3 scripts/report_ee_delta.py
+
+# Just blockers
+python3 scripts/report_ee_delta.py | grep -A 20 "=== Blockers ==="
+
+# Count missing features
+python3 scripts/report_ee_delta.py | grep "missing:" | awk '{print $3}'
+```
+
+### Running CI guards locally before committing
+
+```bash
+# Check both guards
+./guards/ci_guard_no_floating_images.sh && \
+./guards/ci_guard_no_version_branching.sh && \
+echo "✅ All guards passed"
+```
+
+### Updating Docker image pins
+
+```bash
+# 1. Update tag file (example: new Odoo release)
+echo "odoo:19.0-20260215" > ops/pins/odoo_19.tag.txt
+
+# 2. Regenerate digest pins
+./scripts/pin_images.sh
+
+# 3. Verify new digest
+cat runtime/dev/.env.odoo19
+
+# 4. Restart stack with new image
+cd runtime/dev
+docker compose --env-file .env.odoo19 -f compose.odoo19.yml up -d
+```
+
+## ✅ Best Practices
+
+### DO
+
+- ✅ Use `pin_images.sh` to generate deterministic image pins
+- ✅ Run CI guards before committing compose file changes
+- ✅ Use `inventory_addon_deps.py` before installing new OCA modules
+- ✅ Keep `parity/ee_parity_matrix.yaml` updated as features are implemented
+- ✅ Use Colima with virtiofs on Apple Silicon for best performance
+- ✅ Use proper permissions (`u+rwX,go+rX`) instead of `chmod 777`
+
+### DON'T
+
+- ❌ Don't use floating tags (`:latest`, `:19`) in compose files
+- ❌ Don't add version-specific code branches (`if odoo >= 19`)
+- ❌ Don't assume OCA modules are "just Python packages" (they're Odoo addons)
+- ❌ Don't skip the addon dependency analysis before installing
+- ❌ Don't use `chmod 777` for permissions
 
 ---
 
