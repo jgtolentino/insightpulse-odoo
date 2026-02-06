@@ -12,6 +12,7 @@ Usage:
         --success true \
         --timestamp 2025-11-10T12:00:00Z
 """
+
 import argparse
 import json
 from datetime import datetime

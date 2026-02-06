@@ -3,6 +3,7 @@
 Agent Knowledge Base Indexer
 Generates embeddings for agent-specific documentation and stores in Supabase
 """
+
 import argparse
 import json
 import os

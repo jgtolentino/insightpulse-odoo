@@ -2,8 +2,9 @@
 from __future__ import annotations
 
 import sys
-import yaml
 from pathlib import Path
+
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -27,9 +28,11 @@ REQUIRED_DOMAINS = [
     "9_real_world_patterns",
 ]
 
+
 def fail(msg: str) -> None:
     print(f"ERROR: {msg}", file=sys.stderr)
     sys.exit(1)
+
 
 def main() -> None:
     # 1) Required files exist
@@ -74,6 +77,7 @@ def main() -> None:
     # Add stricter checks later (nginx conf presence, docker-compose, health endpoints) once paths are standardized.
 
     print("ok: enterprise standards baseline passed")
+
 
 if __name__ == "__main__":
     main()

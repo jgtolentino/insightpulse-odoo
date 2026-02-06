@@ -7,8 +7,7 @@ from textwrap import dedent
 is_pr = os.environ.get("GITHUB_EVENT_NAME") == "pull_request"
 msg = "\n".join(sys.argv[1:]) or "Section 19 drift detected."
 
-content = dedent(
-    f"""
+content = dedent(f"""
 **Claude Config Sync**
 {msg}
 
@@ -17,8 +16,7 @@ content = dedent(
 make claude:sync-write
 git add -A && git commit -m "chore(claude): sync Section 19"
 ```
-"""
-).strip()
+""").strip()
 
 if is_pr:
     try:

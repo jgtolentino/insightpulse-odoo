@@ -14,6 +14,7 @@ Usage:
     # Analyze error trends
     python error_pattern_detector.py analyze
 """
+
 import json
 import sys
 from pathlib import Path

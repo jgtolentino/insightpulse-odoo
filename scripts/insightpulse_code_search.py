@@ -124,8 +124,7 @@ class InsightPulseCodeSearch:
         cur.execute("CREATE EXTENSION IF NOT EXISTS vector;")
 
         # Create embeddings table
-        cur.execute(
-            """
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS insightpulse_code_embeddings (
                 id SERIAL PRIMARY KEY,
                 chunk_hash TEXT UNIQUE NOT NULL,
@@ -140,32 +139,25 @@ class InsightPulseCodeSearch:
                 created_at TIMESTAMP DEFAULT NOW(),
                 updated_at TIMESTAMP DEFAULT NOW()
             );
-        """
-        )
+        """)
 
         # Create indexes
-        cur.execute(
-            """
+        cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_file_path
             ON insightpulse_code_embeddings(file_path);
-        """
-        )
+        """)
 
-        cur.execute(
-            """
+        cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_chunk_type
             ON insightpulse_code_embeddings(chunk_type);
-        """
-        )
+        """)
 
-        cur.execute(
-            """
+        cur.execute("""
             CREATE INDEX IF NOT EXISTS idx_code_embeddings_vector
             ON insightpulse_code_embeddings
             USING ivfflat (embedding vector_cosine_ops)
             WITH (lists = 100);
-        """
-        )
+        """)
 
         self.conn.commit()
         print("✅ Database schema created")

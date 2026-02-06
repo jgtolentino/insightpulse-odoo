@@ -2,6 +2,7 @@
 """
 Sync section 19 (skills inventory) in claude.md from docs/claude-code-skills/*
 """
+
 import argparse
 import pathlib
 import re

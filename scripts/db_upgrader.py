@@ -146,14 +146,12 @@ def calculate_checksum(file_path: Path) -> str:
 def get_applied_versions(conn: psycopg2.extensions.connection) -> Dict[str, Dict]:
     """Get list of applied migration versions."""
     with conn.cursor() as cur:
-        cur.execute(
-            """
+        cur.execute("""
             SELECT version, description, migration_file, checksum,
                    installed_at, execution_time_ms, success
             FROM public.schema_version
             ORDER BY installed_at ASC
-        """
-        )
+        """)
 
         return {
             row[0]: {
@@ -211,20 +209,16 @@ def create_schemas(conn: psycopg2.extensions.connection):
     """Create all required schemas if they don't exist."""
     with conn.cursor() as cur:
         for schema, description in SCHEMAS.items():
-            cur.execute(
-                f"""
+            cur.execute(f"""
                 CREATE SCHEMA IF NOT EXISTS {schema};
                 COMMENT ON SCHEMA {schema} IS '{description}';
-            """
-            )
+            """)
 
             # Grant permissions
-            cur.execute(
-                f"""
+            cur.execute(f"""
                 GRANT USAGE ON SCHEMA {schema} TO postgres, authenticated, service_role;
                 GRANT ALL ON SCHEMA {schema} TO postgres, service_role;
-            """
-            )
+            """)
 
         print(f"✅ Created {len(SCHEMAS)} schemas")
     conn.commit()
