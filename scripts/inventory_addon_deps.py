@@ -89,13 +89,14 @@ def topo(all_addons: Dict[str, Path], selected: List[str]) -> Tuple[List[str], L
 def main():
     repo = Path(__file__).resolve().parents[1]
 
-    # TODO: adjust if your repo layout differs
+    # Addon search paths for the InsightPulse Odoo repository.
+    # Adjust these paths if your repository layout differs.
     addons_roots = [
-        repo / "addons",          # custom addons
-        repo / "custom_addons",   # another common location
-        repo / "vendor" / "oca",  # vendored OCA addons (common pattern)
-        repo / "oca",             # alternative OCA location
-        repo / "odoo" / "addons", # if you vendor core odoo addons as well
+        repo / "addons",          # Custom InsightPulse addons
+        repo / "custom_addons",   # Alternative custom addon location
+        repo / "vendor" / "oca",  # Vendored OCA addons
+        repo / "oca",             # Alternative OCA addon location
+        repo / "odoo" / "addons", # Core Odoo addons (if vendored)
     ]
 
     selected = os.environ.get("ODOO_SELECTED_ADDONS", "").strip()

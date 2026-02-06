@@ -1,1 +1,1 @@
-dpage/pgadmin4:latest
+dpage/pgadmin4:8.14
