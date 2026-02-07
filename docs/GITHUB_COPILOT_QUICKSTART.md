@@ -23,7 +23,9 @@ Quick reference for enabling GitHub Copilot on the InsightPulse Odoo repository.
    - Add users or teams
    - Users will receive access within 10 minutes
 
-**Cost**: $19/user/month (annual) or $39/user/month (monthly)
+**Cost**: $19/user/month (billed annually) or $39/user/month (billed monthly)
+
+**Note**: Verify pricing at https://github.com/features/copilot/plans
 
 ---
 

@@ -45,9 +45,11 @@ GitHub Copilot is an AI-powered code completion tool that helps developers write
 
 ### Cost Considerations
 
-- **GitHub Copilot for Business**: $19/user/month (billed annually: $39/user/month billed monthly)
+- **GitHub Copilot for Business**: $19/user/month (billed annually) or $39/user/month (billed monthly)
 - **GitHub Copilot Individual**: $10/month or $100/year (per user, not organization-wide)
 - **Free for Students/Teachers**: Available through GitHub Education
+
+**Note**: Verify current pricing at https://github.com/features/copilot/plans as prices may change.
 
 ---
 
@@ -156,28 +158,29 @@ backups/
 *.dump
 ```
 
-### Configure Copilot in Development Environment
+### IDE-Specific Configuration
 
-Add a `.github/copilot/` directory for repository-specific configurations:
+Configure Copilot settings in your IDE for optimal Odoo development:
 
-**`.github/copilot/settings.json`** (optional):
+**VS Code** (`settings.json`):
 ```json
 {
-  "contextSize": "large",
-  "suggestions": {
-    "enabled": true,
-    "preferredLanguages": ["python", "javascript", "xml", "yaml"]
+  "github.copilot.enable": {
+    "*": true,
+    "python": true,
+    "xml": true,
+    "yaml": true
   },
-  "odoo": {
-    "version": "19.0",
-    "modules": ["base", "account", "project"],
-    "patterns": {
-      "models": "odoo.models",
-      "api": "odoo.api"
-    }
-  }
+  "github.copilot.editor.enableAutoCompletions": true
 }
 ```
+
+**PyCharm/IntelliJ** (Settings → Tools → GitHub Copilot):
+- Enable inline completions
+- Enable for Python, XML, YAML files
+- Configure keybindings as preferred
+
+**Note**: GitHub Copilot configuration is managed at the IDE level, not via repository files.
 
 ---
 
