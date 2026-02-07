@@ -57,7 +57,7 @@ backups/
 *.zip
 *.tar.gz
 *.tar.bz2
-files*.zip
+files*.zip  # Exclude files like "files (48).zip", "files (49).zip", etc.
 *.pdf
 
 # Database Dumps
