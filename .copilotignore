@@ -1,0 +1,132 @@
+# GitHub Copilot Ignore File
+# Files and directories listed here will be excluded from Copilot's context
+# This helps protect sensitive data and improve performance
+
+# Environment and Secrets
+.env
+.env.*
+*.env
+.envrc
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials/
+.credentials/
+
+# Sensitive Configuration
+config/production/
+config/secrets/
+*.secret
+*secret*.yaml
+*secret*.yml
+*secret*.json
+
+# Build Artifacts and Dependencies
+node_modules/
+vendor/
+third_party/
+.venv/
+venv/
+env/
+*.pyc
+__pycache__/
+*.so
+*.dylib
+*.dll
+*.exe
+dist/
+build/
+*.egg-info/
+.tox/
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+
+# Large Data Files
+datasets/
+backups/
+*.sql
+*.dump
+*.bak
+*.backup
+*.csv
+*.xlsx
+*.zip
+*.tar.gz
+*.tar.bz2
+files*.zip
+*.pdf
+
+# Database Dumps
+*.sql.gz
+*.dump.gz
+postgres/data/
+postgres/backups/
+
+# Archives and Extracted Files
+.extracted-archives/
+*.tar
+*.rar
+*.7z
+
+# Odoo Specific
+odoo/filestore/
+odoo/sessions/
+odoo/addons/*/static/lib/
+
+# Git
+.git/
+.gitignore
+.gitattributes
+.gitmodules
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# CI/CD Logs
+.github/workflows/logs/
+ci/logs/
+*.log
+
+# Test Coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/
+
+# Documentation Build
+_build/
+.doctrees/
+
+# Temporary Files
+tmp/
+temp/
+*.tmp
+*.cache
+
+# Supabase Local Development
+supabase/.branches/
+supabase/.temp/
+
+# Docker
+docker-compose.override.yml
+
+# Terraform State (if sensitive)
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/.terraform/
+
+# Package Manager Locks (large files)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+poetry.lock
+Pipfile.lock
