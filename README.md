@@ -407,6 +407,7 @@ python -m pytest tests/performance/ -v
 - **[docs/CI_CD_FIXES_SUMMARY.md](docs/CI_CD_FIXES_SUMMARY.md)** - Recent CI/CD improvements
 - **[docs/CANARY_DEPLOYMENT_GUIDE.md](docs/CANARY_DEPLOYMENT_GUIDE.md)** - Canary deployment strategy
 - **[CONTRIBUTING.md](CONTRIBUTING.md)** - Contribution guidelines and development workflow
+- **[docs/GITHUB_COPILOT_SETUP.md](docs/GITHUB_COPILOT_SETUP.md)** - 🤖 GitHub Copilot setup and best practices
 
 ### Module-Specific Documentation
 - **Finance Modules**: [ipai_rate_policy](addons/insightpulse/finance/ipai_rate_policy/README.md), [ipai_ppm](addons/insightpulse/finance/ipai_ppm/README.md), [ipai_ppm_costsheet](insightpulse_odoo/addons/insightpulse/finance/ipai_ppm_costsheet/README.md)

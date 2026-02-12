@@ -39,6 +39,7 @@ This project and everyone participating in it is governed by our commitment to:
 - **Git** with SSH keys configured
 - **GitHub account** for pull requests
 - **8GB RAM minimum** (16GB recommended)
+- **GitHub Copilot** (optional, but recommended) - See [GitHub Copilot Setup Guide](docs/GITHUB_COPILOT_SETUP.md)
 
 ### Setting Up Development Environment
 
@@ -115,6 +116,20 @@ python3 scripts/validate_spec.py
 ```
 
 See [Platform Spec Validation](#platform-spec-validation-required) for details.
+
+**💡 Using GitHub Copilot** (Optional)
+
+GitHub Copilot can accelerate your development. See [GitHub Copilot Setup Guide](docs/GITHUB_COPILOT_SETUP.md) for:
+- How to enable Copilot for this repository
+- Best practices for Odoo development with Copilot
+- Security considerations and `.copilotignore` usage
+- Troubleshooting common issues
+
+**Important**: Always review Copilot suggestions for:
+- OCA compliance and Odoo best practices
+- Security vulnerabilities
+- License compatibility (we use LGPL-3.0)
+- BIR regulation adherence (for finance modules)
 
 ### 4. Test Your Changes
 
